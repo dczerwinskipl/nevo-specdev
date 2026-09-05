@@ -2,7 +2,6 @@
   "$schema": "https://turborepo.com/schema.json",
   "globalDependencies": [
     "tsconfig.base.json",
-    "eslint.config.mjs",
     ".prettierrc.json",
     ".prettierignore",
     ".editorconfig",
@@ -20,10 +19,6 @@
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", "!**/*.md"],
       "outputs": ["*.tsbuildinfo", ".tsbuild/**"]
-    },
-    "lint": {
-      "dependsOn": ["^build"],
-      "outputs": []
     },
     "test": {
       "dependsOn": ["^build"],

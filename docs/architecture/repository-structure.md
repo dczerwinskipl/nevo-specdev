@@ -41,10 +41,14 @@ fake product packages exist to pad the monorepo.
 
 ## Task graph (Turborepo)
 
-Turborepo owns package-level task orchestration. Tasks: `build`, `typecheck`, `lint`,
-`test` (and `dev`, non-cached, persistent). `build`/`typecheck`/`lint`/`test` all
-depend on `^build` (dependencies build first). Outputs (`dist/**`, `coverage/**`,
-`*.tsbuildinfo`) are declared so caching is correct.
+Turborepo owns package-level task orchestration. Tasks: `build`, `typecheck`, `test`
+(and `dev`, non-cached, persistent). All depend on `^build` (dependencies build
+first). Outputs (`dist/**`, `coverage/**`, `*.tsbuildinfo`) are declared so caching is
+correct.
+
+Lint is **not** a Turborepo task: one ESLint flat config covers the whole repository,
+so `pnpm lint` runs `eslint .` in a single pass — like formatting, it does not use
+affected filtering.
 
 Cross-package execution order comes from **declared workspace dependencies**, not a
 hard-coded list. A shared package must declare its dependents correctly for affected
@@ -69,14 +73,14 @@ environment variables. When affected calculation is uncertain, CI fails safe by 
 
 **Global invalidation.** Changing a root input intentionally invalidates every
 package's cache: `pnpm-lock.yaml`, and the files in `turbo.json#globalDependencies`
-(`tsconfig.base.json`, `eslint.config.mjs`, `.prettierrc.json`, `.prettierignore`,
-`.editorconfig`, `.npmrc`, `.nvmrc`). Repository-wide checks that don't map cleanly to
-a package (formatting) run over the whole repo regardless of affected status.
+(`tsconfig.base.json`, `.prettierrc.json`, `.prettierignore`, `.editorconfig`,
+`.npmrc`, `.nvmrc`). Repository-wide checks that don't map to a single package
+(formatting, lint) run over the whole repo regardless of affected status.
 
-Required CI checks are named stably — `CI / quality`, `CI / test`, `CI / build` — and
-a check still reports success when affected filtering skipped its inner work, so a PR
-is never left permanently pending. Inspect what a change would run with
-`pnpm exec turbo run build test lint --affected --dry`.
+Required CI checks are named stably — `PR title / validate`, `CI / quality`,
+`CI / test`, `CI / build` — and a check still reports success when affected filtering
+skipped its inner work, so a PR is never left permanently pending. Inspect what a
+change would run with `pnpm exec turbo run build test typecheck --affected --dry`.
 
 ## Versioning and release lines
 

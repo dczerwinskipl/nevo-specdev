@@ -46,16 +46,16 @@ pnpm install             # frozen against pnpm-lock.yaml
 
 Run from the repository root:
 
-| Command             | What it does                                                                |
-| ------------------- | --------------------------------------------------------------------------- |
-| `pnpm build`        | `turbo run build` across affected/all packages.                             |
-| `pnpm test`         | `turbo run test`.                                                           |
-| `pnpm lint`         | `turbo run lint` (ESLint 10 flat config).                                   |
-| `pnpm typecheck`    | `turbo run typecheck` (`tsc` per package).                                  |
-| `pnpm format`       | Prettier write across the repo.                                             |
-| `pnpm format:check` | Prettier check (what CI runs).                                              |
-| `pnpm check`        | `format:check` + `turbo run lint typecheck test build`. Run before pushing. |
-| `pnpm docs:check`   | Validate doc frontmatter + the generated index.                             |
+| Command             | What it does                                                                    |
+| ------------------- | ------------------------------------------------------------------------------- |
+| `pnpm build`        | `turbo run build` across affected/all packages.                                 |
+| `pnpm test`         | `turbo run test`.                                                               |
+| `pnpm lint`         | `eslint .` over the whole repo (one flat config; not a per-package task).       |
+| `pnpm typecheck`    | `turbo run typecheck` (`tsc` per package).                                      |
+| `pnpm format`       | Prettier write across the repo.                                                 |
+| `pnpm format:check` | Prettier check (what CI runs).                                                  |
+| `pnpm check`        | `format:check` + `lint` + `turbo run typecheck test build`. Run before pushing. |
+| `pnpm docs:check`   | Validate doc frontmatter + the generated index.                                 |
 
 With no packages defining a task, `turbo run <task>` prints "No tasks were executed"
 and exits 0 — that is expected while the workspace is still mostly empty.

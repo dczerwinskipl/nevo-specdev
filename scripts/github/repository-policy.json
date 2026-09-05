@@ -1,0 +1,70 @@
+{
+  "$comment": "Desired GitHub state for this repository. Consumed by scripts/github/configure-repository.mjs — GitHub does NOT read this file on its own. Edit here, then run the script to apply and verify.",
+
+  "merge": {
+    "allow_squash_merge": true,
+    "allow_merge_commit": false,
+    "allow_rebase_merge": false,
+    "delete_branch_on_merge": true,
+    "allow_auto_merge": true,
+    "squash_merge_commit_title": "PR_TITLE",
+    "squash_merge_commit_message": "PR_BODY"
+  },
+
+  "requiredStatusChecks": {
+    "$comment": "Exact GitHub check-run names. Empty until CI has run once and names are confirmed (see scripts/github/README.md). When non-empty, the script adds a strict required_status_checks rule to every ruleset below.",
+    "strict": true,
+    "checks": []
+  },
+
+  "rulesets": [
+    {
+      "name": "protected-main",
+      "target": "branch",
+      "enforcement": "active",
+      "conditions": { "ref_name": { "include": ["refs/heads/main"], "exclude": [] } },
+      "bypass_actors": [],
+      "rules": [
+        { "type": "deletion" },
+        { "type": "non_fast_forward" },
+        { "type": "required_linear_history" },
+        {
+          "type": "pull_request",
+          "parameters": {
+            "required_approving_review_count": 0,
+            "dismiss_stale_reviews_on_push": true,
+            "require_code_owner_review": false,
+            "require_last_push_approval": false,
+            "required_review_thread_resolution": true,
+            "require_extra_approval_for_unattributed_changes": false,
+            "allowed_merge_methods": ["squash"]
+          }
+        }
+      ]
+    },
+    {
+      "name": "protected-release-lines",
+      "target": "branch",
+      "enforcement": "active",
+      "conditions": { "ref_name": { "include": ["refs/heads/release/v*"], "exclude": [] } },
+      "bypass_actors": [],
+      "rules": [
+        { "type": "deletion" },
+        { "type": "non_fast_forward" },
+        { "type": "required_linear_history" },
+        {
+          "type": "pull_request",
+          "parameters": {
+            "required_approving_review_count": 0,
+            "dismiss_stale_reviews_on_push": true,
+            "require_code_owner_review": false,
+            "require_last_push_approval": false,
+            "required_review_thread_resolution": true,
+            "require_extra_approval_for_unattributed_changes": false,
+            "allowed_merge_methods": ["squash"]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -12,15 +12,15 @@
     ".": "./src/index.mjs"
   },
   "scripts": {
-    "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "vitest run",
+    "test": "vitest run --coverage",
     "test:watch": "vitest"
   },
   "dependencies": {
     "yaml": "2.9.0"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "5.0.0",
     "vitest": "5.0.0"
   }
 }

@@ -13,11 +13,11 @@
   "scripts": {
     "build": "turbo run build",
     "test": "turbo run test",
-    "lint": "turbo run lint",
+    "lint": "eslint .",
     "typecheck": "turbo run typecheck",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "pnpm format:check && turbo run lint typecheck test build",
+    "check": "pnpm format:check && pnpm lint && turbo run typecheck test build",
     "docs:list": "node tools/docs/bin/docs.mjs list",
     "docs:find": "node tools/docs/bin/docs.mjs find",
     "docs:context": "node tools/docs/bin/docs.mjs context",

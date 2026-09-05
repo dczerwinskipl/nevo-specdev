@@ -1,0 +1,43 @@
+name: PR title
+
+# The PR title becomes the squash commit message on main / release/v*, so it must
+# follow Conventional Commits. Checkpoint commits on the branch are not checked.
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  pull-requests: read
+
+concurrency:
+  group: pr-title-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: validate
+    runs-on: ubuntu-latest
+    steps:
+      # Pinned to a release tag rather than a commit SHA for readability; tags on
+      # this action are not immutable. Revisit if supply-chain policy tightens.
+      - uses: amannn/action-semantic-pull-request@v5.5.3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Keep in sync with docs/development/commit-conventions.md.
+          types: |
+            feat
+            fix
+            docs
+            refactor
+            test
+            build
+            ci
+            chore
+            perf
+            revert
+          requireScope: false
+          subjectPattern: ^(?![A-Z])(?!.*\.$).+$
+          subjectPatternError: |
+            The subject "{subject}" must start lower-case and not end with a period.
