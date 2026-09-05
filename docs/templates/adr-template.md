@@ -1,0 +1,44 @@
+# ADR template
+
+Copy this file to `docs/architecture/decisions/NNNN-kebab-title.md`, delete this notice,
+and replace the example frontmatter with a real `---`-delimited block. This template
+deliberately has **no** frontmatter of its own so `nevo-docs` skips it.
+
+## Frontmatter to add at the top of the real ADR
+
+```yaml
+---
+id: adr.NNNN-kebab-title
+type: adr
+title: <Decision title>
+status: current # current | superseded | deprecated
+date: <YYYY-MM-DD>
+summary: >
+  One or two sentences stating the decision.
+related: # optional
+  - <area>.<slug>
+---
+```
+
+## Sections
+
+### Status
+
+`Current`, or `Superseded by [NNNN](NNNN-...)`, or `Deprecated`. Note if this ADR
+supersedes an earlier one.
+
+### Context
+
+The forces at play: the requirement, the constraints, what the upstream project or
+prior art does, and any owner decision that settled it. Enough that a future reader
+understands _why_ without external memory.
+
+### Decision
+
+What was decided, stated concretely. Tables for option/version matrices. Say what was
+explicitly _not_ chosen if that is instructive.
+
+### Consequences
+
+What this makes easier, what it makes harder, and what follow-up it implies. Honest
+about trade-offs — "revisit when X" is a valid entry.

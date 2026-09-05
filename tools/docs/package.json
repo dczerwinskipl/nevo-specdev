@@ -1,0 +1,26 @@
+{
+  "name": "@nevo-specdev/docs-tools",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Repository-internal documentation discovery and index for Nevo SpecDev. Not a product package.",
+  "license": "MIT",
+  "bin": {
+    "nevo-docs": "./bin/docs.mjs"
+  },
+  "exports": {
+    ".": "./src/index.mjs"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "yaml": "2.9.0"
+  },
+  "devDependencies": {
+    "vitest": "5.0.0"
+  }
+}

@@ -1,0 +1,524 @@
+{
+  "generated": "2026-09-05T18:03:47.152Z",
+  "docs": [
+    {
+      "id": "docs.architecture-decisions-readme",
+      "type": "hub",
+      "title": "Architecture Decision Records",
+      "status": "current",
+      "file": "docs/architecture/decisions/README.md",
+      "read_when": [],
+      "summary": "Index of ADRs. Each ADR captures one durable, cross-cutting decision, its context, and its consequences.",
+      "related": []
+    },
+    {
+      "id": "docs.architecture-readme",
+      "type": "hub",
+      "title": "Architecture documentation",
+      "status": "current",
+      "file": "docs/architecture/README.md",
+      "read_when": [],
+      "summary": "Durable technical boundaries and decision records. Not a place for implementation instructions — those belong in development/.",
+      "related": []
+    },
+    {
+      "id": "docs.development-cli-readme",
+      "type": "hub",
+      "title": "CLI & Node tooling documentation",
+      "status": "current",
+      "file": "docs/development/cli/README.md",
+      "read_when": [],
+      "summary": "Engineering guidance for Node-based command-line tools and developer tooling in this repository — architecture and testing.",
+      "related": []
+    },
+    {
+      "id": "docs.development-readme",
+      "type": "hub",
+      "title": "Development documentation",
+      "status": "current",
+      "file": "docs/development/README.md",
+      "read_when": [],
+      "summary": "Entry point for engineering work in this repository — process, Node tooling, testing, and UI implementation conventions.",
+      "related": []
+    },
+    {
+      "id": "docs.development-ui-react-readme",
+      "type": "hub",
+      "title": "React documentation",
+      "status": "current",
+      "file": "docs/development/ui/react/README.md",
+      "read_when": [],
+      "summary": "React implementation conventions — component composition, module organization, hooks, and state ownership.",
+      "related": []
+    },
+    {
+      "id": "docs.development-ui-readme",
+      "type": "hub",
+      "title": "UI engineering documentation",
+      "status": "current",
+      "file": "docs/development/ui/README.md",
+      "read_when": [],
+      "summary": "Cross-UI engineering guidance, then technology-specific conventions for React, Tailwind, and Storybook. Implementation only — product UX contracts live under product/dashboard/.",
+      "related": []
+    },
+    {
+      "id": "docs.development-ui-storybook-readme",
+      "type": "hub",
+      "title": "Storybook documentation",
+      "status": "current",
+      "file": "docs/development/ui/storybook/README.md",
+      "read_when": [],
+      "summary": "Storybook conventions — story hierarchy and naming, fixtures, interaction tests, and the agent visual-verification workflow.",
+      "related": []
+    },
+    {
+      "id": "docs.development-ui-tailwind-readme",
+      "type": "hub",
+      "title": "Tailwind documentation",
+      "status": "current",
+      "file": "docs/development/ui/tailwind/README.md",
+      "read_when": [],
+      "summary": "Tailwind CSS conventions — class composition pipeline, component variants, token usage, and the `@apply` policy.",
+      "related": []
+    },
+    {
+      "id": "docs.product-cli-readme",
+      "type": "hub",
+      "title": "CLI product documentation",
+      "status": "current",
+      "file": "docs/product/cli/README.md",
+      "read_when": [],
+      "summary": "The nevo-spec command-line product — who uses it and how it should behave. Node CLI implementation guidance is under development/cli/.",
+      "related": []
+    },
+    {
+      "id": "docs.product-dashboard-readme",
+      "type": "hub",
+      "title": "Dashboard product documentation",
+      "status": "current",
+      "file": "docs/product/dashboard/README.md",
+      "read_when": [],
+      "summary": "The Nevo SpecDev dashboard — who uses it, how navigation and surfaces behave, and how AI sessions are presented. React/Tailwind implementation guidance is under development/ui/.",
+      "related": []
+    },
+    {
+      "id": "docs.product-readme",
+      "type": "hub",
+      "title": "Product documentation",
+      "status": "current",
+      "file": "docs/product/README.md",
+      "read_when": [],
+      "summary": "What Nevo SpecDev is meant to do — product overview, shared terminology and localization, and the CLI and Dashboard interaction models.",
+      "related": []
+    },
+    {
+      "id": "docs.product-shared-readme",
+      "type": "hub",
+      "title": "Shared product concerns",
+      "status": "current",
+      "file": "docs/product/shared/README.md",
+      "read_when": [],
+      "summary": "Product concerns common to every surface — terminology and localization. The CLI and Dashboard must stay consistent with these.",
+      "related": []
+    },
+    {
+      "id": "docs.readme",
+      "type": "hub",
+      "title": "Nevo SpecDev documentation",
+      "status": "current",
+      "file": "docs/README.md",
+      "read_when": [],
+      "summary": "Top-level, human-authored map of the documentation, split by audience: development (how we build), product (what we build), architecture (durable decisions).",
+      "related": []
+    },
+    {
+      "id": "architecture.repository-structure",
+      "type": "architecture",
+      "title": "Repository structure",
+      "status": "current",
+      "file": "docs/architecture/repository-structure.md",
+      "read_when": [
+        "orienting to the repository layout",
+        "understanding how Turborepo and CI decide what runs",
+        "understanding the versioning and release-line model",
+        "reasoning about pre-1.0 compatibility"
+      ],
+      "summary": "Monorepo layout (apps/packages/tools), the Turborepo task graph, the CI affected-package model and what invalidates everything, the SemVer / release-line model, and the pre-1.0 policy.",
+      "related": [
+        "development.local-setup",
+        "development.git-workflow",
+        "adr.0002-toolchain-selection",
+        "adr.0003-branch-and-release-model"
+      ]
+    },
+    {
+      "id": "adr.0001-record-architecture-decisions",
+      "type": "adr",
+      "title": "Record architecture decisions",
+      "status": "current",
+      "file": "docs/architecture/decisions/0001-record-architecture-decisions.md",
+      "read_when": [],
+      "summary": "Durable, cross-cutting decisions are recorded as lightweight numbered Markdown ADRs under docs/architecture/decisions/.",
+      "related": []
+    },
+    {
+      "id": "adr.0002-toolchain-selection",
+      "type": "adr",
+      "title": "Toolchain selection",
+      "status": "current",
+      "file": "docs/architecture/decisions/0002-toolchain-selection.md",
+      "read_when": [],
+      "summary": "The monorepo foundation is pnpm + Turborepo + TypeScript + ESLint flat config + Prettier + Vitest on Node Active LTS, with versions pinned intentionally and TypeScript held one minor line back for lint-ecosystem compatibility.",
+      "related": [
+        "architecture.repository-structure",
+        "development.local-setup"
+      ]
+    },
+    {
+      "id": "adr.0003-branch-and-release-model",
+      "type": "adr",
+      "title": "Branch and release model",
+      "status": "current",
+      "file": "docs/architecture/decisions/0003-branch-and-release-model.md",
+      "read_when": [],
+      "summary": "main carries the next development version; short-lived feature/ and fix/ branches merge into it by squash-only PR; each maintained minor line has one long-lived release/vX.Y branch. The next-version choice (minor vs major) is always an explicit input.",
+      "related": [
+        "development.git-workflow",
+        "architecture.repository-structure"
+      ]
+    },
+    {
+      "id": "adr.0004-mit-license",
+      "type": "adr",
+      "title": "MIT license",
+      "status": "current",
+      "file": "docs/architecture/decisions/0004-mit-license.md",
+      "read_when": [],
+      "summary": "The repository is licensed MIT — permissive, minimal obligations, and sufficient for a public developer-tooling project whose source contributions are controlled by the same owner.",
+      "related": [
+        "architecture.repository-structure"
+      ]
+    },
+    {
+      "id": "development.cli.node-tooling-guidelines",
+      "type": "development",
+      "title": "Node tooling guidelines",
+      "status": "current",
+      "file": "docs/development/cli/node-tooling-guidelines.md",
+      "read_when": [
+        "creating or restructuring a Node CLI command",
+        "changing Node-based developer tooling",
+        "running git, filesystem, or child-process operations from Node",
+        "deciding how a tool should print output and set exit codes"
+      ],
+      "summary": "Architecture for Node CLIs and developer tooling: thin external boundaries, cohesive capability modules, pure decision logic separated from I/O, lightweight DI, and a stable stdout/stderr/exit-code contract for agent automation.",
+      "related": [
+        "development.cli.testing-guidelines",
+        "development.local-setup"
+      ]
+    },
+    {
+      "id": "development.cli.testing-guidelines",
+      "type": "development",
+      "title": "Testing guidelines",
+      "status": "current",
+      "file": "docs/development/cli/testing-guidelines.md",
+      "read_when": [
+        "writing tests for a package or tool",
+        "choosing a test approach",
+        "adding a test task to a package"
+      ],
+      "summary": "Test stack (Vitest, with node:test acceptable for zero-dep tools), what to test at which boundary, determinism rules, and how tests fit the Turborepo task graph.",
+      "related": [
+        "development.cli.node-tooling-guidelines",
+        "development.local-setup"
+      ]
+    },
+    {
+      "id": "development.commit-conventions",
+      "type": "development",
+      "title": "Commit conventions",
+      "status": "current",
+      "file": "docs/development/commit-conventions.md",
+      "read_when": [
+        "writing a pull request title",
+        "writing a commit message",
+        "reviewing a pull request"
+      ],
+      "summary": "Conventional Commits is the PR-title format (the squash commit message). Branch-local checkpoint commits are exempt.",
+      "related": [
+        "development.git-workflow",
+        "development.pull-requests"
+      ]
+    },
+    {
+      "id": "development.git-workflow",
+      "type": "development",
+      "title": "Git workflow",
+      "status": "current",
+      "file": "docs/development/git-workflow.md",
+      "read_when": [
+        "creating a branch",
+        "preparing a pull request",
+        "starting a hotfix on a maintained release line",
+        "deciding how a change reaches main"
+      ],
+      "summary": "Branch model (main, feature/, fix/, release/v*), protected-branch rules, squash-merge policy, and how maintained release lines and hotfixes work.",
+      "related": [
+        "development.commit-conventions",
+        "development.pull-requests",
+        "architecture.repository-structure",
+        "adr.0003-branch-and-release-model"
+      ]
+    },
+    {
+      "id": "development.local-setup",
+      "type": "development",
+      "title": "Local setup",
+      "status": "current",
+      "file": "docs/development/local-setup.md",
+      "read_when": [
+        "setting up the development environment",
+        "running the standard repository commands",
+        "understanding what Turborepo does here"
+      ],
+      "summary": "Prerequisites (Node, Corepack/pnpm), the standard root commands, and how Turborepo owns the task graph. This repository is Node/TypeScript only — no .NET.",
+      "related": [
+        "development.git-workflow",
+        "development.cli.testing-guidelines",
+        "architecture.repository-structure"
+      ]
+    },
+    {
+      "id": "development.pull-requests",
+      "type": "development",
+      "title": "Pull requests",
+      "status": "current",
+      "file": "docs/development/pull-requests.md",
+      "read_when": [
+        "opening a pull request",
+        "reviewing a pull request",
+        "understanding why a PR cannot merge"
+      ],
+      "summary": "PR template, the merge gate on protected branches, and review expectations for a currently single-maintainer repository.",
+      "related": [
+        "development.git-workflow",
+        "development.commit-conventions"
+      ]
+    },
+    {
+      "id": "development.ui.react.component-guidelines",
+      "type": "development",
+      "title": "React component guidelines",
+      "status": "draft",
+      "file": "docs/development/ui/react/component-guidelines.md",
+      "read_when": [
+        "creating or restructuring a React component or module",
+        "deciding whether a helper component gets its own file",
+        "placing state or writing a hook",
+        "reviewing a React change"
+      ],
+      "summary": "Small focused components, composition over configuration, split by responsibility not ceremony, feature-local vertical ownership, hooks by behavior, and where state lives. Condensed from the upstream Nevo React guidelines.",
+      "related": [
+        "development.ui.ui-ux-guidelines",
+        "development.ui.tailwind.styling-guidelines",
+        "development.cli.node-tooling-guidelines"
+      ]
+    },
+    {
+      "id": "development.ui.storybook.guidelines",
+      "type": "development",
+      "title": "Storybook guidelines",
+      "status": "draft",
+      "file": "docs/development/ui/storybook/guidelines.md",
+      "read_when": [
+        "creating or editing a Storybook story",
+        "verifying a UI component visually or with interaction tests",
+        "building deterministic UI fixtures"
+      ],
+      "summary": "Story hierarchy and naming (Foundations / Shared UI / Features / Screens), strict co-location, typed fixture factories, args-first state, play-function interaction tests, and the mandatory verification workflow. Condensed from the upstream Nevo Storybook guide.",
+      "related": [
+        "development.ui.react.component-guidelines",
+        "development.ui.ui-ux-guidelines",
+        "development.cli.testing-guidelines"
+      ]
+    },
+    {
+      "id": "development.ui.tailwind.styling-guidelines",
+      "type": "development",
+      "title": "Tailwind styling guidelines",
+      "status": "draft",
+      "file": "docs/development/ui/tailwind/styling-guidelines.md",
+      "read_when": [
+        "composing Tailwind classes on a component",
+        "adding a component variant",
+        "mapping domain state to visual tone",
+        "deciding whether to use @apply or a CSS file"
+      ],
+      "summary": "Class-composition pipeline: static local layout inline, reusable variants via cva, domain state resolved to a semantic tone before classes, explicit conditional composition, and a narrow @apply policy. Condensed from the upstream Nevo React guidelines §12.",
+      "related": [
+        "development.ui.react.component-guidelines",
+        "development.ui.ui-ux-guidelines"
+      ]
+    },
+    {
+      "id": "development.ui.ui-ux-guidelines",
+      "type": "development",
+      "title": "UI/UX engineering guidelines",
+      "status": "draft",
+      "file": "docs/development/ui/ui-ux-guidelines.md",
+      "read_when": [
+        "implementing or reviewing a UI screen or component",
+        "choosing typography, color, or spacing",
+        "designing progressive disclosure or an inspector",
+        "doing visual verification before marking UI work done"
+      ],
+      "summary": "Engineering rules for building UI: validate the composed screen, semantic typography/color/spacing tokens, information hierarchy, progressive disclosure levels, and mandatory visual self-review. Condensed from the upstream Nevo UI/UX guidelines; expands during dashboard migration.",
+      "related": [
+        "development.ui.react.component-guidelines",
+        "development.ui.tailwind.styling-guidelines",
+        "development.ui.storybook.guidelines",
+        "product.dashboard.interaction-model"
+      ]
+    },
+    {
+      "id": "product.cli.interaction-model",
+      "type": "product",
+      "title": "CLI interaction model",
+      "status": "draft",
+      "file": "docs/product/cli/interaction-model.md",
+      "read_when": [
+        "adding or changing a nevo-spec command",
+        "designing command output or exit codes",
+        "deciding how the CLI confirms a risky action"
+      ],
+      "summary": "Command shape (nevo-spec <noun> <verb>), the stdout/stderr/exit-code contract shared with agents and CI, deterministic output, and how confirmations gate irreversible actions on the human path only.",
+      "related": [
+        "product.cli.personas",
+        "development.cli.node-tooling-guidelines",
+        "product.shared.localization"
+      ]
+    },
+    {
+      "id": "product.cli.personas",
+      "type": "product",
+      "title": "CLI personas",
+      "status": "draft",
+      "file": "docs/product/cli/personas.md",
+      "read_when": [
+        "designing a nevo-spec command or its output",
+        "deciding whether a feature belongs in the CLI or the Dashboard"
+      ],
+      "summary": "The three consumers of nevo-spec — the repository owner/maintainer, the AI coding agent, and CI — and what each needs from the command surface.",
+      "related": [
+        "product.cli.interaction-model",
+        "product.dashboard.personas"
+      ]
+    },
+    {
+      "id": "product.dashboard.ai-session-ux",
+      "type": "product",
+      "title": "AI session UX",
+      "status": "draft",
+      "file": "docs/product/dashboard/ai-session-ux.md",
+      "read_when": [
+        "designing the chat / session workspace",
+        "presenting AI turn state, tool activity, or reasoning",
+        "deciding what belongs at each Work information level"
+      ],
+      "summary": "How an AI session is presented: canonical semantics first, immediate turn feedback, \"thinking\" needs evidence, \"waiting\" is not \"needs attention\", and the four Work information levels. Condensed from the upstream Nevo AI UX guidelines.",
+      "related": [
+        "product.dashboard.interaction-model",
+        "product.shared.terminology",
+        "development.ui.ui-ux-guidelines"
+      ]
+    },
+    {
+      "id": "product.dashboard.interaction-model",
+      "type": "product",
+      "title": "Dashboard interaction model",
+      "status": "draft",
+      "file": "docs/product/dashboard/interaction-model.md",
+      "read_when": [
+        "designing a dashboard screen, its navigation, or its back behavior",
+        "choosing between an inline surface, an inspector, a sheet, and a page",
+        "defining what state is preserved across navigation"
+      ],
+      "summary": "Responsive shell (wide with contextual inspector / narrow), the product navigation hierarchy, context-preserving drill-down, and when to use a tooltip vs. inspector vs. sheet vs. full page. Condensed from the upstream Nevo interaction model.",
+      "related": [
+        "product.dashboard.personas",
+        "product.dashboard.ai-session-ux",
+        "development.ui.ui-ux-guidelines"
+      ]
+    },
+    {
+      "id": "product.dashboard.personas",
+      "type": "product",
+      "title": "Dashboard personas",
+      "status": "draft",
+      "file": "docs/product/dashboard/personas.md",
+      "read_when": [
+        "designing a dashboard screen or surface",
+        "deciding whether a capability belongs in the Dashboard or the CLI"
+      ],
+      "summary": "Who uses the dashboard — the owner monitoring and steering work, and the reviewer checking a change — and what each needs from it. The dashboard observes and steers; it does not replace the CLI/PR workflow.",
+      "related": [
+        "product.dashboard.interaction-model",
+        "product.cli.personas"
+      ]
+    },
+    {
+      "id": "product.product-overview",
+      "type": "product",
+      "title": "Product overview",
+      "status": "draft",
+      "file": "docs/product/product-overview.md",
+      "read_when": [
+        "orienting to what Nevo SpecDev is",
+        "deciding whether a concern belongs to the CLI or the Dashboard",
+        "understanding the current stage of the project"
+      ],
+      "summary": "Nevo SpecDev is a human-led, spec-anchored workflow for AI-assisted software engineering, delivered as a CLI (nevo-spec) and a Dashboard. This repository is bootstrapping the foundation before that implementation is migrated.",
+      "related": [
+        "product.shared.terminology",
+        "product.cli.interaction-model",
+        "product.dashboard.interaction-model"
+      ]
+    },
+    {
+      "id": "product.shared.localization",
+      "type": "product",
+      "title": "Localization",
+      "status": "current",
+      "file": "docs/product/shared/localization.md",
+      "read_when": [
+        "adding user-facing copy to the CLI or Dashboard",
+        "designing a message, label, or notification",
+        "planning the i18n runtime during migration"
+      ],
+      "summary": "Localization is a standing product requirement. The first release may be English-only, but all user-facing copy must be localizable and must not be scattered as hard-coded strings. The i18n library and locale-loading design are chosen at migration time.",
+      "related": [
+        "product.shared.terminology",
+        "product.cli.interaction-model",
+        "product.dashboard.interaction-model"
+      ]
+    },
+    {
+      "id": "product.shared.terminology",
+      "type": "product",
+      "title": "Terminology",
+      "status": "draft",
+      "file": "docs/product/shared/terminology.md",
+      "read_when": [
+        "naming a concept in the CLI or Dashboard",
+        "writing user-facing copy or documentation",
+        "reviewing whether two surfaces describe the same thing consistently"
+      ],
+      "summary": "Canonical product nouns for Nevo SpecDev — specification, change, task, review, session, work — with their meaning. Both surfaces use these terms; the message catalog keys follow them.",
+      "related": [
+        "product.product-overview",
+        "product.shared.localization"
+      ]
+    }
+  ]
+}
