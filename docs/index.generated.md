@@ -2,7 +2,7 @@
 
 # Documentation index
 
-_Generated: 2026-09-05T18:16:48.460Z_
+_Generated: 2026-09-05T18:18:43.057Z_
 
 Regenerate with `pnpm docs:check --write`. Human-authored navigation lives in [`docs/README.md`](README.md).
 
@@ -47,6 +47,7 @@ Regenerate with `pnpm docs:check --write`. Human-authored navigation lives in [`
 | `development.cli.node-tooling-guidelines` | [Node tooling guidelines](development/cli/node-tooling-guidelines.md) | current | Architecture for Node CLIs and developer tooling: thin external boundaries, cohesive capability modules, pure decision logic separated from I/O, lightweight DI, and a stable stdout/stderr/exit-code contract for agent automation. |
 | `development.cli.testing-guidelines` | [Testing guidelines](development/cli/testing-guidelines.md) | current | Test stack (Vitest, with node:test acceptable for zero-dep tools), what to test at which boundary, determinism rules, and how tests fit the Turborepo task graph. |
 | `development.commit-conventions` | [Commit conventions](development/commit-conventions.md) | current | Conventional Commits is the PR-title format (the squash commit message). Branch-local checkpoint commits are exempt. |
+| `development.dependencies-and-security` | [Dependencies and security](development/dependencies-and-security.md) | current | How dependency updates arrive (Dependabot, grouped, weekly), how versions are pinned, the vulnerability-report path, the repository security features that are enabled, and when CodeQL should be added. |
 | `development.git-workflow` | [Git workflow](development/git-workflow.md) | current | Branch model (main, feature/, fix/, release/v*), protected-branch rules, squash-merge policy, and how maintained release lines and hotfixes work. |
 | `development.local-setup` | [Local setup](development/local-setup.md) | current | Prerequisites (Node, Corepack/pnpm), the standard root commands, and how Turborepo owns the task graph. This repository is Node/TypeScript only — no .NET. |
 | `development.pull-requests` | [Pull requests](development/pull-requests.md) | current | PR template, the merge gate on protected branches, and review expectations for a currently single-maintainer repository. |

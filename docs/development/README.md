@@ -16,14 +16,15 @@ here.
 
 ## Process
 
-| Doc                                         | Covers                                                             |
-| ------------------------------------------- | ------------------------------------------------------------------ |
-| [Local setup](local-setup.md)               | Node, Corepack/pnpm, the standard root commands, Turborepo basics. |
-| [Git workflow](git-workflow.md)             | Branch model, protected branches, squash merge, release lines.     |
-| [Commit conventions](commit-conventions.md) | Conventional Commits — the PR title format.                        |
-| [Pull requests](pull-requests.md)           | PR template, review expectations, merge gate.                      |
-| [Continuous integration](ci.md)             | What CI runs, affected-package scoping, required checks.           |
-| [Releasing and version lines](releasing.md) | version.json, derived builds, cutting a line, tagging, hotfixes.   |
+| Doc                                                       | Covers                                                             |
+| --------------------------------------------------------- | ------------------------------------------------------------------ |
+| [Local setup](local-setup.md)                             | Node, Corepack/pnpm, the standard root commands, Turborepo basics. |
+| [Git workflow](git-workflow.md)                           | Branch model, protected branches, squash merge, release lines.     |
+| [Commit conventions](commit-conventions.md)               | Conventional Commits — the PR title format.                        |
+| [Pull requests](pull-requests.md)                         | PR template, review expectations, merge gate.                      |
+| [Continuous integration](ci.md)                           | What CI runs, affected-package scoping, required checks.           |
+| [Releasing and version lines](releasing.md)               | version.json, derived builds, cutting a line, tagging, hotfixes.   |
+| [Dependencies and security](dependencies-and-security.md) | Dependabot, action pinning, vuln reports, enabled features.        |
 
 ## Implementation guidance
 

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-05T18:16:48.460Z",
+  "generated": "2026-09-05T18:18:43.057Z",
   "docs": [
     {
       "id": "docs.architecture-decisions-readme",
@@ -268,6 +268,24 @@
       "related": [
         "development.git-workflow",
         "development.pull-requests"
+      ]
+    },
+    {
+      "id": "development.dependencies-and-security",
+      "type": "development",
+      "title": "Dependencies and security",
+      "status": "current",
+      "file": "docs/development/dependencies-and-security.md",
+      "read_when": [
+        "reviewing a Dependabot pull request",
+        "reporting or triaging a vulnerability",
+        "deciding how to pin a GitHub Action",
+        "wondering when CodeQL gets turned on"
+      ],
+      "summary": "How dependency updates arrive (Dependabot, grouped, weekly), how versions are pinned, the vulnerability-report path, the repository security features that are enabled, and when CodeQL should be added.",
+      "related": [
+        "development.local-setup",
+        "development.ci"
       ]
     },
     {
