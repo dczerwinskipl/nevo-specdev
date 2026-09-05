@@ -2,7 +2,7 @@
 
 # Documentation index
 
-_Generated: 2026-09-05T18:03:47.152Z_
+_Generated: 2026-09-05T18:13:05.425Z_
 
 Regenerate with `pnpm docs:check --write`. Human-authored navigation lives in [`docs/README.md`](README.md).
 
@@ -43,6 +43,7 @@ Regenerate with `pnpm docs:check --write`. Human-authored navigation lives in [`
 
 | ID | Title | Status | Summary |
 |---|---|---|---|
+| `development.ci` | [Continuous integration](development/ci.md) | current | What the CI workflows run, how affected-package execution is scoped on PRs, which checks are required to merge, and what invalidates the whole graph. |
 | `development.cli.node-tooling-guidelines` | [Node tooling guidelines](development/cli/node-tooling-guidelines.md) | current | Architecture for Node CLIs and developer tooling: thin external boundaries, cohesive capability modules, pure decision logic separated from I/O, lightweight DI, and a stable stdout/stderr/exit-code contract for agent automation. |
 | `development.cli.testing-guidelines` | [Testing guidelines](development/cli/testing-guidelines.md) | current | Test stack (Vitest, with node:test acceptable for zero-dep tools), what to test at which boundary, determinism rules, and how tests fit the Turborepo task graph. |
 | `development.commit-conventions` | [Commit conventions](development/commit-conventions.md) | current | Conventional Commits is the PR-title format (the squash commit message). Branch-local checkpoint commits are exempt. |

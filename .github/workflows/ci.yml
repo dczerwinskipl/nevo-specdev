@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - "release/v*"
+
+# Superseded PR runs are cancelled; main / release pushes always run to completion.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  # On a PR, scope package tasks to what changed since the base; elsewhere run everything.
+  # A shallow checkout would make every package look affected — checkout uses fetch-depth: 0.
+  TURBO_SCM_BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
+  TURBO_SCM_HEAD: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
+  AFFECTED: ${{ github.event_name == 'pull_request' && '--affected' || '' }}
+
+jobs:
+  quality:
+    name: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+
+      # Repository-wide — no package filtering (one Prettier + one ESLint flat config).
+      - name: Format
+        run: pnpm format:check
+      - name: Lint
+        run: pnpm lint
+      - name: Docs index
+        run: pnpm docs:check
+
+      # Package-scoped — affected on PRs, full on main / release.
+      - name: Affected packages
+        run: pnpm exec turbo run typecheck test build ${{ env.AFFECTED }} --dry=text
+      - name: Typecheck
+        run: pnpm exec turbo run typecheck ${{ env.AFFECTED }}
+
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+      - name: Test
+        run: pnpm exec turbo run test ${{ env.AFFECTED }}
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+      - name: Build
+        run: pnpm exec turbo run build ${{ env.AFFECTED }}

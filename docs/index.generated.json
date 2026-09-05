@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-05T18:03:47.152Z",
+  "generated": "2026-09-05T18:13:05.425Z",
   "docs": [
     {
       "id": "docs.architecture-decisions-readme",
@@ -197,6 +197,25 @@
       "summary": "The repository is licensed MIT — permissive, minimal obligations, and sufficient for a public developer-tooling project whose source contributions are controlled by the same owner.",
       "related": [
         "architecture.repository-structure"
+      ]
+    },
+    {
+      "id": "development.ci",
+      "type": "development",
+      "title": "Continuous integration",
+      "status": "current",
+      "file": "docs/development/ci.md",
+      "read_when": [
+        "understanding what CI runs on a pull request",
+        "a required check is failing or missing",
+        "reproducing a CI failure locally",
+        "changing the CI workflow or required checks"
+      ],
+      "summary": "What the CI workflows run, how affected-package execution is scoped on PRs, which checks are required to merge, and what invalidates the whole graph.",
+      "related": [
+        "development.local-setup",
+        "architecture.repository-structure",
+        "development.commit-conventions"
       ]
     },
     {
