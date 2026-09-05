@@ -77,10 +77,10 @@ package's cache: `pnpm-lock.yaml`, and the files in `turbo.json#globalDependenci
 `.npmrc`, `.nvmrc`). Repository-wide checks that don't map to a single package
 (formatting, lint) run over the whole repo regardless of affected status.
 
-Required CI checks are named stably — `PR title / validate`, `CI / quality`,
-`CI / test`, `CI / build` — and a check still reports success when affected filtering
-skipped its inner work, so a PR is never left permanently pending. Inspect what a
-change would run with `pnpm exec turbo run build test typecheck --affected --dry`.
+Required CI checks are the stably-named jobs `pr-title`, `quality`, `test` and `build`.
+A check still reports success when affected filtering skipped its inner work, so a PR is
+never left permanently pending. Inspect what a change would run with
+`pnpm exec turbo run build test typecheck --affected --dry`.
 
 ## Versioning and release lines
 

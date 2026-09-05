@@ -48,8 +48,12 @@ No bypass actors are configured. Any bypass must be a deliberate, documented dec
 
 ## Required status checks
 
-`repository-policy.json` → `requiredStatusChecks.checks` is **empty** until CI has run
-once and the exact check-run names are confirmed:
+`repository-policy.json` → `requiredStatusChecks.checks` holds the exact check-run
+(job) names: `pr-title` (from `pr-title.yml`) and `quality` / `test` / `build` (from
+`ci.yml`). The script adds a strict `required_status_checks` rule with these to both
+rulesets.
+
+To re-confirm the names against a real run:
 
 ```bash
 gh pr checks <PR_NUMBER>
@@ -58,9 +62,7 @@ REPO="$(gh repo view --json nameWithOwner -q .nameWithOwner)"
 gh api "repos/$REPO/commits/<SHA>/check-runs" --jq '.check_runs[].name'
 ```
 
-The intended stable names are `PR title / validate`, `CI / quality`, `CI / test`,
-`CI / build`. Put the confirmed names in the array and re-run the script; it adds a
-strict `required_status_checks` rule to both rulesets.
+If a job is renamed, update the array and re-run the script.
 
 ## Not handled here
 

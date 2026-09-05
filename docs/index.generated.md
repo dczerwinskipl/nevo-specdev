@@ -2,7 +2,7 @@
 
 # Documentation index
 
-_Generated: 2026-09-05T18:18:43.057Z_
+_Generated: 2026-09-05T18:23:27.759Z_
 
 Regenerate with `pnpm docs:check --write`. Human-authored navigation lives in [`docs/README.md`](README.md).
 

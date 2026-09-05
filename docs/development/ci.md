@@ -55,10 +55,10 @@ The branch rulesets (`protected-main`, `protected-release-lines`) require these 
 check names — kept stable even if the steps inside them change:
 
 ```text
-PR title / validate
-CI / quality
-CI / test
-CI / build
+pr-title
+quality
+test
+build
 ```
 
 They are added to the rulesets by

@@ -12,9 +12,9 @@
   },
 
   "requiredStatusChecks": {
-    "$comment": "Exact GitHub check-run names. Empty until CI has run once and names are confirmed (see scripts/github/README.md). When non-empty, the script adds a strict required_status_checks rule to every ruleset below.",
+    "$comment": "Exact GitHub check-run (job) names, confirmed from a real run. The script adds a strict required_status_checks rule with these to every ruleset below.",
     "strict": true,
-    "checks": []
+    "checks": ["pr-title", "quality", "test", "build"]
   },
 
   "rulesets": [

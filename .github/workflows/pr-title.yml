@@ -15,8 +15,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  validate:
-    name: validate
+  pr-title:
+    name: pr-title
     runs-on: ubuntu-latest
     steps:
       # Pinned to a release tag rather than a commit SHA for readability; tags on
