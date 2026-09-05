@@ -1,0 +1,11 @@
+{
+  "//": "Root solution file. Package/tool tsconfigs are added to `references` as they appear.",
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "composite": false,
+    "incremental": false
+  },
+  "files": [],
+  "references": []
+}

@@ -1,0 +1,13 @@
+# pnpm workspace definition.
+#
+# Only globs with a real purpose are listed:
+#   apps/*     — deployable applications (CLI, dashboard); populated during product migration
+#   packages/* — publishable / shared libraries; populated during product migration
+#   tools/*    — repository-internal tooling, never published as a product package
+#
+# Empty directories are intentional: the hierarchy is reserved, but no placeholder
+# product packages are created before the real migration.
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "tools/*"

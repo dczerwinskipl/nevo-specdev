@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build & task output
+dist/
+build/
+.output/
+*.tsbuildinfo
+
+# Turborepo
+.turbo/
+
+# Test / coverage output
+coverage/
+*.lcov
+
+# Logs & diagnostics
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Editor / OS cruft
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.recommended.json
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Local scratch area — never tracked. Prompts, notes, throwaway experiments.
+.local/

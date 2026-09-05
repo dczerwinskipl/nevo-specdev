@@ -1,0 +1,12 @@
+Nevo SpecDev
+Copyright 2026 Dominik Czerwiński and the Nevo SpecDev contributors
+
+This product is licensed under the Apache License, Version 2.0 (the "License");
+you may not use this repository except in compliance with the License.
+A copy of the License is provided in the LICENSE file, and is also available at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Portions of this repository's development and documentation conventions are
+adapted from the Nevo project (https://github.com/dczerwinskipl/nevo), which is
+also distributed under the Apache License, Version 2.0.
