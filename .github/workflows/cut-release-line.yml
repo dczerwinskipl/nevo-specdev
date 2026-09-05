@@ -1,0 +1,61 @@
+name: Cut release line
+
+# Manually triggered. Branches release/vX.Y off main and opens the PR that moves
+# main to the explicitly chosen next development line. The next version is an
+# input — this workflow never infers minor-vs-major.
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: "Version this line stabilizes, e.g. 0.1.0"
+        required: true
+      next_development_version:
+        description: "Next development line for main — next minor OR next major, e.g. 0.2.0 or 1.0.0"
+        required: true
+      from_sha:
+        description: "Commit on main to cut from (default: current origin/main)"
+        required: false
+        default: ""
+      execute:
+        description: "Actually create the branch and PR (unchecked = validate only)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: cut-release-line
+  cancel-in-progress: false
+
+jobs:
+  cut:
+    name: cut
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # A PAT here (repo scope) lets the main-bump PR trigger CI so auto-merge
+          # can land it. With the default GITHUB_TOKEN the bump PR opens but its
+          # checks never start — a maintainer merges it by hand. See
+          # docs/development/releasing.md.
+          token: ${{ secrets.RELEASE_TOKEN || github.token }}
+      - uses: ./.github/actions/setup
+
+      - name: Configure git identity
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Cut
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+        run: |
+          node scripts/release/cut-release-line.mjs \
+            --release-version "${{ inputs.release_version }}" \
+            --next-development-version "${{ inputs.next_development_version }}" \
+            ${{ inputs.from_sha && format('--from {0}', inputs.from_sha) || '' }} \
+            ${{ inputs.execute && '--execute' || '--check' }}

@@ -1,0 +1,11 @@
+{
+  "$comment": "Durable version-line metadata for Nevo SpecDev. CI derives build versions from this file — it is NOT rewritten on every change. Only the 'cut release line' process and deliberate line bumps edit it. See docs/development/releasing.md.",
+
+  "development": {
+    "$comment": "What `main` currently represents. CI publishes it as <line>-<channel>.<build>.",
+    "line": "0.1.0",
+    "channel": "alpha"
+  },
+
+  "releaseLines": []
+}

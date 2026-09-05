@@ -39,6 +39,10 @@ jobs:
         run: pnpm lint
       - name: Docs index
         run: pnpm docs:check
+      - name: Script tests
+        run: pnpm test:scripts
+      - name: Resolved version
+        run: pnpm version:print
 
       # Package-scoped — affected on PRs, full on main / release.
       - name: Affected packages

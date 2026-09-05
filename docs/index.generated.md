@@ -2,7 +2,7 @@
 
 # Documentation index
 
-_Generated: 2026-09-05T18:13:05.425Z_
+_Generated: 2026-09-05T18:16:48.460Z_
 
 Regenerate with `pnpm docs:check --write`. Human-authored navigation lives in [`docs/README.md`](README.md).
 
@@ -50,6 +50,7 @@ Regenerate with `pnpm docs:check --write`. Human-authored navigation lives in [`
 | `development.git-workflow` | [Git workflow](development/git-workflow.md) | current | Branch model (main, feature/, fix/, release/v*), protected-branch rules, squash-merge policy, and how maintained release lines and hotfixes work. |
 | `development.local-setup` | [Local setup](development/local-setup.md) | current | Prerequisites (Node, Corepack/pnpm), the standard root commands, and how Turborepo owns the task graph. This repository is Node/TypeScript only — no .NET. |
 | `development.pull-requests` | [Pull requests](development/pull-requests.md) | current | PR template, the merge gate on protected branches, and review expectations for a currently single-maintainer repository. |
+| `development.releasing` | [Releasing and version lines](development/releasing.md) | current | How the version model works in practice: version.json as durable metadata, CI-derived build versions, the cut-release-line workflow, tagging from release branches, and the 0.x policy. The model itself is in architecture/repository-structure.md. |
 | `development.ui.react.component-guidelines` | [React component guidelines](development/ui/react/component-guidelines.md) | draft | Small focused components, composition over configuration, split by responsibility not ceremony, feature-local vertical ownership, hooks by behavior, and where state lives. Condensed from the upstream Nevo React guidelines. |
 | `development.ui.storybook.guidelines` | [Storybook guidelines](development/ui/storybook/guidelines.md) | draft | Story hierarchy and naming (Foundations / Shared UI / Features / Screens), strict co-location, typed fixture factories, args-first state, play-function interaction tests, and the mandatory verification workflow. Condensed from the upstream Nevo Storybook guide. |
 | `development.ui.tailwind.styling-guidelines` | [Tailwind styling guidelines](development/ui/tailwind/styling-guidelines.md) | draft | Class-composition pipeline: static local layout inline, reusable variants via cva, domain state resolved to a semantic tone before classes, explicit conditional composition, and a narrow @apply policy. Condensed from the upstream Nevo React guidelines §12. |

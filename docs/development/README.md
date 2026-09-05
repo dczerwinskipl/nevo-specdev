@@ -23,6 +23,7 @@ here.
 | [Commit conventions](commit-conventions.md) | Conventional Commits — the PR title format.                        |
 | [Pull requests](pull-requests.md)           | PR template, review expectations, merge gate.                      |
 | [Continuous integration](ci.md)             | What CI runs, affected-package scoping, required checks.           |
+| [Releasing and version lines](releasing.md) | version.json, derived builds, cutting a line, tagging, hotfixes.   |
 
 ## Implementation guidance
 

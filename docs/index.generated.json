@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-05T18:13:05.425Z",
+  "generated": "2026-09-05T18:16:48.460Z",
   "docs": [
     {
       "id": "docs.architecture-decisions-readme",
@@ -323,6 +323,25 @@
       "related": [
         "development.git-workflow",
         "development.commit-conventions"
+      ]
+    },
+    {
+      "id": "development.releasing",
+      "type": "development",
+      "title": "Releasing and version lines",
+      "status": "current",
+      "file": "docs/development/releasing.md",
+      "read_when": [
+        "cutting a maintained release line",
+        "tagging a release or release candidate",
+        "understanding what version main and a release branch report",
+        "applying a hotfix to a released line"
+      ],
+      "summary": "How the version model works in practice: version.json as durable metadata, CI-derived build versions, the cut-release-line workflow, tagging from release branches, and the 0.x policy. The model itself is in architecture/repository-structure.md.",
+      "related": [
+        "architecture.repository-structure",
+        "adr.0003-branch-and-release-model",
+        "development.git-workflow"
       ]
     },
     {
