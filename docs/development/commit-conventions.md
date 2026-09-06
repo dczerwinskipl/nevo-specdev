@@ -70,7 +70,7 @@ feat(docs-tools): add `context` command for agent file discovery
 fix(ci): give affected detection full git history on PRs
 docs(development): document the hotfix flow for maintained release lines
 build(deps): pin turbo to 2.10.12
-chore(workspace): enable engine-strict in .npmrc
+chore(workspace): move project settings into pnpm-workspace.yaml
 ci: add PR title validation with amannn/action-semantic-pull-request
 ```
 

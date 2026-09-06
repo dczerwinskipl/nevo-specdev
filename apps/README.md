@@ -5,11 +5,7 @@ Deployable Nevo SpecDev applications live here.
 Nothing is here yet. This directory is reserved by the pnpm workspace
 (`apps/*`) so the structure is stable before the product migration.
 
-Expected future occupants (names indicative, not committed):
-
-| Directory        | Purpose                                                     |
-| ---------------- | ----------------------------------------------------------- |
-| `apps/cli`       | The `nevo-spec` end-user command-line application.          |
-| `apps/dashboard` | The Nevo SpecDev dashboard (web UI / AI-session workspace). |
-
-No placeholder packages are created here before there is real code to migrate.
+The **dashboard** is the clear future occupant — a web application is naturally an app.
+Whether the **`nevo-spec` CLI** lands here or under `packages/` (a CLI that is installed
+as an npm package can reasonably be a package) is **deliberately not decided yet**; the
+migration will show which fits. No placeholder packages are created here.

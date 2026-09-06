@@ -71,11 +71,12 @@ enough history (not a shallow clone) and passes the base ref through Turborepo's
 environment variables. When affected calculation is uncertain, CI fails safe by running
 **more**, not fewer, checks.
 
-**Global invalidation.** Changing a root input intentionally invalidates every
-package's cache: `pnpm-lock.yaml`, and the files in `turbo.json#globalDependencies`
-(`tsconfig.base.json`, `.prettierrc.json`, `.prettierignore`, `.editorconfig`,
-`.npmrc`, `.nvmrc`). Repository-wide checks that don't map to a single package
-(formatting, lint) run over the whole repo regardless of affected status.
+**Global invalidation.** Turbo hashes `pnpm-lock.yaml` and root `package.json`
+automatically; `turbo.json#globalDependencies` adds only `tsconfig.base.json` (extended
+by every package `tsconfig`). Those are the inputs that legitimately change every
+package's build/test/typecheck output. Repo-wide quality config (Prettier,
+EditorConfig, ESLint) is not global — it only affects `pnpm format` / `pnpm lint`,
+which run over the whole repo outside Turbo.
 
 Required CI checks are the stably-named jobs `pr-title`, `quality`, `test` and `build`.
 A check still reports success when affected filtering skipped its inner work, so a PR is

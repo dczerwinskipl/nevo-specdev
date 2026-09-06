@@ -21,10 +21,30 @@ related:
 
 ## Dependency versions
 
-- Package versions are **exact** in `package.json` (`.npmrc` sets `save-exact=true`).
-  Every bump is a visible diff.
-- The toolchain baseline and the reason TypeScript is held one line back are in ADR
-  [0002](../architecture/decisions/0002-toolchain-selection.md).
+- Package versions are **exact** in `package.json` — `pnpm-workspace.yaml` sets
+  `savePrefix: ""` so `pnpm add` never writes a range. Every bump is a visible diff.
+- The toolchain baseline, and why pnpm and TypeScript are each held a line back, are in
+  ADR [0002](../architecture/decisions/0002-toolchain-selection.md).
+
+## Lockfile shape and the dependency graph
+
+The repository pins **pnpm 10** on purpose. pnpm 11+ writes a multi-document
+`pnpm-lock.yaml` that GitHub's Dependency Graph and Dependabot cannot parse — they read
+only the first document and report **zero dependencies**
+(`dependabot/dependabot-core#14794`). pnpm 10's single-document lockfile is parsed
+correctly, so Dependabot actually has a dependency tree to scan.
+
+Verify after any lockfile change:
+
+```bash
+grep -c '^---$' pnpm-lock.yaml     # must be 0 (single YAML document)
+```
+
+And, on the default branch, that GitHub sees real dependencies:
+
+```bash
+gh api repos/OWNER/REPO/dependency-graph/sbom --jq '.sbom.packages | length'
+```
 
 ## Dependabot
 

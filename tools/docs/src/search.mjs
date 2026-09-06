@@ -4,7 +4,7 @@
 
 /** @param {string} term */
 export function normalizeTerm(term) {
-  let t = String(term || '')
+  const t = String(term || '')
     .toLowerCase()
     .trim()
     .replace(/^[^a-z0-9]+|[^a-z0-9]+$/g, '');

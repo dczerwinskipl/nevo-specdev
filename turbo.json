@@ -1,13 +1,7 @@
 {
   "$schema": "https://turborepo.com/schema.json",
-  "globalDependencies": [
-    "tsconfig.base.json",
-    ".prettierrc.json",
-    ".prettierignore",
-    ".editorconfig",
-    ".npmrc",
-    ".nvmrc"
-  ],
+  "//": "Only genuinely cross-package build inputs are global. Repo-wide quality config (Prettier, EditorConfig, ESLint) affects `pnpm format`/`pnpm lint`, which are not Turbo tasks, so it is deliberately NOT listed here. The lockfile and root package.json are hashed by Turbo automatically.",
+  "globalDependencies": ["tsconfig.base.json"],
   "globalEnv": ["CI"],
   "tasks": {
     "build": {

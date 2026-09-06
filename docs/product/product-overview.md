@@ -42,11 +42,15 @@ development**. The core idea, carried forward from the upstream Nevo project:
 
 ## Surfaces
 
-| Surface             | Package (future)         | Command / entry | Role                                                                                                            |
-| ------------------- | ------------------------ | --------------- | --------------------------------------------------------------------------------------------------------------- |
-| **CLI**             | `apps/cli`               | `nevo-spec`     | Deterministic driver for the spec/task lifecycle and docs discovery, for humans and agents in a terminal or CI. |
-| **Dashboard**       | `apps/dashboard`         | web UI          | Live, file-backed view of active/archived specifications, tasks, changes/PRs, and AI sessions.                  |
-| **Product package** | `packages/@nevo/specdev` | library         | Shared spec model and workflow logic the surfaces build on.                                                     |
+| Surface       | Command / entry | Role                                                                                                            |
+| ------------- | --------------- | --------------------------------------------------------------------------------------------------------------- |
+| **CLI**       | `nevo-spec`     | Deterministic driver for the spec/task lifecycle and docs discovery, for humans and agents in a terminal or CI. |
+| **Dashboard** | web UI          | View of active/archived specifications, tasks, changes/PRs, and AI sessions.                                    |
+| **Library**   | `import`        | Shared spec model and workflow logic the surfaces build on.                                                     |
+
+Published product packages will use the `@nevo/*` scope (e.g. `@nevo/specdev`). The
+workspace location of each surface (`apps/` vs `packages/`) is decided at migration
+time, not here.
 
 The end-user command is deliberately short — `nevo-spec init`, `nevo-spec status`,
 `nevo-spec dashboard`. `nevo-specdev` is the repository/product name, not the binary.

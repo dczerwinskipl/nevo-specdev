@@ -39,7 +39,7 @@ This repository is **Node/TypeScript only** — no .NET.
 
 ```bash
 corepack enable                 # once per machine
-pnpm install                    # Node >= 22.13 (.nvmrc pins 24.20.0), pnpm 12 via Corepack
+pnpm install                    # Node >= 22.13 (.nvmrc pins 24.20.0), pnpm 10 via Corepack
 pnpm check                      # format:check + lint + typecheck + test + build
 pnpm docs:check                 # validate documentation frontmatter + index
 ```

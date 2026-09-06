@@ -20,20 +20,20 @@ related:
 
 ## Prerequisites
 
-| Tool     | Version                                | Notes                                                     |
-| -------- | -------------------------------------- | --------------------------------------------------------- |
-| Node.js  | `>=22.13.0`; `.nvmrc` pins `24.20.0`   | Current Active LTS. `nvm use` / `fnm use` reads `.nvmrc`. |
-| Corepack | bundled with Node (keep it current)    | Activates the pinned pnpm — do not `npm i -g pnpm`.       |
-| pnpm     | `12.3.4` (pinned via `packageManager`) | Corepack downloads it on first use.                       |
-| Git      | any recent                             | —                                                         |
+| Tool     | Version                                 | Notes                                                          |
+| -------- | --------------------------------------- | -------------------------------------------------------------- |
+| Node.js  | `>=22.13.0`; `.nvmrc` pins `24.20.0`    | Current Active LTS. `nvm use` / `fnm use` reads `.nvmrc`.      |
+| Corepack | bundled with Node (keep it current)     | Activates the pinned pnpm — do not `npm i -g pnpm`.            |
+| pnpm     | `10.34.5` (pinned via `packageManager`) | Newer pnpm lines break GitHub Dependency Graph — see ADR 0002. |
+| Git      | any recent                              | —                                                              |
 
 ```bash
 corepack enable          # once per machine
 node -v                  # 24.x (or ≥ 22.13)
-pnpm -v                  # 12.3.4, provided by Corepack
+pnpm -v                  # 10.34.5, provided by Corepack
 ```
 
-If a bundled Corepack is too old to fetch pnpm 12, update it:
+If a bundled Corepack is too old to fetch the pinned pnpm, update it:
 `npm i -g corepack@latest`.
 
 ## Install
@@ -67,9 +67,10 @@ Turborepo owns the package task graph. Key points:
 - Task dependencies are declared in [`turbo.json`](../../turbo.json) (`^build` means
   "build dependencies first"). CI adds `--affected` so only changed packages and their
   dependents run — see [ci-and-affected-packages](../architecture/repository-structure.md).
-- Editing a root input listed in `turbo.json#globalDependencies` (tsconfig base, ESLint
-  config, Prettier config, `.npmrc`, `.nvmrc`) or `pnpm-lock.yaml` invalidates **every**
-  package's cache on purpose.
+- Editing `tsconfig.base.json` (listed in `turbo.json#globalDependencies`) or
+  `pnpm-lock.yaml` invalidates **every** package's build/test/typecheck cache on
+  purpose. Repo-wide quality config (Prettier, EditorConfig) is deliberately not
+  global — it only affects `pnpm format` / `pnpm lint`, which are not Turbo tasks.
 - `pnpm exec turbo ls` lists workspace packages; `pnpm exec turbo run build --affected --dry`
   shows what a change would run.
 

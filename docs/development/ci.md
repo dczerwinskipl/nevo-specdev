@@ -71,10 +71,14 @@ runs always finish.
 
 ## What invalidates everything
 
-Turbo hashes `pnpm-lock.yaml` and every file in `turbo.json#globalDependencies`
-(`tsconfig.base.json`, `.prettierrc.json`, `.prettierignore`, `.editorconfig`,
-`.npmrc`, `.nvmrc`). Changing any of them busts every package's cache — a lockfile bump
-or a base-tsconfig change is expected to rebuild and retest the whole graph.
+Turbo hashes `pnpm-lock.yaml` and root `package.json` automatically, plus every file in
+`turbo.json#globalDependencies` — deliberately just `tsconfig.base.json`, which every
+package's `tsconfig` extends. A lockfile bump or a base-tsconfig change rebuilds and
+retests the whole graph.
+
+Prettier / EditorConfig / ESLint config are **not** global inputs: they only change
+the repo-wide `format` / `lint` results, which run outside Turbo, so changing them does
+not invalidate unrelated package builds.
 
 ## Reproducing locally
 

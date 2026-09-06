@@ -2,7 +2,7 @@
 
 # Documentation index
 
-_Generated: 2026-09-05T18:23:27.759Z_
+_Generated: 2026-09-06T09:04:30.056Z_
 
 Regenerate with `pnpm docs:check --write`. Human-authored navigation lives in [`docs/README.md`](README.md).
 
@@ -35,9 +35,9 @@ Regenerate with `pnpm docs:check --write`. Human-authored navigation lives in [`
 | ID | Title | Status | Summary |
 |---|---|---|---|
 | `adr.0001-record-architecture-decisions` | [Record architecture decisions](architecture/decisions/0001-record-architecture-decisions.md) | current | Durable, cross-cutting decisions are recorded as lightweight numbered Markdown ADRs under docs/architecture/decisions/. |
-| `adr.0002-toolchain-selection` | [Toolchain selection](architecture/decisions/0002-toolchain-selection.md) | current | The monorepo foundation is pnpm + Turborepo + TypeScript + ESLint flat config + Prettier + Vitest on Node Active LTS, with versions pinned intentionally and TypeScript held one minor line back for lint-ecosystem compatibility. |
+| `adr.0002-toolchain-selection` | [Toolchain selection](architecture/decisions/0002-toolchain-selection.md) | current | The monorepo foundation is pnpm 10 + Turborepo + TypeScript + ESLint flat config (type-aware for TS) + Prettier + Vitest on Node Active LTS. Two versions are held back on purpose — pnpm (for GitHub Dependency Graph compatibility) and TypeScript (for the lint ecosystem) — each with an explicit upgrade condition. |
 | `adr.0003-branch-and-release-model` | [Branch and release model](architecture/decisions/0003-branch-and-release-model.md) | current | main carries the next development version; short-lived feature/ and fix/ branches merge into it by squash-only PR; each maintained minor line has one long-lived release/vX.Y branch. The next-version choice (minor vs major) is always an explicit input. |
-| `adr.0004-mit-license` | [MIT license](architecture/decisions/0004-mit-license.md) | current | The repository is licensed MIT — permissive, minimal obligations, and sufficient for a public developer-tooling project whose source contributions are controlled by the same owner. |
+| `adr.0004-mit-license` | [MIT license](architecture/decisions/0004-mit-license.md) | current | The repository is licensed MIT — permissive, minimal obligations, sufficient for a public developer-tooling project. Provenance of any code migrated in from elsewhere is a separate per-migration review. |
 
 ## Development
 

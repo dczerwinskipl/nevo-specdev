@@ -1,4 +1,4 @@
-// Public surface of @nevo-specdev/docs-tools — imported by the CLI and by tests.
+// Public surface of nevo-repo-docs — imported by the CLI and by tests.
 
 export {
   parseFrontmatter,

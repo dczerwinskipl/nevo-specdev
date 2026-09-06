@@ -1,4 +1,4 @@
-# `@nevo-specdev/docs-tools` (`nevo-docs`)
+# `nevo-repo-docs` (`nevo-docs`)
 
 Repository-internal documentation discovery. Not published, not the `nevo-spec`
 product CLI.

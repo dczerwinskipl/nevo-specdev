@@ -1,13 +1,20 @@
-# pnpm workspace definition.
+# pnpm workspace + project settings.
 #
-# Only globs with a real purpose are listed:
-#   apps/*     — deployable applications (CLI, dashboard); populated during product migration
-#   packages/* — publishable / shared libraries; populated during product migration
-#   tools/*    — repository-internal tooling, never published as a product package
-#
-# Empty directories are intentional: the hierarchy is reserved, but no placeholder
-# product packages are created before the real migration.
+# Since pnpm 10, only auth/registry settings are read from .npmrc; every other
+# project setting lives here.
+
 packages:
   - "apps/*"
   - "packages/*"
   - "tools/*"
+  # Empty directories are intentional — the hierarchy is reserved, but no
+  # placeholder product packages are created before the real migration.
+
+# Resolve dependencies and check `engines` against the pinned Node, regardless
+# of which Node the developer is currently running. Keep in sync with .nvmrc.
+nodeVersion: "24.20.0"
+engineStrict: true
+
+# Pin exact versions on `pnpm add` so every dependency change is an explicit,
+# reviewable diff.
+savePrefix: ""

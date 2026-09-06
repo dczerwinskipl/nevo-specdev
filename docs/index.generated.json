@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-05T18:23:27.759Z",
+  "generated": "2026-09-06T09:04:30.056Z",
   "docs": [
     {
       "id": "docs.architecture-decisions-readme",
@@ -168,10 +168,11 @@
       "status": "current",
       "file": "docs/architecture/decisions/0002-toolchain-selection.md",
       "read_when": [],
-      "summary": "The monorepo foundation is pnpm + Turborepo + TypeScript + ESLint flat config + Prettier + Vitest on Node Active LTS, with versions pinned intentionally and TypeScript held one minor line back for lint-ecosystem compatibility.",
+      "summary": "The monorepo foundation is pnpm 10 + Turborepo + TypeScript + ESLint flat config (type-aware for TS) + Prettier + Vitest on Node Active LTS. Two versions are held back on purpose — pnpm (for GitHub Dependency Graph compatibility) and TypeScript (for the lint ecosystem) — each with an explicit upgrade condition.",
       "related": [
         "architecture.repository-structure",
-        "development.local-setup"
+        "development.local-setup",
+        "development.dependencies-and-security"
       ]
     },
     {
@@ -194,7 +195,7 @@
       "status": "current",
       "file": "docs/architecture/decisions/0004-mit-license.md",
       "read_when": [],
-      "summary": "The repository is licensed MIT — permissive, minimal obligations, and sufficient for a public developer-tooling project whose source contributions are controlled by the same owner.",
+      "summary": "The repository is licensed MIT — permissive, minimal obligations, sufficient for a public developer-tooling project. Provenance of any code migrated in from elsewhere is a separate per-migration review.",
       "related": [
         "architecture.repository-structure"
       ]
