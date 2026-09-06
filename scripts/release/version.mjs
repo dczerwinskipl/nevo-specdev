@@ -19,7 +19,6 @@ import { fileURLToPath } from 'node:url';
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 export const CHANNELS = Object.freeze(['alpha', 'beta', 'rc', 'stable']);
-export const PRERELEASE_CHANNELS = Object.freeze(['alpha', 'beta', 'rc']);
 
 const SEMVER_CORE = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
 
