@@ -29,11 +29,11 @@ Workflows under [`.github/workflows/`](../../.github/workflows/):
 
 ## `ci` jobs
 
-| Job       | Steps                                                                                                                                                                  |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `quality` | `pnpm check:quality` (format, lint, `docs:check`, `version:check-transition`), `pnpm version:print`, an affected-graph dry-run, then `turbo run typecheck --affected`. |
-| `test`    | `turbo run test --affected`.                                                                                                                                           |
-| `build`   | `turbo run build --affected`.                                                                                                                                          |
+| Job       | Steps                                                                                                                                                                                         |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `quality` | `pnpm check:quality` (builds `tools/*`, then format, lint, `docs:check`, `version:check-transition`), `pnpm version:print`, an affected-graph dry-run, then `turbo run typecheck --affected`. |
+| `test`    | `turbo run test --affected`.                                                                                                                                                                  |
+| `build`   | `turbo run build --affected`.                                                                                                                                                                 |
 
 `check:quality` is the **same script contributors run** (`pnpm check` = `check:quality`
 

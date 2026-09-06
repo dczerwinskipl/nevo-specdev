@@ -1,6 +1,6 @@
 # `nevo-repo-release`
 
-Repository-internal release tooling. Private, unnpm-published, and never a
+Repository-internal release + version tooling. Private, never published, and never a
 `nevo-spec` product surface (ADR 0005). The full flow is in
 [`docs/development/releasing.md`](../../docs/development/releasing.md).
 
@@ -8,60 +8,67 @@ Repository-internal release tooling. Private, unnpm-published, and never a
 is on. SemVer parsing/compare is the `semver` package; only the channel/branch rules
 are custom.
 
-## `bin/version.mjs` — `pnpm version:print`
+## Commands
+
+TypeScript, `tsc` → `dist/`; the `nevo-release` executable is `dist/bin.js`. One
+program, four subcommands, each owning its own options (`nevo-release <cmd> --help`):
 
 ```bash
-pnpm version:print               # from version.json + $GITHUB_* (run number 0 locally)
+nevo-release version [--with-sha]
+    # CI build version from version.json + $GITHUB_* (run number 0 locally):
+    # alpha/beta/rc -> <version>-<channel>.<run>; stable -> <version>; a tag ref -> its own version.
+
+nevo-release check-transition [--json]
+    # CI + local gate. A version.json change must be a legal transition (unchanged /
+    # main-line bump / line cut / promotion) for the branch it lands on. The rules are
+    # judged against the TARGET branch (PR base / pushed branch), never the head branch:
+    # GITHUB_BASE_REF for a PR, the pushed branch (HEAD~1 base) for a push, or — locally —
+    # inferred from the working-tree version.json channel (alpha -> main; a release
+    # channel -> its origin/release/vX.Y). There is no BASE_REF override.
+
+nevo-release cut-line --release-version X.Y.Z --next-development-version X.Y.Z [--execute]
+    # Cut release/vX.Y off the current origin/main. Without --execute: validate only.
+    # With it: validate origin/main's own version.json at the fetched base commit
+    # (must be alpha on the release version), then create release/vX.Y and the
+    # chore/bump-main-to-<next> branch by git plumbing (no working-tree changes), and
+    # either open the main-bump PR (RELEASE_TOKEN present) or print the exact
+    # `gh pr create` command. Env fallbacks: RELEASE_VERSION, NEXT_DEVELOPMENT_VERSION.
+
+nevo-release create --channel beta|rc|stable [--execute]
+    # Run on a release/vX.Y branch. Two independent idempotent phases:
+    #   A. ensure the tag + its GitHub Release exist — the branch HEAD must have PASSED
+    #      quality + test + build on GitHub (newest run per check); an orphaned last
+    #      prerelease tag on HEAD is completed rather than skipped to N+1; a tag at a
+    #      different commit is refused.
+    #   B. for a stable release, ensure the branch advances to the next patch's beta —
+    #      reached even when phase A was a no-op. PR already open -> nothing; branch
+    #      missing -> create + hand off PR; valid branch, no PR -> reuse + create PR;
+    #      inconsistent branch -> fail closed, never force-push.
+    # Env fallbacks: RELEASE_CHANNEL, EXECUTE, RELEASE_TOKEN_PRESENT.
 ```
 
-- `alpha` / `beta` / `rc` → `<version>-<channel>.<run>` (e.g. `1.3.0-beta.147`).
-- `stable` → `<version>`.
-- a tag ref → its own version; any other tag ref is an error.
+Root scripts `pnpm version:print` / `pnpm version:check-transition` call the built
+`dist/bin.js`; the release / cut-release-line workflows build the package first.
 
-## `bin/check-version-transition.mjs` — `pnpm version:check-transition`
-
-CI + local gate. A change to `version.json` must be a legal transition (unchanged /
-main-line bump / line cut / promotion) — otherwise it fails.
-
-The rules are checked against the **target** branch (the release state machine being
-mutated), never the head branch a PR is raised from: a PR into `main` is checked as
-`main`, a PR into `release/v1.3` as `release/v1.3`. Base/target is taken from
-`GITHUB_BASE_REF` (a PR), the pushed branch with `HEAD~1` (a branch push), or — for a
-local run — inferred from the working-tree `version.json` (`alpha` → `main`, any
-release channel → its `origin/release/vX.Y`). `BASE_REF` overrides all of this.
-
-## `bin/cut-release-line.mjs`
-
-```bash
-node tools/release/bin/cut-release-line.mjs \
-  --release-version 1.3.0 --next-development-version 1.4.0 [--execute]
-```
-
-Always cuts from the current `origin/main`. Inputs also come from `RELEASE_VERSION` /
-`NEXT_DEVELOPMENT_VERSION` / `EXECUTE` so the workflow passes no user input on the
-command line. Without `--execute`: validate only. With it: create `release/vX.Y` (with
-its `version.json`), push the main-bump branch, and either open the bump PR
-(`RELEASE_TOKEN_PRESENT=true`) or print the exact `gh pr create` command.
-
-## `bin/release.mjs`
-
-```bash
-node tools/release/bin/release.mjs --channel beta|rc|stable [--execute]
-```
-
-Run on a `release/vX.Y` branch. Validates branch / version-in-line / channel, then
-**requires the branch HEAD to have passed `quality` + `test` + `build`** on GitHub
-before tagging. Recovery-safe: a re-run after "tag created, Release failed" finishes the
-Release; a tag pointing elsewhere is refused. After a `stable` tag it opens the PR that
-advances the branch to the next patch's `beta`. No npm publish.
-
-## Layout
+## Architecture
 
 ```
-tools/release/
-  src/    version.mjs · cut-release-line.mjs · release.mjs · index.mjs   (typechecked, tested)
-  bin/    thin CLI wrappers
-  test/   node:test suites (pure planners)
+src/
+  domain/     version model · transitions · release/cut planning + decisions  (all pure)
+  ports.ts    GitClient / GitHubClient interfaces
+  infra/      git.ts (plumbing-based GitClient) · github.ts (gh CLI) · git-sync.ts (fast reads for the gate)
+  app/        check-transition · build-version · cut-release-line · create-release  (use cases)
+  cli/        thin Commander wiring; commands own their own options
+  bin.ts      executable boundary
 ```
 
-`node --test test/*.test.mjs` runs via `turbo run test` (affected-aware).
+Application code never touches `child_process`, `process`, or stdio. Errors:
+`UsageError` (exit 2) / `InconsistentStateError` (exit 1), rendered only at the CLI
+boundary; `--json` errors are structured.
+
+## Tests
+
+`vitest run` (affected-aware via `turbo run test`): domain units, application-level
+orchestration against in-memory `GitClient` / `GitHubClient` fakes (the full
+create-release and cut-release-line scenario matrices), and a subprocess CLI smoke
+suite.

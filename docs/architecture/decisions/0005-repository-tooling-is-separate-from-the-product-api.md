@@ -23,9 +23,11 @@ Current.
 ## Context
 
 The repository needs its own developer tooling — documentation discovery and ADR
-authoring (`tools/docs`), release-line and version management (`tools/release`). Some of
-this overlaps conceptually with things Nevo SpecDev may eventually offer as product
-features (spec/decision management, a project-knowledge CLI).
+authoring (`tools/docs`), release-line and version management (`tools/release`), GitHub
+governance (`tools/github`). Some of this overlaps conceptually with things Nevo SpecDev
+may eventually offer as product features (spec/decision management, a project-knowledge
+CLI). All three are Commander CLIs built to the same architecture the product `nevo-spec`
+CLI is meant to follow — the pattern is shared, the command surface is not.
 
 Without a rule, the internal tools drift into becoming a de-facto product contract:
 example commands leak into product docs, an internal package name squats on the `@nevo/*`
@@ -36,8 +38,8 @@ scope, and a refactor of a repo tool turns into a breaking product change.
 - **Location.** Repository-internal tooling lives under `tools/*`. Product code lives in
   `apps/*` and `packages/*`. There is no root `src/` — every source file has an owner.
 - **Naming.** Internal tools are **private** (`"private": true`) and **unscoped**
-  (`nevo-repo-docs`, `nevo-repo-release`). The `@nevo/*` scope is reserved for
-  published product packages.
+  (`nevo-repo-docs`, `nevo-repo-release`, `nevo-repo-github`). The `@nevo/*` scope is
+  reserved for published product packages.
 - **No implicit promotion.** An internal tool does not become a `nevo-spec` subcommand
   or a `@nevo/*` API just because it exists. If a capability should be a product
   surface, that is its own decision, designed independently; it may reuse extracted

@@ -1,7 +1,7 @@
 # `nevo-repo-docs` (`nevo-docs`)
 
-Repository-internal documentation discovery. Not published, not the `nevo-spec`
-product CLI.
+Repository-internal documentation discovery. Private, never published, not the
+`nevo-spec` product CLI (ADR 0005).
 
 It reads the structured frontmatter on every `docs/**/*.md` file and answers
 "which document should I read for this task?" deterministically — no product
@@ -31,16 +31,35 @@ placeholder summary. Titles are serialized through the YAML library, so `:`
 / `#` / quotes / accents in a title cannot corrupt the frontmatter; the slug is
 still ASCII-only and deterministic.
 
-`--type`, `--status`, `--limit`, `--json` and (for `adr new`) `--dry-run` are accepted
-where they make sense.
+Each command owns its own options (`nevo-docs find --help`, `nevo-docs adr new --help`):
+`find` takes `--type` / `--status` / `--limit` / `--json`; `context` takes `--limit` /
+`--json`; `adr new` takes `--dry-run` / `--json`; `check` takes `--write`.
 
 `list` / `find` / `context` / `adr` load a **fully validated corpus** — if the docs are
 inconsistent they fail loudly rather than serve partial context. `pnpm docs:check` is
 what CI runs; it exits non-zero on any authored file missing frontmatter, invalid
 frontmatter, an unresolved `related` id, an ADR whose filename and `id` disagree or
-whose date is not ISO, a `current` ADR still carrying a generated `TODO` placeholder,
-or a stale index. The generated index carries no timestamp, so `--write` twice with no
-source change leaves the tree clean.
+whose date is not ISO, a `current` ADR still carrying a generated `TODO` placeholder
+**anywhere** (summary or body), or a stale index. The generated index carries no
+timestamp, so `--write` twice with no source change leaves the tree clean.
+
+## Architecture
+
+TypeScript, `tsc` → `dist/`; the `nevo-docs` executable is `dist/bin.js`. Same layered
+split as the other `tools/*` packages:
+
+```
+src/
+  domain/     frontmatter contract · ADR authoring/validation · search · index build  (all pure)
+  app/        load-corpus · find-documents · get-context · validate-documentation · create-adr
+  infra/      doc-repository — the filesystem boundary (scan docs/, read/write index, write/remove ADR)
+  cli/        thin Commander wiring; commands own their own options
+  bin.ts      executable boundary — build deps, run the program, map errors to exit codes
+```
+
+The use cases run against a `DocRepository` port: `create-adr` (plan → validate in
+memory → write → re-validate → roll the file back on failure → regenerate the index) is
+driven by an in-memory repository in tests; a temp-dir test covers the real adapter.
 
 ## Frontmatter contract
 

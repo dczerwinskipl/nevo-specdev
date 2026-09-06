@@ -41,15 +41,16 @@ Two ecosystem realities forced a version to be held back:
 
 ## Decision
 
-| Tool                             | Pinned                                                               | Rationale                                                                                                                                                                                                                 |
-| -------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Node.js                          | `.nvmrc` `24.20.0`; `engines.node` `>=24.20.0 <25`                   | Node 24 LTS is the single contributor runtime — CI tests only it. The range is bounded below `25` so a newer major cannot silently satisfy `engines` before it has been adopted deliberately.                             |
-| pnpm                             | `10.34.5` via `packageManager` + Corepack; `engines.pnpm` `>=10 <11` | Newest pnpm line whose lockfile GitHub Dependency Graph / Dependabot can parse (see Context).                                                                                                                             |
-| Turborepo                        | `2.10.12`                                                            | Latest stable; native `--affected` execution.                                                                                                                                                                             |
-| TypeScript                       | `6.0.3`                                                              | Newest release inside `typescript-eslint` 8.69's supported range (`<6.1.0`).                                                                                                                                              |
-| ESLint / typescript-eslint       | `10.10.0` / `8.69.0`, flat config                                    | Latest stable. Type-aware config (`recommendedTypeChecked` + `stylisticTypeChecked`, project service) is applied to `**/*.{ts,mts,cts,tsx}`; JS/MJS scripts use the non-type-aware rules and need no tsconfig membership. |
-| Prettier                         | `3.9.6` + `eslint-config-prettier` `10.1.8`                          | Formatting stays entirely in Prettier, disabled in ESLint.                                                                                                                                                                |
-| Vitest (+ `@vitest/coverage-v8`) | `5.0.0`                                                              | Test runner for packages that need one (currently `tools/docs`), 80% coverage thresholds.                                                                                                                                 |
+| Tool                       | Pinned                                                               | Rationale                                                                                                                                                                                                                                    |
+| -------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Node.js                    | `.nvmrc` `24.20.0`; `engines.node` `>=24.20.0 <25`                   | Node 24 LTS is the single contributor runtime — CI tests only it. The range is bounded below `25` so a newer major cannot silently satisfy `engines` before it has been adopted deliberately.                                                |
+| pnpm                       | `10.34.5` via `packageManager` + Corepack; `engines.pnpm` `>=10 <11` | Newest pnpm line whose lockfile GitHub Dependency Graph / Dependabot can parse (see Context).                                                                                                                                                |
+| Turborepo                  | `2.10.12`                                                            | Latest stable; native `--affected` execution.                                                                                                                                                                                                |
+| TypeScript                 | `6.0.3`                                                              | Newest release inside `typescript-eslint` 8.69's supported range (`<6.1.0`).                                                                                                                                                                 |
+| ESLint / typescript-eslint | `10.10.0` / `8.69.0`, flat config                                    | Latest stable. Type-aware config (`recommendedTypeChecked` + `stylisticTypeChecked`, project service) applies to `**/*.{ts,mts,cts,tsx}` — every `tools/*` package's `src` **and** `test`. Config `.mjs` files use the non-type-aware rules. |
+| Prettier                   | `3.9.6` + `eslint-config-prettier` `10.1.8`                          | Formatting stays entirely in Prettier, disabled in ESLint.                                                                                                                                                                                   |
+| Vitest                     | `5.0.0`                                                              | The test runner for every `tools/*` package. `tsc` emits each tool to `dist/`; the `bin` points at the built artifact.                                                                                                                       |
+| Commander                  | `15.0.0`                                                             | The CLI framework for the `tools/*` executables and the pattern for the future `nevo-spec` product CLI — see [CLI architecture](../../development/cli/).                                                                                     |
 
 Project pnpm settings (`engineStrict`, `savePrefix: ""` for exact pins, `nodeVersion`
 so resolution and `engines` checks use the pinned Node regardless of the running one)
@@ -68,8 +69,9 @@ Turbo tasks.
   fixes the resolution target. Published `@nevo/*` packages can declare a broader
   runtime matrix when they exist; the private root does not.
 - Exact version pins keep Dependabot bump PRs individually reviewable.
-- **Type-aware linting is configured but dormant** until the first `.ts` source lands —
-  there are no TypeScript sources yet.
+- The `tools/*` packages are TypeScript (strict, `tsc` → `dist/`, tests typechecked);
+  type-aware linting is active on them. The `.mjs` config files at the root
+  (`eslint.config.mjs`, `vitest`-less) stay on the non-type-aware rules.
 - **Upgrade conditions**, each its own follow-up (superseding note or ADR):
   - pnpm 11+ once `dependabot/dependabot-core#14794` (multi-document lockfile parsing)
     is resolved and verified against this repo's Dependency Graph.

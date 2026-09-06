@@ -50,8 +50,8 @@ Anything else fails CI. The check is always evaluated against the **branch the c
 targets** — the PR base, or the branch a push lands on — so a promotion PR is judged
 by `release/vX.Y`'s rules no matter what the source branch is called. A local
 `pnpm version:check-transition` infers the target from `version.json` itself
-(`alpha` → `main`, any release channel → its `origin/release/vX.Y`); set `BASE_REF` to
-override.
+(`alpha` → `main`, any release channel → its `origin/release/vX.Y`, which must exist on
+`origin`). There is no override flag.
 
 ## CI build version
 
@@ -82,11 +82,15 @@ With `execute` it:
 1. validates the versions (adjacent minor/major only);
 2. fails closed if the remote is unreachable, and reports (does not silently resume) a
    half-finished previous run;
-3. creates `release/vX.Y` at `origin/main` **plus one commit setting that branch's
-   `version.json` to `{ "channel": "beta", "version": "<release_version>" }`** — so the
-   branch's first CI run has a valid version;
-4. pushes `chore/bump-main-to-<next>`, a branch that sets `main`'s `version.json` to
-   `{ "channel": "alpha", "version": "<next_development_version>" }`.
+3. **reads `origin/main`'s own `version.json` at the fetched base commit** (never the
+   working tree) and refuses unless it is `channel: alpha` on exactly `release_version`,
+   with `next_development_version` as that version's next minor or major — so a line is
+   never cut from a `main` that has already moved on;
+4. creates `release/vX.Y` at `origin/main` **plus one commit setting that branch's
+   `version.json` to `{ "channel": "beta", "version": "<release_version>" }`** and
+   pushes `chore/bump-main-to-<next>` (which sets `main`'s `version.json` to
+   `{ "channel": "alpha", "version": "<next_development_version>" }`). Both commits are
+   built with git plumbing — the workflow's working tree is never touched.
 
 ### Landing the main-bump PR
 
@@ -109,7 +113,7 @@ green.
 and cannot have CI results) is allowed; every later push is fully gated. Deletion stays
 blocked. Verified against the live ruleset. To remove a mistaken release branch, an
 admin sets the ruleset's `enforcement` to `disabled`, deletes it, and re-runs
-`configure-repository.mjs`.
+`nevo-repo-github configure`.
 
 ## Promoting and releasing
 
@@ -142,12 +146,18 @@ channel equals the requested one (**promote first** otherwise). Then:
 4. creates the annotated tag + a GitHub Release (`--prerelease` for beta/rc, generated
    notes). **No npm package is published.**
 
+Phases 3–4 (the tag + Release) and the stable branch-advance below are **independent
+idempotent steps**: a re-run after "tag done, advance failed" still performs the
+advance — it is not skipped just because the tag is already complete.
+
 ### After a stable tag
 
-A `stable` release also opens a PR moving the branch to
+A `stable` release also ensures the branch moves to
 `{ channel: "beta", version: "<next patch>" }`, so later commits report
-`X.Y.(Z+1)-beta.<n>` — never the already-shipped `X.Y.Z`. (Same `RELEASE_TOKEN` /
-manual-`gh pr create` rule as above.)
+`X.Y.(Z+1)-beta.<n>` — never the already-shipped `X.Y.Z`. If that advance PR is already
+open it does nothing; if the advance branch exists and is consistent it reuses it and
+just opens the PR; an inconsistent advance branch is refused, never force-pushed. (Same
+`RELEASE_TOKEN` / manual-`gh pr create` rule as above.)
 
 ## Hotfix on a released line
 

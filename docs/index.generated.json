@@ -241,9 +241,10 @@
         "creating or restructuring a Node CLI command",
         "changing Node-based developer tooling",
         "running git, filesystem, or child-process operations from Node",
-        "deciding how a tool should print output and set exit codes"
+        "deciding how a tool should print output and set exit codes",
+        "designing the nevo-spec product CLI"
       ],
-      "summary": "Architecture for Node CLIs and developer tooling: thin external boundaries, cohesive capability modules, pure decision logic separated from I/O, lightweight DI, and a stable stdout/stderr/exit-code contract for agent automation.",
+      "summary": "Architecture for Node CLIs and developer tooling: Commander for multi-command CLIs, a thin executable, command-local options, use cases separate from handlers, explicit filesystem/git/gh I/O ports, TypeScript-first, and a stable stdout/stderr/exit-code contract for agent automation.",
       "related": [
         "development.cli.testing-guidelines",
         "development.local-setup"
@@ -260,7 +261,7 @@
         "choosing a test approach",
         "adding a test task to a package"
       ],
-      "summary": "Test stack (Vitest, with node:test acceptable for zero-dep tools), what to test at which boundary, determinism rules, and how tests fit the Turborepo task graph.",
+      "summary": "Test stack (Vitest), the domain / application / CLI-smoke split, determinism rules, and how tests fit the Turborepo task graph.",
       "related": [
         "development.cli.node-tooling-guidelines",
         "development.local-setup"

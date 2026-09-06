@@ -46,16 +46,16 @@ pnpm install             # frozen against pnpm-lock.yaml
 
 Run from the repository root:
 
-| Command                             | What it does                                                                                       |
-| ----------------------------------- | -------------------------------------------------------------------------------------------------- |
-| **`pnpm check`**                    | **The one gate to run before pushing** — `check:quality`, then `turbo run typecheck test build`.   |
-| `pnpm check:quality`                | Repo-wide only: `format:check` + `lint` + `docs:check` + `version:check-transition`. Reused by CI. |
-| `pnpm build` / `test` / `typecheck` | `turbo run <task>` across the package graph.                                                       |
-| `pnpm lint`                         | `eslint .` over the whole repo (one flat config; not a per-package task).                          |
-| `pnpm format`                       | Prettier write across the repo.                                                                    |
-| `pnpm docs:check`                   | Validate the documentation corpus + the generated index.                                           |
-| `pnpm docs:adr new "…"`             | Create the next-numbered ADR from the template.                                                    |
-| `pnpm version:print`                | Print the CI build version for the current branch.                                                 |
+| Command                             | What it does                                                                                                           |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **`pnpm check`**                    | **The one gate to run before pushing** — `check:quality`, then `turbo run typecheck test build`.                       |
+| `pnpm check:quality`                | Builds the `tools/*` packages, then `format:check` + `lint` + `docs:check` + `version:check-transition`. Reused by CI. |
+| `pnpm build` / `test` / `typecheck` | `turbo run <task>` across the package graph.                                                                           |
+| `pnpm lint`                         | `eslint .` over the whole repo (one flat config; not a per-package task).                                              |
+| `pnpm format`                       | Prettier write across the repo.                                                                                        |
+| `pnpm docs:check`                   | Validate the documentation corpus + the generated index.                                                               |
+| `pnpm docs:adr new "…"`             | Create the next-numbered ADR from the template.                                                                        |
+| `pnpm version:print`                | Print the CI build version for the current branch.                                                                     |
 
 ## Turborepo
 

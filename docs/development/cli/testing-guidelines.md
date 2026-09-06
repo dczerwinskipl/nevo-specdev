@@ -8,8 +8,8 @@ read_when:
   - choosing a test approach
   - adding a test task to a package
 summary: >
-  Test stack (Vitest, with node:test acceptable for zero-dep tools), what to test at
-  which boundary, determinism rules, and how tests fit the Turborepo task graph.
+  Test stack (Vitest), the domain / application / CLI-smoke split, determinism rules,
+  and how tests fit the Turborepo task graph.
 related:
   - development.cli.node-tooling-guidelines
   - development.local-setup
@@ -19,44 +19,46 @@ related:
 
 ## Stack
 
-| Tool                        | Role                                                                                          |
-| --------------------------- | --------------------------------------------------------------------------------------------- |
-| **Vitest 5**                | Default test runner for packages and tools.                                                   |
-| `node:test` + `node:assert` | Acceptable for a tool that otherwise has **zero** runtime deps and wants to keep it that way. |
-| `@vitest/coverage-v8`       | Coverage, when a package opts in.                                                             |
+| Tool                  | Role                                         |
+| --------------------- | -------------------------------------------- |
+| **Vitest 5**          | The test runner for every `tools/*` package. |
+| `@vitest/coverage-v8` | Coverage, when a package opts in.            |
 
-Pick one runner per package and state it in that package's `test` script. Do not mix
-runners within a package.
+One runner, TypeScript tests, `"test": "vitest run"` in the package's `test` script.
 
 ## What to test, and where
 
-1. **Pure logic** — validation rules, state transitions, path/glob calculation,
-   normalization, scoring. Fast, no mocks. This is the bulk of the suite.
-2. **Application operations** — orchestration with controlled fakes for git, filesystem
-   and clock injected per the [Node tooling guidelines](node-tooling-guidelines.md).
-3. **Adapters** — integration tests against a realistic boundary (a git wrapper against
-   a temp repo, a process runner).
-4. **CLI boundary** — argument parsing, validation failures, stdout/stderr shape, exit
-   codes. Prefer importing and calling the command function; reserve spawned-process
-   tests for a few end-to-end smoke cases. A CLI entry file must guard its dispatch
-   (`if (import.meta.url === …)` or an explicit `main()` call) so internals import
-   cleanly under test.
+1. **Domain (`src/domain/`)** — validation rules, state transitions, path/glob
+   calculation, normalization, scoring, planning. Fast, no mocks. This is the bulk of
+   the suite.
+2. **Application (`src/app/`)** — the use cases, driven by in-memory fakes of the ports
+   (`GitClient`, `GitHubClient`, `DocRepository`, `GitHubAdminClient`) per the
+   [Node tooling guidelines](node-tooling-guidelines.md). The interesting scenario
+   matrices live here (e.g. the release phase-A/phase-B recovery cases).
+3. **Adapters (`src/infra/`)** — a temp-dir / temp-repo integration test for the real
+   filesystem or git wrapper where it is worth it.
+4. **CLI smoke (`test/cli/`)** — a subprocess suite against the built `dist/bin.js`:
+   `--help`, an unknown command exits non-zero, an invalid option exits non-zero, one
+   happy path, one clean-`--json`-on-stdout path. Do not re-test Commander. Keep
+   importable logic in `src/index.ts`; `bin.ts` is a dedicated executable, never
+   imported by tests.
 
 ## Determinism
 
 - No reliance on wall-clock time, network, locale, or ambient environment. Inject a
   clock; freeze time where output includes timestamps.
-- Generated-file checks compare against a freshly-built expected value with the
-  timestamp line stripped — see `tools/docs/test/index-file.test.mjs`.
+- Generated files carry **no** timestamp; a check compares against a freshly-built
+  expected value byte-for-byte — see `tools/docs/test/domain/index-file.test.ts`.
 - Tests must pass regardless of run order and in parallel.
 
 ## Turborepo integration
 
-Each package exposes a `test` script; `turbo run test` runs it. The `test` task in
-`turbo.json` depends on `^build`, excludes `**/*.md` from its input hash, and caches
-`coverage/**`. On PRs, CI runs `test` with `--affected`, so a change to a shared
-package also runs its dependents' tests — this only works if `dependencies` /
-`devDependencies` between workspace packages are declared correctly.
+Each `tools/*` package exposes `build` / `typecheck` / `test`. Its `turbo.json` makes
+`test` depend on **its own `build`** as well as `^build`, because the CLI smoke suite
+runs the built `dist/bin.js`. `**/*.md` is excluded from the input hash. On PRs, CI
+runs `test` with `--affected`, so a change to a shared package also runs its
+dependents' tests — this only works if workspace `dependencies` / `devDependencies` are
+declared correctly. `pnpm check` builds the tools first, then runs the repo-wide gate.
 
 ## Coverage
 
