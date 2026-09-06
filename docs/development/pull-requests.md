@@ -57,7 +57,7 @@ The **durable target** (in
 is **1 approving review** from an eligible reviewer (write access), stale approvals
 dismissed on a new reviewable push, latest push approved, threads resolved.
 
-`configure-repository.mjs` applies that target as soon as the repository has **2+
+`nevo-repo-github configure` applies that target as soon as the repository has **2+
 eligible reviewers**. With only one, it applies a **bootstrap exception** (0 required
 approvals — an author cannot approve their own PR) and prints the reason on every run.
 Adding a second Write collaborator and re-running the script converges to the target
