@@ -53,7 +53,7 @@ developers is an admin operation on collaborators/teams. There is no
 `.github/CODEOWNERS`.
 
 The **durable target** (in
-[`scripts/github/repository-policy.json`](../../scripts/github/repository-policy.json))
+[`tools/github/repository-policy.json`](../../tools/github/repository-policy.json))
 is **1 approving review** from an eligible reviewer (write access), stale approvals
 dismissed on a new reviewable push, latest push approved, threads resolved.
 
@@ -62,7 +62,7 @@ eligible reviewers**. With only one, it applies a **bootstrap exception** (0 req
 approvals — an author cannot approve their own PR) and prints the reason on every run.
 Adding a second Write collaborator and re-running the script converges to the target
 automatically; the policy file is not edited. See
-[`scripts/github/README.md`](../../scripts/github/README.md#review-policy).
+[`tools/github/README.md`](../../tools/github/README.md#review-policy).
 
 Regardless of the approval count, the author self-reviews the full diff before merge: no
 unrelated changes, tests and docs updated, `pnpm check` green locally.

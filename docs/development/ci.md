@@ -66,7 +66,7 @@ build
 ```
 
 They are applied by
-[`scripts/github/configure-repository.mjs`](../../scripts/github/README.md). A job whose
+[`tools/github (nevo-repo-github)`](../../tools/github/README.md). A job whose
 `--affected` run selected nothing still exits 0 and reports its check green, so a PR is
 never left permanently pending.
 

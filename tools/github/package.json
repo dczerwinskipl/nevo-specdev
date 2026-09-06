@@ -1,0 +1,24 @@
+{
+  "name": "nevo-repo-github",
+  "private": true,
+  "type": "module",
+  "description": "Repository-internal GitHub governance for Nevo SpecDev: idempotent apply + verify of merge settings and branch rulesets. Not a product package.",
+  "license": "MIT",
+  "bin": {
+    "nevo-repo-github": "./dist/bin.js"
+  },
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "commander": "15.0.0"
+  },
+  "devDependencies": {
+    "vitest": "5.0.0"
+  }
+}

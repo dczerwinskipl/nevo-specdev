@@ -49,6 +49,16 @@ importers:
         specifier: 5.0.0
         version: 5.0.0(@types/node@24.13.3)(@vitest/coverage-v8@5.0.0)(vite@8.2.2(@types/node@24.13.3)(yaml@2.9.0))
 
+  tools/github:
+    dependencies:
+      commander:
+        specifier: 15.0.0
+        version: 15.0.0
+    devDependencies:
+      vitest:
+        specifier: 5.0.0
+        version: 5.0.0(@types/node@24.13.3)(@vitest/coverage-v8@5.0.0)(vite@8.2.2(@types/node@24.13.3)(yaml@2.9.0))
+
   tools/release:
     dependencies:
       commander:

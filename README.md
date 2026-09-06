@@ -30,13 +30,12 @@ and every package's typecheck / test / build. Full setup and the command referen
 
 ## Repository shape
 
-| Path              | Contents                                                                                                                                       |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/`           | Deployable applications. Workspace glob; populated when an app lands.                                                                          |
-| `packages/`       | Shared / publishable libraries under the `@nevo/*` scope. Workspace glob; populated when a package lands.                                      |
-| `tools/`          | Repository-internal tooling — [`tools/docs`](tools/docs/README.md) (`nevo-docs`), [`tools/release`](tools/release/README.md). Never published. |
-| `docs/`           | [Documentation](docs/README.md): development, product, architecture.                                                                           |
-| `scripts/github/` | Idempotent GitHub governance apply/verify (`gh` API).                                                                                          |
+| Path        | Contents                                                                                                                                                                               |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/`     | Deployable applications. Workspace glob; populated when an app lands.                                                                                                                  |
+| `packages/` | Shared / publishable libraries under the `@nevo/*` scope. Workspace glob; populated when a package lands.                                                                              |
+| `tools/`    | Repository-internal tooling, all TypeScript — [`docs`](tools/docs/README.md) (`nevo-docs`), [`release`](tools/release/README.md), [`github`](tools/github/README.md). Never published. |
+| `docs/`     | [Documentation](docs/README.md): development, product, architecture.                                                                                                                   |
 
 ## Contributing
 

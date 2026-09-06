@@ -27,11 +27,11 @@ related:
 nevo-specdev/
   apps/                 deployable applications        (workspace glob; empty until one lands)
   packages/             shared / publishable libraries (@nevo/* scope; empty until one lands)
-  tools/                repository-internal tooling — never published
-    docs/               nevo-repo-docs   — doc discovery, index, ADR authoring
+  tools/                repository-internal tooling — never published, all TypeScript
+    docs/               nevo-repo-docs    — doc discovery, index, ADR authoring
     release/            nevo-repo-release — version model, cut-release-line, release
+    github/             nevo-repo-github  — idempotent GitHub governance apply/verify (gh API)
   docs/                 this documentation set
-  scripts/github/       idempotent GitHub governance apply/verify (gh API)
   version.json          { channel, version } for the current branch
   .github/              workflows, composite setup action, PR template, Dependabot
   turbo.json            task graph

@@ -53,7 +53,7 @@ produced from `release/v1.3` — the branch name stays at the minor granularity.
 - Strict required status checks green; review conversations resolved; no blocking
   `Request changes`; GitHub's own merge-conflict block (no custom check).
 - **Review is by repository access, not a file.** There is no `.github/CODEOWNERS`;
-  collaborators/teams are managed in GitHub. `scripts/github/repository-policy.json`
+  collaborators/teams are managed in GitHub. `tools/github/repository-policy.json`
   holds one durable target — **1 eligible approval**, stale reviews dismissed,
   latest-push approval required. `configure-repository.mjs` applies it verbatim when
   the repo has ≥ 2 eligible reviewers; with only 1 it applies a **bootstrap exception**
@@ -88,4 +88,4 @@ produced from `release/v1.3` — the branch name stays at the minor granularity.
 - The minor-vs-major step after a release cut is always stated by a person, never
   inferred by automation.
 - Protected-branch configuration is applied and verified through
-  [`scripts/github/`](../../../scripts/github/README.md) against the GitHub API.
+  [`tools/github/`](../../../tools/github/README.md) against the GitHub API.
