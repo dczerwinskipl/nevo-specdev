@@ -149,8 +149,8 @@ export function verifyHeadChecksPassed(sha) {
 }
 
 /**
- * { state: 'absent' | 'ok' | 'mismatch', release: boolean } for a tag vs HEAD.
  * @param {string} tag @param {string} headSha
+ * @returns {{ state: 'absent'|'ok'|'mismatch', release: boolean }}
  */
 export function inspectTagState(tag, headSha) {
   const tagSha = resolveTagSha(tag);
@@ -185,6 +185,37 @@ function tagHasRelease(tag) {
 }
 
 /**
+ * Pure decision for a possibly-partial prior run. Given the tag/HEAD/Release
+ * state, what should execute do?
+ *
+ * @param {{ state: 'absent'|'ok'|'mismatch', release: boolean }} existing
+ * @param {{ tag: string, headShort: string, branch: string }} ctx
+ * @returns {{ action: 'noop'|'create-release'|'tag-and-release', message: string } | { error: string }}
+ */
+export function decideReleaseAction(existing, { tag, headShort, branch }) {
+  if (existing.state === 'mismatch') {
+    return {
+      error:
+        `Tag ${tag} already exists but points at a different commit than ${branch} HEAD ` +
+        `(${headShort}). Refusing to move or reuse it — investigate.`,
+    };
+  }
+  if (existing.state === 'ok' && existing.release) {
+    return {
+      action: 'noop',
+      message: `${tag} and its GitHub Release already exist and match HEAD — nothing to do.`,
+    };
+  }
+  if (existing.state === 'ok') {
+    return {
+      action: 'create-release',
+      message: `${tag} already exists and matches HEAD; creating the missing GitHub Release.`,
+    };
+  }
+  return { action: 'tag-and-release', message: `Tagging ${tag} at ${headShort}` };
+}
+
+/**
  * @param {ReturnType<typeof planRelease>} plan
  * @param {{ hasToken: boolean, log: (m: string) => void }} opts
  */
@@ -197,28 +228,17 @@ export function executeRelease(plan, { hasToken, log }) {
 
   const tag = /** @type {string} */ (plan.tag);
   const existing = inspectTagState(tag, headSha);
+  const decision = decideReleaseAction(existing, { tag, headShort: headSha.slice(0, 7), branch });
 
-  if (existing.state === 'mismatch') {
-    throw new Error(
-      `Tag ${tag} already exists but points at a different commit than ${branch} HEAD ` +
-        `(${headSha.slice(0, 7)}). Refusing to move or reuse it — investigate.`,
-    );
-  }
+  if ('error' in decision) throw new Error(decision.error);
+  log(decision.message);
+  if (decision.action === 'noop') return;
 
-  if (existing.state === 'ok' && existing.release) {
-    log(`${tag} and its GitHub Release already exist and match HEAD — nothing to do.`);
-    return;
-  }
-
-  if (existing.state === 'ok' && !existing.release) {
-    log(`${tag} already exists and matches HEAD; creating the missing GitHub Release.`);
-    createGithubRelease(tag, plan.prerelease === true, log);
-  } else {
+  if (decision.action === 'tag-and-release') {
     git(['tag', '-a', tag, '-m', tag, headSha]);
     git(['push', 'origin', `refs/tags/${tag}`]);
-    log(`Tagged ${tag} at ${headSha.slice(0, 7)}`);
-    createGithubRelease(tag, plan.prerelease === true, log);
   }
+  createGithubRelease(tag, plan.prerelease === true, log);
 
   if (plan.nextBranchState)
     advanceBranchAfterStable(branch, plan.nextBranchState, { hasToken, log });

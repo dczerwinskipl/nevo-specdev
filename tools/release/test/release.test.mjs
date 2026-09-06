@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { planRelease, REQUIRED_HEAD_CHECKS } from '../src/release.mjs';
+import { decideReleaseAction, planRelease, REQUIRED_HEAD_CHECKS } from '../src/release.mjs';
 
 const onV13 = (channel, version, existingTags = []) =>
   planRelease({ branch: 'release/v1.3', channel, versionFile: { channel, version }, existingTags });
@@ -70,4 +70,29 @@ test('refuses when version.json version is off-line or channel mismatches', () =
 
 test('rejects an unknown channel', () => {
   assert.match(onV13('ga', '1.3.0').errors[0], /--channel must be one of/);
+});
+
+// ── decideReleaseAction (§11 partial-state recovery) ──────────────────────
+
+const ctx = { tag: 'v1.3.0-beta.2', headShort: 'abc1234', branch: 'release/v1.3' };
+
+test('fresh tag → tag-and-release', () => {
+  assert.deepEqual(
+    decideReleaseAction({ state: 'absent', release: false }, ctx).action,
+    'tag-and-release',
+  );
+});
+
+test('tag exists at HEAD but no Release → create just the Release (no sequence bump)', () => {
+  assert.equal(decideReleaseAction({ state: 'ok', release: false }, ctx).action, 'create-release');
+});
+
+test('tag + Release both present and consistent → noop', () => {
+  assert.equal(decideReleaseAction({ state: 'ok', release: true }, ctx).action, 'noop');
+});
+
+test('tag exists but points elsewhere → refuse loudly', () => {
+  const d = decideReleaseAction({ state: 'mismatch', release: false }, ctx);
+  assert.ok('error' in d);
+  assert.match(d.error, /points at a different commit/);
 });

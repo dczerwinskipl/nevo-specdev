@@ -6,8 +6,8 @@ status: current
 date: 2026-09-05
 summary: >
   The repository is licensed MIT — permissive, minimal obligations, sufficient for a
-  public developer-tooling project. Provenance of any code migrated in from elsewhere
-  is a separate per-migration review.
+  public developer-tooling project. Provenance of any code brought in from another repository
+  is checked per file when brought in.
 related:
   - architecture.repository-structure
 ---
@@ -43,8 +43,7 @@ material is actually incorporated. No such material is present in this repositor
 - MIT-licensed code composes cleanly into more restrictive projects later without a
   compatibility step.
 - There is no patent grant beyond what MIT implies; accepted for the current scope.
-- **Not settled by this ADR:** when code is later migrated from another repository, the
+- **Not settled by this ADR:** when code is later brought in from another repository, the
   licence and provenance of those specific files must be checked before they land here.
   Being under the same GitHub account is not by itself a relicensing authority — a file
-  may carry a third-party copyright or a contributor's licence terms. That review
-  belongs to the migration PR, not this one.
+  may carry a third-party copyright or a contributor's licence terms. That review belongs to the PR that brings the code in, not this one.

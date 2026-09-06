@@ -22,5 +22,6 @@ export {
   planRelease,
   verifyHeadChecksPassed,
   inspectTagState,
+  decideReleaseAction,
   executeRelease,
 } from './release.mjs';

@@ -48,21 +48,21 @@ blocked on the protected targets.
 
 ## Review policy
 
-Repository access is managed in **GitHub**, not in a file — adding or removing developers
-is an admin operation on collaborators/teams. There is no `.github/CODEOWNERS`.
+Repository access is managed in **GitHub**, not in a file — adding or removing
+developers is an admin operation on collaborators/teams. There is no
+`.github/CODEOWNERS`.
 
-- **Intended (target) policy:** **1 approving review**, from a user GitHub considers
-  eligible (write access), with stale approvals dismissed on a new reviewable push and
-  the latest push required to be approved.
-- **Currently applied:** **0 required approvals.** The repository has a single
-  collaborator and GitHub does not let an author approve their own PR, so `1` would make
-  every PR unmergeable. This gap is recorded in
-  [`scripts/github/repository-policy.json`](../../scripts/github/repository-policy.json)
-  (`pullRequest.applied` vs `pullRequest.target`) and printed on every
-  `configure-repository.mjs` run.
-- **To reach the target:** an admin adds a second collaborator with Write access, then
-  sets `pullRequest.applied` = `pullRequest.target` and re-runs the script. See
-  [`scripts/github/README.md`](../../scripts/github/README.md#review-policy--applied-vs-target).
+The **durable target** (in
+[`scripts/github/repository-policy.json`](../../scripts/github/repository-policy.json))
+is **1 approving review** from an eligible reviewer (write access), stale approvals
+dismissed on a new reviewable push, latest push approved, threads resolved.
+
+`configure-repository.mjs` applies that target as soon as the repository has **2+
+eligible reviewers**. With only one, it applies a **bootstrap exception** (0 required
+approvals — an author cannot approve their own PR) and prints the reason on every run.
+Adding a second Write collaborator and re-running the script converges to the target
+automatically; the policy file is not edited. See
+[`scripts/github/README.md`](../../scripts/github/README.md#review-policy).
 
 Regardless of the approval count, the author self-reviews the full diff before merge: no
 unrelated changes, tests and docs updated, `pnpm check` green locally.

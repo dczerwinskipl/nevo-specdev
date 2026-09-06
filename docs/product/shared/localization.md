@@ -38,11 +38,11 @@ post-launch nice-to-have — even though the first release can ship in English o
 4. **Diagnostic-only text is exempt.** Log lines, stack traces, and developer-facing
    debug output aimed at maintainers are not user-facing copy.
 
-## Deferred to migration
+## Deferred
 
 - The concrete **i18n library** (e.g. an ICU MessageFormat implementation) and the
   **locale-loading architecture** (bundled vs. lazy, per-surface catalogs) are selected
-  when the CLI/Dashboard code is migrated and this concern is actually exercised.
+  when the CLI/Dashboard reaches this concern.
 - **Do not add an i18n runtime dependency now** just to satisfy this document.
 
 ## CLI vs Dashboard

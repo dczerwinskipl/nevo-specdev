@@ -117,7 +117,7 @@ function reconcileMergeSettings(repo) {
 
 /**
  * Build one ruleset's `rules`: the base rules, then the shared `pull_request`
- * rule from `pullRequest.applied`, then `required_status_checks` when configured.
+ * rule from the effective PR policy, then `required_status_checks` when configured.
  */
 function rulesFor(rulesetSpec) {
   const rules = (rulesetSpec.baseRules ?? []).map((r) => ({ ...r }));
