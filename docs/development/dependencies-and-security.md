@@ -34,6 +34,10 @@ only the first document and report **zero dependencies**
 (`dependabot/dependabot-core#14794`). pnpm 10's single-document lockfile is parsed
 correctly, so Dependabot actually has a dependency tree to scan.
 
+`.gitattributes` marks `pnpm-lock.yaml` `linguist-generated=true` (collapsed by default,
+excluded from language stats) but **not** `-diff` — a lockfile must stay diffable in PR
+review for supply-chain and reproducibility checks.
+
 Verify after any lockfile change:
 
 ```bash

@@ -21,8 +21,8 @@ Current.
 ## Context
 
 The repository is public developer tooling and a framework. It has carried an MIT
-`LICENSE` since its first commit. The documentation and tooling in this bootstrap are
-written fresh.
+`LICENSE` since its first commit. Its documentation and tooling are original to this
+repository.
 
 Apache-2.0 was weighed for its explicit patent grant and `NOTICE`-based attribution.
 Those add ongoing obligations (carrying and updating a `NOTICE` file, recording

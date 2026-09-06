@@ -200,6 +200,19 @@
       ]
     },
     {
+      "id": "adr.0005-repository-tooling-is-separate-from-the-product-api",
+      "type": "adr",
+      "title": "Repository tooling is separate from the product API",
+      "status": "current",
+      "file": "docs/architecture/decisions/0005-repository-tooling-is-separate-from-the-product-api.md",
+      "read_when": [],
+      "summary": "Repository-internal developer tooling lives under `tools/*` as private, unscoped packages and never becomes a Nevo SpecDev product surface by default. Product capabilities are designed as `@nevo/*` packages and `nevo-spec` commands in their own right.",
+      "related": [
+        "architecture.repository-structure",
+        "development.cli.node-tooling-guidelines"
+      ]
+    },
+    {
       "id": "development.ci",
       "type": "development",
       "title": "Continuous integration",
@@ -319,7 +332,7 @@
         "running the standard repository commands",
         "understanding what Turborepo does here"
       ],
-      "summary": "Prerequisites (Node, Corepack/pnpm), the standard root commands, and how Turborepo owns the task graph. This repository is Node/TypeScript only — no .NET.",
+      "summary": "Prerequisites (Node, Corepack/pnpm), the standard root commands, and how Turborepo owns the task graph.",
       "related": [
         "development.git-workflow",
         "development.cli.testing-guidelines",
@@ -356,11 +369,12 @@
         "tagging a beta / rc / stable release",
         "applying a hotfix to a released line"
       ],
-      "summary": "The version model (version.json = channel + version), CI-derived build versions, the cut-release-line and release workflows, the beta -> rc -> stable -> patch channel flow, intentional prerelease tag sequences, and the pre-1.0 policy.",
+      "summary": "The version model (version.json = channel + version), CI-derived build versions, the legal-transition gate, the cut-release-line and release workflows, the beta -> rc -> stable channel flow with an automatic post-stable advance, intentional prerelease tag sequences, and the pre-1.0 policy.",
       "related": [
         "architecture.repository-structure",
         "adr.0003-branch-and-release-model",
-        "development.git-workflow"
+        "development.git-workflow",
+        "development.ci"
       ]
     },
     {
@@ -375,7 +389,7 @@
         "placing state or writing a hook",
         "reviewing a React change"
       ],
-      "summary": "Small focused components, composition over configuration, split by responsibility not ceremony, feature-local vertical ownership, hooks by behavior, and where state lives. Condensed from the upstream Nevo React guidelines.",
+      "summary": "Small focused components, composition over configuration, split by responsibility not ceremony, feature-local vertical ownership, hooks by behavior, and where state lives.",
       "related": [
         "development.ui.ui-ux-guidelines",
         "development.ui.tailwind.styling-guidelines",
@@ -393,7 +407,7 @@
         "verifying a UI component visually or with interaction tests",
         "building deterministic UI fixtures"
       ],
-      "summary": "Story hierarchy and naming (Foundations / Shared UI / Features / Screens), strict co-location, typed fixture factories, args-first state, play-function interaction tests, and the mandatory verification workflow. Condensed from the upstream Nevo Storybook guide.",
+      "summary": "Story hierarchy and naming (Foundations / Shared UI / Features / Screens), strict co-location, typed fixture factories, args-first state, play-function interaction tests, and the mandatory verification workflow.",
       "related": [
         "development.ui.react.component-guidelines",
         "development.ui.ui-ux-guidelines",
@@ -412,7 +426,7 @@
         "mapping domain state to visual tone",
         "deciding whether to use @apply or a CSS file"
       ],
-      "summary": "Class-composition pipeline: static local layout inline, reusable variants via cva, domain state resolved to a semantic tone before classes, explicit conditional composition, and a narrow @apply policy. Condensed from the upstream Nevo React guidelines §12.",
+      "summary": "Class-composition pipeline: static local layout inline, reusable variants via cva, domain state resolved to a semantic tone before classes, explicit conditional composition, and a narrow @apply policy.",
       "related": [
         "development.ui.react.component-guidelines",
         "development.ui.ui-ux-guidelines"
@@ -483,7 +497,7 @@
         "presenting AI turn state, tool activity, or reasoning",
         "deciding what belongs at each Work information level"
       ],
-      "summary": "How an AI session is presented: canonical semantics first, immediate turn feedback, \"thinking\" needs evidence, \"waiting\" is not \"needs attention\", and the four Work information levels. Condensed from the upstream Nevo AI UX guidelines.",
+      "summary": "How an AI session is presented: canonical semantics first, immediate turn feedback, \"thinking\" needs evidence, \"waiting\" is not \"needs attention\", and the four Work information levels.",
       "related": [
         "product.dashboard.interaction-model",
         "product.shared.terminology",
@@ -501,7 +515,7 @@
         "choosing between an inline surface, an inspector, a sheet, and a page",
         "defining what state is preserved across navigation"
       ],
-      "summary": "Responsive shell (wide with contextual inspector / narrow), the product navigation hierarchy, context-preserving drill-down, and when to use a tooltip vs. inspector vs. sheet vs. full page. Condensed from the upstream Nevo interaction model.",
+      "summary": "Responsive shell (wide with contextual inspector / narrow), the product navigation hierarchy, context-preserving drill-down, and when to use a tooltip vs. inspector vs. sheet vs. full page.",
       "related": [
         "product.dashboard.personas",
         "product.dashboard.ai-session-ux",
@@ -532,10 +546,9 @@
       "file": "docs/product/product-overview.md",
       "read_when": [
         "orienting to what Nevo SpecDev is",
-        "deciding whether a concern belongs to the CLI or the Dashboard",
-        "understanding the current stage of the project"
+        "deciding whether a concern belongs to the CLI or the Dashboard"
       ],
-      "summary": "Nevo SpecDev is a human-led, spec-anchored workflow for AI-assisted software engineering, delivered as a CLI (nevo-spec) and a Dashboard. This repository is bootstrapping the foundation before that implementation is migrated.",
+      "summary": "Nevo SpecDev is a human-led, spec-anchored workflow for AI-assisted software engineering, delivered as a CLI (nevo-spec), a dashboard, and a shared library.",
       "related": [
         "product.shared.terminology",
         "product.cli.interaction-model",
@@ -551,9 +564,9 @@
       "read_when": [
         "adding user-facing copy to the CLI or Dashboard",
         "designing a message, label, or notification",
-        "planning the i18n runtime during migration"
+        "planning the i18n runtime"
       ],
-      "summary": "Localization is a standing product requirement. The first release may be English-only, but all user-facing copy must be localizable and must not be scattered as hard-coded strings. The i18n library and locale-loading design are chosen at migration time.",
+      "summary": "Localization is a standing product requirement. The first release may be English-only, but all user-facing copy must be localizable and must not be scattered as hard-coded strings. The i18n library and locale-loading design are chosen when the UI/CLI reaches that concern.",
       "related": [
         "product.shared.terminology",
         "product.cli.interaction-model",

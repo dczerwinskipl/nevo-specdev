@@ -1,71 +1,74 @@
 #!/usr/bin/env node
-// nevo-docs — repository-internal documentation discovery for Nevo SpecDev.
+// nevo-docs — repository documentation discovery, index and ADR authoring.
 //
 //   nevo-docs list      [--type T] [--status S] [--json]
 //   nevo-docs find   Q  [--type T] [--status S] [--limit N] [--json]
 //   nevo-docs context Q [--limit N] [--json]
+//   nevo-docs adr new "Title"  [--dry-run] [--json]
 //   nevo-docs check     [--write]
 //   nevo-docs generate                      (alias for: check --write)
 //
-// stdout carries results (clean text or JSON); stderr carries diagnostics.
-// Exit code is 0 on success, 1 on any failure or stale/invalid index.
+// list / find / context / adr load a FULLY VALIDATED corpus — if the docs are
+// inconsistent (missing frontmatter, bad id/reference, ADR numbering, ...) the
+// command fails loudly instead of serving partial context.
+//
+// stdout carries results; stderr carries diagnostics. Exit 0 on success, 1 on
+// any failure or a stale/invalid index.
 
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { readdirSync, writeFileSync } from 'node:fs';
 
-import { scanDocs, findRepoRoot } from '../src/scan.mjs';
+import { findRepoRoot } from '../src/scan.mjs';
 import { searchDocs } from '../src/search.mjs';
 import { checkIndex, writeIndex } from '../src/index-file.mjs';
+import { loadValidatedCorpus, inspectCorpus, CorpusError } from '../src/corpus.mjs';
+import { planNewAdr } from '../src/adr.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = findRepoRoot(join(HERE, '..', '..', '..'));
 const DOCS_DIR = join(REPO_ROOT, 'docs');
+const OPTS = { docsDir: DOCS_DIR, repoRoot: REPO_ROOT };
 
-function loadCorpus() {
-  return scanDocs({ docsDir: DOCS_DIR, repoRoot: REPO_ROOT });
-}
-
-/** Just the parsed docs — for list / find / context. */
-function loadDocs() {
-  return loadCorpus().docs;
-}
-
-/** @param {string} [line] */
-function print(line = '') {
-  process.stdout.write(`${line}\n`);
-}
-
+const print = (line = '') => process.stdout.write(`${line}\n`);
 /** @param {string} message */
-function fail(message) {
+const fail = (message) => {
   process.stderr.write(`${message}\n`);
   process.exitCode = 1;
+};
+
+/** Load the validated corpus, or print the problems and exit non-zero. */
+function corpusOrExit() {
+  try {
+    return loadValidatedCorpus(OPTS);
+  } catch (err) {
+    if (err instanceof CorpusError) {
+      fail(`nevo-docs: ${err.message}`);
+      fail('Fix the documentation before running discovery commands.');
+      process.exit(1);
+    }
+    throw err;
+  }
 }
 
 // ── commands ────────────────────────────────────────────────────────────────
 
-/**
- * @typedef {object} CliValues
- * @property {string} [type]
- * @property {string} [status]
- * @property {string} [limit]
- * @property {boolean} [json]
- * @property {boolean} [write]
- */
+/** @typedef {{ type?: string, status?: string, limit?: string, json?: boolean, write?: boolean, 'dry-run'?: boolean }} CliValues */
 
 /** @param {CliValues} values */
 function cmdList(values) {
-  const docs = searchDocs(loadDocs(), { type: values.type, status: values.status });
+  const docs = searchDocs(corpusOrExit(), { type: values.type, status: values.status });
   if (values.json) return print(JSON.stringify(docs, null, 2));
   if (docs.length === 0) return print('(no documents match)');
-  for (const d of docs) print(`${d.id.padEnd(38)} ${String(d.status).padEnd(10)} ${d.file}`);
+  for (const d of docs) print(`${d.id.padEnd(40)} ${String(d.status).padEnd(10)} ${d.file}`);
 }
 
 /** @param {string} query @param {CliValues} values */
 function cmdFind(query, values) {
   if (!query) return fail('find: a query is required, e.g. `nevo-docs find "git workflow"`');
   const limit = values.limit ? Number(values.limit) : 10;
-  const results = searchDocs(loadDocs(), {
+  const results = searchDocs(corpusOrExit(), {
     query,
     type: values.type,
     status: values.status,
@@ -87,7 +90,7 @@ function cmdContext(query, values) {
   if (!query)
     return fail('context: a query is required, e.g. `nevo-docs context "react tailwind"`');
   const limit = values.limit ? Number(values.limit) : 5;
-  const results = searchDocs(loadDocs(), { query, limit });
+  const results = searchDocs(corpusOrExit(), { query, limit });
   if (values.json) {
     return print(
       JSON.stringify(
@@ -113,10 +116,62 @@ function cmdContext(query, values) {
   }
 }
 
+/** @param {string[]} positionals @param {CliValues} values */
+function cmdAdr(positionals, values) {
+  const [sub, ...rest] = positionals;
+  if (sub !== 'new')
+    return fail('adr: the only subcommand is \'new\'. Usage: nevo-docs adr new "Title"');
+  const title = rest.join(' ').trim();
+  if (!title) return fail('adr new: a title is required, e.g. `nevo-docs adr new "Use X for Y"`');
+
+  // Validate the corpus first — never add an ADR on top of an inconsistent set.
+  corpusOrExit();
+
+  const adrDir = join(DOCS_DIR, 'architecture', 'decisions');
+  let filenames;
+  try {
+    filenames = readdirSync(adrDir).filter((f) => f.endsWith('.md'));
+  } catch (err) {
+    return fail(
+      `adr new: cannot read ${adrDir}: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+
+  let plan;
+  try {
+    plan = planNewAdr({ title, filenames });
+  } catch (err) {
+    return fail(`adr new: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  if (values['dry-run']) {
+    if (values.json) return print(JSON.stringify({ ...plan }, null, 2));
+    print(`# would create ${plan.file}\n`);
+    return print(plan.content);
+  }
+
+  writeFileSync(join(REPO_ROOT, plan.file), plan.content);
+
+  // Regenerate the index so the repository is immediately valid after creation.
+  const corpus = inspectCorpus(OPTS);
+  if (corpus.problems.length) {
+    for (const p of corpus.problems) fail(p);
+    return fail(
+      `Created ${plan.file}, but the corpus is now invalid — fix it, then \`pnpm docs:check --write\`.`,
+    );
+  }
+  writeIndex(corpus.docs, DOCS_DIR);
+
+  if (values.json) return print(JSON.stringify({ ...plan, indexRegenerated: true }, null, 2));
+  print(`Created ${plan.file}`);
+  print('Regenerated docs/index.generated.{md,json}');
+  print('Fill in the TODO placeholders and commit.');
+}
+
 /** @param {CliValues} values */
 function cmdCheck(values) {
-  const corpus = loadCorpus();
-  if (values.write) {
+  const corpus = inspectCorpus(OPTS);
+  if (values.write && corpus.problems.length === 0) {
     writeIndex(corpus.docs, DOCS_DIR);
     print('Wrote docs/index.generated.json and docs/index.generated.md');
   }
@@ -126,7 +181,7 @@ function cmdCheck(values) {
     if (!values.write) fail('Run `pnpm docs:check --write` to regenerate the index.');
     return;
   }
-  print(`OK — ${corpus.docs.length} documents, index current.`);
+  print(`OK — ${corpus.docs.length} documents, corpus valid, index current.`);
 }
 
 // ── entry ───────────────────────────────────────────────────────────────────
@@ -145,6 +200,7 @@ function main(argv) {
         limit: { type: 'string' },
         json: { type: 'boolean', default: false },
         write: { type: 'boolean', default: false },
+        'dry-run': { type: 'boolean', default: false },
       },
     });
   } catch (err) {
@@ -160,6 +216,8 @@ function main(argv) {
       return cmdFind(query, values);
     case 'context':
       return cmdContext(query, values);
+    case 'adr':
+      return cmdAdr(positionals, values);
     case 'check':
       return cmdCheck(values);
     case 'generate':
@@ -170,15 +228,16 @@ function main(argv) {
     case 'help':
       return print(
         [
-          'nevo-docs — Nevo SpecDev documentation discovery',
+          'nevo-docs — Nevo SpecDev documentation discovery, index and ADR authoring',
           '',
-          '  list               list every indexed document',
-          '  find <query>       rank documents by a query',
-          '  context <query>    print the files to load for a task, most relevant first',
-          '  check [--write]    validate frontmatter + verify (or regenerate) the index',
-          '  generate           alias for: check --write',
+          '  list                 list every indexed document',
+          '  find <query>          rank documents by a query',
+          '  context <query>       print the files to load for a task, most relevant first',
+          '  adr new "Title"       create the next-numbered ADR from the template',
+          '  check [--write]       validate the corpus + verify (or regenerate) the index',
+          '  generate             alias for: check --write',
           '',
-          'Flags: --type --status --limit --json --write',
+          'Flags: --type --status --limit --json --write --dry-run',
         ].join('\n'),
       );
     default:

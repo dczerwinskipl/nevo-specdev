@@ -1,10 +1,9 @@
 name: Release
 
-# Manually triggered from a release/vX.Y branch. Creates the Git tag and a
-# GitHub Release for the branch's current version + channel. No npm publishing.
-#
-# Promote the branch first (beta -> rc -> stable, or stable -> next patch) by
-# merging a PR that edits version.json — see docs/development/releasing.md.
+# Manually triggered from a release/vX.Y branch. Verifies the branch HEAD passed
+# CI, then creates the Git tag + GitHub Release for the branch's { channel,
+# version }. Idempotent: a re-run after "tag created, Release failed" finishes the
+# Release; it never silently bumps the sequence. No npm publishing.
 
 on:
   workflow_dispatch:
@@ -21,6 +20,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 concurrency:
   group: release-${{ github.ref }}
@@ -43,6 +43,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          token: ${{ secrets.RELEASE_TOKEN || github.token }}
       - uses: ./.github/actions/setup
 
       - name: Configure git identity
@@ -52,7 +53,8 @@ jobs:
 
       - name: Release
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+          RELEASE_TOKEN_PRESENT: ${{ secrets.RELEASE_TOKEN != '' }}
           RELEASE_CHANNEL: ${{ inputs.channel }}
           EXECUTE: ${{ inputs.execute }}
-        run: node scripts/release/release.mjs
+        run: node tools/release/bin/release.mjs

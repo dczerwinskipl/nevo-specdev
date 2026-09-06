@@ -1,8 +1,8 @@
 name: Cut release line
 
-# Manually triggered. Creates `release/vX.Y` off `main` (with its own version.json
-# set to the beta channel) and opens the PR that moves `main` onto the explicitly
-# chosen next line. The next version is an input — never inferred.
+# Manually triggered. Creates `release/vX.Y` off the current origin/main (with its
+# own version.json set to the beta channel) and opens — or hands off — the PR that
+# moves `main` onto the explicitly chosen next line. The next version is an input.
 
 on:
   workflow_dispatch:
@@ -13,12 +13,8 @@ on:
       next_development_version:
         description: "Next line for main — next minor OR next major, e.g. 1.4.0 or 2.0.0"
         required: true
-      from_ref:
-        description: "Commit/ref on main to cut from (default: current origin/main)"
-        required: false
-        default: ""
       execute:
-        description: "Create the branch and PR (unchecked = validate only)"
+        description: "Create the branch and (with RELEASE_TOKEN) the PR — unchecked = validate only"
         type: boolean
         default: false
 
@@ -38,10 +34,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-          # A PAT (repo scope) lets the main-bump PR trigger CI so auto-merge can
-          # land it. With the default GITHUB_TOKEN the PR opens but its checks
-          # never start — a maintainer merges it by hand. See
-          # docs/development/releasing.md.
+          # A PAT lets the main-bump PR trigger CI so auto-merge can land it.
+          # Without it the branches are still created and the exact `gh pr create`
+          # command is printed for a maintainer to run. See docs/development/releasing.md.
           token: ${{ secrets.RELEASE_TOKEN || github.token }}
       - uses: ./.github/actions/setup
 
@@ -51,12 +46,10 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Cut
-        # Inputs are passed as environment variables, never interpolated into the
-        # command line.
         env:
           GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+          RELEASE_TOKEN_PRESENT: ${{ secrets.RELEASE_TOKEN != '' }}
           RELEASE_VERSION: ${{ inputs.release_version }}
           NEXT_DEVELOPMENT_VERSION: ${{ inputs.next_development_version }}
-          FROM_REF: ${{ inputs.from_ref }}
           EXECUTE: ${{ inputs.execute }}
-        run: node scripts/release/cut-release-line.mjs
+        run: node tools/release/bin/cut-release-line.mjs

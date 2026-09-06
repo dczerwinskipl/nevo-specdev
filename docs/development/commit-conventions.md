@@ -51,17 +51,17 @@ permanent commit message on `main` / `release/v*`. CI validates the PR title; it
 | `perf`     | performance improvement                      |
 | `revert`   | reverting a previous commit                  |
 
-## Scopes (initial)
+## Scopes
 
-The product code is not migrated yet, so scopes currently cover the repository itself:
+The scope names the area of the change. Current areas:
 
 ```text
-repo      workspace   docs      ci        deps
-tooling   docs-tools  release   github
+workspace   docs        docs-tools   release
+ci          github      deps
 ```
 
-Add product scopes (`cli`, `dashboard`, `core`, …) when the corresponding packages are
-migrated. An unknown or omitted scope is acceptable — do not invent noise.
+Package scopes (`cli`, `dashboard`, `core`, …) are used once the corresponding packages
+exist. An unknown or omitted scope is acceptable — do not invent noise.
 
 ## Examples
 

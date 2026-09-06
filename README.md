@@ -4,55 +4,46 @@
 engineering: a human-led, spec-anchored workflow delivered as a CLI (`nevo-spec`) and a
 dashboard.
 
-> **Early-stage.** This repository is being **bootstrapped** — workspace tooling,
-> documentation architecture, Git/GitHub governance, CI, the versioning model, and a
-> security baseline. The product implementation is **not here yet**; it will be migrated
-> from the upstream Nevo project in reviewable pieces. Nothing below claims a shipped
-> feature.
-
-## What it will be
-
-- **Human-led.** The repository owner makes architectural and scope decisions; AI agents
-  propose options and implement approved work inside a declared context.
+- **Human-led.** The repository owner makes the architectural and scope calls; AI agents
+  propose options and implement approved work inside an explicitly declared context.
 - **Spec-anchored.** Non-trivial changes are tied to a specification, classified by
   weight, with explicit owner approval gates.
-- **Deterministic & tool-enforced.** The spec/task lifecycle and documentation discovery
-  run through commands with stable, machine-readable output.
-- **Vendor-neutral.** One workflow, thin adapters for Claude Code, Cursor, Copilot, and
-  others.
+- **Deterministic and tool-enforced.** The spec/task lifecycle and documentation
+  discovery run through commands with stable, machine-readable output.
+- **Vendor-neutral.** The workflow is exposed to AI coding agents through thin adapters
+  over a single source of truth.
 
-See [`docs/product/product-overview.md`](docs/product/product-overview.md).
-
-## Repository shape
-
-| Path               | Contents                                                                                    |
-| ------------------ | ------------------------------------------------------------------------------------------- |
-| `apps/`            | Deployable apps (`cli`, `dashboard`) — added during migration.                              |
-| `packages/`        | Shared / publishable libraries (`@nevo/*` scope) — added during migration.                  |
-| `tools/`           | Repository-internal tooling. Today: [`tools/docs`](tools/docs/README.md) (`nevo-docs` CLI). |
-| `docs/`            | [Documentation](docs/README.md): development, product, architecture.                        |
-| `scripts/github/`  | Idempotent GitHub governance apply/verify (`gh` API).                                       |
-| `scripts/release/` | Version derivation, cut-release-line, and release (tag + GitHub Release).                   |
-
-This repository is **Node/TypeScript only** — no .NET.
+See [`docs/product/product-overview.md`](docs/product/product-overview.md) for the
+product overview and [`docs/`](docs/README.md) for everything else.
 
 ## Getting started
 
 ```bash
 corepack enable                 # once per machine
-pnpm install                    # Node >= 22.13 (.nvmrc pins 24.20.0), pnpm 10 via Corepack
-pnpm check                      # format:check + lint + script tests + turbo typecheck/test/build
-pnpm docs:check                 # validate documentation frontmatter + index
+pnpm install                    # Node 24 LTS (.nvmrc), pnpm 10 via Corepack
+pnpm check                      # the full local quality gate
 ```
 
-Full setup and the standard commands: [`docs/development/local-setup.md`](docs/development/local-setup.md).
+`pnpm check` runs format, lint, documentation validation, the version-metadata gate,
+and every package's typecheck / test / build. Full setup and the command reference:
+[`docs/development/local-setup.md`](docs/development/local-setup.md).
+
+## Repository shape
+
+| Path              | Contents                                                                                                                                       |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/`           | Deployable applications (`nevo-spec` CLI, dashboard).                                                                                          |
+| `packages/`       | Shared and publishable libraries under the `@nevo/*` scope.                                                                                    |
+| `tools/`          | Repository-internal tooling — [`tools/docs`](tools/docs/README.md) (`nevo-docs`), [`tools/release`](tools/release/README.md). Never published. |
+| `docs/`           | [Documentation](docs/README.md): development, product, architecture.                                                                           |
+| `scripts/github/` | Idempotent GitHub governance apply/verify (`gh` API).                                                                                          |
 
 ## Contributing
 
-Branches and pull requests only — no direct commits to `main`. Squash merge; the PR
-title is the commit message and follows Conventional Commits. See
-[`CONTRIBUTING.md`](CONTRIBUTING.md), [`docs/development/git-workflow.md`](docs/development/git-workflow.md),
-and [`docs/development/commit-conventions.md`](docs/development/commit-conventions.md).
+Branches and pull requests only — no direct commits to `main` or `release/v*`. Squash
+merge; the PR title is the commit message and follows Conventional Commits. See
+[`CONTRIBUTING.md`](CONTRIBUTING.md) and
+[`docs/development/git-workflow.md`](docs/development/git-workflow.md).
 
 ## License
 

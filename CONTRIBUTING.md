@@ -1,8 +1,5 @@
 # Contributing to Nevo SpecDev
 
-Thanks for your interest. This repository is at an early, foundational stage — most
-work right now is repository infrastructure, not product features.
-
 ## Ground rules
 
 - **No direct commits to `main` or `release/v*`.** All changes go through a pull
@@ -21,24 +18,26 @@ pnpm install
 git switch main && git pull
 git switch -c feature/short-slug        # or fix/ , docs/ , chore/
 # ... work ...
-pnpm check                              # format:check + lint + script tests + turbo typecheck/test/build
-pnpm docs:check                         # if you touched docs/
+pnpm check                              # the full local quality gate
 git push -u origin feature/short-slug
-gh pr create                            # set a Conventional Commits title; fill the template
+gh pr create                            # Conventional Commits title; fill the template
 ```
 
-Prerequisites and the full command set: [`docs/development/local-setup.md`](docs/development/local-setup.md).
+`pnpm check` covers formatting, lint, documentation validation and index freshness, the
+`version.json` transition gate, and every package's typecheck / test / build.
+Prerequisites and the command reference:
+[`docs/development/local-setup.md`](docs/development/local-setup.md).
 
 ## Documentation changes
 
 Every authored `.md` under `docs/` needs YAML frontmatter (`id`, `type`, `title`,
 `status`, `read_when`, `summary`, optional `related`) — `pnpm docs:check` fails on a
 file missing it; only `docs/templates/**` and generated files are exempt. Use the
-templates in [`docs/templates/`](docs/templates/). Run `pnpm docs:check --write` to
-refresh the generated index (it carries no timestamp, so a no-op run produces no diff)
-and commit it with your change. CI runs `pnpm docs:check`.
+templates in [`docs/templates/`](docs/templates/), or `pnpm docs:adr new "Title"` for a
+new ADR. Run `pnpm docs:check --write` to refresh the generated index (it carries no
+timestamp, so a no-op run produces no diff) and commit it with your change.
 
-Keep the separation: engineering how-to in `docs/development/**`, product behavior and
+Keep the separation: engineering how-to in `docs/development/**`, product behaviour and
 personas in `docs/product/**`, durable decisions in `docs/architecture/**`.
 
 ## Decisions

@@ -17,10 +17,10 @@ files.
 
 | Area                                    | Covers                                                             |
 | --------------------------------------- | ------------------------------------------------------------------ |
-| [Product overview](product-overview.md) | What the product is, who it is for, current stage.                 |
+| [Product overview](product-overview.md) | What the product is and who it is for.                             |
 | [`shared/`](shared/)                    | Terminology and localization — concerns common to every surface.   |
 | [`cli/`](cli/)                          | The `nevo-spec` command-line product: personas, interaction model. |
 | [`dashboard/`](dashboard/)              | The dashboard product: personas, interaction model, AI-session UX. |
 
-The product implementation is **not migrated yet**. These documents describe intent and
-constraints so the migration has a target to hit.
+Documents here that describe behaviour ahead of the code carry `status: draft`; the
+intent and constraints they state are what the implementation must satisfy.

@@ -11,3 +11,15 @@ export {
 export { scanDocs, findRepoRoot, isFrontmatterExempt } from './scan.mjs';
 export { searchDocs, scoreDoc, tokenize, normalizeTerm } from './search.mjs';
 export { buildIndex, writeIndex, checkIndex } from './index-file.mjs';
+export { loadValidatedCorpus, inspectCorpus, CorpusError } from './corpus.mjs';
+export {
+  slugify,
+  padNumber,
+  isoDate,
+  isIsoDate,
+  nextAdrNumber,
+  planNewAdr,
+  renderAdr,
+  validateAdrs,
+  ADR_DIR,
+} from './adr.mjs';

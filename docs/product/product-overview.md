@@ -6,11 +6,9 @@ status: draft
 read_when:
   - orienting to what Nevo SpecDev is
   - deciding whether a concern belongs to the CLI or the Dashboard
-  - understanding the current stage of the project
 summary: >
   Nevo SpecDev is a human-led, spec-anchored workflow for AI-assisted software
-  engineering, delivered as a CLI (nevo-spec) and a Dashboard. This repository is
-  bootstrapping the foundation before that implementation is migrated.
+  engineering, delivered as a CLI (nevo-spec), a dashboard, and a shared library.
 related:
   - product.shared.terminology
   - product.cli.interaction-model
@@ -19,13 +17,13 @@ related:
 
 # Product overview
 
-`status: draft` — written before the implementation is migrated. It states intent and
-scope, not shipped behavior.
+`status: draft` — states intent and scope; the surfaces themselves are not yet in this
+repository.
 
 ## What it is
 
 **Nevo SpecDev** is a framework and toolset for **spec-driven, AI-assisted
-development**. The core idea, carried forward from the upstream Nevo project:
+development**:
 
 - The work is **human-led**. The repository owner makes architectural and scope
   decisions. AI agents propose options with a recommendation and implement approved
@@ -37,8 +35,8 @@ development**. The core idea, carried forward from the upstream Nevo project:
 - The workflow is **tool-enforced and deterministic**. Discovery, specification, task
   decomposition, start/verify/finalize, and documentation discovery run through
   commands that produce stable, machine-readable output — safe for agents to drive.
-- It is **vendor-neutral**. The same workflow is exposed to Claude Code, Cursor,
-  Copilot, and others through thin adapters over one source of truth.
+- It is **vendor-neutral**. The workflow is exposed to AI coding agents through thin
+  adapters over one source of truth, rather than being tied to any single tool.
 
 ## Surfaces
 
@@ -48,23 +46,15 @@ development**. The core idea, carried forward from the upstream Nevo project:
 | **Dashboard** | web UI          | View of active/archived specifications, tasks, changes/PRs, and AI sessions.                                    |
 | **Library**   | `import`        | Shared spec model and workflow logic the surfaces build on.                                                     |
 
-Published product packages will use the `@nevo/*` scope (e.g. `@nevo/specdev`). The
-workspace location of each surface (`apps/` vs `packages/`) is decided at migration
-time, not here.
+Published product packages use the `@nevo/*` scope (e.g. `@nevo/specdev`).
 
 The end-user command is deliberately short — `nevo-spec init`, `nevo-spec status`,
 `nevo-spec dashboard`. `nevo-specdev` is the repository/product name, not the binary.
 
-## Not in this repository
+## Names
 
-- The upstream Nevo product implementation, active/historical specs, provider internals,
-  session runtime, and dashboard/server product code — all migrated later, in reviewable
-  pieces.
-- Any .NET. The upstream project is a .NET solution; only its Node/React tooling lineage
-  and conventions are carried here.
-
-## Current stage
-
-Foundation only: workspace tooling, documentation architecture, Git/GitHub governance,
-CI, versioning model, and security baseline. See [`../README.md`](../README.md) and the
-repository [`README.md`](../../README.md).
+| Name           | Meaning                                           |
+| -------------- | ------------------------------------------------- |
+| Nevo SpecDev   | the product.                                      |
+| `nevo-specdev` | the repository, and the `@nevo/*` package family. |
+| `nevo-spec`    | the end-user CLI command.                         |

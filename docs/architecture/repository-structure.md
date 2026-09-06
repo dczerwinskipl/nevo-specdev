@@ -25,21 +25,22 @@ related:
 
 ```text
 nevo-specdev/
-  apps/                 deployable apps (cli, dashboard) — populated during migration
-  packages/             shared / publishable libraries — populated during migration
-  tools/                repository-internal tooling (never published)
-    docs/               nevo-repo-docs — documentation discovery + index
+  apps/                 deployable applications (nevo-spec CLI, dashboard)
+  packages/             shared / publishable libraries (@nevo/* scope)
+  tools/                repository-internal tooling — never published
+    docs/               nevo-repo-docs   — doc discovery, index, ADR authoring
+    release/            nevo-repo-release — version model, cut-release-line, release
   docs/                 this documentation set
   scripts/github/       idempotent GitHub governance apply/verify (gh API)
-  scripts/release/      version derivation, cut-release-line, release (tag + GH Release)
   version.json          { channel, version } for the current branch
   .github/              workflows, composite setup action, PR template, Dependabot
   turbo.json            task graph
   pnpm-workspace.yaml   workspace globs + pnpm project settings
 ```
 
-The workspace root is `private: true`. Child packages may become publishable later; no
-fake product packages exist to pad the monorepo.
+The workspace root is `private: true`. `apps/` and `packages/` are workspace globs;
+directories appear there with real code, not placeholders. Repository-internal tooling
+lives under `tools/` and is never confused with a publishable `@nevo/*` package.
 
 ## Task graph (Turborepo)
 
@@ -87,23 +88,27 @@ never left permanently pending. Inspect what a change would run with
 
 ## Versioning and release lines
 
-SemVer. One product version concept (Nevo SpecDev); internal packages are not
-independently versioned yet. Each branch carries `version.json` = `{ channel, version }`.
+SemVer, with `semver` doing the parsing/compare. One product version concept (Nevo
+SpecDev). Each branch carries `version.json` = `{ channel, version }`, and CI enforces
+that any change to it is a legal transition (see
+[releasing](../development/releasing.md)).
 
-- **`main`** is always the _next development version_: `channel: alpha`, `version` =
-  the next `X.Y.0`. CI publishes it as `<version>-alpha.<run-number>`. The run number
-  is a build identifier, not committed per change.
-- **`release/vX.Y`** — one long-lived branch per maintained minor line, owning the
-  whole `X.Y.z` series. Its `channel` moves `beta` → `rc` → `stable` and then repeats
-  for each patch; CI publishes `<version>-<channel>.<run>` (or the plain `<version>` on
-  `stable`).
-- **Public tags** are cut only from a `release/vX.Y` branch, never from an arbitrary
-  `main` commit, and prereleases follow an **intentional sequence**
+- **`main`** is the _next development version_: `channel: alpha`, `version` = the next
+  `X.Y.0`. CI publishes `<version>-alpha.<run-number>`; the run number is a build
+  identifier, not committed per change.
+- **`release/vX.Y`** — one long-lived branch per maintained minor line. Its `channel`
+  moves `beta` → `rc` → `stable`; after a `stable` tag it automatically advances to the
+  next patch's `beta` (via PR), so no commit keeps reporting an already-shipped
+  version. CI publishes `<version>-<channel>.<run>`, or the plain `<version>` while
+  briefly on `stable`.
+- **Public tags** are cut only from a `release/vX.Y` branch whose HEAD has passed CI,
+  never from a `main` commit. Prereleases are an **intentional sequence**
   (`v1.3.0-beta.1`, `-beta.2`, `-rc.1`, `v1.3.0`, `v1.3.1`, …) computed from existing
-  tags — not from the build number.
+  tags — not the build number. Tagging is recovery-safe (a re-run finishes a missing
+  GitHub Release; a tag that moved is refused).
 - **Cutting a line** is a manually-triggered workflow taking the release version and
-  the next development version (next minor **or** next major — never inferred). It
-  creates `release/vX.Y` with its own `version.json` already committed, and moves
+  the next development version (next minor **or** next major — never inferred). It cuts
+  from the current `origin/main` with the branch's `version.json` committed, and moves
   `main` forward through a PR, never a direct write.
 
 See [releasing](../development/releasing.md), ADR

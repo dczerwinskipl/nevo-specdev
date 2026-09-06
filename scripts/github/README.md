@@ -49,31 +49,37 @@ If a release branch is created by mistake, an admin removes it by temporarily se
 the ruleset's `enforcement` to `disabled`, deleting the branch, then re-running this
 script (which restores `active`).
 
-## Review policy — applied vs. target
+## Review policy
 
-`repository-policy.json#pullRequest` holds two blocks:
+`repository-policy.json#pullRequest` holds **one durable target**: 1 required approval,
+stale reviews dismissed on a new reviewable push, latest push must be approved, review
+threads resolved, squash only.
 
-- **`applied`** — what the rulesets carry now: `required_approving_review_count: 0`.
-- **`target`** — the intended end state: `required_approving_review_count: 1` with
-  `require_last_push_approval: true`.
+`configure-repository.mjs` reads the repository's actual collaborators (write/admin =
+"eligible reviewer") and:
 
-The target is **not** applied because the repository has a single collaborator, and
-GitHub does not let an author approve their own PR — `count: 1` would make every PR
-(including PR #1) unmergeable. `configure-repository.mjs` prints this gap loudly on
-every run; it is a deliberate, recorded pending item, not a silent `0`.
+- **≥ 2 eligible reviewers** → applies the target verbatim.
+- **only 1** → applies a **bootstrap exception** (`required_approving_review_count: 0`,
+  last-push approval off) because GitHub does not let an author approve their own PR, so
+  `1` would block every PR. It prints:
 
-**Admin step to reach the target:** add a second collaborator with at least Write
-access —
+  ```
+  PR REVIEW POLICY — BOOTSTRAP EXCEPTION IN EFFECT
+    target policy    : 1 approval
+    effective policy : 0 approvals
+    reason           : only 1 eligible reviewer (…)
+  ```
+
+Adding a second collaborator with Write access —
 
 ```bash
 REPO="$(gh repo view --json nameWithOwner -q .nameWithOwner)"
 gh api -X PUT "repos/$REPO/collaborators/<user>" -f permission=push
 ```
 
-— then set `pullRequest.applied` equal to `pullRequest.target` in the policy file and
-re-run the script. Only an approving review from a user with write access satisfies the
-gate; code ownership is intentionally not used (there is no `.github/CODEOWNERS` — repo
-access is managed in GitHub, not in a file).
+— and re-running the script converges to the target **with no edit to the policy
+file**. Code ownership is intentionally not used (there is no `.github/CODEOWNERS` —
+repository access is managed in GitHub).
 
 ## Discovering required check names
 

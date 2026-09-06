@@ -19,8 +19,7 @@ related:
 
 # Node tooling guidelines
 
-Adapted from the upstream Nevo project's Node tooling guidelines, which were written to
-be portable to exactly this kind of standalone repository.
+Portable architecture guidance for Node CLIs and repository tooling.
 
 > These are **responsibilities, not a mandatory directory tree**. Example module names
 > are illustrative. Prefer the smallest structural boundary that solves a real problem

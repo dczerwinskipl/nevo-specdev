@@ -47,7 +47,7 @@ are also the owner.
   flow.
 - Anything an agent or CI does is done through the CLI/workflow, not the dashboard.
 
-> **Provisional:** the upstream Nevo dashboard is file-backed (it reads the spec
-> YAML/Markdown and Git/PR state directly, with no separate database). Whether Nevo
-> SpecDev keeps exactly that is a storage/architecture decision for the migration —
-> it will be recorded in [`architecture/`](../../architecture/), not asserted here.
+> **Provisional:** the dashboard is intended to reflect the specification files and
+> Git/PR state directly rather than own a separate datastore. Whether it is implemented
+> exactly that way is a storage decision recorded in
+> [`architecture/`](../../architecture/), not asserted here.

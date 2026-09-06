@@ -11,8 +11,7 @@ read_when:
 summary: >
   Class-composition pipeline: static local layout inline, reusable variants via cva,
   domain state resolved to a semantic tone before classes, explicit conditional
-  composition, and a narrow @apply policy. Condensed from the upstream Nevo React
-  guidelines §12.
+  composition, and a narrow @apply policy.
 related:
   - development.ui.react.component-guidelines
   - development.ui.ui-ux-guidelines
@@ -20,8 +19,7 @@ related:
 
 # Tailwind styling guidelines
 
-`status: draft` — condensed from the upstream Nevo "Tailwind class composition"
-section. Tailwind version and token file are confirmed when the dashboard migrates.
+`status: draft` — working guidance. The Tailwind version and token file are confirmed with the dashboard code.
 
 ## 1. Local static layout
 

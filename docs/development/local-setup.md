@@ -9,7 +9,7 @@ read_when:
   - understanding what Turborepo does here
 summary: >
   Prerequisites (Node, Corepack/pnpm), the standard root commands, and how Turborepo
-  owns the task graph. This repository is Node/TypeScript only — no .NET.
+  owns the task graph.
 related:
   - development.git-workflow
   - development.cli.testing-guidelines
@@ -20,16 +20,16 @@ related:
 
 ## Prerequisites
 
-| Tool     | Version                                 | Notes                                                          |
-| -------- | --------------------------------------- | -------------------------------------------------------------- |
-| Node.js  | `>=22.13.0`; `.nvmrc` pins `24.20.0`    | Current Active LTS. `nvm use` / `fnm use` reads `.nvmrc`.      |
-| Corepack | bundled with Node (keep it current)     | Activates the pinned pnpm — do not `npm i -g pnpm`.            |
-| pnpm     | `10.34.5` (pinned via `packageManager`) | Newer pnpm lines break GitHub Dependency Graph — see ADR 0002. |
-| Git      | any recent                              | —                                                              |
+| Tool     | Version                                                       | Notes                                                                      |
+| -------- | ------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Node.js  | `24` LTS — `.nvmrc` pins `24.20.0`, `engines` requires `>=24` | The single contributor / CI runtime. `nvm use` / `fnm use` reads `.nvmrc`. |
+| Corepack | bundled with Node (keep it current)                           | Activates the pinned pnpm — do not `npm i -g pnpm`.                        |
+| pnpm     | `10.34.5` (pinned via `packageManager`)                       | Newer pnpm lines break GitHub Dependency Graph — see ADR 0002.             |
+| Git      | any recent                                                    | —                                                                          |
 
 ```bash
 corepack enable          # once per machine
-node -v                  # 24.x (or ≥ 22.13)
+node -v                  # 24.x
 pnpm -v                  # 10.34.5, provided by Corepack
 ```
 
@@ -46,19 +46,16 @@ pnpm install             # frozen against pnpm-lock.yaml
 
 Run from the repository root:
 
-| Command             | What it does                                                                    |
-| ------------------- | ------------------------------------------------------------------------------- |
-| `pnpm build`        | `turbo run build` across affected/all packages.                                 |
-| `pnpm test`         | `turbo run test`.                                                               |
-| `pnpm lint`         | `eslint .` over the whole repo (one flat config; not a per-package task).       |
-| `pnpm typecheck`    | `turbo run typecheck` (`tsc` per package).                                      |
-| `pnpm format`       | Prettier write across the repo.                                                 |
-| `pnpm format:check` | Prettier check (what CI runs).                                                  |
-| `pnpm check`        | `format:check` + `lint` + `turbo run typecheck test build`. Run before pushing. |
-| `pnpm docs:check`   | Validate doc frontmatter + the generated index.                                 |
-
-With no packages defining a task, `turbo run <task>` prints "No tasks were executed"
-and exits 0 — that is expected while the workspace is still mostly empty.
+| Command                             | What it does                                                                                       |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **`pnpm check`**                    | **The one gate to run before pushing** — `check:quality`, then `turbo run typecheck test build`.   |
+| `pnpm check:quality`                | Repo-wide only: `format:check` + `lint` + `docs:check` + `version:check-transition`. Reused by CI. |
+| `pnpm build` / `test` / `typecheck` | `turbo run <task>` across the package graph.                                                       |
+| `pnpm lint`                         | `eslint .` over the whole repo (one flat config; not a per-package task).                          |
+| `pnpm format`                       | Prettier write across the repo.                                                                    |
+| `pnpm docs:check`                   | Validate the documentation corpus + the generated index.                                           |
+| `pnpm docs:adr new "…"`             | Create the next-numbered ADR from the template.                                                    |
+| `pnpm version:print`                | Print the CI build version for the current branch.                                                 |
 
 ## Turborepo
 
@@ -73,9 +70,3 @@ Turborepo owns the package task graph. Key points:
   global — it only affects `pnpm format` / `pnpm lint`, which are not Turbo tasks.
 - `pnpm exec turbo ls` lists workspace packages; `pnpm exec turbo run build --affected --dry`
   shows what a change would run.
-
-## No .NET
-
-The upstream Nevo project is a .NET solution with Node/React tooling. Only that tooling
-lineage is carried forward here. This repository has no .NET SDK, projects, or build
-steps.

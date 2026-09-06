@@ -18,9 +18,8 @@ related:
 
 # Terminology
 
-`status: draft` — seeded from the upstream Nevo workflow vocabulary. Extended as the
-product model is migrated. When a term here has a precise meaning, do not use a synonym
-in the UI or copy.
+`status: draft` — the canonical product nouns, extended as the model grows. When a term
+here has a precise meaning, do not use a synonym in the UI or copy.
 
 | Term                     | Meaning                                                                                                                                                                    |
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

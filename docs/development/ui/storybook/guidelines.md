@@ -10,8 +10,7 @@ read_when:
 summary: >
   Story hierarchy and naming (Foundations / Shared UI / Features / Screens), strict
   co-location, typed fixture factories, args-first state, play-function interaction
-  tests, and the mandatory verification workflow. Condensed from the upstream Nevo
-  Storybook guide.
+  tests, and the mandatory verification workflow.
 related:
   - development.ui.react.component-guidelines
   - development.ui.ui-ux-guidelines
@@ -20,8 +19,7 @@ related:
 
 # Storybook guidelines
 
-`status: draft` — condensed from the upstream Nevo Storybook guide. Exact scripts and
-config paths are set when the dashboard migrates.
+`status: draft` — working guidance. Exact scripts and config paths are set with the dashboard code.
 
 ## Story hierarchy
 

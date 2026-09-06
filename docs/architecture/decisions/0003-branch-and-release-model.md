@@ -53,32 +53,31 @@ produced from `release/v1.3` — the branch name stays at the minor granularity.
 - Strict required status checks green; review conversations resolved; no blocking
   `Request changes`; GitHub's own merge-conflict block (no custom check).
 - **Review is by repository access, not a file.** There is no `.github/CODEOWNERS`;
-  collaborators/teams are managed in GitHub. The required-approval count is a ruleset
-  setting. The **target** is 1 eligible approval; it is **not applied yet** because a
-  single collaborator cannot approve their own PR, so the ruleset currently requires 0
-  and the gap is recorded in `scripts/github/repository-policy.json` and reported on
-  every configure run. The admin step to close it (add a second Write collaborator) is
-  documented, not silently deferred.
+  collaborators/teams are managed in GitHub. `scripts/github/repository-policy.json`
+  holds one durable target — **1 eligible approval**, stale reviews dismissed,
+  latest-push approval required. `configure-repository.mjs` applies it verbatim when
+  the repo has ≥ 2 eligible reviewers; with only 1 it applies a **bootstrap exception**
+  (0 approvals) and reports why on every run. Adding a second Write collaborator and
+  re-running converges to the target with no policy-file edit.
 
-**Versioning**
+**Versioning** — full detail in [releasing](../development/releasing.md).
 
-- `version.json` on each branch is `{ channel, version }`. `main`: `channel: alpha`,
-  `version` = the next development `X.Y.0`. `release/vX.Y`: `channel` is
-  `beta` → `rc` → `stable` (then the next patch), `version` = the `X.Y.Z` being
-  stabilized. CI derives the build version from this file plus the run number; on a
-  `stable` channel it is the plain `X.Y.Z`. It is not rewritten per change.
+- `version.json` on each branch is `{ channel, version }`. `main` is `alpha` / next
+  `X.Y.0`; `release/vX.Y` moves `beta` → `rc` → `stable`, and a `stable` tag also opens
+  a PR advancing the branch to the next patch's `beta` so no later commit reports an
+  already-shipped `X.Y.Z`. **CI enforces the legal transitions** — an ordinary PR
+  cannot hand-edit `version.json` into an illegal state.
 - **Public prerelease tags are an intentional sequence** (`v1.3.0-beta.1`, `-beta.2`,
-  `-rc.1`, …) computed from existing tags by the `release` workflow — the CI build
-  number is never a public release number.
-- Stable and prerelease tags are created only from a `release/vX.Y` branch, never from
-  an arbitrary `main` commit.
-- Cutting a release line is a manually-triggered workflow that takes the release
-  version and the next development version (next minor **or** next major) as explicit
-  inputs. It creates `release/vX.Y` **with its own `version.json`** already set to the
-  `beta` channel — so the branch's first CI run has a valid version without any
-  cross-branch lookup — and advances `main` through a pull request. The
-  `required_status_checks` ruleset uses `do_not_enforce_on_create: true` so that
-  branch-creating push is allowed while every later push is gated.
+  `-rc.1`, …) computed from existing tags — the CI build number is never a public
+  release number.
+- Tags are created only from a `release/vX.Y` branch **whose HEAD has passed CI**,
+  never from a `main` commit. Tagging is recovery-safe.
+- Cutting a release line is a manually-triggered workflow taking the release version
+  and the next development version (next minor **or** next major) as explicit inputs.
+  It cuts from the current `origin/main` **with the branch's `version.json` committed**
+  and advances `main` through a PR. `required_status_checks` uses
+  `do_not_enforce_on_create: true` so the branch-creating push is allowed while every
+  later push is gated.
 
 ## Consequences
 

@@ -1,8 +1,10 @@
 // Frontmatter contract for Nevo SpecDev documentation.
 //
-// Every indexed doc under docs/ starts with a `---`-delimited YAML block. Files
-// without one (templates, generated indexes, stray notes) are simply skipped by
-// the scanner — absence is not an error.
+// Every authored doc under docs/ starts with a `---`-delimited YAML block. A
+// file that has none is a validation FAILURE (`scanDocs` returns it under
+// `missingFrontmatter`) unless it is explicitly exempt — see
+// `isFrontmatterExempt` in scan.mjs (only `docs/templates/**` and
+// `*.generated.*`).
 
 import { parse } from 'yaml';
 

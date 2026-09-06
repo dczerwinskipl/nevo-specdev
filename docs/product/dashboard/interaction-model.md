@@ -10,7 +10,7 @@ read_when:
 summary: >
   Responsive shell (wide with contextual inspector / narrow), the product navigation
   hierarchy, context-preserving drill-down, and when to use a tooltip vs. inspector vs.
-  sheet vs. full page. Condensed from the upstream Nevo interaction model.
+  sheet vs. full page.
 related:
   - product.dashboard.personas
   - product.dashboard.ai-session-ux
@@ -19,8 +19,8 @@ related:
 
 # Dashboard interaction model
 
-`status: draft` — condensed from the upstream Nevo interaction model. Screen-by-screen
-contracts are filled in during migration.
+`status: draft` — working guidance, expanded as the code it governs lands. Screen-by-screen
+contracts are filled in with the implementation.
 
 ## Interaction principles
 

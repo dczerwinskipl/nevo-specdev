@@ -6,11 +6,12 @@ status: current
 read_when:
   - adding user-facing copy to the CLI or Dashboard
   - designing a message, label, or notification
-  - planning the i18n runtime during migration
+  - planning the i18n runtime
 summary: >
   Localization is a standing product requirement. The first release may be English-only,
   but all user-facing copy must be localizable and must not be scattered as hard-coded
-  strings. The i18n library and locale-loading design are chosen at migration time.
+  strings. The i18n library and locale-loading design are chosen when the UI/CLI reaches
+  that concern.
 related:
   - product.shared.terminology
   - product.cli.interaction-model

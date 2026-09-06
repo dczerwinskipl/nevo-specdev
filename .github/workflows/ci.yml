@@ -32,15 +32,11 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/setup
 
-      # Repository-wide — no package filtering (one Prettier + one ESLint flat config).
-      - name: Format
-        run: pnpm format:check
-      - name: Lint
-        run: pnpm lint
-      - name: Docs index
-        run: pnpm docs:check
-      - name: Script tests
-        run: pnpm test:scripts
+      # The same canonical script contributors run locally: format:check, lint,
+      # docs validation/index freshness, and the version.json transition gate.
+      - name: Quality gate
+        run: pnpm check:quality
+
       - name: Resolved version
         run: pnpm version:print
 

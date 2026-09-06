@@ -10,7 +10,7 @@ read_when:
 summary: >
   How an AI session is presented: canonical semantics first, immediate turn feedback,
   "thinking" needs evidence, "waiting" is not "needs attention", and the four Work
-  information levels. Condensed from the upstream Nevo AI UX guidelines.
+  information levels.
 related:
   - product.dashboard.interaction-model
   - product.shared.terminology
@@ -19,8 +19,8 @@ related:
 
 # AI session UX
 
-`status: draft` — condensed from the upstream Nevo AI UX guidelines. The canonical UI
-model and exact component specs are defined during migration.
+`status: draft` — working guidance, expanded as the code it governs lands. The canonical UI
+model and exact component specs are defined with the implementation.
 
 ## Model
 

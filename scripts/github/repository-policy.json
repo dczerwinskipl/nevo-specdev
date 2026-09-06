@@ -12,29 +12,18 @@
   },
 
   "pullRequest": {
-    "$comment": "`applied` is what the rulesets carry now. `target` is the intended end state; it is NOT applied because the repository has a single collaborator and an author cannot approve their own PR, so required_approving_review_count:1 would make every PR unmergeable. See targetBlockedOn.",
-    "applied": {
-      "required_approving_review_count": 0,
-      "dismiss_stale_reviews_on_push": true,
-      "require_code_owner_review": false,
-      "require_last_push_approval": false,
-      "required_review_thread_resolution": true,
-      "require_extra_approval_for_unattributed_changes": false,
-      "allowed_merge_methods": ["squash"]
-    },
-    "target": {
-      "required_approving_review_count": 1,
-      "require_last_push_approval": true,
-      "dismiss_stale_reviews_on_push": true,
-      "required_review_thread_resolution": true,
-      "require_code_owner_review": false,
-      "allowed_merge_methods": ["squash"]
-    },
-    "targetBlockedOn": "Add a second repository collaborator with at least Write access (Settings -> Collaborators, or `gh api -X PUT repos/OWNER/REPO/collaborators/USER -f permission=push`). Only an approving review from a user with write access counts toward the gate; until one exists, count:1 blocks every PR including the author's own. Once done, set pullRequest.applied to pullRequest.target and re-run this script."
+    "$comment": "The single, durable target policy. configure-repository.mjs applies it verbatim when the repository has at least 2 eligible reviewers (collaborators with write/admin). With only 1, it applies a bootstrap exception (0 approvals, last-push approval off) and reports why — no edit here is needed when a second maintainer is added through GitHub access; just re-run the script.",
+    "required_approving_review_count": 1,
+    "dismiss_stale_reviews_on_push": true,
+    "require_last_push_approval": true,
+    "required_review_thread_resolution": true,
+    "require_code_owner_review": false,
+    "require_extra_approval_for_unattributed_changes": false,
+    "allowed_merge_methods": ["squash"]
   },
 
   "requiredStatusChecks": {
-    "$comment": "Exact check-run (job) names, confirmed from a real run. doNotEnforceOnCreate lets `cut-release-line` create release/vX.Y (a non-PR push, so no checks can have run on it) while still gating every later push.",
+    "$comment": "Exact check-run (job) names. doNotEnforceOnCreate lets `cut-release-line` create release/vX.Y (a non-PR push, so no checks can have run on it) while still gating every later push.",
     "strict": true,
     "doNotEnforceOnCreate": true,
     "checks": ["pr-title", "quality", "test", "build"]

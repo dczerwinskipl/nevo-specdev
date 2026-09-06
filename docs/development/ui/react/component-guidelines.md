@@ -11,7 +11,6 @@ read_when:
 summary: >
   Small focused components, composition over configuration, split by responsibility not
   ceremony, feature-local vertical ownership, hooks by behavior, and where state lives.
-  Condensed from the upstream Nevo React guidelines.
 related:
   - development.ui.ui-ux-guidelines
   - development.ui.tailwind.styling-guidelines
@@ -20,7 +19,7 @@ related:
 
 # React component guidelines
 
-`status: draft` — condensed from the upstream Nevo React & module guidelines. Same
+`status: draft` — working guidance, expanded as the code it governs lands. Same
 "responsibilities, not a mandatory directory tree" spirit as the
 [Node tooling guidelines](../../cli/node-tooling-guidelines.md).
 

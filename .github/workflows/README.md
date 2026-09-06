@@ -1,11 +1,11 @@
 # Workflows
 
-| Workflow                                       | Trigger                             | Purpose                                                         |
-| ---------------------------------------------- | ----------------------------------- | --------------------------------------------------------------- |
-| [`ci.yml`](ci.yml)                             | PRs; pushes to `main`, `release/v*` | Format, lint, docs index, script tests, typecheck, test, build. |
-| [`pr-title.yml`](pr-title.yml)                 | PR opened / edited / synced         | Conventional Commits check on the PR title.                     |
-| [`release.yml`](release.yml)                   | `workflow_dispatch` on `release/v*` | Tag + GitHub Release for a `beta` / `rc` / `stable` version.    |
-| [`cut-release-line.yml`](cut-release-line.yml) | `workflow_dispatch`                 | Branch `release/vX.Y` off `main`; open the main-bump PR.        |
+| Workflow                                       | Trigger                             | Purpose                                                                      |
+| ---------------------------------------------- | ----------------------------------- | ---------------------------------------------------------------------------- |
+| [`ci.yml`](ci.yml)                             | PRs; pushes to `main`, `release/v*` | `pnpm check:quality`, then affected typecheck / test / build.                |
+| [`pr-title.yml`](pr-title.yml)                 | PR opened / edited / synced         | Conventional Commits check on the PR title.                                  |
+| [`release.yml`](release.yml)                   | `workflow_dispatch` on `release/v*` | Verify HEAD CI, then tag + GitHub Release (`beta`/`rc`/`stable`).            |
+| [`cut-release-line.yml`](cut-release-line.yml) | `workflow_dispatch`                 | Branch `release/vX.Y` off current `main`; open or hand off the main-bump PR. |
 
 Full behavior: [`docs/development/ci.md`](../../docs/development/ci.md) and
 [`docs/development/releasing.md`](../../docs/development/releasing.md).

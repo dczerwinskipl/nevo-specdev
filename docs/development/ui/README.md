@@ -23,6 +23,5 @@ contracts, AI-session behavior — is under
 | [`tailwind/`](tailwind/)                            | Class composition pipeline, variants, tokens, `@apply` policy.                                |
 | [`storybook/`](storybook/)                          | Story hierarchy, fixtures, interaction tests, visual verification.                            |
 
-The dashboard application is **not migrated yet**. These docs establish the conventions
-the migration must follow; each will be expanded with concrete file paths when the code
-lands.
+These are the conventions the dashboard UI follows; each expands with concrete file
+paths once the corresponding code lands.

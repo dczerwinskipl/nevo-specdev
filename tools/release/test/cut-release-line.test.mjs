@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { planReleaseCut } from './cut-release-line.mjs';
+import { planReleaseCut } from '../src/cut-release-line.mjs';
 
 test('next minor is accepted', () => {
   const p = planReleaseCut({ releaseVersion: '0.1.0', nextDevelopmentVersion: '0.2.0' });
@@ -26,7 +26,7 @@ test('skipping a minor is rejected', () => {
   assert.equal(p.releaseBranch, undefined);
 });
 
-test('a lower / equal next version is rejected', () => {
+test('a lower / equal / non-.0 next version is rejected', () => {
   assert.equal(
     planReleaseCut({ releaseVersion: '1.3.0', nextDevelopmentVersion: '1.2.0' }).errors.length,
     1,
@@ -35,9 +35,6 @@ test('a lower / equal next version is rejected', () => {
     planReleaseCut({ releaseVersion: '1.3.0', nextDevelopmentVersion: '1.3.0' }).errors.length,
     1,
   );
-});
-
-test('a non-.0 next version is rejected (lines start at X.Y.0)', () => {
   assert.equal(
     planReleaseCut({ releaseVersion: '1.3.0', nextDevelopmentVersion: '1.4.1' }).errors.length,
     1,

@@ -1,4 +1,4 @@
-import { mkdtempSync, writeFileSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -26,7 +26,7 @@ const DOCS = [
   },
 ];
 
-const corpus = (docs, missingFrontmatter = []) => ({ docs, missingFrontmatter });
+const corpus = (docs, problems = []) => ({ docs, problems });
 
 describe('buildIndex', () => {
   it('is deterministic, orders hubs first, carries no timestamp', () => {
@@ -39,7 +39,7 @@ describe('buildIndex', () => {
   });
 });
 
-describe('writeIndex', () => {
+describe('writeIndex / checkIndex', () => {
   let docsDir;
   beforeEach(() => {
     docsDir = join(mkdtempSync(join(tmpdir(), 'nevo-idx-')), 'docs');
@@ -56,15 +56,6 @@ describe('writeIndex', () => {
     expect(readFileSync(join(docsDir, 'index.generated.json'), 'utf8')).toBe(json1);
     expect(checkIndex(corpus(DOCS), docsDir)).toEqual([]);
   });
-});
-
-describe('checkIndex', () => {
-  let docsDir;
-  beforeEach(() => {
-    docsDir = join(mkdtempSync(join(tmpdir(), 'nevo-idx-')), 'docs');
-    mkdirSync(docsDir, { recursive: true });
-  });
-  afterEach(() => rmSync(join(docsDir, '..'), { recursive: true, force: true }));
 
   it('reports missing index, then passes after writeIndex', () => {
     expect(checkIndex(corpus(DOCS), docsDir).join('\n')).toMatch(/missing: docs\/index\.generated/);
@@ -80,26 +71,9 @@ describe('checkIndex', () => {
     );
   });
 
-  it('flags files missing frontmatter before anything else', () => {
+  it('surfaces pre-collected corpus problems and stops before the index check', () => {
     writeIndex(DOCS, docsDir);
-    const problems = checkIndex(corpus(DOCS, ['docs/random-notes.md']), docsDir);
-    expect(problems.join('\n')).toMatch(/docs\/random-notes\.md: missing frontmatter/);
-  });
-
-  it('surfaces frontmatter field problems before touching the index', () => {
-    writeFileSync(join(docsDir, 'index.generated.json'), '{}');
-    const problems = checkIndex(
-      corpus([{ file: 'docs/x.md', id: 'x', type: 'development' }]),
-      docsDir,
-    );
-    expect(problems.join('\n')).toMatch(/missing required field/);
-  });
-
-  it('keeps unresolved `related` ids as failures', () => {
-    writeIndex(DOCS, docsDir);
-    const withBadRef = [{ ...DOCS[0], related: ['nope.missing'] }, DOCS[1]];
-    expect(checkIndex(corpus(withBadRef), docsDir).join('\n')).toMatch(
-      /unresolved reference 'nope\.missing'/,
-    );
+    const problems = checkIndex(corpus(DOCS, ['docs/x.md: missing frontmatter']), docsDir);
+    expect(problems).toEqual(['docs/x.md: missing frontmatter']);
   });
 });

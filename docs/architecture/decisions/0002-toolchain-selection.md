@@ -43,7 +43,7 @@ Two ecosystem realities forced a version to be held back:
 
 | Tool                             | Pinned                                                               | Rationale                                                                                                                                                                                                                 |
 | -------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Node.js                          | `.nvmrc` `24.20.0`; `engines.node` `>=22.13.0`                       | Node 24 is the current Active LTS. Floor is 22.13 (ESLint 10's minimum).                                                                                                                                                  |
+| Node.js                          | `.nvmrc` `24.20.0`; `engines.node` `>=24.0.0`                        | Node 24 LTS is the single contributor runtime — CI tests only it, so the floor is not widened for a transitive dependency.                                                                                                |
 | pnpm                             | `10.34.5` via `packageManager` + Corepack; `engines.pnpm` `>=10 <11` | Newest pnpm line whose lockfile GitHub Dependency Graph / Dependabot can parse (see Context).                                                                                                                             |
 | Turborepo                        | `2.10.12`                                                            | Latest stable; native `--affected` execution.                                                                                                                                                                             |
 | TypeScript                       | `6.0.3`                                                              | Newest release inside `typescript-eslint` 8.69's supported range (`<6.1.0`).                                                                                                                                              |
@@ -57,18 +57,19 @@ live in **`pnpm-workspace.yaml`** — since pnpm 10, `.npmrc` is read only for
 auth/registry, so the repository has no `.npmrc`.
 
 Turborepo owns the package task graph (`turbo.json`). Root scripts — `build`, `test`,
-`test:scripts`, `lint`, `typecheck`, `format`, `format:check`, `check` — are the stable
+`lint`, `typecheck`, `format`, `format:check`, `check:quality`, `check` — are the stable
 contributor interface. Lint and format run repository-wide (one config each), not as
 Turbo tasks.
 
 ## Consequences
 
-- The repository targets Node 24 in CI and via `.nvmrc`. A developer on a different
+- Node 24 LTS is the only supported contributor/CI runtime. A developer on a different
   Node still gets deterministic installs because `pnpm-workspace.yaml#nodeVersion`
-  fixes the resolution target.
+  fixes the resolution target. Published `@nevo/*` packages can declare a broader
+  runtime matrix when they exist; the private root does not.
 - Exact version pins keep Dependabot bump PRs individually reviewable.
-- **Type-aware linting is configured but dormant** until the first `.ts` source is
-  migrated — there are no TypeScript sources yet.
+- **Type-aware linting is configured but dormant** until the first `.ts` source lands —
+  there are no TypeScript sources yet.
 - **Upgrade conditions**, each its own follow-up (superseding note or ADR):
   - pnpm 11+ once `dependabot/dependabot-core#14794` (multi-document lockfile parsing)
     is resolved and verified against this repo's Dependency Graph.

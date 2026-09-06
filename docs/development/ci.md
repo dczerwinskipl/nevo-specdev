@@ -19,23 +19,27 @@ related:
 
 # Continuous integration
 
-Two workflows under [`.github/workflows/`](../../.github/workflows/):
+Workflows under [`.github/workflows/`](../../.github/workflows/):
 
-| Workflow   | Trigger                                | Does                                                                          |
-| ---------- | -------------------------------------- | ----------------------------------------------------------------------------- |
-| `pr-title` | PR opened / edited / synchronized      | Validates the PR title against [Conventional Commits](commit-conventions.md). |
-| `ci`       | PRs; pushes to `main` and `release/v*` | Format, lint, docs index, typecheck, test, build.                             |
+| Workflow                      | Trigger                                | Does                                                                          |
+| ----------------------------- | -------------------------------------- | ----------------------------------------------------------------------------- |
+| `pr-title`                    | PR opened / edited / synchronized      | Validates the PR title against [Conventional Commits](commit-conventions.md). |
+| `ci`                          | PRs; pushes to `main` and `release/v*` | The quality gate, then typecheck / test / build.                              |
+| `release`, `cut-release-line` | `workflow_dispatch`                    | See [releasing](releasing.md).                                                |
 
 ## `ci` jobs
 
-| Job       | Steps                                                                                                       |
-| --------- | ----------------------------------------------------------------------------------------------------------- |
-| `quality` | `pnpm format:check`, `pnpm lint`, `pnpm docs:check`, an affected-graph dry-run, then `turbo run typecheck`. |
-| `test`    | `turbo run test`.                                                                                           |
-| `build`   | `turbo run build`.                                                                                          |
+| Job       | Steps                                                                                                                                                                  |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `quality` | `pnpm check:quality` (format, lint, `docs:check`, `version:check-transition`), `pnpm version:print`, an affected-graph dry-run, then `turbo run typecheck --affected`. |
+| `test`    | `turbo run test --affected`.                                                                                                                                           |
+| `build`   | `turbo run build --affected`.                                                                                                                                          |
 
-Format, lint and the docs index run **repository-wide** — one Prettier config and one
-ESLint flat config, so package filtering has no meaning for them.
+`check:quality` is the **same script contributors run** (`pnpm check` = `check:quality`
+
+- the package graph), so local and CI cannot drift. Its steps run **repository-wide** —
+  one Prettier config, one ESLint config, one doc corpus, one `version.json` — so package
+  filtering has no meaning for them.
 
 Typecheck, test and build are **package-scoped**:
 
@@ -61,10 +65,13 @@ test
 build
 ```
 
-They are added to the rulesets by
-[`scripts/github/configure-repository.mjs`](../../scripts/github/README.md) once
-confirmed from a real run. A job whose `--affected` run selected nothing still exits 0
-and reports its check green, so a PR is never left permanently pending.
+They are applied by
+[`scripts/github/configure-repository.mjs`](../../scripts/github/README.md). A job whose
+`--affected` run selected nothing still exits 0 and reports its check green, so a PR is
+never left permanently pending.
+
+The `release` workflow separately re-checks that a release branch's HEAD has `quality` +
+`test` + `build` green (not `pr-title` — that only runs on PRs) before it cuts a tag.
 
 Concurrency: a new commit on a PR cancels the previous PR run; `main` / `release/v*`
 runs always finish.
@@ -83,7 +90,8 @@ not invalidate unrelated package builds.
 ## Reproducing locally
 
 ```bash
-pnpm check                                             # what CI runs, whole repo
+pnpm check                                             # the full gate (= what CI runs)
+pnpm check:quality                                     # just the repo-wide gate
 pnpm exec turbo run build test typecheck --affected --dry   # what a PR would select
-pnpm exec turbo run test --filter <package>            # one package
+pnpm exec turbo run test --filter nevo-repo-release    # one package
 ```

@@ -1,7 +1,6 @@
 # Security policy
 
-Nevo SpecDev is early-stage and maintained by a single person on a best-effort basis.
-There is no released product yet, but the repository tooling and workflows are public.
+Nevo SpecDev is maintained by a single person on a best-effort basis.
 
 ## Reporting a vulnerability
 

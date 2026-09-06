@@ -32,11 +32,12 @@ nevo-spec status
 nevo-spec dashboard
 nevo-spec task next
 nevo-spec task start <change> <task>
-nevo-spec docs find "git workflow"
 ```
 
-Short, guessable, `<noun> <verb>` where there is more than one verb. The exact surface
-is defined during migration; this is the shape it must follow.
+Short, guessable, `<noun> <verb>` where there is more than one verb. The full command
+set is defined with the implementation; this is only the shape it must follow. Whether
+repository documentation discovery (today's `nevo-docs`) becomes part of the product CLI
+is a separate decision, not implied here.
 
 ## Output contract
 

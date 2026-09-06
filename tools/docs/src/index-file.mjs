@@ -7,8 +7,6 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { validateDoc, validateCorpus } from './frontmatter.mjs';
-
 const GENERATED_NOTICE = '<!-- GENERATED FILE — do not edit. Run: pnpm docs:check --write -->\n\n';
 
 const TYPE_ORDER = ['hub', 'architecture', 'adr', 'development', 'product'];
@@ -88,24 +86,19 @@ export function writeIndex(docs, docsDir) {
 }
 
 /**
- * Validate the corpus and confirm the on-disk index matches a fresh build.
+ * Given an already-validated corpus (`{ docs, problems }` from `inspectCorpus`),
+ * report corpus problems first, then any staleness of the on-disk index.
  *
- * @param {{ docs: Array<Record<string, any>>, missingFrontmatter?: string[] }} corpus
+ * @param {{ docs: Array<Record<string, any>>, problems: string[] }} corpus
  * @param {string} docsDir absolute path to docs/
  * @returns {string[]} problems (empty ⇒ valid and current)
  */
 export function checkIndex(corpus, docsDir) {
-  const { docs, missingFrontmatter = [] } = corpus;
+  const { docs, problems: corpusProblems } = corpus;
+  if (corpusProblems.length) return [...corpusProblems];
+
   /** @type {string[]} */
   const problems = [];
-
-  for (const file of missingFrontmatter) {
-    problems.push(`${file}: missing frontmatter (every authored docs/**.md file needs it)`);
-  }
-  for (const doc of docs) problems.push(...validateDoc(doc));
-  problems.push(...validateCorpus(docs));
-  if (problems.length) return problems;
-
   const built = buildIndex(docs);
 
   const jsonPath = join(docsDir, 'index.generated.json');

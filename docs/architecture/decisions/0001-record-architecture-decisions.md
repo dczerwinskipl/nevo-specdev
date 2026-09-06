@@ -22,8 +22,9 @@ by coding agents. Decisions that constrain the whole repository (toolchain, lice
 branch model) need to be discoverable with their rationale, so they are not silently
 re-litigated or reversed.
 
-The upstream Nevo project already uses lightweight numbered Markdown ADRs
-(`docs/decisions/ADR-XXXX-*.md`) and it works well.
+Lightweight numbered Markdown ADRs kept in-repo are a well-established pattern for
+exactly this — low ceremony, reviewed like any other change, and discoverable next to
+the code they govern.
 
 ## Decision
 

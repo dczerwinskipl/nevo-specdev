@@ -10,10 +10,9 @@ summary: >
 
 # Nevo SpecDev documentation
 
-Nevo SpecDev is an early-stage, spec-driven development framework for AI-assisted
-software engineering. This repository is being bootstrapped **before** the product
-implementation is migrated, so these documents describe conventions and intent, not
-shipped features.
+The documentation is split by audience: **development** (how it is built), **product**
+(what it does), **architecture** (durable decisions). Docs that describe intent ahead of
+the code they govern carry `status: draft` in their frontmatter.
 
 For a flat, auto-generated listing of every indexed document, see
 [`index.generated.md`](index.generated.md) — rebuilt by `pnpm docs:check --write`, do
@@ -46,7 +45,8 @@ pnpm docs:context "react tailwind" # the files to load for a task
 
 ## Contributing to the docs
 
-Every indexed file carries YAML frontmatter (`id`, `type`, `title`, `status`,
-`read_when`, `summary`, optional `related`). Templates live in
-[`templates/`](templates/). `pnpm docs:check` validates the frontmatter and the
-generated index in CI.
+Every authored file carries YAML frontmatter (`id`, `type`, `title`, `status`,
+`read_when`, `summary`, optional `related`); `docs/templates/**` and generated files
+are the only exemptions. Use [`templates/`](templates/), or `pnpm docs:adr new "Title"`
+for a new ADR. `pnpm docs:check` validates the whole corpus and the generated index,
+and runs in CI.

@@ -36,6 +36,51 @@ const CHECK_ONLY = values.check;
 const changed = [];
 const problems = [];
 
+/**
+ * The pull_request rule parameters actually applied. Equals POLICY.pullRequest
+ * (the durable target) when >= 2 eligible reviewers exist; a bootstrap exception
+ * (0 approvals) with only 1. Computed once in main().
+ * @type {{ params: Record<string, unknown>, target: Record<string, unknown>, exception: string | null }}
+ */
+let EFFECTIVE_PR;
+
+/**
+ * Eligible reviewers = collaborators who can submit an approving review that
+ * counts toward the gate, i.e. write or admin.
+ */
+/** Drop `$comment` (and any other `$`-prefixed) keys — they are not GitHub fields. */
+function stripMeta(obj) {
+  return Object.fromEntries(Object.entries(obj).filter(([k]) => !k.startsWith('$')));
+}
+
+function computeEffectivePrPolicy(repo) {
+  const target = stripMeta(POLICY.pullRequest);
+  let eligible = [];
+  try {
+    eligible = ghApi(`repos/${repo}/collaborators`).filter(
+      (c) => c.permissions?.push || c.permissions?.admin,
+    );
+  } catch {
+    // If we cannot read collaborators, fail safe: apply the bootstrap exception.
+  }
+  if (eligible.length >= 2) {
+    return { params: { ...target }, target, exception: null };
+  }
+  const who = eligible.map((c) => c.login).join(', ') || '(none readable)';
+  return {
+    params: {
+      ...target,
+      required_approving_review_count: 0,
+      require_last_push_approval: false, // moot at 0, and GitHub rejects true+0
+    },
+    target,
+    exception:
+      `only ${eligible.length} eligible reviewer${eligible.length === 1 ? '' : 's'} (${who}); ` +
+      `an author cannot approve their own PR. Add a second collaborator with write ` +
+      `access and re-run — the policy file needs no edit.`,
+  };
+}
+
 function log(msg) {
   process.stdout.write(`${msg}\n`);
 }
@@ -77,7 +122,7 @@ function reconcileMergeSettings(repo) {
 function rulesFor(rulesetSpec) {
   const rules = (rulesetSpec.baseRules ?? []).map((r) => ({ ...r }));
 
-  rules.push({ type: 'pull_request', parameters: { ...POLICY.pullRequest.applied } });
+  rules.push({ type: 'pull_request', parameters: { ...EFFECTIVE_PR.params } });
 
   const rsc = POLICY.requiredStatusChecks;
   if (rsc && Array.isArray(rsc.checks) && rsc.checks.length > 0) {
@@ -155,36 +200,20 @@ function verifyRuleset(repo, id, compare) {
   else log(`ruleset ${id}: verified`);
 }
 
-/**
- * Loudly report the difference between the applied PR policy and the intended
- * one. Not a `problem` (it does not fail the run) — but it must never be silent.
- */
-function reportTargetGap(repo) {
-  const { applied, target, targetBlockedOn } = POLICY.pullRequest;
-  const gaps = Object.keys(target).filter(
-    (k) => JSON.stringify(target[k]) !== JSON.stringify(applied[k]),
-  );
-  if (gaps.length === 0) {
-    log('\nPR review policy: applied == target.');
+/** Report the bootstrap review-policy exception, if one is in effect. Never silent. */
+function reportReviewPolicy() {
+  if (!EFFECTIVE_PR.exception) {
+    log(
+      `\nPR review policy: target applied (${EFFECTIVE_PR.target.required_approving_review_count} approval).`,
+    );
     return;
   }
   warn('\n────────────────────────────────────────────────────────────────');
-  warn('TARGET PR REVIEW POLICY IS NOT YET APPLIED');
+  warn('PR REVIEW POLICY — BOOTSTRAP EXCEPTION IN EFFECT');
   warn('────────────────────────────────────────────────────────────────');
-  for (const k of gaps) {
-    warn(`  ${k}: applied=${JSON.stringify(applied[k])}  target=${JSON.stringify(target[k])}`);
-  }
-  warn(`\n  Blocked on: ${targetBlockedOn}`);
-  warn(`  Repo currently has these collaborators:`);
-  try {
-    const collabs = ghApi(`repos/${repo}/collaborators`);
-    for (const c of collabs) {
-      const perm = c.permissions?.admin ? 'admin' : c.permissions?.push ? 'write' : 'read';
-      warn(`    - ${c.login} (${perm})`);
-    }
-  } catch {
-    warn('    (could not list collaborators)');
-  }
+  warn(`  target policy    : ${EFFECTIVE_PR.target.required_approving_review_count} approval`);
+  warn(`  effective policy : ${EFFECTIVE_PR.params.required_approving_review_count} approvals`);
+  warn(`  reason           : ${EFFECTIVE_PR.exception}`);
   warn('────────────────────────────────────────────────────────────────');
 }
 
@@ -195,9 +224,11 @@ function main() {
   const repo = detectRepo();
   log(`${CHECK_ONLY ? 'Checking' : 'Configuring'} ${repo}\n`);
 
+  EFFECTIVE_PR = computeEffectivePrPolicy(repo);
+
   reconcileMergeSettings(repo);
   for (const spec of POLICY.rulesets) reconcileRuleset(repo, spec);
-  reportTargetGap(repo);
+  reportReviewPolicy();
 
   log('');
   if (changed.length) {
