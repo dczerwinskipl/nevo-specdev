@@ -54,10 +54,14 @@ nevo-release promote --target rc|stable [--execute]
     #   - recovery by STRUCTURE not name: an existing chore/promote-<v>-to-<target>
     #     (with or without an open PR) is reused only if it is a single commit on the
     #     current origin/<branch> HEAD changing only version.json to { target, v }.
-    #     Open PR + missing/invalid branch -> fail closed.
+    #     Open PR + missing/invalid branch -> fail closed. The result separates
+    #     "the protected branch already carries { target, v }" (alreadyPromoted) from
+    #     "a valid PR is open and still has to merge" (prPending) — an open unmerged
+    #     PR is never reported as alreadyPromoted.
     #   - with --execute: push the branch by plumbing, open/hand off a PR titled
     #     `chore(release): promote <v> to <target>`, request auto-merge when the token
-    #     is set. Env fallback: PROMOTE_TARGET, EXECUTE, CI_GITHUB_RELEASE_TOKEN_PRESENT.
+    #     is set. Auto-merge is CONVERGED: a re-run re-requests it on the existing
+    #     valid PR. Env fallback: PROMOTE_TARGET, EXECUTE, CI_GITHUB_RELEASE_TOKEN_PRESENT.
 
 nevo-release create --channel beta|rc|stable [--execute]
     # Run on a release/vX.Y branch. ONE operation, explicit mutation boundary: without
@@ -100,11 +104,18 @@ src/
 
 Application code never touches `child_process`, `process`, or stdio. `GitClient`
 exposes only read-only history inspection (`commitParents`, `changedFiles`,
-`showFileAtRef`, `resolveCommit`) plus the mutation methods, so the structural
-recovery checks run without any plumbing writes. Errors: `UsageError` (exit 2) /
-`InconsistentStateError` (exit 1), rendered only at the CLI boundary; `--json` errors
-are structured. `GitHubClient` reads fail closed — an ambiguous `gh` failure never
-reads as "resource absent".
+`showFileAtRef`, `resolveCommit`, `isAncestor`) plus the mutation methods, so the
+structural recovery checks run without any plumbing writes. Errors: `UsageError`
+(exit 2) / `InconsistentStateError` (exit 1), rendered only at the CLI boundary;
+`--json` errors are structured.
+
+`GitHubClient` reads **fail closed**. `releaseExists` decides absent-vs-existing-vs-
+indeterminate from the **HTTP status code** of `gh api --include …/releases/tags/<tag>`
+(200 / 404 / everything-else-throws), never by matching human `gh` stderr. `gh`
+authenticates from `GH_TOKEN` / `GITHUB_TOKEN`; the adapter copies
+`CI_GITHUB_RELEASE_TOKEN` into `GH_TOKEN` for its subprocesses only when neither is
+already set (`resolveGhEnv`). Each release workflow's `permissions:` block is the
+minimum for the APIs it calls — `release.yml` alone adds `checks: read`.
 
 ## Tests
 

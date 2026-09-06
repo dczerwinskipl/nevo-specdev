@@ -133,13 +133,41 @@ describe('promoteRelease — recovery / idempotency', () => {
     expect(github.createdPrs).toHaveLength(1);
   });
 
-  it('existing valid promotion branch + open PR -> noop', async () => {
+  it('existing valid promotion branch + open PR -> noop, but auto-merge is re-requested (§4)', async () => {
     seedPromotionBranch('rc', { channel: 'rc', version: '0.1.0' });
     github.state.openPrs.push({ head: promoteBranch('rc'), base: BRANCH, url: 'u' });
     const r = await run('rc', true, true);
     expect(git.pushedBranches).toEqual([]);
     expect(github.createdPrs).toEqual([]);
     expect(msgs(r)).toMatch(/verified and its PR is open/);
+    // §4 — a transient earlier auto-merge failure is repaired by re-running.
+    expect(github.autoMerged).toEqual(['u']);
+    // §5 — the protected branch is NOT yet promoted; the PR still has to land.
+    expect(r.alreadyPromoted).toBe(false);
+    expect(r.prPending).toBe(true);
+  });
+
+  it('existing valid promotion branch + open PR + auto-merge unavailable -> truthful, non-fatal (§4)', async () => {
+    seedPromotionBranch('rc', { channel: 'rc', version: '0.1.0' });
+    github.state.openPrs.push({ head: promoteBranch('rc'), base: BRANCH, url: 'u' });
+    github.state.autoMerge = 'unavailable';
+    const r = await run('rc', true, true);
+    expect(msgs(r)).toMatch(/Auto-merge not requested .*normal merge after CI/);
+    expect(r.prPending).toBe(true);
+  });
+
+  it('existing valid promotion branch + open PR + unexpected auto-merge error -> surfaced (§4)', async () => {
+    seedPromotionBranch('rc', { channel: 'rc', version: '0.1.0' });
+    github.state.openPrs.push({ head: promoteBranch('rc'), base: BRANCH, url: 'u' });
+    github.state.autoMerge = new Error('HTTP 403: forbidden');
+    await expect(run('rc', true, true)).rejects.toThrow(/HTTP 403/);
+  });
+
+  it('existing valid promotion branch + open PR, validate-only -> auto-merge NOT touched', async () => {
+    seedPromotionBranch('rc', { channel: 'rc', version: '0.1.0' });
+    github.state.openPrs.push({ head: promoteBranch('rc'), base: BRANCH, url: 'u' });
+    await run('rc', false, true);
+    expect(github.autoMerged).toEqual([]);
   });
 
   it('malformed promotion branch (unrelated file) -> fail closed', async () => {
@@ -161,6 +189,7 @@ describe('promoteRelease — recovery / idempotency', () => {
     onReleaseBranch({ channel: 'rc', version: '0.1.0' });
     const r = await run('rc', true, true);
     expect(r.alreadyPromoted).toBe(true);
+    expect(r.prPending).toBe(false);
   });
 
   it('GitHub PR-list failure -> fail closed', async () => {

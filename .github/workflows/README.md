@@ -1,11 +1,22 @@
 # Workflows
 
-| Workflow                                       | Trigger                             | Purpose                                                                      |
-| ---------------------------------------------- | ----------------------------------- | ---------------------------------------------------------------------------- |
-| [`ci.yml`](ci.yml)                             | PRs; pushes to `main`, `release/v*` | `pnpm check:quality`, then affected typecheck / test / build.                |
-| [`pr-title.yml`](pr-title.yml)                 | PR opened / edited / synced         | Conventional Commits check on the PR title.                                  |
-| [`release.yml`](release.yml)                   | `workflow_dispatch` on `release/v*` | Verify HEAD CI, then tag + GitHub Release (`beta`/`rc`/`stable`).            |
-| [`cut-release-line.yml`](cut-release-line.yml) | `workflow_dispatch`                 | Branch `release/vX.Y` off current `main`; open or hand off the main-bump PR. |
+| Workflow                                       | Trigger                             | Purpose                                                                                   | `permissions`                                             |
+| ---------------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| [`ci.yml`](ci.yml)                             | PRs; pushes to `main`, `release/v*` | `pnpm check:quality`, then affected typecheck / test / build.                             | `contents: read`                                          |
+| [`pr-title.yml`](pr-title.yml)                 | PR opened / edited / synced         | Conventional Commits check on the PR title (`<type>(<scope>): …`, scope required).        | `pull-requests: read`                                     |
+| [`release.yml`](release.yml)                   | `workflow_dispatch` on `release/v*` | Verify HEAD CI, then tag + GitHub Release (`beta`/`rc`/`stable`); post-stable advance PR. | `contents: write`, `pull-requests: write`, `checks: read` |
+| [`cut-release-line.yml`](cut-release-line.yml) | `workflow_dispatch`                 | Branch `release/vX.Y` off current `main`; open or hand off the main-bump PR.              | `contents: write`, `pull-requests: write`                 |
+| [`promote-release.yml`](promote-release.yml)   | `workflow_dispatch` on `release/v*` | Open the PR moving `release/vX.Y`'s channel forward (`beta→rc` / `rc→stable`).            | `contents: write`, `pull-requests: write`                 |
+
+Each workflow declares the **minimum** `permissions` for the GitHub APIs it actually
+calls — `release.yml` adds `checks: read` because the release tool reads the
+release-branch HEAD check-runs; the others neither read checks nor tag, so they don't.
+
+The three `workflow_dispatch` workflows take an optional `CI_GITHUB_RELEASE_TOKEN`
+secret (a fine-grained, repository-scoped PAT) so a PR they open triggers `pull_request`
+CI and can auto-merge; without it they push the branch and print the exact
+`gh pr create …` command. See
+[`docs/development/releasing.md`](../../docs/development/releasing.md#ci_github_release_token).
 
 Full behavior: [`docs/development/ci.md`](../../docs/development/ci.md) and
 [`docs/development/releasing.md`](../../docs/development/releasing.md).

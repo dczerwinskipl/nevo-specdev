@@ -4,8 +4,60 @@ import type { NormalizedCheckRun } from '../domain/release-plan.js';
 import type { AutoMergeResult, GitHubClient, PullRequestRef } from '../ports.js';
 import { CommandFailedError, run } from './exec.js';
 
-export function createGitHubClient(repoRoot: string): GitHubClient {
-  const opts = { cwd: repoRoot };
+/**
+ * `gh` authenticates from `GH_TOKEN` / `GITHUB_TOKEN`. The CI secret is named
+ * `CI_GITHUB_RELEASE_TOKEN`; map it onto `GH_TOKEN` for the `gh` subprocesses so
+ * a local operator only has to export the one variable. An explicitly-supplied
+ * `GH_TOKEN` / `GITHUB_TOKEN` is never overridden (CI sets `GH_TOKEN` itself).
+ */
+export function resolveGhEnv(
+  env: Readonly<Record<string, string | undefined>>,
+): Record<string, string> | undefined {
+  if (env.GH_TOKEN || env.GITHUB_TOKEN) return undefined;
+  if (env.CI_GITHUB_RELEASE_TOKEN) return { GH_TOKEN: env.CI_GITHUB_RELEASE_TOKEN };
+  return undefined;
+}
+
+/** First `HTTP/x.y NNN` status line in a `gh api --include` response, or `null`. */
+export function httpStatus(raw: string): number | null {
+  const m = /^HTTP\/[\d.]+\s+(\d{3})\b/im.exec(raw);
+  return m?.[1] ? Number(m[1]) : null;
+}
+
+export type ReleaseLookup =
+  | { readonly outcome: 'exists' }
+  | { readonly outcome: 'absent' }
+  | { readonly outcome: 'indeterminate'; readonly reason: string };
+
+/**
+ * Decide whether a Release exists purely from the HTTP status code of a
+ * `gh api --include repos/.../releases/tags/<tag>` call — never from
+ * human-readable CLI stderr. `200` -> exists, `404` -> confirmed absent,
+ * anything else (401/403/429/5xx, or no status line at all because the call
+ * never reached GitHub) -> indeterminate, and the caller must fail closed.
+ */
+export function classifyReleaseLookup(res: {
+  readonly stdout: string;
+  readonly exitCode: number | null;
+}): ReleaseLookup {
+  const status = httpStatus(res.stdout);
+  if (status === 200) return { outcome: 'exists' };
+  if (status === 404) return { outcome: 'absent' };
+  return {
+    outcome: 'indeterminate',
+    reason:
+      (status === null
+        ? 'gh api returned no HTTP status line'
+        : `gh api returned HTTP ${String(status)}`) + ` (exit ${String(res.exitCode)})`,
+  };
+}
+
+export function createGitHubClient(
+  repoRoot: string,
+  env: Readonly<Record<string, string | undefined>> = process.env,
+): GitHubClient {
+  const ghEnv = resolveGhEnv(env);
+  const opts = { cwd: repoRoot, ...(ghEnv ? { env: ghEnv } : {}) };
   const gh = (args: readonly string[]): Promise<string> => run('gh', args, opts);
 
   return {
@@ -47,27 +99,31 @@ export function createGitHubClient(repoRoot: string): GitHubClient {
     },
 
     async releaseExists(tag): Promise<boolean> {
+      // Query the Releases-by-tag REST endpoint and decide on the HTTP status
+      // code from the wire (`--include` prints the status line), never on
+      // human-readable CLI stderr:
+      //   200 -> the Release exists
+      //   404 -> confirmed absent
+      //   anything else / no status line (auth, permission, rate limit,
+      //   network, malformed) -> throw; the caller fails closed.
+      const path = `repos/{owner}/{repo}/releases/tags/${tag}`;
+      let res: { stdout: string; exitCode: number | null };
       try {
-        await gh(['release', 'view', tag, '--json', 'tagName', '--jq', '.tagName']);
-        return true;
+        res = { stdout: await gh(['api', '--include', '--silent', path]), exitCode: 0 };
       } catch (err) {
-        // `gh release view` on a missing Release exits non-zero with a
-        // recognisable "release not found" / 404. Anything else — auth, network,
-        // rate limit, a malformed response — is "could not determine": re-throw
-        // so the caller fails closed rather than proceeding as if it were absent.
-        if (
-          err instanceof CommandFailedError &&
-          /release not found|HTTP 404|\bnot found\b/i.test(err.stderr)
-        ) {
-          return false;
+        if (err instanceof CommandFailedError) {
+          res = { stdout: err.stdout, exitCode: err.exitCode };
+        } else {
+          throw err instanceof Error ? err : new Error(String(err));
         }
-        throw new Error(
-          `could not determine whether the GitHub Release '${tag}' exists: ${
-            err instanceof Error ? err.message : String(err)
-          }`,
-          { cause: err },
-        );
       }
+      const lookup = classifyReleaseLookup(res);
+      if (lookup.outcome === 'exists') return true;
+      if (lookup.outcome === 'absent') return false;
+      throw new Error(
+        `could not determine whether the GitHub Release '${tag}' exists: ${lookup.reason}. ` +
+          `Refusing to treat this as "the Release is absent".`,
+      );
     },
 
     async createRelease({ tag, prerelease }): Promise<{ url: string }> {

@@ -18,6 +18,10 @@ on:
         type: boolean
         default: false
 
+# Least privilege — exactly the GitHub APIs this workflow calls:
+#   contents: write       push release/vX.Y and the main-bump branch (git plumbing)
+#   pull-requests: write   open the main-bump PR; request auto-merge
+# It does not read check-runs, so no `checks:` permission.
 permissions:
   contents: write
   pull-requests: write

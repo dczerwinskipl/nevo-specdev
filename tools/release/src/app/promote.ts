@@ -33,9 +33,12 @@ export interface PromoteDeps {
 
 export interface PromoteResult {
   readonly events: ActionEvent[];
+  /** a branch and/or PR was created or pushed on this run. */
   readonly mutated: boolean;
-  /** true when the branch is already in the target channel. */
+  /** the PROTECTED branch already carries the target state (the promotion has landed). */
   readonly alreadyPromoted: boolean;
+  /** a valid promotion PR exists or was opened and still has to merge. */
+  readonly prPending: boolean;
 }
 
 /** `chore/promote-<version>-to-<target>` */
@@ -82,7 +85,7 @@ export async function promoteRelease(
 
   if (current.channel === target) {
     events.push(info(`${branch} is already { ${target}, ${current.version} } — already promoted.`));
-    return { events, mutated: false, alreadyPromoted: true };
+    return { events, mutated: false, alreadyPromoted: true, prPending: false };
   }
   const requiredCurrent = REQUIRED_CURRENT[target];
   if (current.channel !== requiredCurrent) {
@@ -108,7 +111,7 @@ export async function promoteRelease(
   );
   events.push(info(mutate ? '' : '(validate-only — running every check, changing nothing)'));
 
-  const { satisfied } = await ensureVersionFileChangePr(
+  const res = await ensureVersionFileChangePr(
     { git, github, hasToken: deps.hasToken },
     {
       baseBranch: branch,
@@ -126,7 +129,12 @@ export async function promoteRelease(
     { mutate, events },
   );
 
-  return { events, mutated: mutate && !satisfied, alreadyPromoted: satisfied };
+  return {
+    events,
+    mutated: res.changed,
+    alreadyPromoted: res.status === 'already-applied',
+    prPending: res.status === 'pr-pending',
+  };
 }
 
 async function readVersionFileAt(git: GitClient, ref: string, label: string): Promise<VersionFile> {

@@ -203,7 +203,7 @@ describe('executeRelease — Phase B (stable advance) structural validation §3'
     await expect(run('stable', true, true)).rejects.toThrow(/its version\.json is/);
   });
 
-  it('valid advance branch + open PR -> phase B no-op', async () => {
+  it('valid advance branch + open PR -> phase B no-op, auto-merge re-requested (§4)', async () => {
     seedAdvance({ ...releaseFiles(), 'version.json': versionFileText(NEXT) });
     github.state.openPrs.push({
       head: ADVANCE_BRANCH,
@@ -214,6 +214,7 @@ describe('executeRelease — Phase B (stable advance) structural validation §3'
     expect(git.pushedBranches).toEqual([]);
     expect(github.createdPrs).toEqual([]);
     expect(msgs(r)).toMatch(/verified and its PR is open/);
+    expect(github.autoMerged).toEqual(['https://example.test/pull/7']);
   });
 
   it('open advance PR but the branch is missing -> fail closed (§1)', async () => {

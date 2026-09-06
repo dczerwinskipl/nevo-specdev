@@ -18,9 +18,14 @@ on:
         type: boolean
         default: false
 
+# Least privilege — exactly the GitHub APIs this workflow calls:
+#   contents: write       create + push the annotated tag; push the advance branch
+#   pull-requests: write  open the post-stable advance PR; request auto-merge
+#   checks: read          read the release-branch HEAD check-runs before tagging
 permissions:
   contents: write
   pull-requests: write
+  checks: read
 
 concurrency:
   group: release-${{ github.ref }}

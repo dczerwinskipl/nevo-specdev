@@ -131,7 +131,9 @@ workflows, so its required checks never start.
   squash auto-merge; CI runs and it lands on its own. If the repository does not
   have auto-merge enabled, the tool says so and the PR simply waits for a normal
   merge after CI. An auth / permission / network failure of the auto-merge request is
-  **not** swallowed — it surfaces.
+  **not** swallowed — it surfaces. Auto-merge is **converged, not fire-and-forget**:
+  if that request failed transiently, just re-run the workflow — it finds the existing
+  valid PR and re-requests auto-merge rather than reporting "nothing to do".
 - **Without `CI_GITHUB_RELEASE_TOKEN`**: the workflow pushes the branch and prints the
   exact `gh pr create …` command. Run it **yourself** — a PR you open triggers CI.
 
@@ -146,19 +148,31 @@ run (the built-in `GITHUB_TOKEN` cannot trigger that). Every operation that work
 the built-in token still falls back to `github.token`; only PR creation is handed off
 when the PAT is absent.
 
-Minimum permissions for the operations the tool actually performs (push a branch by
-plumbing, open a PR, request auto-merge, tag + GitHub Release on the `Release`
-workflow):
+Minimum fine-grained PAT permissions, derived from the GitHub APIs the tool actually
+calls (push a branch by plumbing, list/open a PR, request auto-merge, and — on the
+`Release` workflow only — read the HEAD check-runs and create a tag + GitHub Release):
 
-| Permission    | Level        | Why                                                         |
-| ------------- | ------------ | ----------------------------------------------------------- |
-| Contents      | Read & write | push the promotion / bump / advance branch; tags + Releases |
-| Pull requests | Read & write | open the PR, request auto-merge                             |
-| Workflows     | Read         | (only if a PR ever touches `.github/workflows/`)            |
-| Metadata      | Read         | mandatory for every fine-grained PAT                        |
+| Permission    | Level        | Why                                                                         |
+| ------------- | ------------ | --------------------------------------------------------------------------- |
+| Contents      | Read & write | push the promotion / bump / advance branch; create the tag + GitHub Release |
+| Pull requests | Read & write | list the open PR, open it, request auto-merge                               |
+| Checks        | Read         | `Release` only — read the release-branch HEAD `quality`/`test`/`build` runs |
+| Workflows     | Read         | only if a PR ever changes a file under `.github/workflows/`                 |
+| Metadata      | Read         | mandatory for every fine-grained PAT                                        |
 
-No token value is ever stored in the repository. If the secret is unset, the workflows
-still run and hand off PR creation safely.
+The workflow `permissions:` blocks mirror this exactly — `release.yml` is the only one
+with `checks: read`, because it is the only one that reads check-runs. No token value is
+ever stored in the repository. If the secret is unset, the workflows still run and hand
+off PR creation safely.
+
+**Running a release step locally.** `gh` (which the tool shells out to) authenticates
+from `GH_TOKEN` / `GITHUB_TOKEN`. As a convenience the tool copies
+`CI_GITHUB_RELEASE_TOKEN` into `GH_TOKEN` for its `gh` subprocesses **only when you have
+not set `GH_TOKEN` or `GITHUB_TOKEN` yourself** — an explicit value is never
+overridden. So locally either `export GH_TOKEN=…` (what `gh` already uses) or
+`export CI_GITHUB_RELEASE_TOKEN=…`; both work, and the latter keeps the variable name
+identical to the CI secret. `CI_GITHUB_RELEASE_TOKEN_PRESENT` is a CI-only signal set by
+the workflows and is not needed locally.
 
 ### Why branch creation is allowed on a protected pattern
 
@@ -190,12 +204,16 @@ Promotion **never touches `release/vX.Y` directly and never tags anything.** It:
    `chore/promote-<version>-to-<target>` branch (with or without an open PR) is reused
    only if read-only Git inspection proves it is a single commit on the current
    `origin/<branch>` HEAD changing only `version.json` to exactly `{ target, version }`.
-   An open PR whose head branch is missing or invalid → fail closed. `origin/<branch>`
-   already in the target channel → "already promoted";
+   An open PR whose head branch is missing or invalid → fail closed;
 4. execute: builds one commit by git plumbing (no working tree touched), pushes
    `chore/promote-<version>-to-<target>`, and opens / hands off a PR back to
    `release/vX.Y` (title `chore(release): promote <version> to <target>`), requesting
    auto-merge when `CI_GITHUB_RELEASE_TOKEN` is set.
+
+The result distinguishes **the promotion has landed** — `origin/release/vX.Y` itself
+already carries `{ target, version }` — from **a promotion PR is still open and has to
+merge**. An open, unmerged promotion PR is never reported as "already promoted". When a
+valid PR is already open the run re-requests auto-merge and otherwise changes nothing.
 
 After the promotion PR merges, run **`Release`** to cut the `<target>` tag.
 

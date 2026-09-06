@@ -6,7 +6,13 @@
 //     commit on the CURRENT `origin/<baseBranch>` HEAD, changing ONLY
 //     `version.json`, to EXACTLY the expected next state;
 //   * an open PR whose head branch is missing or invalid -> fail closed;
-//   * `origin/<baseBranch>` already in the expected state -> already satisfied.
+//   * `origin/<baseBranch>` already in the expected state -> already applied.
+//
+// Auto-merge is CONVERGED, not fire-and-forget: when a token is available and a
+// valid PR already exists, the flow re-requests auto-merge, so a transient
+// GitHub failure is repaired simply by re-running. A repository that has
+// auto-merge turned off stays a truthful, non-fatal outcome; anything else
+// throws.
 
 import { parseVersionFile, versionFileText, type VersionFile } from '../domain/version.js';
 import { InconsistentStateError } from '../errors.js';
@@ -14,6 +20,41 @@ import type { GitClient, GitHubClient } from '../ports.js';
 import { info, warn, type ActionEvent } from './events.js';
 
 export type StructuralCheck = { ok: true } | { ok: false; reason: string };
+
+/**
+ * The result of one `ensureVersionFileChangePr` call. `status` answers the only
+ * question a caller needs: is the target state already on the protected branch,
+ * or is there still a PR to land?
+ */
+export type VersionPrStatus =
+  /** `origin/<baseBranch>` already carries `nextState` — nothing to do. */
+  | 'already-applied'
+  /** a structurally-valid PR exists (or was just created) and still needs to merge. */
+  | 'pr-pending'
+  /** validate-only: every check passed; nothing was created. */
+  | 'validated';
+
+export interface EnsureVersionFilePrResult {
+  readonly status: VersionPrStatus;
+  /** a branch and/or PR was created or pushed on THIS call. */
+  readonly changed: boolean;
+}
+
+/** Request squash auto-merge and record the outcome truthfully. Throws on an unexpected failure. */
+export async function requestAutoMerge(
+  github: GitHubClient,
+  prUrl: string,
+  events: ActionEvent[],
+): Promise<void> {
+  const am = await github.enableAutoMerge(prUrl);
+  events.push(
+    info(
+      am.outcome === 'enabled'
+        ? 'Auto-merge requested — lands when required checks pass.'
+        : `Auto-merge not requested (${am.reason}); the PR stays open for a normal merge after CI.`,
+    ),
+  );
+}
 
 /**
  * A single commit on top of `origin/<baseBranch>` HEAD that changes only
@@ -80,11 +121,6 @@ export interface EnsureVersionFilePrInput {
   readonly verb: string;
 }
 
-export interface EnsureVersionFilePrResult {
-  /** true when the target state is already in place (nothing more to do). */
-  readonly satisfied: boolean;
-}
-
 export async function ensureVersionFileChangePr(
   { git, github, hasToken }: EnsureVersionFilePrDeps,
   input: EnsureVersionFilePrInput,
@@ -103,7 +139,7 @@ export async function ensureVersionFileChangePr(
         `origin/${baseBranch} is already { ${nextState.channel}, ${nextState.version} } — ${input.verb}, nothing to do.`,
       ),
     );
-    return { satisfied: true };
+    return { status: 'already-applied', changed: false };
   }
 
   const openPr = await github.findOpenPullRequest({ head: headBranch, base: baseBranch });
@@ -128,8 +164,13 @@ export async function ensureVersionFileChangePr(
       );
     }
     events.push(info(`${headBranch} is verified and its PR is open:\n  ${openPr.url}`));
-    events.push(info('Nothing to do — merge that PR to finish.'));
-    return { satisfied: true };
+    // Converge auto-merge — a re-run repairs a PR whose earlier auto-merge
+    // request failed transiently.
+    if (hasToken && mutate) {
+      await requestAutoMerge(github, openPr.url, events);
+    }
+    events.push(info('Nothing to do here — merge that PR to finish.'));
+    return { status: 'pr-pending', changed: false };
   }
 
   let reuseBranch = false;
@@ -161,7 +202,7 @@ export async function ensureVersionFileChangePr(
     events.push(
       info(`Would ${hasToken ? 'open' : 'hand off'} the PR (${headBranch} -> ${baseBranch}).`),
     );
-    return { satisfied: false };
+    return { status: 'validated', changed: false };
   }
 
   if (!reuseBranch) {
@@ -185,16 +226,7 @@ export async function ensureVersionFileChangePr(
       body: input.prBody,
     });
     events.push(info(`Opened PR: ${pr.url}`));
-    const am = await github.enableAutoMerge(pr.url);
-    if (am.outcome === 'enabled') {
-      events.push(info('Auto-merge requested — lands when required checks pass.'));
-    } else {
-      events.push(
-        info(
-          `Auto-merge not requested (${am.reason}); the PR stays open for a normal merge after CI.`,
-        ),
-      );
-    }
+    await requestAutoMerge(github, pr.url, events);
   } else {
     events.push(
       warn(
@@ -210,7 +242,7 @@ export async function ensureVersionFileChangePr(
     );
   }
 
-  return { satisfied: false };
+  return { status: 'pr-pending', changed: true };
 }
 
 function safeParse(raw: string): VersionFile | null {

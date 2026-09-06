@@ -37,7 +37,13 @@ export {
   type PromoteResult,
   type PromotionTarget,
 } from './app/promote.js';
-export { ensureVersionFileChangePr, checkSingleVersionFileCommit } from './app/version-pr.js';
+export {
+  ensureVersionFileChangePr,
+  checkSingleVersionFileCommit,
+  requestAutoMerge,
+  type EnsureVersionFilePrResult,
+  type VersionPrStatus,
+} from './app/version-pr.js';
 export { createProgram } from './cli/program.js';
 export type { CliContext } from './cli/context.js';
 export { hasCiGithubReleaseToken, wantsExecute } from './cli/context.js';

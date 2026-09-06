@@ -11,6 +11,7 @@ import { parseVersionFile, versionFileText, type VersionFile } from '../domain/v
 import { InconsistentStateError, UsageError, errorMessage } from '../errors.js';
 import type { GitClient, GitHubClient } from '../ports.js';
 import { info, type ActionEvent } from './events.js';
+import { requestAutoMerge } from './version-pr.js';
 
 type ValidCutPlan = Extract<CutPlan, { ok: true }>;
 
@@ -106,6 +107,11 @@ export async function executeReleaseCut(
           `${releaseBranch} is already cut correctly and the main-bump PR is open:\n  ${openBumpPr.url}`,
         ),
       );
+      // Converge auto-merge — a re-run repairs a bump PR whose earlier
+      // auto-merge request failed transiently.
+      if (hasToken && mutate) {
+        await requestAutoMerge(github, openBumpPr.url, events);
+      }
       events.push(info('Nothing to do — merge that PR to finish.'));
       return { events, plan, alreadyDone: true, mutated: false };
     }
@@ -192,14 +198,7 @@ export async function executeReleaseCut(
   if (hasToken) {
     const pr = await github.createPullRequest({ head: bumpBranch, base: 'main', title, body });
     events.push(info(`Opened main-bump PR: ${pr.url}`));
-    const am = await github.enableAutoMerge(pr.url);
-    events.push(
-      info(
-        am.outcome === 'enabled'
-          ? 'Auto-merge requested — lands when required checks pass.'
-          : `Auto-merge not requested (${am.reason}); the PR stays open for a normal merge after CI.`,
-      ),
-    );
+    await requestAutoMerge(github, pr.url, events);
   } else {
     events.push(info(''));
     events.push(

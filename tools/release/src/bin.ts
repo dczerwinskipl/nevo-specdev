@@ -19,7 +19,7 @@ async function main(argv: string[]): Promise<number> {
   const repoRoot = findRepoRoot(dirname(fileURLToPath(import.meta.url)));
   const program = createProgram({
     git: createGitClient(repoRoot),
-    github: createGitHubClient(repoRoot),
+    github: createGitHubClient(repoRoot, process.env),
     syncGit: createSyncGitReader(repoRoot),
     readWorkingVersion: () => readWorkingVersion(repoRoot),
     env: process.env,
