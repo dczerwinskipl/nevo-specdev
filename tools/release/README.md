@@ -27,23 +27,37 @@ nevo-release check-transition [--json]
     # channel -> its origin/release/vX.Y). There is no BASE_REF override.
 
 nevo-release cut-line --release-version X.Y.Z --next-development-version X.Y.Z [--execute]
-    # Cut release/vX.Y off the current origin/main. Without --execute: validate only.
-    # With it: validate origin/main's own version.json at the fetched base commit
-    # (must be alpha on the release version), then create release/vX.Y and the
-    # chore/bump-main-to-<next> branch by git plumbing (no working-tree changes), and
-    # either open the main-bump PR (RELEASE_TOKEN present) or print the exact
-    # `gh pr create` command. Env fallbacks: RELEASE_VERSION, NEXT_DEVELOPMENT_VERSION.
+    # Cut release/vX.Y off the current origin/main. ONE operation, explicit mutation
+    # boundary: without --execute it runs EVERY read-only check (origin/main + its
+    # version.json at the fetched base; an existing release/bump branch's *contents*;
+    # PR state) and reports "would this succeed now?" — creating nothing. A dry run
+    # that passes means the real run proceeds.
+    #   - a prior run is recognised only by CONTENT: an existing release/vX.Y must be a
+    #     single commit on an alpha <releaseVersion> base changing only version.json to
+    #     beta <releaseVersion>; the bump branch (if present) the mirror on the same
+    #     base. A merged bump PR (main already on the next alpha) = fully complete.
+    #     Inconsistent contents -> fail closed, never overwritten / force-pushed.
+    #   - with --execute: create both branches by git plumbing (no working-tree change),
+    #     then open the main-bump PR (RELEASE_TOKEN present) or print the exact
+    #     `gh pr create` command. Env fallbacks: RELEASE_VERSION, NEXT_DEVELOPMENT_VERSION.
 
 nevo-release create --channel beta|rc|stable [--execute]
-    # Run on a release/vX.Y branch. Two independent idempotent phases:
-    #   A. ensure the tag + its GitHub Release exist — the branch HEAD must have PASSED
-    #      quality + test + build on GitHub (newest run per check); an orphaned last
-    #      prerelease tag on HEAD is completed rather than skipped to N+1; a tag at a
-    #      different commit is refused.
-    #   B. for a stable release, ensure the branch advances to the next patch's beta —
-    #      reached even when phase A was a no-op. PR already open -> nothing; branch
-    #      missing -> create + hand off PR; valid branch, no PR -> reuse + create PR;
-    #      inconsistent branch -> fail closed, never force-push.
+    # Run on a release/vX.Y branch. ONE operation, explicit mutation boundary: without
+    # --execute it runs every read-only check and reports what would happen, changing
+    # nothing. Checks (both modes):
+    #   - after fetch, the local release-branch HEAD must equal origin/<branch> — a
+    #     behind / diverged / unresolvable checkout is refused (§ stale checkout);
+    #   - the branch HEAD must have PASSED quality + test + build on GitHub (newest run
+    #     per check); an unreadable check-run response is refused;
+    #   - Phase A — tag + GitHub Release: orphaned last prerelease tag on HEAD is
+    #     completed, not skipped to N+1; a tag at a different commit is refused; if the
+    #     Release state cannot be DETERMINED (auth/network/ambiguous) it fails closed,
+    #     never assuming "absent".
+    #   - Phase B (stable) — advance the branch, reached even when Phase A was a no-op.
+    #     An existing advance branch is reused only when read-only Git inspection proves
+    #     it is a single commit on the current origin/release/vX.Y HEAD changing only
+    #     version.json to the expected next state. Extra file / wrong base / wrong
+    #     content -> fail closed, never force-pushed, never turned into a PR.
     # Env fallbacks: RELEASE_CHANNEL, EXECUTE, RELEASE_TOKEN_PRESENT.
 ```
 
@@ -62,9 +76,13 @@ src/
   bin.ts      executable boundary
 ```
 
-Application code never touches `child_process`, `process`, or stdio. Errors:
-`UsageError` (exit 2) / `InconsistentStateError` (exit 1), rendered only at the CLI
-boundary; `--json` errors are structured.
+Application code never touches `child_process`, `process`, or stdio. `GitClient`
+exposes only read-only history inspection (`commitParents`, `changedFiles`,
+`showFileAtRef`, `resolveCommit`) plus the mutation methods, so the structural
+recovery checks run without any plumbing writes. Errors: `UsageError` (exit 2) /
+`InconsistentStateError` (exit 1), rendered only at the CLI boundary; `--json` errors
+are structured. `GitHubClient` reads fail closed — an ambiguous `gh` failure never
+reads as "resource absent".
 
 ## Tests
 

@@ -77,19 +77,24 @@ Run **`Cut release line`** (Actions → Run workflow). It always cuts from the *
 | `next_development_version` | Next line for `main` — **next minor** (`1.4.0`) or **next major** (`2.0.0`). Required; never inferred. |
 | `execute`                  | Unchecked = validate only. Checked = act.                                                              |
 
-With `execute` it:
+`execute` unchecked = **validate-only**: every check below runs, nothing is changed —
+a dry run that passes means the real run would proceed. It:
 
 1. validates the versions (adjacent minor/major only);
-2. fails closed if the remote is unreachable, and reports (does not silently resume) a
-   half-finished previous run;
-3. **reads `origin/main`'s own `version.json` at the fetched base commit** (never the
-   working tree) and refuses unless it is `channel: alpha` on exactly `release_version`,
-   with `next_development_version` as that version's next minor or major — so a line is
-   never cut from a `main` that has already moved on;
-4. creates `release/vX.Y` at `origin/main` **plus one commit setting that branch's
-   `version.json` to `{ "channel": "beta", "version": "<release_version>" }`** and
-   pushes `chore/bump-main-to-<next>` (which sets `main`'s `version.json` to
-   `{ "channel": "alpha", "version": "<next_development_version>" }`). Both commits are
+2. `git fetch`, then **reads `origin/main`'s own `version.json` at the fetched base
+   commit** (never the working tree) and refuses unless it is `channel: alpha` on
+   exactly `release_version`, with `next_development_version` as that version's next
+   minor or major. A PR-list query failure fails closed (not read as "no PR");
+3. **recognises a prior run only by CONTENT, never by branch/PR name.** An existing
+   `release/vX.Y` is accepted only when read-only Git inspection shows it is a single
+   commit on an `alpha <release_version>` base changing **only** `version.json` to
+   `beta <release_version>`; the `chore/bump-main-to-<next>` branch (when present) must
+   be the mirror on the same base. A merged bump PR (`origin/main` already on
+   `alpha <next>`) is recognised as fully complete. Inconsistent contents → fail
+   closed, never overwritten, never force-pushed;
+4. execute: creates `release/vX.Y` at `origin/main` **plus one commit setting that
+   branch's `version.json` to `beta <release_version>`** and pushes
+   `chore/bump-main-to-<next>` (`alpha <next_development_version>`). Both commits are
    built with git plumbing — the workflow's working tree is never touched.
 
 ### Landing the main-bump PR
@@ -124,29 +129,37 @@ rejects the rest.
 
 Run **`Release`** from a `release/vX.Y` branch:
 
-| Input     | Meaning                    |
-| --------- | -------------------------- |
-| `channel` | `beta` \| `rc` \| `stable` |
-| `execute` | Unchecked = validate only. |
+| Input     | Meaning                                                               |
+| --------- | --------------------------------------------------------------------- |
+| `channel` | `beta` \| `rc` \| `stable`                                            |
+| `execute` | Unchecked = **validate-only**: run every check below, change nothing. |
 
-It validates the branch, that `version.json`'s version is on that line, and that its
-channel equals the requested one (**promote first** otherwise). Then:
+**Validate-only is real validation, not a rubber stamp.** It runs every read-only
+check the execute path runs and answers _"would this succeed right now?"_ — it just
+never creates a commit / branch / tag / Release / PR / auto-merge. A dry run that
+"passes" means the real run would proceed.
 
-1. **verifies the release-branch HEAD passed CI** — `quality`, `test` and `build`
-   check-runs must all be `success` on that commit (not `pr-title`, which is PR-only).
-   A freshly-cut branch or a red commit is refused;
-2. computes the tag:
-   - `beta` / `rc` → the next number in that channel's sequence from the existing tags
-     (`v1.3.0-beta.1`, `-beta.2`, `-rc.1`, …);
-   - `stable` → `v1.3.0` (refused if it exists);
-3. **recovery-safe execution**: if the tag already exists and points at the same HEAD,
-   it only creates the missing GitHub Release (or does nothing if both exist); if it
-   points elsewhere, it refuses loudly. It never bumps `-beta.2` just because
-   `-beta.1`'s tag exists without a Release;
-4. creates the annotated tag + a GitHub Release (`--prerelease` for beta/rc, generated
-   notes). **No npm package is published.**
+The checks, in order (all performed in both modes):
 
-Phases 3–4 (the tag + Release) and the stable branch-advance below are **independent
+1. **local checkout is current** — after `git fetch`, the release-branch local HEAD
+   must equal `origin/<release branch>`. A behind or diverged checkout is refused
+   (`git pull --ff-only` and retry); an unresolvable `origin/<branch>` fails closed.
+   The release always tags the current remote protected-branch commit.
+2. branch / version-in-line / channel (**promote first** if the channel does not match);
+3. **the release-branch HEAD passed CI** — `quality`, `test` and `build` check-runs
+   must all be `success` on that commit (not `pr-title`, which is PR-only). A
+   freshly-cut branch, a red commit, or an unreadable check-run response is refused;
+4. tag selection: `beta` / `rc` → the next number in that channel's sequence from the
+   existing tags; `stable` → `v1.3.0`;
+5. **recovery-safe**: the target tag already on HEAD with its Release → nothing; on
+   HEAD without a Release → create just the missing Release; pointing elsewhere →
+   refuse loudly; an orphaned last prerelease tag on HEAD is completed, never skipped
+   to `-beta.2`. If the GitHub Release state cannot be **determined** (auth, network,
+   404-vs-outage ambiguity), the run fails closed rather than assuming "absent".
+6. execute: create the annotated tag + a GitHub Release (`--prerelease` for beta/rc,
+   generated notes). **No npm package is published.**
+
+The tag + Release (step 6) and the stable branch-advance below are **independent
 idempotent steps**: a re-run after "tag done, advance failed" still performs the
 advance — it is not skipped just because the tag is already complete.
 
@@ -154,10 +167,14 @@ advance — it is not skipped just because the tag is already complete.
 
 A `stable` release also ensures the branch moves to
 `{ channel: "beta", version: "<next patch>" }`, so later commits report
-`X.Y.(Z+1)-beta.<n>` — never the already-shipped `X.Y.Z`. If that advance PR is already
-open it does nothing; if the advance branch exists and is consistent it reuses it and
-just opens the PR; an inconsistent advance branch is refused, never force-pushed. (Same
-`RELEASE_TOKEN` / manual-`gh pr create` rule as above.)
+`X.Y.(Z+1)-beta.<n>` — never the already-shipped `X.Y.Z`. The advance branch
+(`chore/advance-release-vX.Y-to-X.Y.(Z+1)`) is **reused only when it structurally
+matches** the intended operation: read-only Git inspection must show it is a single
+commit on top of the current `origin/release/vX.Y` HEAD that changes **only**
+`version.json`, to exactly the expected next state. An advance branch with an extra
+file, a wrong base, or wrong content is **refused** — never force-pushed, never turned
+into a PR. If the advance PR is already open, nothing happens. (Same `RELEASE_TOKEN` /
+manual-`gh pr create` rule as above.)
 
 ## Hotfix on a released line
 
