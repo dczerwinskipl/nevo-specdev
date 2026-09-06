@@ -40,8 +40,14 @@ are also the owner.
 
 ## Boundaries
 
-- The dashboard is **file-backed and observational**. YAML/Markdown specs and Git/PR
-  state remain the source of truth; the dashboard reflects them and offers the gated
-  owner actions — it is not a separate database or a replacement for the CLI and the
-  GitHub PR flow.
+- The dashboard is **observational and steering, not authoritative**. It shows the
+  state of specifications, tasks, changes and PRs and offers the same gated owner
+  actions the CLI does — it is not a place where work is authored or where a second
+  copy of the state is maintained, and it does not replace the CLI or the GitHub PR
+  flow.
 - Anything an agent or CI does is done through the CLI/workflow, not the dashboard.
+
+> **Provisional:** the upstream Nevo dashboard is file-backed (it reads the spec
+> YAML/Markdown and Git/PR state directly, with no separate database). Whether Nevo
+> SpecDev keeps exactly that is a storage/architecture decision for the migration —
+> it will be recorded in [`architecture/`](../../architecture/), not asserted here.

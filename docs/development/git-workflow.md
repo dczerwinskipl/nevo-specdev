@@ -66,22 +66,27 @@ gh pr create --fill        # edit the title to Conventional Commits form
 
 ## Maintained release lines
 
-A release line is cut with the **`cut-release-line`** GitHub Actions workflow, which
-takes explicit inputs (`release line`, `next development version`) rather than inferring
-the next version. See [`architecture/repository-structure.md`](../architecture/repository-structure.md)
-and ADR [`0003-branch-and-release-model`](../architecture/decisions/0003-branch-and-release-model.md).
+A release line is cut with the **`cut-release-line`** workflow, which takes the release
+version and the explicitly chosen next development version (next minor **or** next
+major) as inputs — it never infers that choice.
 
 ```text
-release/v1.3  ──►  v1.3.0 ──► v1.3.1 ──► v1.3.2   (tags on the branch)
-main          ──►  1.4.0-alpha.<build>  (or 2.0.0-alpha.<build> if the next work breaks compat)
+release/v1.3  ──►  stabilizes 1.3.x: beta → rc → stable → patches
+main          ──►  1.4.0-alpha.<build>   (or 2.0.0-alpha.<build> if the next work breaks compatibility)
 ```
+
+The channel model (`beta` / `rc` / `stable`), the intentional prerelease tag sequence
+(`v1.3.0-beta.1`, `-beta.2`, `-rc.1`, …), and the `release` workflow are in
+[releasing](releasing.md). ADR
+[`0003-branch-and-release-model`](../architecture/decisions/0003-branch-and-release-model.md).
 
 ## Hotfix on a released line
 
 1. A security/critical issue affects `1.3` while `main` has moved on.
 2. `git switch release/v1.3 && git switch -c fix/security-xyz`
 3. PR into `release/v1.3` — same review + CI gate, squash merge.
-4. Tag `v1.3.1` from `release/v1.3`; publish a GitHub Release from the tag.
+4. Promote and release the patch via the [`release` workflow](releasing.md#releasing-a-version)
+   — an optional `v1.3.1-rc.1`, then `v1.3.1`.
 5. **Forward-port** the fix to `main` and any other maintained release lines with
    their own PRs.
 

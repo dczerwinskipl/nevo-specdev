@@ -86,26 +86,27 @@ never left permanently pending. Inspect what a change would run with
 ## Versioning and release lines
 
 SemVer. One product version concept (Nevo SpecDev); internal packages are not
-independently versioned yet.
+independently versioned yet. Each branch carries `version.json` = `{ channel, version }`.
 
-- **`main`** is always the _next development version_, expressed as a prerelease:
-  `1.4.0-alpha.<build>` or `2.0.0-alpha.<build>`. The build identifier is derived
-  deterministically in CI (GitHub run number, optionally plus commit identity). The
-  build number is **not** committed on every change; durable version-line metadata
-  lives in the repository and CI derives the build version from it.
-- **`release/vX.Y`** — one long-lived branch per maintained minor line. It owns the
-  whole `X.Y.z` patch series. Tags (`vX.Y.0-rc.1`, `vX.Y.0`, `vX.Y.1`) are cut from
-  that branch, never from an arbitrary `main` commit.
-- **Cutting a line** is a manually-triggered workflow with explicit inputs — the
-  release line (e.g. `1.3.0`) and the next development version (`1.4.0` **or**
-  `2.0.0`). GitHub does not infer minor-vs-major; that choice is semantic and stated
-  by a human. The workflow validates SemVer, checks the branch does not exist, creates
-  `release/vX.Y` from the right `main` commit, sets each branch's version state, and
-  moves `main` to the chosen next alpha line via PRs — never a direct write to
-  protected `main`.
+- **`main`** is always the _next development version_: `channel: alpha`, `version` =
+  the next `X.Y.0`. CI publishes it as `<version>-alpha.<run-number>`. The run number
+  is a build identifier, not committed per change.
+- **`release/vX.Y`** — one long-lived branch per maintained minor line, owning the
+  whole `X.Y.z` series. Its `channel` moves `beta` → `rc` → `stable` and then repeats
+  for each patch; CI publishes `<version>-<channel>.<run>` (or the plain `<version>` on
+  `stable`).
+- **Public tags** are cut only from a `release/vX.Y` branch, never from an arbitrary
+  `main` commit, and prereleases follow an **intentional sequence**
+  (`v1.3.0-beta.1`, `-beta.2`, `-rc.1`, `v1.3.0`, `v1.3.1`, …) computed from existing
+  tags — not from the build number.
+- **Cutting a line** is a manually-triggered workflow taking the release version and
+  the next development version (next minor **or** next major — never inferred). It
+  creates `release/vX.Y` with its own `version.json` already committed, and moves
+  `main` forward through a PR, never a direct write.
 
-See ADR [`0003-branch-and-release-model`](decisions/0003-branch-and-release-model.md)
-and [git-workflow](../development/git-workflow.md).
+See [releasing](../development/releasing.md), ADR
+[`0003-branch-and-release-model`](decisions/0003-branch-and-release-model.md), and
+[git-workflow](../development/git-workflow.md).
 
 ## 0.x policy
 

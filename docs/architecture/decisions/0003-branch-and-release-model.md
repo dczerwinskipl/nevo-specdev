@@ -50,23 +50,35 @@ produced from `release/v1.3` — the branch name stays at the minor granularity.
   [Conventional Commits](../development/commit-conventions.md).
 - Linear history; force-push and branch deletion blocked; merged head branches
   auto-deleted.
-- Required status checks green; review conversations resolved; no blocking
-  `Request changes`.
-- `CODEOWNERS` records the authorized reviewer(s). The required-approval count is a
-  ruleset setting, managed through GitHub as maintainers are added, so it always
-  matches the people actually available to review.
+- Strict required status checks green; review conversations resolved; no blocking
+  `Request changes`; GitHub's own merge-conflict block (no custom check).
+- **Review is by repository access, not a file.** There is no `.github/CODEOWNERS`;
+  collaborators/teams are managed in GitHub. The required-approval count is a ruleset
+  setting. The **target** is 1 eligible approval; it is **not applied yet** because a
+  single collaborator cannot approve their own PR, so the ruleset currently requires 0
+  and the gap is recorded in `scripts/github/repository-policy.json` and reported on
+  every configure run. The admin step to close it (add a second Write collaborator) is
+  documented, not silently deferred.
 
 **Versioning**
 
-- The build identifier in `main`'s prerelease version is derived deterministically in
-  CI from durable version-line metadata in the repository — it is not committed per
-  change.
-- Stable and RC tags are cut from a `release/vX.Y` branch, not from an arbitrary
-  `main` commit.
-- Cutting a release line is a manually-triggered workflow that takes the release line
-  and the next development version (next minor **or** next major) as explicit inputs.
-  It validates the SemVer inputs, creates `release/vX.Y` from the intended `main`
-  commit, sets each branch's version state, and advances `main` through pull requests.
+- `version.json` on each branch is `{ channel, version }`. `main`: `channel: alpha`,
+  `version` = the next development `X.Y.0`. `release/vX.Y`: `channel` is
+  `beta` → `rc` → `stable` (then the next patch), `version` = the `X.Y.Z` being
+  stabilized. CI derives the build version from this file plus the run number; on a
+  `stable` channel it is the plain `X.Y.Z`. It is not rewritten per change.
+- **Public prerelease tags are an intentional sequence** (`v1.3.0-beta.1`, `-beta.2`,
+  `-rc.1`, …) computed from existing tags by the `release` workflow — the CI build
+  number is never a public release number.
+- Stable and prerelease tags are created only from a `release/vX.Y` branch, never from
+  an arbitrary `main` commit.
+- Cutting a release line is a manually-triggered workflow that takes the release
+  version and the next development version (next minor **or** next major) as explicit
+  inputs. It creates `release/vX.Y` **with its own `version.json`** already set to the
+  `beta` channel — so the branch's first CI run has a valid version without any
+  cross-branch lookup — and advances `main` through a pull request. The
+  `required_status_checks` ruleset uses `do_not_enforce_on_create: true` so that
+  branch-creating push is allowed while every later push is gated.
 
 ## Consequences
 

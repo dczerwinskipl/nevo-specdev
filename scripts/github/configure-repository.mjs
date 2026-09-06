@@ -70,15 +70,22 @@ function reconcileMergeSettings(repo) {
 
 // ── rulesets ─────────────────────────────────────────────────────────────────
 
-/** Build the rules array for one ruleset, injecting required_status_checks when configured. */
+/**
+ * Build one ruleset's `rules`: the base rules, then the shared `pull_request`
+ * rule from `pullRequest.applied`, then `required_status_checks` when configured.
+ */
 function rulesFor(rulesetSpec) {
-  const rules = rulesetSpec.rules.map((r) => ({ ...r }));
+  const rules = (rulesetSpec.baseRules ?? []).map((r) => ({ ...r }));
+
+  rules.push({ type: 'pull_request', parameters: { ...POLICY.pullRequest.applied } });
+
   const rsc = POLICY.requiredStatusChecks;
   if (rsc && Array.isArray(rsc.checks) && rsc.checks.length > 0) {
     rules.push({
       type: 'required_status_checks',
       parameters: {
         strict_required_status_checks_policy: rsc.strict !== false,
+        do_not_enforce_on_create: rsc.doNotEnforceOnCreate === true,
         required_status_checks: rsc.checks.map((context) => ({ context })),
       },
     });
@@ -148,6 +155,39 @@ function verifyRuleset(repo, id, compare) {
   else log(`ruleset ${id}: verified`);
 }
 
+/**
+ * Loudly report the difference between the applied PR policy and the intended
+ * one. Not a `problem` (it does not fail the run) — but it must never be silent.
+ */
+function reportTargetGap(repo) {
+  const { applied, target, targetBlockedOn } = POLICY.pullRequest;
+  const gaps = Object.keys(target).filter(
+    (k) => JSON.stringify(target[k]) !== JSON.stringify(applied[k]),
+  );
+  if (gaps.length === 0) {
+    log('\nPR review policy: applied == target.');
+    return;
+  }
+  warn('\n────────────────────────────────────────────────────────────────');
+  warn('TARGET PR REVIEW POLICY IS NOT YET APPLIED');
+  warn('────────────────────────────────────────────────────────────────');
+  for (const k of gaps) {
+    warn(`  ${k}: applied=${JSON.stringify(applied[k])}  target=${JSON.stringify(target[k])}`);
+  }
+  warn(`\n  Blocked on: ${targetBlockedOn}`);
+  warn(`  Repo currently has these collaborators:`);
+  try {
+    const collabs = ghApi(`repos/${repo}/collaborators`);
+    for (const c of collabs) {
+      const perm = c.permissions?.admin ? 'admin' : c.permissions?.push ? 'write' : 'read';
+      warn(`    - ${c.login} (${perm})`);
+    }
+  } catch {
+    warn('    (could not list collaborators)');
+  }
+  warn('────────────────────────────────────────────────────────────────');
+}
+
 // ── run ──────────────────────────────────────────────────────────────────────
 
 function main() {
@@ -157,6 +197,7 @@ function main() {
 
   reconcileMergeSettings(repo);
   for (const spec of POLICY.rulesets) reconcileRuleset(repo, spec);
+  reportTargetGap(repo);
 
   log('');
   if (changed.length) {

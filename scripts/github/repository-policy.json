@@ -1,5 +1,5 @@
 {
-  "$comment": "Desired GitHub state for this repository. Consumed by scripts/github/configure-repository.mjs — GitHub does NOT read this file on its own. Edit here, then run the script to apply and verify.",
+  "$comment": "Desired GitHub state. Consumed by scripts/github/configure-repository.mjs — GitHub does NOT read this file. Edit here, then run the script to apply and verify.",
 
   "merge": {
     "allow_squash_merge": true,
@@ -11,9 +11,32 @@
     "squash_merge_commit_message": "PR_BODY"
   },
 
+  "pullRequest": {
+    "$comment": "`applied` is what the rulesets carry now. `target` is the intended end state; it is NOT applied because the repository has a single collaborator and an author cannot approve their own PR, so required_approving_review_count:1 would make every PR unmergeable. See targetBlockedOn.",
+    "applied": {
+      "required_approving_review_count": 0,
+      "dismiss_stale_reviews_on_push": true,
+      "require_code_owner_review": false,
+      "require_last_push_approval": false,
+      "required_review_thread_resolution": true,
+      "require_extra_approval_for_unattributed_changes": false,
+      "allowed_merge_methods": ["squash"]
+    },
+    "target": {
+      "required_approving_review_count": 1,
+      "require_last_push_approval": true,
+      "dismiss_stale_reviews_on_push": true,
+      "required_review_thread_resolution": true,
+      "require_code_owner_review": false,
+      "allowed_merge_methods": ["squash"]
+    },
+    "targetBlockedOn": "Add a second repository collaborator with at least Write access (Settings -> Collaborators, or `gh api -X PUT repos/OWNER/REPO/collaborators/USER -f permission=push`). Only an approving review from a user with write access counts toward the gate; until one exists, count:1 blocks every PR including the author's own. Once done, set pullRequest.applied to pullRequest.target and re-run this script."
+  },
+
   "requiredStatusChecks": {
-    "$comment": "Exact GitHub check-run (job) names, confirmed from a real run. The script adds a strict required_status_checks rule with these to every ruleset below.",
+    "$comment": "Exact check-run (job) names, confirmed from a real run. doNotEnforceOnCreate lets `cut-release-line` create release/vX.Y (a non-PR push, so no checks can have run on it) while still gating every later push.",
     "strict": true,
+    "doNotEnforceOnCreate": true,
     "checks": ["pr-title", "quality", "test", "build"]
   },
 
@@ -24,22 +47,10 @@
       "enforcement": "active",
       "conditions": { "ref_name": { "include": ["refs/heads/main"], "exclude": [] } },
       "bypass_actors": [],
-      "rules": [
+      "baseRules": [
         { "type": "deletion" },
         { "type": "non_fast_forward" },
-        { "type": "required_linear_history" },
-        {
-          "type": "pull_request",
-          "parameters": {
-            "required_approving_review_count": 0,
-            "dismiss_stale_reviews_on_push": true,
-            "require_code_owner_review": false,
-            "require_last_push_approval": false,
-            "required_review_thread_resolution": true,
-            "require_extra_approval_for_unattributed_changes": false,
-            "allowed_merge_methods": ["squash"]
-          }
-        }
+        { "type": "required_linear_history" }
       ]
     },
     {
@@ -48,22 +59,10 @@
       "enforcement": "active",
       "conditions": { "ref_name": { "include": ["refs/heads/release/v*"], "exclude": [] } },
       "bypass_actors": [],
-      "rules": [
+      "baseRules": [
         { "type": "deletion" },
         { "type": "non_fast_forward" },
-        { "type": "required_linear_history" },
-        {
-          "type": "pull_request",
-          "parameters": {
-            "required_approving_review_count": 0,
-            "dismiss_stale_reviews_on_push": true,
-            "require_code_owner_review": false,
-            "require_last_push_approval": false,
-            "required_review_thread_resolution": true,
-            "require_extra_approval_for_unattributed_changes": false,
-            "allowed_merge_methods": ["squash"]
-          }
-        }
+        { "type": "required_linear_history" }
       ]
     }
   ]

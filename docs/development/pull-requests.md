@@ -35,26 +35,37 @@ Every change to `main` and `release/v*` is a pull request. Use
 
 A PR into `main` or `release/v*` can merge only when:
 
-- the **PR title** follows [Conventional Commits](commit-conventions.md) (checked in CI);
-- all **required status checks** pass — `quality`, `test`, `build` (plus `pr-title`);
-- the branch is **up to date** with its base when strict checks require it;
+- the **PR title** follows [Conventional Commits](commit-conventions.md) (`pr-title` check);
+- all **required status checks** pass — `pr-title`, `quality`, `test`, `build` — with the
+  **strict / up-to-date** policy, so the branch must also be current with its base;
 - there are **no unresolved review conversations**;
 - there is **no pending `Request changes` review**;
-- **squash merge** is used (the only method enabled).
+- there are no merge conflicts (GitHub blocks these on its own — there is no custom check);
+- **squash merge** is used (the only method enabled), giving **linear history**.
 
-Merged branches are deleted automatically. Linear history is enforced.
+Merged short-lived branches are deleted automatically. Force-push and branch deletion are
+blocked on the protected targets.
 
-## Review expectations
+## Review policy
 
-This is currently a **single-maintainer** repository. Required-approval count is managed
-in the branch ruleset and adjusted through GitHub when additional maintainers join —
-see [git-workflow](git-workflow.md) and
-[`scripts/github/`](../../scripts/github/README.md). Do not add a self-approval
-requirement that a lone maintainer cannot satisfy.
+Repository access is managed in **GitHub**, not in a file — adding or removing developers
+is an admin operation on collaborators/teams. There is no `.github/CODEOWNERS`.
 
-Regardless of the approval count, the author is expected to self-review the full diff
-before requesting merge: no unrelated changes, tests and docs updated, `pnpm check`
-green locally.
+- **Intended (target) policy:** **1 approving review**, from a user GitHub considers
+  eligible (write access), with stale approvals dismissed on a new reviewable push and
+  the latest push required to be approved.
+- **Currently applied:** **0 required approvals.** The repository has a single
+  collaborator and GitHub does not let an author approve their own PR, so `1` would make
+  every PR unmergeable. This gap is recorded in
+  [`scripts/github/repository-policy.json`](../../scripts/github/repository-policy.json)
+  (`pullRequest.applied` vs `pullRequest.target`) and printed on every
+  `configure-repository.mjs` run.
+- **To reach the target:** an admin adds a second collaborator with Write access, then
+  sets `pullRequest.applied` = `pullRequest.target` and re-runs the script. See
+  [`scripts/github/README.md`](../../scripts/github/README.md#review-policy--applied-vs-target).
+
+Regardless of the approval count, the author self-reviews the full diff before merge: no
+unrelated changes, tests and docs updated, `pnpm check` green locally.
 
 For a change that touches a recorded decision
 ([`architecture/decisions/`](../architecture/decisions/)), update or supersede the ADR

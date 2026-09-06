@@ -1,0 +1,56 @@
+name: Release
+
+# Manually triggered from a release/vX.Y branch. Creates the Git tag and a
+# GitHub Release for the branch's current version + channel. No npm publishing.
+#
+# Promote the branch first (beta -> rc -> stable, or stable -> next patch) by
+# merging a PR that edits version.json — see docs/development/releasing.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: "Release channel"
+        type: choice
+        options: [beta, rc, stable]
+        required: true
+      execute:
+        description: "Create the tag + release (unchecked = validate only)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Guard — release branch only
+        run: |
+          case "${{ github.ref }}" in
+            refs/heads/release/v*) echo "ok: ${{ github.ref }}" ;;
+            *) echo "::error::Run this workflow from a release/vX.Y branch, not ${{ github.ref }}"; exit 1 ;;
+          esac
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+
+      - name: Configure git identity
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_CHANNEL: ${{ inputs.channel }}
+          EXECUTE: ${{ inputs.execute }}
+        run: node scripts/release/release.mjs

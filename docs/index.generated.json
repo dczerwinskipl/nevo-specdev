@@ -1,5 +1,4 @@
 {
-  "generated": "2026-09-06T09:04:30.056Z",
   "docs": [
     {
       "id": "docs.architecture-decisions-readme",
@@ -351,12 +350,13 @@
       "status": "current",
       "file": "docs/development/releasing.md",
       "read_when": [
+        "understanding what version main or a release branch reports",
         "cutting a maintained release line",
-        "tagging a release or release candidate",
-        "understanding what version main and a release branch report",
+        "promoting a release branch (beta -> rc -> stable) or starting a patch",
+        "tagging a beta / rc / stable release",
         "applying a hotfix to a released line"
       ],
-      "summary": "How the version model works in practice: version.json as durable metadata, CI-derived build versions, the cut-release-line workflow, tagging from release branches, and the 0.x policy. The model itself is in architecture/repository-structure.md.",
+      "summary": "The version model (version.json = channel + version), CI-derived build versions, the cut-release-line and release workflows, the beta -> rc -> stable -> patch channel flow, intentional prerelease tag sequences, and the pre-1.0 policy.",
       "related": [
         "architecture.repository-structure",
         "adr.0003-branch-and-release-model",
@@ -430,7 +430,7 @@
         "designing progressive disclosure or an inspector",
         "doing visual verification before marking UI work done"
       ],
-      "summary": "Engineering rules for building UI: validate the composed screen, semantic typography/color/spacing tokens, information hierarchy, progressive disclosure levels, and mandatory visual self-review. Condensed from the upstream Nevo UI/UX guidelines; expands during dashboard migration.",
+      "summary": "Portable engineering rules for building UI: validate the composed screen, semantic typography/color/spacing tokens, information hierarchy, progressive disclosure, and mandatory visual self-review. Product-specific UX (AI sessions, dashboard screens) is under product/dashboard/.",
       "related": [
         "development.ui.react.component-guidelines",
         "development.ui.tailwind.styling-guidelines",

@@ -1,24 +1,24 @@
 name: Cut release line
 
-# Manually triggered. Branches release/vX.Y off main and opens the PR that moves
-# main to the explicitly chosen next development line. The next version is an
-# input — this workflow never infers minor-vs-major.
+# Manually triggered. Creates `release/vX.Y` off `main` (with its own version.json
+# set to the beta channel) and opens the PR that moves `main` onto the explicitly
+# chosen next line. The next version is an input — never inferred.
 
 on:
   workflow_dispatch:
     inputs:
       release_version:
-        description: "Version this line stabilizes, e.g. 0.1.0"
+        description: "Version this line stabilizes, e.g. 1.3.0"
         required: true
       next_development_version:
-        description: "Next development line for main — next minor OR next major, e.g. 0.2.0 or 1.0.0"
+        description: "Next line for main — next minor OR next major, e.g. 1.4.0 or 2.0.0"
         required: true
-      from_sha:
-        description: "Commit on main to cut from (default: current origin/main)"
+      from_ref:
+        description: "Commit/ref on main to cut from (default: current origin/main)"
         required: false
         default: ""
       execute:
-        description: "Actually create the branch and PR (unchecked = validate only)"
+        description: "Create the branch and PR (unchecked = validate only)"
         type: boolean
         default: false
 
@@ -35,12 +35,12 @@ jobs:
     name: cut
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-          # A PAT here (repo scope) lets the main-bump PR trigger CI so auto-merge
-          # can land it. With the default GITHUB_TOKEN the bump PR opens but its
-          # checks never start — a maintainer merges it by hand. See
+          # A PAT (repo scope) lets the main-bump PR trigger CI so auto-merge can
+          # land it. With the default GITHUB_TOKEN the PR opens but its checks
+          # never start — a maintainer merges it by hand. See
           # docs/development/releasing.md.
           token: ${{ secrets.RELEASE_TOKEN || github.token }}
       - uses: ./.github/actions/setup
@@ -51,11 +51,12 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Cut
+        # Inputs are passed as environment variables, never interpolated into the
+        # command line.
         env:
           GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
-        run: |
-          node scripts/release/cut-release-line.mjs \
-            --release-version "${{ inputs.release_version }}" \
-            --next-development-version "${{ inputs.next_development_version }}" \
-            ${{ inputs.from_sha && format('--from {0}', inputs.from_sha) || '' }} \
-            ${{ inputs.execute && '--execute' || '--check' }}
+          RELEASE_VERSION: ${{ inputs.release_version }}
+          NEXT_DEVELOPMENT_VERSION: ${{ inputs.next_development_version }}
+          FROM_REF: ${{ inputs.from_ref }}
+          EXECUTE: ${{ inputs.execute }}
+        run: node scripts/release/cut-release-line.mjs

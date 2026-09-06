@@ -64,8 +64,9 @@ behavior changes; for a grouped PR, note anything that isn't purely mechanical.
 
 ## GitHub Action pinning
 
-Actions are pinned to **release tags**, not SHAs. The trade-off and the upgrade path
-are documented in [`.github/workflows/README.md`](../../.github/workflows/README.md).
+Every `uses:` is pinned to a **full commit SHA** with a trailing version comment; a tag
+is mutable, a SHA is not. Dependabot's `github-actions` updater keeps both current. The
+table of pins is in [`.github/workflows/README.md`](../../.github/workflows/README.md).
 
 ## Vulnerability reports
 

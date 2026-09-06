@@ -4,14 +4,15 @@ type: development
 title: Releasing and version lines
 status: current
 read_when:
+  - understanding what version main or a release branch reports
   - cutting a maintained release line
-  - tagging a release or release candidate
-  - understanding what version main and a release branch report
+  - promoting a release branch (beta -> rc -> stable) or starting a patch
+  - tagging a beta / rc / stable release
   - applying a hotfix to a released line
 summary: >
-  How the version model works in practice: version.json as durable metadata, CI-derived
-  build versions, the cut-release-line workflow, tagging from release branches, and the
-  0.x policy. The model itself is in architecture/repository-structure.md.
+  The version model (version.json = channel + version), CI-derived build versions, the
+  cut-release-line and release workflows, the beta -> rc -> stable -> patch channel
+  flow, intentional prerelease tag sequences, and the pre-1.0 policy.
 related:
   - architecture.repository-structure
   - adr.0003-branch-and-release-model
@@ -20,98 +21,129 @@ related:
 
 # Releasing and version lines
 
-The model — `main` as the next development version, one long-lived `release/vX.Y` per
-maintained minor line, explicit next-version choice — lives in
-[repository-structure](../architecture/repository-structure.md#versioning-and-release-lines)
-and ADR [0003](../architecture/decisions/0003-branch-and-release-model.md). This page
-is the operational detail.
-
-## Durable metadata: `version.json`
+## `version.json` — one schema per branch
 
 ```jsonc
-{
-  "development": { "line": "0.1.0", "channel": "alpha" }, // what main represents
-  "releaseLines": [], // one entry per maintained line, added when it's cut
-}
+{ "channel": "alpha", "version": "0.1.0" }
 ```
 
-It is **not** rewritten per change. Only a deliberate line bump or the release-cut flow
-touches it.
+| Branch         | `channel`                                                 | `version`                              |
+| -------------- | --------------------------------------------------------- | -------------------------------------- |
+| `main`         | `alpha`                                                   | the next development `X.Y.0`           |
+| `release/vX.Y` | `beta` → `rc` → `stable`, then repeats for the next patch | the `X.Y.Z` currently being stabilized |
 
-## Derived build version
+It is **not** rewritten per change. Only cutting a line and promoting a branch edit it,
+each through a PR.
 
-`scripts/release/version.mjs` (`pnpm version:print`) computes the full version from
-`version.json` plus the CI environment:
+## CI build version
 
-| Where            | Version                                                                        |
-| ---------------- | ------------------------------------------------------------------------------ |
-| `main`, or local | `<line>-<channel>.<GITHUB_RUN_NUMBER>` — e.g. `0.1.0-alpha.42` (`0` locally)   |
-| `release/vX.Y`   | the exact `version` recorded for that line — e.g. `0.1.0`, no prerelease stamp |
+`scripts/release/version.mjs` (`pnpm version:print`) derives the build version from
+`version.json` + the CI environment:
 
-The build number is the run number: deterministic, never committed.
-`--with-sha` appends `+<short-sha>` build metadata.
+| Situation                                    | Build version                                                     |
+| -------------------------------------------- | ----------------------------------------------------------------- |
+| `channel: alpha` / `beta` / `rc`             | `<version>-<channel>.<GITHUB_RUN_NUMBER>` — e.g. `1.3.0-beta.147` |
+| `channel: stable`                            | `<version>` — e.g. `1.3.0`                                        |
+| ref is a tag `refs/tags/vX.Y.Z[-beta\|rc.N]` | that exact version — never re-derived                             |
+
+`--with-sha` appends `+<short-sha>` build metadata. The run number is a **build
+identifier**, not a release number.
+
+## Channels and promotion
+
+```text
+main                     alpha
+  │  cut-release-line
+  ▼
+release/v1.3   beta ──promote──▶ rc ──promote──▶ stable
+                                                   │  (1.3.0 shipped)
+                                                   ▼
+                                       rc (or beta) of 1.3.1 ──▶ stable ──▶ 1.3.2 …
+```
+
+**Promotion is a one-line edit to `version.json` on the release branch, via a PR.**
+`scripts/release/version.mjs` exports `planPromotion` (used by tests) which encodes the
+legal transitions:
+
+| From     | To          | Result                               |
+| -------- | ----------- | ------------------------------------ |
+| `beta`   | `rc`        | same version, channel `rc`           |
+| `rc`     | `stable`    | same version, channel `stable`       |
+| `stable` | `rc`/`beta` | `version` → next patch, that channel |
+
+Anything else (e.g. `beta` → `stable`, or skipping) is rejected.
 
 ## Cutting a release line
 
-Use the **`Cut release line`** workflow (Actions → Run workflow). Inputs:
+Run the **`Cut release line`** workflow (Actions → Run workflow):
 
 | Input                      | Meaning                                                                                                |
 | -------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `release_version`          | Version this line stabilizes, e.g. `0.1.0`.                                                            |
-| `next_development_version` | Next line for `main` — **next minor** (`0.2.0`) or **next major** (`1.0.0`). Required; never inferred. |
-| `from_sha`                 | Commit on `main` to cut from (default: current `origin/main`).                                         |
+| `release_version`          | The version this line stabilizes, e.g. `1.3.0`.                                                        |
+| `next_development_version` | Next line for `main` — **next minor** (`1.4.0`) or **next major** (`2.0.0`). Required; never inferred. |
+| `from_ref`                 | Commit/ref on `main` to cut from (default: `origin/main`).                                             |
 | `execute`                  | Unchecked = validate only. Checked = create the branch + open the PR.                                  |
 
-With `execute`, the workflow:
+With `execute` the workflow:
 
-1. validates both versions are plain SemVer and that the next is the adjacent minor or
-   major of the release version;
-2. confirms `release/vX.Y` does not already exist;
-3. pushes `release/vX.Y` at the chosen `main` commit;
-4. opens a PR (`chore/bump-main-to-<next>-alpha`) that sets
-   `version.json#development.line` to the next line and appends the `releaseLines`
-   entry.
+1. validates both versions are plain SemVer and the next is the adjacent minor or major;
+2. checks (failing closed on any git/network error) that `release/vX.Y` does not already
+   exist and no stale bump PR is open — a half-finished previous run is reported, not
+   silently resumed;
+3. creates `release/vX.Y` at the chosen `main` commit **plus one commit that sets that
+   branch's `version.json` to `{ "channel": "beta", "version": "<release_version>" }`**
+   — so the branch's first CI run has a valid version with no cross-branch lookup;
+4. opens `chore/bump-main-to-<next>` — a PR that sets `main`'s `version.json` to
+   `{ "channel": "alpha", "version": "<next_development_version>" }`.
+
+### Why branch creation is allowed
+
+`release/v*` is protected, but the `required_status_checks` rule is set with
+`do_not_enforce_on_create: true`: the one creating push (which cannot go through a PR
+and cannot have CI results) is allowed; every later push is fully gated. Deleting the
+branch is still blocked. Verified against the live ruleset. To remove a
+mistakenly-created release branch, an admin temporarily sets the ruleset's
+`enforcement` to `disabled`, deletes it, and re-runs `configure-repository.mjs`.
 
 ### The main-bump PR and CI
 
-`main` is protected, so the bump lands by PR like any other change. A PR opened with
-the default `GITHUB_TOKEN` **does not trigger workflows**, so its required checks never
-start and auto-merge cannot complete it. To fully automate:
+A PR opened by the default `GITHUB_TOKEN` does **not** trigger workflows, so its
+required checks never start and auto-merge cannot complete it. Add a repository secret
+**`RELEASE_TOKEN`** (a fine-grained PAT with `contents: write` + `pull requests: write`)
+and the workflow uses it for checkout and PR creation; CI then runs and `--auto
+--squash` lands it. Without `RELEASE_TOKEN`, the branch and PR are still created — a
+maintainer merges the PR by hand. Nothing is silently skipped.
 
-- add a repository secret **`RELEASE_TOKEN`** — a fine-grained PAT with
-  `contents: write` and `pull requests: write` on this repository. The workflow uses it
-  for checkout and PR creation, CI then runs on the bump PR, and `--auto --squash`
-  merges it when checks pass.
+## Releasing a version
 
-Without `RELEASE_TOKEN` the workflow still creates the release branch and opens the
-bump PR; a maintainer merges that PR by hand once CI is green. Nothing is silently
-skipped.
+Run the **`Release`** workflow **from a `release/vX.Y` branch**:
 
-## Tagging a release
+| Input     | Meaning                    |
+| --------- | -------------------------- |
+| `channel` | `beta` \| `rc` \| `stable` |
+| `execute` | Unchecked = validate only. |
 
-Tags come **only** from a `release/vX.Y` branch, never from an arbitrary `main` commit.
+`scripts/release/release.mjs` validates: the branch is a `release/vX.Y`; `version.json`'s
+`version` belongs to that line; `version.json`'s `channel` equals the requested channel
+(promote first if not). Then it computes the tag:
 
-```bash
-git switch release/v0.1 && git pull
-git tag -a v0.1.0-rc.1 -m "v0.1.0-rc.1"    # release candidate
-git tag -a v0.1.0      -m "v0.1.0"          # stable
-git push origin v0.1.0
-gh release create v0.1.0 --verify-tag --notes-from-tag
-```
+- `beta` / `rc` → the next number in that channel's sequence for the version, from the
+  existing tags — `v1.3.0-beta.1`, then `v1.3.0-beta.2`, then `v1.3.0-rc.1`, …
+- `stable` → `v1.3.0` (refused if it already exists)
 
-Package publication to npm is **out of scope** for now — a GitHub Release from the tag
-is the release artifact.
+`execute` creates an annotated tag at the branch HEAD, pushes it, and creates a GitHub
+Release (`--prerelease` for beta/rc, notes generated). **No npm package is published.**
 
 ## Hotfix on a released line
 
-Full flow in [git-workflow](git-workflow.md#hotfix-on-a-released-line): branch
-`fix/<slug>` off `release/vX.Y`, PR back into it (same review + CI gate, squash), tag
-`vX.Y.(z+1)`, then forward-port to `main` and other maintained lines.
+Branch `fix/<slug>` off `release/vX.Y`, PR back into it (same review + CI gate, squash),
+then promote/release: optionally `v1.3.1-rc.1`, then `v1.3.1`. Forward-port the fix to
+`main` and other maintained lines with their own PRs.
 
-## 0.x policy
+## Pre-1.0 policy
 
-Pre-1.0, breaking changes are allowed without a major bump but must be intentional,
-marked (`!` / `BREAKING CHANGE:`), and documented — see
-[repository-structure](../architecture/repository-structure.md#0x-policy). `main`
-still carries `0.y.0-alpha.<build>`. Release lines (`release/v0.y`) are cut only once
-there is something to maintain separately from `main`.
+Before `1.0.0`, breaking changes are allowed without a major bump, but must be
+intentional, marked (`!` / `BREAKING CHANGE:`), and documented — see
+[repository-structure](../architecture/repository-structure.md#0x-policy). `main` still
+carries `0.y.0-alpha.<build>`. Release lines (`release/v0.y`) are cut only once there is
+something to maintain separately from `main`.

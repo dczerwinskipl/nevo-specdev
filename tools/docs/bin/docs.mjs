@@ -26,6 +26,11 @@ function loadCorpus() {
   return scanDocs({ docsDir: DOCS_DIR, repoRoot: REPO_ROOT });
 }
 
+/** Just the parsed docs — for list / find / context. */
+function loadDocs() {
+  return loadCorpus().docs;
+}
+
 /** @param {string} [line] */
 function print(line = '') {
   process.stdout.write(`${line}\n`);
@@ -50,7 +55,7 @@ function fail(message) {
 
 /** @param {CliValues} values */
 function cmdList(values) {
-  const docs = searchDocs(loadCorpus(), { type: values.type, status: values.status });
+  const docs = searchDocs(loadDocs(), { type: values.type, status: values.status });
   if (values.json) return print(JSON.stringify(docs, null, 2));
   if (docs.length === 0) return print('(no documents match)');
   for (const d of docs) print(`${d.id.padEnd(38)} ${String(d.status).padEnd(10)} ${d.file}`);
@@ -60,7 +65,7 @@ function cmdList(values) {
 function cmdFind(query, values) {
   if (!query) return fail('find: a query is required, e.g. `nevo-docs find "git workflow"`');
   const limit = values.limit ? Number(values.limit) : 10;
-  const results = searchDocs(loadCorpus(), {
+  const results = searchDocs(loadDocs(), {
     query,
     type: values.type,
     status: values.status,
@@ -82,7 +87,7 @@ function cmdContext(query, values) {
   if (!query)
     return fail('context: a query is required, e.g. `nevo-docs context "react tailwind"`');
   const limit = values.limit ? Number(values.limit) : 5;
-  const results = searchDocs(loadCorpus(), { query, limit });
+  const results = searchDocs(loadDocs(), { query, limit });
   if (values.json) {
     return print(
       JSON.stringify(
@@ -110,18 +115,18 @@ function cmdContext(query, values) {
 
 /** @param {CliValues} values */
 function cmdCheck(values) {
-  const docs = loadCorpus();
+  const corpus = loadCorpus();
   if (values.write) {
-    writeIndex(docs, DOCS_DIR);
+    writeIndex(corpus.docs, DOCS_DIR);
     print('Wrote docs/index.generated.json and docs/index.generated.md');
   }
-  const problems = checkIndex(docs, DOCS_DIR);
+  const problems = checkIndex(corpus, DOCS_DIR);
   if (problems.length) {
     for (const p of problems) fail(p);
     if (!values.write) fail('Run `pnpm docs:check --write` to regenerate the index.');
     return;
   }
-  print(`OK — ${docs.length} documents, index current.`);
+  print(`OK — ${corpus.docs.length} documents, index current.`);
 }
 
 // ── entry ───────────────────────────────────────────────────────────────────

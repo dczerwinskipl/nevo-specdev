@@ -4,6 +4,7 @@
 | ---------------------------------------------- | ----------------------------------- | --------------------------------------------------------------- |
 | [`ci.yml`](ci.yml)                             | PRs; pushes to `main`, `release/v*` | Format, lint, docs index, script tests, typecheck, test, build. |
 | [`pr-title.yml`](pr-title.yml)                 | PR opened / edited / synced         | Conventional Commits check on the PR title.                     |
+| [`release.yml`](release.yml)                   | `workflow_dispatch` on `release/v*` | Tag + GitHub Release for a `beta` / `rc` / `stable` version.    |
 | [`cut-release-line.yml`](cut-release-line.yml) | `workflow_dispatch`                 | Branch `release/vX.Y` off `main`; open the main-bump PR.        |
 
 Full behavior: [`docs/development/ci.md`](../../docs/development/ci.md) and
@@ -11,17 +12,25 @@ Full behavior: [`docs/development/ci.md`](../../docs/development/ci.md) and
 
 ## Action pinning
 
-Third-party and official actions are pinned to **release tags** (`actions/checkout@v4`,
-`amannn/action-semantic-pull-request@v5.5.3`), not commit SHAs.
+Every `uses:` is pinned to a **full commit SHA**, with the human-readable version as a
+trailing comment:
 
-Trade-off: a tag is mutable — the owner of an action can move it — so tag-pinning trusts
-the action's maintainers and GitHub's tag protections rather than being
-cryptographically immutable. This is an accepted risk for the current set (all
-widely-used, from `actions/*` or a well-known maintainer). Dependabot's
-`github-actions` updater watches these for new versions.
+```yaml
+uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+```
 
-If supply-chain requirements tighten, switch to SHA pins (`uses: actions/checkout@<sha> # v4.x`)
-— Dependabot keeps the trailing version comment in sync.
+A tag is mutable — its owner can move it — so a SHA is the only immutable reference.
+Dependabot's `github-actions` updater bumps both the SHA and the comment together, so
+this costs nothing to maintain.
+
+Current pins:
+
+| Action                                | SHA                                        | Version |
+| ------------------------------------- | ------------------------------------------ | ------- |
+| `actions/checkout`                    | `3d3c42e5aac5ba805825da76410c181273ba90b1` | v7.0.1  |
+| `actions/setup-node`                  | `820762786026740c76f36085b0efc47a31fe5020` | v7.0.0  |
+| `actions/cache`                       | `55cc8345863c7cc4c66a329aec7e433d2d1c52a9` | v6.1.0  |
+| `amannn/action-semantic-pull-request` | `48f256284bd46cdaab1048c3721360e808335d50` | v6.1.1  |
 
 ## CodeQL
 

@@ -19,9 +19,7 @@ jobs:
     name: pr-title
     runs-on: ubuntu-latest
     steps:
-      # Pinned to a release tag rather than a commit SHA for readability; tags on
-      # this action are not immutable. Revisit if supply-chain policy tightens.
-      - uses: amannn/action-semantic-pull-request@v5.5.3
+      - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:

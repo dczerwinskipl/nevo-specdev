@@ -4,42 +4,47 @@ import { test } from 'node:test';
 import { planReleaseCut } from './cut-release-line.mjs';
 
 test('next minor is accepted', () => {
-  const plan = planReleaseCut({ releaseVersion: '0.1.0', nextDevelopmentVersion: '0.2.0' });
-  assert.deepEqual(plan.errors, []);
-  assert.equal(plan.releaseBranch, 'release/v0.1');
-  assert.equal(plan.nextLine, '0.2.0');
-  assert.equal(plan.bumpBranch, 'chore/bump-main-to-0.2.0-alpha');
+  const p = planReleaseCut({ releaseVersion: '0.1.0', nextDevelopmentVersion: '0.2.0' });
+  assert.deepEqual(p.errors, []);
+  assert.equal(p.releaseBranch, 'release/v0.1');
+  assert.equal(p.nextVersion, '0.2.0');
+  assert.equal(p.bumpBranch, 'chore/bump-main-to-0.2.0');
+  assert.equal(p.step, 'minor');
 });
 
 test('next major is accepted', () => {
-  const plan = planReleaseCut({ releaseVersion: '1.3.0', nextDevelopmentVersion: '2.0.0' });
-  assert.deepEqual(plan.errors, []);
-  assert.equal(plan.releaseBranch, 'release/v1.3');
+  const p = planReleaseCut({ releaseVersion: '1.3.0', nextDevelopmentVersion: '2.0.0' });
+  assert.deepEqual(p.errors, []);
+  assert.equal(p.releaseBranch, 'release/v1.3');
+  assert.equal(p.step, 'major');
 });
 
 test('skipping a minor is rejected', () => {
-  const plan = planReleaseCut({ releaseVersion: '1.3.0', nextDevelopmentVersion: '1.5.0' });
-  assert.equal(plan.errors.length, 1);
-  assert.match(plan.errors[0], /neither the next minor .* nor the next major/);
+  const p = planReleaseCut({ releaseVersion: '1.3.0', nextDevelopmentVersion: '1.5.0' });
+  assert.equal(p.errors.length, 1);
+  assert.match(p.errors[0], /neither the next minor .* nor the next major/);
+  assert.equal(p.releaseBranch, undefined);
 });
 
-test('a lower next version is rejected', () => {
-  const plan = planReleaseCut({ releaseVersion: '1.3.0', nextDevelopmentVersion: '1.2.0' });
-  assert.equal(plan.errors.length, 1);
+test('a lower / equal next version is rejected', () => {
+  assert.equal(
+    planReleaseCut({ releaseVersion: '1.3.0', nextDevelopmentVersion: '1.2.0' }).errors.length,
+    1,
+  );
+  assert.equal(
+    planReleaseCut({ releaseVersion: '1.3.0', nextDevelopmentVersion: '1.3.0' }).errors.length,
+    1,
+  );
 });
 
-test('non-semver inputs are rejected before any planning', () => {
-  const plan = planReleaseCut({ releaseVersion: 'v1.3', nextDevelopmentVersion: '1.4' });
-  assert.equal(plan.errors.length, 2);
-  assert.equal(plan.releaseBranch, undefined);
+test('a non-.0 next version is rejected (lines start at X.Y.0)', () => {
+  assert.equal(
+    planReleaseCut({ releaseVersion: '1.3.0', nextDevelopmentVersion: '1.4.1' }).errors.length,
+    1,
+  );
 });
 
-test('a mismatched current development line is a warning, not an error', () => {
-  const plan = planReleaseCut({
-    releaseVersion: '0.1.0',
-    nextDevelopmentVersion: '0.2.0',
-    currentLine: '0.1.0-alpha.7',
-  });
-  assert.deepEqual(plan.errors, []);
-  assert.equal(plan.warnings.length, 1);
+test('non-semver inputs are rejected before planning', () => {
+  const p = planReleaseCut({ releaseVersion: 'v1.3', nextDevelopmentVersion: '1.4' });
+  assert.equal(p.errors.length, 2);
 });

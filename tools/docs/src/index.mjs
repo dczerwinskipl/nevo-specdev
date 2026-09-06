@@ -8,6 +8,6 @@ export {
   KNOWN_TYPES,
   KNOWN_STATUSES,
 } from './frontmatter.mjs';
-export { scanDocs, findRepoRoot } from './scan.mjs';
+export { scanDocs, findRepoRoot, isFrontmatterExempt } from './scan.mjs';
 export { searchDocs, scoreDoc, tokenize, normalizeTerm } from './search.mjs';
 export { buildIndex, writeIndex, checkIndex } from './index-file.mjs';

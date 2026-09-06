@@ -1,8 +1,6 @@
-<!-- GENERATED FILE — do not edit. Run: pnpm docs:check --write (or node tools/docs/bin/docs.mjs generate) -->
+<!-- GENERATED FILE — do not edit. Run: pnpm docs:check --write -->
 
 # Documentation index
-
-_Generated: 2026-09-06T09:04:30.056Z_
 
 Regenerate with `pnpm docs:check --write`. Human-authored navigation lives in [`docs/README.md`](README.md).
 
@@ -51,11 +49,11 @@ Regenerate with `pnpm docs:check --write`. Human-authored navigation lives in [`
 | `development.git-workflow` | [Git workflow](development/git-workflow.md) | current | Branch model (main, feature/, fix/, release/v*), protected-branch rules, squash-merge policy, and how maintained release lines and hotfixes work. |
 | `development.local-setup` | [Local setup](development/local-setup.md) | current | Prerequisites (Node, Corepack/pnpm), the standard root commands, and how Turborepo owns the task graph. This repository is Node/TypeScript only — no .NET. |
 | `development.pull-requests` | [Pull requests](development/pull-requests.md) | current | PR template, the merge gate on protected branches, and review expectations for a currently single-maintainer repository. |
-| `development.releasing` | [Releasing and version lines](development/releasing.md) | current | How the version model works in practice: version.json as durable metadata, CI-derived build versions, the cut-release-line workflow, tagging from release branches, and the 0.x policy. The model itself is in architecture/repository-structure.md. |
+| `development.releasing` | [Releasing and version lines](development/releasing.md) | current | The version model (version.json = channel + version), CI-derived build versions, the cut-release-line and release workflows, the beta -> rc -> stable -> patch channel flow, intentional prerelease tag sequences, and the pre-1.0 policy. |
 | `development.ui.react.component-guidelines` | [React component guidelines](development/ui/react/component-guidelines.md) | draft | Small focused components, composition over configuration, split by responsibility not ceremony, feature-local vertical ownership, hooks by behavior, and where state lives. Condensed from the upstream Nevo React guidelines. |
 | `development.ui.storybook.guidelines` | [Storybook guidelines](development/ui/storybook/guidelines.md) | draft | Story hierarchy and naming (Foundations / Shared UI / Features / Screens), strict co-location, typed fixture factories, args-first state, play-function interaction tests, and the mandatory verification workflow. Condensed from the upstream Nevo Storybook guide. |
 | `development.ui.tailwind.styling-guidelines` | [Tailwind styling guidelines](development/ui/tailwind/styling-guidelines.md) | draft | Class-composition pipeline: static local layout inline, reusable variants via cva, domain state resolved to a semantic tone before classes, explicit conditional composition, and a narrow @apply policy. Condensed from the upstream Nevo React guidelines §12. |
-| `development.ui.ui-ux-guidelines` | [UI/UX engineering guidelines](development/ui/ui-ux-guidelines.md) | draft | Engineering rules for building UI: validate the composed screen, semantic typography/color/spacing tokens, information hierarchy, progressive disclosure levels, and mandatory visual self-review. Condensed from the upstream Nevo UI/UX guidelines; expands during dashboard migration. |
+| `development.ui.ui-ux-guidelines` | [UI/UX engineering guidelines](development/ui/ui-ux-guidelines.md) | draft | Portable engineering rules for building UI: validate the composed screen, semantic typography/color/spacing tokens, information hierarchy, progressive disclosure, and mandatory visual self-review. Product-specific UX (AI sessions, dashboard screens) is under product/dashboard/. |
 
 ## Product
 

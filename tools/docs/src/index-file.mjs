@@ -1,14 +1,15 @@
-// Build / write / check the generated documentation index. The build step is
-// pure and deterministic (no timestamps); only write() stamps a time.
+// Build / write / check the generated documentation index.
+//
+// The generated files are fully deterministic — no timestamp — so
+// `pnpm docs:check --write` run twice with no source change leaves the working
+// tree clean.
 
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { validateDoc, validateCorpus } from './frontmatter.mjs';
 
-const GENERATED_NOTICE =
-  '<!-- GENERATED FILE — do not edit. Run: pnpm docs:check --write (or node tools/docs/bin/docs.mjs generate) -->\n\n';
-const TIMESTAMP_RE = /^_Generated: .*_\r?\n\r?\n/m;
+const GENERATED_NOTICE = '<!-- GENERATED FILE — do not edit. Run: pnpm docs:check --write -->\n\n';
 
 const TYPE_ORDER = ['hub', 'architecture', 'adr', 'development', 'product'];
 
@@ -18,10 +19,16 @@ function typeRank(type) {
   return i === -1 ? TYPE_ORDER.length : i;
 }
 
+/** docs/index.generated.md links are relative to docs/ @param {string} file */
+function relLink(file) {
+  return file.replace(/^docs\//, '');
+}
+
 /**
- * Deterministic index content (no timestamp).
+ * Deterministic index content.
  *
  * @param {Array<Record<string, any>>} docs
+ * @returns {{ json: object, md: string }}
  */
 export function buildIndex(docs) {
   const sorted = [...docs].sort(
@@ -67,13 +74,8 @@ export function buildIndex(docs) {
   };
 }
 
-/**
- * docs/index.generated.md links are relative to docs/
- * @param {string} file
- */
-function relLink(file) {
-  return file.replace(/^docs\//, '');
-}
+/** @param {unknown} json */
+const jsonText = (json) => `${JSON.stringify(json, null, 2)}\n`;
 
 /**
  * @param {Array<Record<string, any>>} docs
@@ -81,29 +83,25 @@ function relLink(file) {
  */
 export function writeIndex(docs, docsDir) {
   const built = buildIndex(docs);
-  const timestamp = new Date().toISOString();
-  writeFileSync(
-    join(docsDir, 'index.generated.json'),
-    `${JSON.stringify({ generated: timestamp, ...built.json }, null, 2)}\n`,
-  );
-  writeFileSync(
-    join(docsDir, 'index.generated.md'),
-    built.md.replace(
-      /^# Documentation index\n\n/m,
-      `# Documentation index\n\n_Generated: ${timestamp}_\n\n`,
-    ),
-  );
+  writeFileSync(join(docsDir, 'index.generated.json'), jsonText(built.json));
+  writeFileSync(join(docsDir, 'index.generated.md'), built.md);
 }
 
 /**
  * Validate the corpus and confirm the on-disk index matches a fresh build.
  *
- * @param {Array<Record<string, any>>} docs
+ * @param {{ docs: Array<Record<string, any>>, missingFrontmatter?: string[] }} corpus
  * @param {string} docsDir absolute path to docs/
- * @returns {string[]} problems (empty ⇒ everything current and valid)
+ * @returns {string[]} problems (empty ⇒ valid and current)
  */
-export function checkIndex(docs, docsDir) {
+export function checkIndex(corpus, docsDir) {
+  const { docs, missingFrontmatter = [] } = corpus;
+  /** @type {string[]} */
   const problems = [];
+
+  for (const file of missingFrontmatter) {
+    problems.push(`${file}: missing frontmatter (every authored docs/**.md file needs it)`);
+  }
   for (const doc of docs) problems.push(...validateDoc(doc));
   problems.push(...validateCorpus(docs));
   if (problems.length) return problems;
@@ -113,21 +111,15 @@ export function checkIndex(docs, docsDir) {
   const jsonPath = join(docsDir, 'index.generated.json');
   if (!existsSync(jsonPath)) {
     problems.push('missing: docs/index.generated.json — run `pnpm docs:check --write`');
-  } else {
-    const onDisk = JSON.parse(readFileSync(jsonPath, 'utf8'));
-    if (JSON.stringify(onDisk.docs) !== JSON.stringify(built.json.docs)) {
-      problems.push('stale: docs/index.generated.json — run `pnpm docs:check --write`');
-    }
+  } else if (readFileSync(jsonPath, 'utf8').replace(/\r\n/g, '\n') !== jsonText(built.json)) {
+    problems.push('stale: docs/index.generated.json — run `pnpm docs:check --write`');
   }
 
   const mdPath = join(docsDir, 'index.generated.md');
   if (!existsSync(mdPath)) {
     problems.push('missing: docs/index.generated.md — run `pnpm docs:check --write`');
-  } else {
-    const onDisk = readFileSync(mdPath, 'utf8').replace(/\r\n/g, '\n').replace(TIMESTAMP_RE, '');
-    if (onDisk !== built.md.replace(/\r\n/g, '\n')) {
-      problems.push('stale: docs/index.generated.md — run `pnpm docs:check --write`');
-    }
+  } else if (readFileSync(mdPath, 'utf8').replace(/\r\n/g, '\n') !== built.md) {
+    problems.push('stale: docs/index.generated.md — run `pnpm docs:check --write`');
   }
 
   return problems;
