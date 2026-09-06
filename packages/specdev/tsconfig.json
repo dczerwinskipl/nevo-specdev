@@ -8,7 +8,13 @@
     "sourceMap": false,
     "incremental": true,
     "tsBuildInfoFile": "./.tsbuild/specdev.tsbuildinfo",
-    "types": ["node"]
+    "types": ["node"],
+    // Typecheck / lint resolve the sibling capability from source, so neither
+    // needs a prior build. Runtime (esbuild bundle, vitest) resolves it through
+    // the package `exports` -> dist, so the dist boundary stays real.
+    "paths": {
+      "@nevo/specdev-dashboard": ["../specdev-dashboard/src/index.ts"]
+    }
   },
   "include": ["src/**/*.ts", "test/**/*.ts"]
 }
