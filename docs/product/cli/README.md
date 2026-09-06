@@ -13,7 +13,12 @@ summary: >
 Product behavior of the `nevo-spec` command-line tool. How Node CLIs are _built_ is in
 [`../../development/cli/`](../../development/cli/).
 
-| Doc                                       | Covers                                                      |
-| ----------------------------------------- | ----------------------------------------------------------- |
-| [Personas](personas.md)                   | Who runs `nevo-spec` and what they need from it.            |
-| [Interaction model](interaction-model.md) | Command shape, output contract, human vs. agent vs. CI use. |
+| Doc                                          | Covers                                                                                                                  |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| [Public CLI contract](nevo-spec-contract.md) | The commands that actually exist today (`--help`, `--version`, `dashboard`) and what is explicitly not implemented yet. |
+| [Personas](personas.md)                      | Who runs `nevo-spec` and what they need from it.                                                                        |
+| [Interaction model](interaction-model.md)    | Command shape, output contract, human vs. agent vs. CI use.                                                             |
+
+`@nevo/specdev` is packaged and installed as a single artifact — see
+[product packaging](../../development/product-packaging.md) and
+[dogfooding](../../development/dogfooding.md).

@@ -36,7 +36,11 @@ expected to follow the same shape.
   framework over Commander. `node:util` `parseArgs` is acceptable only for a genuinely
   single-purpose one- or two-flag script.
 - **TypeScript**, strict, `tsc` emitting to `dist/`; the `bin` points at the built
-  artifact. Tests are typechecked too.
+  artifact. Tests are typechecked too. **No bundler** for repository tools. The one
+  exception is the _product distributable_: `nevo-repo-product` uses esbuild to bundle
+  `@nevo/specdev` + its internal workspace capability packages into a single installable
+  artifact — a distribution concern, not a tooling one
+  ([ADR 0006](../../architecture/decisions/0006-product-ships-as-a-single-bundled-artifact.md)).
 - **One executable, subcommands** (`nevo-release version`, `nevo-release create`, …) —
   not several `bin` entries.
 - **Command-local options.** Each command declares only the arguments and options it
@@ -76,7 +80,11 @@ directly testable without `process.argv` or Commander — a handler that itself 
 
 When two boundaries (e.g. a CLI and a future HTTP route) need the same operation, call a
 shared function — do not spawn the tool's own CLI as a subprocess to reuse internal
-behavior. Subprocesses are for genuine external executables (`git`, `gh`).
+behavior. Subprocesses are for genuine external executables (`git`, `gh`). A **stable
+stdout contract of another tool** is a legitimate boundary too: `nevo-repo-product`
+reads the product version by running `nevo-release version` (exactly what the root
+`pnpm version:print` script does), rather than importing `nevo-repo-release` and taking
+on a build-graph edge — the version string is a documented contract, not internal state.
 
 ## 3. Organize by cohesive capability
 

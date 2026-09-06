@@ -26,13 +26,17 @@ related:
 ```text
 nevo-specdev/
   apps/                 deployable applications        (workspace glob; empty until one lands)
-  packages/             shared / publishable libraries (@nevo/* scope; empty until one lands)
+  packages/             product packages (@nevo/* scope)
+    specdev/            @nevo/specdev            — the public `nevo-spec` CLI (Commander router)
+    specdev-dashboard/  @nevo/specdev-dashboard  — dashboard capability (private, bundled into specdev)
   tools/                repository-internal tooling — never published, all TypeScript
     docs/               nevo-repo-docs    — doc discovery, index, ADR authoring
-    release/            nevo-repo-release — version model, cut-release-line, release
+    release/            nevo-repo-release — version model, cut-release-line, promote, release
     github/             nevo-repo-github  — idempotent GitHub governance apply/verify (gh API)
+    product/            nevo-repo-product — the canonical bundle + pack + dogfood entrypoint
   docs/                 this documentation set
   version.json          { channel, version } for the current branch
+  .artifacts/           generated product tarballs (git-ignored)
   .github/              workflows, composite setup action, PR template, Dependabot
   turbo.json            task graph
   pnpm-workspace.yaml   workspace globs + pnpm project settings
@@ -40,7 +44,15 @@ nevo-specdev/
 
 The workspace root is `private: true`. `apps/` and `packages/` are workspace globs;
 directories appear there with real code, not placeholders. Repository-internal tooling
-lives under `tools/` and is never confused with a publishable `@nevo/*` package.
+lives under `tools/` (unscoped, `private`) and is never confused with a publishable
+`@nevo/*` package ([ADR 0005](decisions/0005-repository-tooling-is-separate-from-the-product-api.md)).
+
+The first product boundary is real: `@nevo/specdev` is the installable `nevo-spec` CLI;
+`@nevo/specdev-dashboard` (`private: true`) owns the dashboard **capability** and is
+bundled into `@nevo/specdev` at pack time, so a user installs one artifact with no
+registry ([ADR 0006](decisions/0006-product-ships-as-a-single-bundled-artifact.md),
+[product packaging](../development/product-packaging.md)). `dashboard` is a bootstrap
+proof only — it does not start the migrated dashboard yet.
 
 ## Task graph (Turborepo)
 

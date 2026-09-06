@@ -28,6 +28,16 @@ gh pr create                            # Conventional Commits title; fill the t
 Prerequisites and the command reference:
 [`docs/development/local-setup.md`](docs/development/local-setup.md).
 
+To build and try the product CLI from a real tarball (not a workspace link):
+
+```bash
+pnpm product:pack        # -> .artifacts/nevo-specdev-<version>.tgz
+pnpm dogfood:install     # pack + install globally + smoke `nevo-spec`
+```
+
+See [`docs/development/product-packaging.md`](docs/development/product-packaging.md) and
+[`docs/development/dogfooding.md`](docs/development/dogfooding.md).
+
 ## Documentation changes
 
 Every authored `.md` under `docs/` needs YAML frontmatter (`id`, `type`, `title`,

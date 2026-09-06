@@ -53,6 +53,25 @@ Affected execution includes a changed package's **dependents**, because that com
 declared workspace `dependencies` — not a hard-coded matrix. The `quality` job prints
 `turbo run … --dry=text` so you can see exactly which packages were selected and why.
 
+Concretely, for the product graph:
+
+| Change                                           | Affected `build` / `test`                                                                   |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| `tools/release/**` only                          | `nevo-repo-release` — **not** the `@nevo/*` product packages.                               |
+| `packages/specdev/**` (the CLI)                  | `@nevo/specdev` (+ its build prerequisites `@nevo/specdev-dashboard`, `nevo-repo-product`). |
+| `packages/specdev-dashboard/**` (the capability) | `@nevo/specdev-dashboard` **and** its dependent `@nevo/specdev`.                            |
+
+`quality:build-tools` stays scoped to `nevo-repo-docs` + `nevo-repo-release` (what the
+quality gate itself needs). Product packaging never runs as an install/`prepare` script,
+so it cannot reintroduce a repo-wide pre-build.
+
+## Product packaging (not a CI job)
+
+`pnpm product:pack` (→ `.artifacts/nevo-specdev-<version>.tgz`) and `pnpm dogfood:install`
+are developer commands, not CI jobs — see [product packaging](product-packaging.md) and
+[dogfooding](dogfooding.md). The packed artifact is proven in CI by
+`packages/specdev/test/packaging.smoke.test.ts`, which runs inside the normal `test` job.
+
 ## Required checks
 
 The branch rulesets (`protected-main`, `protected-release-lines`) require these exact
