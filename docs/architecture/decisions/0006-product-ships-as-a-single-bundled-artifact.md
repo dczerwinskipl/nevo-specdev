@@ -44,10 +44,13 @@ registry is a different problem.
 
 - **The distributable is one self-contained file.** `nevo-repo-product`
   (`tools/product`) runs **esbuild** to compile the `nevo-spec` entry, every internal
-  workspace package it imports (`@nevo/specdev-dashboard` today), and `commander` into
-  `packages/specdev/dist/bin.js` — an ESM file with a `#!/usr/bin/env node` banner and
-  the version baked in. The packed tarball is `dist/bin.js` + a minimal `package.json`
-  (real version, **no `dependencies`**, no scripts) + `README` + `LICENSE`.
+  workspace package it imports (`@nevo/specdev-dashboard`, both `.` and `./cli`), and
+  `commander` into `packages/specdev/dist/bin.js` — an ESM file with a
+  `#!/usr/bin/env node` banner and the version baked in. The packed tarball is
+  `dist/bin.js` + a minimal `package.json` (real version, **no `dependencies`**, no
+  scripts) + `README` + `LICENSE` + `THIRD_PARTY_NOTICES.txt` (the verbatim license of
+  the third-party code embedded in the bundle — `commander` — since a self-contained
+  bundle carries that code rather than resolving it at install time).
 - **esbuild is confined to `tools/product`** and only ever produces the product
   artifact. Repository tools stay plain `tsc`. `@nevo/specdev`'s `build` script is
   exactly `node ../../tools/product/dist/bin.js bundle`.
@@ -89,4 +92,8 @@ registry is a different problem.
 - If the product later gains a dependency that must **not** be bundled (a native addon,
   something with its own `bin`), this ADR is revisited: such a dependency goes in the
   packed `dependencies` and the "no `dependencies`" rule above is relaxed for it.
+- Because the bundle carries third-party code rather than resolving it at install time,
+  every embedded package's license travels with it in `THIRD_PARTY_NOTICES.txt`
+  (generated at pack time from that package's own `LICENSE`). Build-only tools whose
+  code is not in the bundle are not listed.
 - No npm publish, no registry auth, no publish workflow is added by this decision.
