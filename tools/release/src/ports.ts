@@ -12,6 +12,10 @@ export interface GitClient {
   headSha(): Promise<string>;
   /** `git rev-parse <ref>^{commit}` — `null` when the ref does not resolve. */
   resolveCommit(ref: string): Promise<string | null>;
+  /** Parent commit SHAs of `<ref>`, or `null` when the ref does not resolve. */
+  commitParents(ref: string): Promise<string[] | null>;
+  /** Repo-relative paths that differ between two refs (`git diff --name-only`). */
+  changedFiles(fromRef: string, toRef: string): Promise<string[]>;
   /** File content at a ref, or `null` when the ref/path does not exist. */
   showFileAtRef(ref: string, path: string): Promise<string | null>;
   listTags(): Promise<string[]>;
@@ -39,9 +43,19 @@ export interface PullRequestRef {
 }
 
 export interface GitHubClient {
+  /**
+   * Latest check-runs for `sha`. Throws when GitHub could not be read or the
+   * response could not be parsed — never returns an empty list to mean "failed".
+   */
   checkRunsForCommit(sha: string): Promise<NormalizedCheckRun[]>;
+  /**
+   * `true` only on a **confirmed** existing Release, `false` only on a
+   * **confirmed** absent one. Throws when the state could not be determined
+   * (auth / network / permission / malformed) — the caller fails closed.
+   */
   releaseExists(tag: string): Promise<boolean>;
   createRelease(input: { tag: string; prerelease: boolean }): Promise<{ url: string }>;
+  /** The one open PR for `head` -> `base`, or `null`. Throws on a query failure. */
   findOpenPullRequest(input: { head: string; base: string }): Promise<PullRequestRef | null>;
   createPullRequest(input: {
     head: string;

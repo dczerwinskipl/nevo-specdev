@@ -1,8 +1,6 @@
 import { Command, Option } from 'commander';
 
 import { executeReleaseCut } from '../../app/cut-release-line.js';
-import { planReleaseCut } from '../../domain/cut-plan.js';
-import { UsageError } from '../../errors.js';
 import { hasReleaseToken, wantsExecute, type CliContext } from '../context.js';
 
 interface CutLineOptions {
@@ -24,35 +22,18 @@ export function cutLineCommand(ctx: CliContext): Command {
         .env('NEXT_DEVELOPMENT_VERSION')
         .makeOptionMandatory(),
     )
-    .option('--execute', 'perform the cut (otherwise validate only)', false)
+    .option('--execute', 'perform the cut (otherwise run every check, change nothing)', false)
     .action(async (opts: CutLineOptions) => {
-      const plan = planReleaseCut({
-        releaseVersion: opts.releaseVersion ?? '',
-        nextDevelopmentVersion: opts.nextDevelopmentVersion ?? '',
-      });
-      if (!plan.ok) {
-        throw new UsageError(`Invalid inputs:\n  - ${plan.errors.join('\n  - ')}`);
-      }
-
-      ctx.stdout('Plan');
-      ctx.stdout(`  release branch : ${plan.releaseBranch}  (from origin/main)`);
-      ctx.stdout(`  branch version : { channel: "beta", version: "${plan.releaseVersion}" }`);
-      ctx.stdout(
-        `  main moves to  : { channel: "alpha", version: "${plan.nextVersion}" }  ` +
-          `(${plan.step} step, PR ${plan.bumpBranch})`,
+      const mutate = wantsExecute(opts.execute, ctx.env);
+      const { events } = await executeReleaseCut(
+        {
+          releaseVersion: opts.releaseVersion ?? '',
+          nextDevelopmentVersion: opts.nextDevelopmentVersion ?? '',
+        },
+        { git: ctx.git, github: ctx.github, hasToken: hasReleaseToken(ctx.env) },
+        { mutate },
       );
-
-      if (!wantsExecute(opts.execute, ctx.env)) {
-        ctx.stdout('');
-        ctx.stdout('--execute not set: validated only, nothing changed.');
-        return;
-      }
-
-      const { events } = await executeReleaseCut(plan, {
-        git: ctx.git,
-        github: ctx.github,
-        hasToken: hasReleaseToken(ctx.env),
-      });
       for (const e of events) (e.level === 'warn' ? ctx.stderr : ctx.stdout)(e.message);
+      if (!mutate) ctx.stdout('\nvalidate-only: every check passed; nothing was changed.');
     });
 }

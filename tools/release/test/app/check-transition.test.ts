@@ -57,4 +57,19 @@ describe('checkVersionTransition', () => {
       UsageError,
     );
   });
+
+  it('a git read failure (not a missing path) surfaces — it is not read as "skip"', () => {
+    expect(() =>
+      checkVersionTransition({
+        git: {
+          refExists: () => true,
+          readFileAtRef: () => {
+            throw new Error('fatal: bad object store');
+          },
+        },
+        readWorkingVersion: () => ({ channel: 'alpha', version: '0.1.0' }),
+        env: { GITHUB_BASE_REF: 'main' },
+      }),
+    ).toThrow(/bad object store/);
+  });
 });

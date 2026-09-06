@@ -1,7 +1,7 @@
 // Thin CLI smoke layer — invokes the real built executable in a subprocess.
 // Not a re-test of Commander; just the wiring contracts.
 
-import { execFile } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -66,17 +66,27 @@ describe('nevo-release CLI', () => {
     expect(code).not.toBe(0);
   });
 
-  it('cut-line without --execute performs no side effects and prints a plan', async () => {
-    const { code, stdout } = await cli([
+  it('cut-line validate-only really validates against the repo and makes no side effects', async () => {
+    // Versions that do NOT match origin/main's version.json: validate-only must
+    // FAIL for the same reason execute would (it is not a rubber stamp).
+    const bad = await cli([
       'cut-line',
       '--release-version',
-      '1.3.0',
+      '9.9.0',
       '--next-development-version',
-      '1.4.0',
+      '9.10.0',
     ]);
-    expect(code).toBe(0);
-    expect(stdout).toContain('release/v1.3');
-    expect(stdout).toContain('validated only');
+    expect(bad.code).not.toBe(0);
+    expect(bad.stderr + bad.stdout).toMatch(
+      /has no version\.json|is developing|not in the expected state/,
+    );
+
+    // cut-line's side effect is creating branches — validate-only creates none.
+    const branches = execFileSync('git', ['branch', '--list', 'chore/*', 'release/*'], {
+      cwd: pkgRoot,
+      encoding: 'utf8',
+    });
+    expect(branches.trim()).toBe('');
   });
 
   it('check-transition --json emits a single clean JSON object on stdout', async () => {

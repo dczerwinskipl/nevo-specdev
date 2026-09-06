@@ -32,6 +32,21 @@ export function createGitClient(repoRoot: string): GitClient {
 
     resolveCommit: (ref) => tryGitLine(['rev-parse', '--verify', '--quiet', `${ref}^{commit}`]),
 
+    async commitParents(ref): Promise<string[] | null> {
+      // `rev-list --parents -n 1 X` -> "<commit> <parent1> [<parent2> ...]"
+      const line = await tryGitLine(['rev-list', '--parents', '-n', '1', `${ref}^{commit}`]);
+      if (line === null) return null;
+      return line.split(/\s+/).filter(Boolean).slice(1);
+    },
+
+    async changedFiles(fromRef, toRef): Promise<string[]> {
+      const out = await git(['diff', '--name-only', `${fromRef}`, `${toRef}`]);
+      return out
+        .split('\n')
+        .map((f) => f.trim())
+        .filter(Boolean);
+    },
+
     async showFileAtRef(ref, path): Promise<string | null> {
       try {
         return await git(['show', `${ref}:${path}`]);

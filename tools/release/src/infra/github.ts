@@ -20,8 +20,20 @@ export function createGitHubClient(repoRoot: string): GitHubClient {
         '--jq',
         '[.[].check_runs[] | { name, status, conclusion, id }]',
       ]);
-      const parsed: unknown = JSON.parse(raw.trim() || '[]');
-      if (!Array.isArray(parsed)) return [];
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(raw.trim() || '[]');
+      } catch (err) {
+        throw new Error(
+          `could not parse check-run data for ${sha.slice(0, 12)} from GitHub: ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+          { cause: err },
+        );
+      }
+      if (!Array.isArray(parsed)) {
+        throw new Error(`unexpected check-run response shape for ${sha.slice(0, 12)}`);
+      }
       return parsed.map((r): NormalizedCheckRun => {
         const o: Record<string, unknown> =
           typeof r === 'object' && r !== null ? (r as Record<string, unknown>) : {};
@@ -39,8 +51,22 @@ export function createGitHubClient(repoRoot: string): GitHubClient {
         await gh(['release', 'view', tag, '--json', 'tagName', '--jq', '.tagName']);
         return true;
       } catch (err) {
-        if (err instanceof CommandFailedError) return false;
-        throw err;
+        // `gh release view` on a missing Release exits non-zero with a
+        // recognisable "release not found" / 404. Anything else — auth, network,
+        // rate limit, a malformed response — is "could not determine": re-throw
+        // so the caller fails closed rather than proceeding as if it were absent.
+        if (
+          err instanceof CommandFailedError &&
+          /release not found|HTTP 404|\bnot found\b/i.test(err.stderr)
+        ) {
+          return false;
+        }
+        throw new Error(
+          `could not determine whether the GitHub Release '${tag}' exists: ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+          { cause: err },
+        );
       }
     },
 

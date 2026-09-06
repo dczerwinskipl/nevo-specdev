@@ -1,8 +1,6 @@
 import { Command, Option } from 'commander';
 
 import { executeRelease } from '../../app/create-release.js';
-import { planRelease } from '../../domain/release-plan.js';
-import { UsageError } from '../../errors.js';
 import { hasReleaseToken, wantsExecute, type CliContext } from '../context.js';
 
 interface CreateOptions {
@@ -19,44 +17,20 @@ export function createReleaseCommand(ctx: CliContext): Command {
         .env('RELEASE_CHANNEL')
         .makeOptionMandatory(),
     )
-    .option('--execute', 'perform the release (otherwise validate only)', false)
+    .option('--execute', 'perform the release (otherwise run every check, change nothing)', false)
     .action(async (opts: CreateOptions) => {
-      await ctx.git.fetch();
-      const branch = await ctx.git.currentBranch();
-      const existingTags = await ctx.git.listTags();
-
-      const plan = planRelease({
-        branch,
-        channel: opts.channel ?? '',
-        versionFile: ctx.readWorkingVersion(),
-        existingTags,
-      });
-      if (!plan.ok) {
-        throw new UsageError(`Cannot release:\n  - ${plan.errors.join('\n  - ')}`);
-      }
-
-      ctx.stdout('Plan');
-      ctx.stdout(`  branch  : ${branch}`);
-      ctx.stdout(`  channel : ${plan.channel}`);
-      ctx.stdout(`  tag     : ${plan.tag}${plan.prerelease ? '  (prerelease)' : ''}`);
-      if (plan.nextBranchState) {
-        ctx.stdout(
-          `  then    : advance ${branch} -> { channel: "${plan.nextBranchState.channel}", ` +
-            `version: "${plan.nextBranchState.version}" }`,
-        );
-      }
-
-      if (!wantsExecute(opts.execute, ctx.env)) {
-        ctx.stdout('');
-        ctx.stdout('--execute not set: validated only, no tag created.');
-        return;
-      }
-
-      const { events } = await executeRelease(plan, {
-        git: ctx.git,
-        github: ctx.github,
-        hasToken: hasReleaseToken(ctx.env),
-      });
+      const mutate = wantsExecute(opts.execute, ctx.env);
+      const { events } = await executeRelease(
+        { channel: opts.channel ?? '' },
+        {
+          git: ctx.git,
+          github: ctx.github,
+          readWorkingVersion: ctx.readWorkingVersion,
+          hasToken: hasReleaseToken(ctx.env),
+        },
+        { mutate },
+      );
       for (const e of events) (e.level === 'warn' ? ctx.stderr : ctx.stdout)(e.message);
+      if (!mutate) ctx.stdout('\nvalidate-only: every check passed; nothing was changed.');
     });
 }

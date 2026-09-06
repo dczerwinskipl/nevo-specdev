@@ -55,4 +55,31 @@ describe('createGitClient.commitSingleFileOnto', () => {
     expect(await client.resolveCommit('refs/heads/does-not-exist')).toBeNull();
     expect(await client.resolveCommit('HEAD')).toMatch(/^[0-9a-f]{40}$/);
   });
+
+  it('commitParents and changedFiles read history without mutating anything', async () => {
+    const client = createGitClient(repo);
+    const baseSha = git(['rev-parse', 'HEAD']);
+
+    const child = await client.commitSingleFileOnto({
+      baseRef: baseSha,
+      path: 'version.json',
+      content: '{"channel":"beta","version":"1.3.0"}\n',
+      message: 'advance',
+    });
+
+    expect(await client.commitParents(child)).toEqual([baseSha]);
+    expect(await client.commitParents('refs/heads/nope')).toBeNull();
+    expect(await client.changedFiles(baseSha, child)).toEqual(['version.json']);
+    expect(await client.changedFiles(baseSha, baseSha)).toEqual([]);
+
+    // a two-file commit is detected as changing both
+    const two = await client.commitSingleFileOnto({
+      baseRef: child,
+      path: 'extra.txt',
+      content: 'hi\n',
+      message: 'extra',
+    });
+    expect((await client.changedFiles(child, two)).sort()).toEqual(['extra.txt']);
+    expect(git(['status', '--porcelain'])).toBe('');
+  });
 });
