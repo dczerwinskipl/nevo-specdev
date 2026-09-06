@@ -20,8 +20,10 @@ pnpm docs:check --write               # regenerate docs/index.generated.{md,json
 ```
 
 `--type`, `--status`, `--limit` and `--json` are accepted where they make sense.
-`pnpm docs:check` is what CI runs; it exits non-zero on invalid frontmatter or a
-stale index.
+`pnpm docs:check` is what CI runs; it exits non-zero on **any** authored file missing
+frontmatter, invalid frontmatter, an unresolved `related` id, or a stale index. The
+generated index carries no timestamp, so `--write` run twice with no source change
+leaves the working tree clean.
 
 ## Frontmatter contract
 
@@ -41,5 +43,6 @@ related: # optional; each id must resolve
 ---
 ```
 
-Files without a frontmatter block (templates, generated indexes) are skipped, not
-rejected.
+An authored `docs/**/*.md` file with **no** frontmatter block is a `docs:check`
+failure — it must not silently disappear from discovery. Only two things are exempt:
+`docs/templates/**` (copy-me starters) and `*.generated.*` (owned by the generator).

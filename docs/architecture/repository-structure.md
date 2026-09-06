@@ -28,12 +28,14 @@ nevo-specdev/
   apps/                 deployable apps (cli, dashboard) — populated during migration
   packages/             shared / publishable libraries — populated during migration
   tools/                repository-internal tooling (never published)
-    docs/               nevo-docs — documentation discovery + index
+    docs/               nevo-repo-docs — documentation discovery + index
   docs/                 this documentation set
-  scripts/github/       idempotent GitHub governance apply/verify scripts
-  .github/              workflows, templates, CODEOWNERS, Dependabot
+  scripts/github/       idempotent GitHub governance apply/verify (gh API)
+  scripts/release/      version derivation, cut-release-line, release (tag + GH Release)
+  version.json          { channel, version } for the current branch
+  .github/              workflows, composite setup action, PR template, Dependabot
   turbo.json            task graph
-  pnpm-workspace.yaml   apps/* packages/* tools/*
+  pnpm-workspace.yaml   workspace globs + pnpm project settings
 ```
 
 The workspace root is `private: true`. Child packages may become publishable later; no

@@ -86,6 +86,15 @@ function gh(args) {
   }).trim();
 }
 
+/** Current branch name, or the HEAD sha when detached. */
+function currentBranchOrSha() {
+  try {
+    return git(['symbolic-ref', '--quiet', '--short', 'HEAD']);
+  } catch {
+    return git(['rev-parse', 'HEAD']);
+  }
+}
+
 /**
  * 'present' | 'absent'. Any failure to reach the remote throws rather than being
  * misread as "absent" — the original bug.
@@ -183,6 +192,8 @@ if (isMain()) {
   // ── execute ──────────────────────────────────────────────────────────────
   const baseSha = git(['rev-parse', `${from}^{commit}`]);
   const work = `cut-release-${Date.now()}`;
+  // Where to return to afterwards (a branch name, or a detached-HEAD sha).
+  const startRef = currentBranchOrSha();
 
   try {
     // 1. release/vX.Y = baseSha + one commit that sets the branch's version.json.
@@ -221,15 +232,18 @@ if (isMain()) {
       out('Auto-merge could not be enabled; merge the PR by hand once CI is green.');
     }
   } finally {
+    // Return to the starting ref and drop the two local scratch branches.
     try {
-      git(['switch', '--force', '-']);
+      git(['checkout', '--force', startRef]);
     } catch {
       /* best effort */
     }
-    try {
-      git(['branch', '-D', work]);
-    } catch {
-      /* best effort */
+    for (const b of [work, plan.bumpBranch]) {
+      try {
+        git(['branch', '-D', b]);
+      } catch {
+        /* best effort — the branch may not have been created */
+      }
     }
   }
 }

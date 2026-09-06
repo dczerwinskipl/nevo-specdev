@@ -25,13 +25,14 @@ See [`docs/product/product-overview.md`](docs/product/product-overview.md).
 
 ## Repository shape
 
-| Path              | Contents                                                                                |
-| ----------------- | --------------------------------------------------------------------------------------- |
-| `apps/`           | Deployable apps (`cli`, `dashboard`) — added during migration.                          |
-| `packages/`       | Shared / publishable libraries — added during migration.                                |
-| `tools/`          | Repository-internal tooling. Today: [`tools/docs`](tools/docs/README.md) (`nevo-docs`). |
-| `docs/`           | [Documentation](docs/README.md): development, product, architecture.                    |
-| `scripts/github/` | Idempotent GitHub governance apply/verify scripts.                                      |
+| Path               | Contents                                                                                    |
+| ------------------ | ------------------------------------------------------------------------------------------- |
+| `apps/`            | Deployable apps (`cli`, `dashboard`) — added during migration.                              |
+| `packages/`        | Shared / publishable libraries (`@nevo/*` scope) — added during migration.                  |
+| `tools/`           | Repository-internal tooling. Today: [`tools/docs`](tools/docs/README.md) (`nevo-docs` CLI). |
+| `docs/`            | [Documentation](docs/README.md): development, product, architecture.                        |
+| `scripts/github/`  | Idempotent GitHub governance apply/verify (`gh` API).                                       |
+| `scripts/release/` | Version derivation, cut-release-line, and release (tag + GitHub Release).                   |
 
 This repository is **Node/TypeScript only** — no .NET.
 
@@ -40,7 +41,7 @@ This repository is **Node/TypeScript only** — no .NET.
 ```bash
 corepack enable                 # once per machine
 pnpm install                    # Node >= 22.13 (.nvmrc pins 24.20.0), pnpm 10 via Corepack
-pnpm check                      # format:check + lint + typecheck + test + build
+pnpm check                      # format:check + lint + script tests + turbo typecheck/test/build
 pnpm docs:check                 # validate documentation frontmatter + index
 ```
 

@@ -32,10 +32,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Guard — release branch only
+        env:
+          REF: ${{ github.ref }}
         run: |
-          case "${{ github.ref }}" in
-            refs/heads/release/v*) echo "ok: ${{ github.ref }}" ;;
-            *) echo "::error::Run this workflow from a release/vX.Y branch, not ${{ github.ref }}"; exit 1 ;;
+          case "$REF" in
+            refs/heads/release/v*) echo "ok: $REF" ;;
+            *) echo "::error::Run this workflow from a release/vX.Y branch, not $REF"; exit 1 ;;
           esac
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

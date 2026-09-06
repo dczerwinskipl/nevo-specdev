@@ -2,7 +2,8 @@
 
 Copy this file to `docs/architecture/decisions/NNNN-kebab-title.md`, delete this notice,
 and replace the example frontmatter with a real `---`-delimited block. This template
-deliberately has **no** frontmatter of its own so `nevo-docs` skips it.
+deliberately has **no** frontmatter — `docs/templates/**` is exempt from the
+frontmatter requirement `nevo-docs` enforces everywhere else.
 
 ## Frontmatter to add at the top of the real ADR
 
