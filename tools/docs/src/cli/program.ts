@@ -14,14 +14,20 @@ export function createProgram(ctx: DocsCliContext): Command {
     .configureOutput({
       writeOut: (str) => ctx.stdout(str.replace(/\n$/, '')),
       writeErr: (str) => ctx.stderr(str.replace(/\n$/, '')),
-    })
-    .exitOverride();
+    });
 
   program.addCommand(listCommand(ctx));
   program.addCommand(findCommand(ctx));
   program.addCommand(contextCommand(ctx));
   program.addCommand(checkCommand(ctx));
   program.addCommand(adrCommand(ctx));
+
+  // Route every exit (help, parse error, our thrown errors) through bin.ts.
+  program.exitOverride();
+  for (const cmd of program.commands) {
+    cmd.exitOverride();
+    for (const sub of cmd.commands) sub.exitOverride();
+  }
 
   return program;
 }

@@ -13,13 +13,16 @@ export function createProgram(ctx: CliContext): Command {
     .configureOutput({
       writeOut: (str) => ctx.stdout(str.replace(/\n$/, '')),
       writeErr: (str) => ctx.stderr(str.replace(/\n$/, '')),
-    })
-    .exitOverride();
+    });
 
   program.addCommand(versionCommand(ctx));
   program.addCommand(checkTransitionCommand(ctx));
   program.addCommand(cutLineCommand(ctx));
   program.addCommand(createReleaseCommand(ctx));
+
+  // Route every exit (help, parse error, our thrown errors) through bin.ts.
+  program.exitOverride();
+  for (const cmd of program.commands) cmd.exitOverride();
 
   return program;
 }

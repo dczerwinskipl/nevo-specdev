@@ -15,9 +15,11 @@ export function createProgram(ctx: GithubCliContext): Command {
     .configureOutput({
       writeOut: (str) => ctx.stdout(str.replace(/\n$/, '')),
       writeErr: (str) => ctx.stderr(str.replace(/\n$/, '')),
-    })
-    .exitOverride();
+    });
 
   program.addCommand(configureCommand(ctx.client, ctx.stdout, ctx.stderr));
+
+  program.exitOverride();
+  for (const cmd of program.commands) cmd.exitOverride();
   return program;
 }
