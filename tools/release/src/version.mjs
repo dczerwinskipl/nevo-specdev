@@ -162,12 +162,42 @@ export function isReleaseTagVersion(v) {
  * @returns {string} tag name including the leading `v`
  */
 export function nextPrereleaseTag({ version, channel, existingTags }) {
-  if (!isCoreVersion(version))
-    throw new Error(`nextPrereleaseTag: bad version ${JSON.stringify(version)}`);
+  const max = maxPrereleaseNumber({ version, channel, existingTags, caller: 'nextPrereleaseTag' });
+  return `v${version}-${channel}.${max + 1}`;
+}
+
+/**
+ * The **highest** intentional prerelease tag that already exists for this
+ * version + channel, or `null` if none does. Used by the release flow to notice
+ * an orphaned last tag (pushed, but its GitHub Release never created) before it
+ * would otherwise skip ahead to the next number.
+ *
+ * @param {object} o
+ * @param {string} o.version
+ * @param {'beta'|'rc'} o.channel
+ * @param {string[]} o.existingTags
+ * @returns {string | null} tag name including the leading `v`
+ */
+export function highestPrereleaseTag({ version, channel, existingTags }) {
+  const max = maxPrereleaseNumber({
+    version,
+    channel,
+    existingTags,
+    caller: 'highestPrereleaseTag',
+  });
+  return max === 0 ? null : `v${version}-${channel}.${max}`;
+}
+
+/**
+ * @param {object} o
+ * @param {string} o.version @param {'beta'|'rc'} o.channel
+ * @param {string[]} o.existingTags @param {string} o.caller
+ * @returns {number} the greatest N among `v<version>-<channel>.N` tags (0 if none)
+ */
+function maxPrereleaseNumber({ version, channel, existingTags, caller }) {
+  if (!isCoreVersion(version)) throw new Error(`${caller}: bad version ${JSON.stringify(version)}`);
   if (!TAG_PRERELEASE_CHANNELS.includes(channel)) {
-    throw new Error(
-      `nextPrereleaseTag: channel must be 'beta' or 'rc', got ${JSON.stringify(channel)}`,
-    );
+    throw new Error(`${caller}: channel must be 'beta' or 'rc', got ${JSON.stringify(channel)}`);
   }
   let max = 0;
   for (const t of existingTags ?? []) {
@@ -185,7 +215,7 @@ export function nextPrereleaseTag({ version, channel, existingTags }) {
       max = Math.max(max, Number(p.prerelease[1]));
     }
   }
-  return `v${version}-${channel}.${max + 1}`;
+  return max;
 }
 
 /**
@@ -215,20 +245,26 @@ export function planPromotion({ current, toChannel }) {
 }
 
 /**
- * Validate a `version.json` change from `from` to `to` on `branch`. Used by CI
- * so an ordinary PR cannot hand-edit `version.json` into an illegal state.
+ * Validate a `version.json` change from `from` to `to` as it will land on
+ * `targetBranch`. Used by CI so an ordinary PR cannot hand-edit `version.json`
+ * into an illegal state.
+ *
+ * `targetBranch` is the protected branch whose release state the change mutates
+ * — the PR **base** branch, or the pushed branch, never the short-lived source
+ * branch a PR happens to come from. A PR into `main` is validated as `main`; a
+ * PR into `release/v1.3` is validated as `release/v1.3`.
  *
  * @param {object} o
- * @param {VersionFile} o.from   version.json at the PR base
- * @param {VersionFile} o.to     version.json in the PR head
- * @param {string} o.branch      the head branch (e.g. `main`, `release/v1.3`)
+ * @param {VersionFile} o.from          version.json on the target branch (the base)
+ * @param {VersionFile} o.to            version.json the change would produce
+ * @param {string} o.targetBranch       protected branch being mutated (`main`, `release/v1.3`)
  * @returns {{ ok: boolean, kind?: string, error?: string }}
  */
-export function validateVersionTransition({ from, to, branch }) {
+export function validateVersionTransition({ from, to, targetBranch }) {
   const sameFile = from.channel === to.channel && from.version === to.version;
   if (sameFile) return { ok: true, kind: 'unchanged' };
 
-  const line = lineOfBranch(branch);
+  const line = lineOfBranch(targetBranch);
 
   // main development-line bump: alpha stays alpha, version steps to the next
   // minor or major .0 and strictly increases.
@@ -247,18 +283,24 @@ export function validateVersionTransition({ from, to, branch }) {
   // Cutting a line: first commit on release/vX.Y takes main's version into beta.
   if (from.channel === 'alpha' && to.channel === 'beta' && from.version === to.version) {
     if (line && versionInLine(to.version, line)) return { ok: true, kind: 'line-cut' };
-    return { ok: false, error: `release branch ${branch} does not match version ${to.version}` };
+    return {
+      ok: false,
+      error: `release branch ${targetBranch} does not match version ${to.version}`,
+    };
   }
 
   // Otherwise it must be a legal promotion on a release branch.
   if (!line) {
-    return { ok: false, error: `unexpected version.json change on '${branch}'` };
+    return { ok: false, error: `unexpected version.json change on '${targetBranch}'` };
   }
   try {
     const expected = planPromotion({ current: from, toChannel: to.channel });
     if (expected.channel === to.channel && expected.version === to.version) {
       if (!versionInLine(to.version, line)) {
-        return { ok: false, error: `${to.version} is not on line ${line} (branch ${branch})` };
+        return {
+          ok: false,
+          error: `${to.version} is not on line ${line} (branch ${targetBranch})`,
+        };
       }
       return { ok: true, kind: 'promotion' };
     }
@@ -271,4 +313,78 @@ export function validateVersionTransition({ from, to, branch }) {
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
   }
+}
+
+/**
+ * Decide which protected branch's rules a `version.json` change must satisfy and
+ * which git ref holds the "from" version.json to compare against. Pure — every
+ * environment lookup and repo probe is injected, so the resolution itself is
+ * unit-testable without a real checkout.
+ *
+ * Resolution order:
+ *   1. `BASE_REF`            explicit override: that ref is both target and base.
+ *   2. `GITHUB_BASE_REF`     a PR — the base branch is the state machine being
+ *                            mutated; base version.json is `origin/<base>`.
+ *   3. `GITHUB_REF` heads/*  a push — the pushed branch is the target; the prior
+ *                            state is `HEAD~1` (a squash merge = the whole PR).
+ *   4. local                 infer from the working-tree version.json channel:
+ *                            `alpha` -> `main`; any release channel -> its
+ *                            `release/vX.Y` (which must exist on `origin`).
+ *
+ * @param {object} o
+ * @param {Record<string, string | undefined>} o.env   environment (a `process.env` slice)
+ * @param {() => VersionFile} o.readWorkingVersion      parse the working-tree version.json
+ * @param {(ref: string) => boolean} o.refExists        does this git ref resolve to a commit?
+ * @returns {{ targetBranch: string, baseRef: string, source: string } | { error: string }}
+ */
+export function resolveTransitionTarget({ env, readWorkingVersion, refExists }) {
+  if (env.BASE_REF) {
+    return { targetBranch: env.BASE_REF, baseRef: env.BASE_REF, source: 'BASE_REF override' };
+  }
+  if (env.GITHUB_BASE_REF) {
+    return {
+      targetBranch: env.GITHUB_BASE_REF,
+      baseRef: `origin/${env.GITHUB_BASE_REF}`,
+      source: `pull_request base ${env.GITHUB_BASE_REF}`,
+    };
+  }
+  if (env.GITHUB_REF && env.GITHUB_REF.startsWith('refs/heads/')) {
+    const pushed = env.GITHUB_REF_NAME || env.GITHUB_REF.slice('refs/heads/'.length);
+    return { targetBranch: pushed, baseRef: 'HEAD~1', source: `push to ${pushed}` };
+  }
+
+  /** @type {VersionFile} */ let vf;
+  try {
+    vf = readWorkingVersion();
+  } catch (err) {
+    return {
+      error:
+        `cannot read the working-tree version.json to infer the comparison target: ` +
+        `${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+
+  const line = `${semver.major(vf.version)}.${semver.minor(vf.version)}`;
+  if (vf.channel === 'alpha') {
+    return {
+      targetBranch: 'main',
+      baseRef: 'origin/main',
+      source: `local: alpha ${vf.version} -> main`,
+    };
+  }
+  const releaseBranch = `release/v${line}`;
+  if (refExists(`origin/${releaseBranch}`)) {
+    return {
+      targetBranch: releaseBranch,
+      baseRef: `origin/${releaseBranch}`,
+      source: `local: ${vf.channel} ${vf.version} -> ${releaseBranch}`,
+    };
+  }
+  return {
+    error:
+      `version.json is on channel '${vf.channel}' (${vf.version}), which belongs to ` +
+      `${releaseBranch}, but 'origin/${releaseBranch}' does not exist.\n` +
+      `  - run 'git fetch origin' if the line was cut elsewhere, or\n` +
+      `  - set BASE_REF explicitly (e.g. BASE_REF=origin/main) if you are preparing the line cut.`,
+  };
 }

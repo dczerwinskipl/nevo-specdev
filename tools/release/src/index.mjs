@@ -13,13 +13,18 @@ export {
   versionFileText,
   deriveBuildVersion,
   nextPrereleaseTag,
+  highestPrereleaseTag,
   planPromotion,
   validateVersionTransition,
+  resolveTransitionTarget,
 } from './version.mjs';
-export { planReleaseCut, executeReleaseCut } from './cut-release-line.mjs';
+export { planReleaseCut, executeReleaseCut, validateCutBaseVersion } from './cut-release-line.mjs';
 export {
   REQUIRED_HEAD_CHECKS,
   planRelease,
+  pickReleaseCandidate,
+  latestCheckRunsByName,
+  evaluateRequiredChecks,
   verifyHeadChecksPassed,
   inspectTagState,
   decideReleaseAction,

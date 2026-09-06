@@ -7,6 +7,7 @@ export {
   REQUIRED_FIELDS,
   KNOWN_TYPES,
   KNOWN_STATUSES,
+  INACTIVE_STATUSES,
 } from './frontmatter.mjs';
 export { scanDocs, findRepoRoot, isFrontmatterExempt } from './scan.mjs';
 export { searchDocs, scoreDoc, tokenize, normalizeTerm } from './search.mjs';
@@ -20,6 +21,8 @@ export {
   nextAdrNumber,
   planNewAdr,
   renderAdr,
+  validateRenderedAdr,
   validateAdrs,
   ADR_DIR,
+  NEW_ADR_STATUS,
 } from './adr.mjs';

@@ -95,12 +95,17 @@ export function scoreDoc(doc, query) {
  * @param {object} opts
  * @param {string} [opts.query]
  * @param {string} [opts.type]
- * @param {string} [opts.status]
+ * @param {string} [opts.status]           keep only this exact status
+ * @param {readonly string[]} [opts.excludeStatuses] drop these statuses (e.g. deprecated/superseded)
  * @param {number} [opts.limit]
  * @returns {Array<Record<string, any>>} docs with `score` / `matchedTerms` / `matchedFields` when a query was given
  */
-export function searchDocs(docs, { query, type, status, limit } = {}) {
-  let results = docs.filter((d) => (!type || d.type === type) && (!status || d.status === status));
+export function searchDocs(docs, { query, type, status, excludeStatuses, limit } = {}) {
+  const excluded = new Set(excludeStatuses ?? []);
+  let results = docs.filter(
+    (d) =>
+      (!type || d.type === type) && (!status || d.status === status) && !excluded.has(d.status),
+  );
 
   if (query && query.trim()) {
     results = results

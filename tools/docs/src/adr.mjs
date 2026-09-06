@@ -2,6 +2,10 @@
 //
 // This is repository architecture-doc tooling, not a Nevo SpecDev product API.
 
+import { stringify as stringifyYaml } from 'yaml';
+
+import { parseFrontmatter, validateDoc } from './frontmatter.mjs';
+
 const ADR_FILE_RE = /^(\d{4})-([a-z0-9]+(?:-[a-z0-9]+)*)\.md$/;
 export const ADR_DIR = 'docs/architecture/decisions';
 
@@ -62,28 +66,41 @@ export function isIsoDate(v) {
   return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v;
 }
 
+/** A newly-authored ADR is a `draft` until a human fills it in and promotes it. */
+export const NEW_ADR_STATUS = 'draft';
+/** Marker left in the generated body/summary; a `current` ADR must carry none. */
+export const ADR_PLACEHOLDER_RE = /\bTODO\b/;
+
 /**
- * Render a new ADR file body from the template contract.
+ * Render a new ADR file from the template contract. The frontmatter is
+ * serialized with the YAML library — the human title is never string-spliced
+ * into the block, so `:`/`#`/quotes/Unicode in a title cannot corrupt it.
  *
  * @param {{ number: number, slug: string, title: string, date: string }} o
  */
 export function renderAdr({ number, slug, title, date }) {
   const id = `adr.${padNumber(number)}-${slug}`;
+  const frontmatter = stringifyYaml(
+    {
+      id,
+      type: 'adr',
+      title,
+      status: NEW_ADR_STATUS,
+      date,
+      summary: 'TODO: one or two sentences stating the decision.',
+    },
+    { lineWidth: 0 },
+  ).trimEnd();
+
   return `---
-id: ${id}
-type: adr
-title: ${title}
-status: current
-date: ${date}
-summary: >
-  TODO: one or two sentences stating the decision.
+${frontmatter}
 ---
 
 # ${padNumber(number)} — ${title}
 
 ## Status
 
-Current.
+Draft — proposed, not yet adopted. Promote to \`current\` once accepted.
 
 ## Context
 
@@ -101,6 +118,42 @@ TODO: what this makes easier, what it makes harder, and any follow-up it implies
 }
 
 /**
+ * Validate a rendered ADR file in memory, before it is written. Parses the
+ * frontmatter (so a serialization bug is caught here, not on disk) and runs the
+ * single-document contract + ADR-shape checks. Cross-corpus checks (numbering,
+ * references) are left to the post-write `docs:check`.
+ *
+ * @param {string} content
+ * @param {string} file  repo-relative path, for messages
+ * @returns {string[]} problems (empty ⇒ safe to write)
+ */
+export function validateRenderedAdr(content, file) {
+  let fm;
+  try {
+    fm = parseFrontmatter(content, file);
+  } catch (err) {
+    return [`${file}: ${err instanceof Error ? err.message : String(err)}`];
+  }
+  if (!fm) return [`${file}: rendered ADR has no frontmatter block`];
+
+  /** @type {Record<string, any>} */
+  const doc = { ...fm, file };
+  const problems = validateDoc(doc);
+
+  const base = file.split('/').pop() ?? '';
+  const m = ADR_FILE_RE.exec(base);
+  if (!m) {
+    problems.push(`${file}: ADR filename must be NNNN-kebab-title.md`);
+  } else if (doc.id !== `adr.${m[1]}-${m[2]}`) {
+    problems.push(`${file}: id '${doc.id}' must match the filename ('adr.${m[1]}-${m[2]}')`);
+  }
+  if (!isIsoDate(doc.date)) {
+    problems.push(`${file}: 'date' must be ISO YYYY-MM-DD (got ${JSON.stringify(doc.date)})`);
+  }
+  return problems;
+}
+
+/**
  * Plan a new ADR from a title + the current directory listing. Pure.
  *
  * @param {{ title: string, filenames: string[], date?: string }} o
@@ -113,13 +166,17 @@ export function planNewAdr({ title, filenames, date = isoDate() }) {
   const slug = slugify(title);
   const name = `${padNumber(next)}-${slug}.md`;
   if (filenames.includes(name)) throw new Error(`${ADR_DIR}/${name} already exists.`);
-  return {
-    number: next,
-    slug,
-    file: `${ADR_DIR}/${name}`,
-    id: `adr.${padNumber(next)}-${slug}`,
-    content: renderAdr({ number: next, slug, title: String(title).trim(), date }),
-  };
+  const file = `${ADR_DIR}/${name}`;
+  const content = renderAdr({ number: next, slug, title: String(title).trim(), date });
+
+  // Transactional: the rendered file must parse and satisfy the contract before
+  // the caller is allowed to write it — no half-valid ADR ever reaches disk.
+  const problems = validateRenderedAdr(content, file);
+  if (problems.length) {
+    throw new Error(`refusing to create an invalid ADR:\n  - ${problems.join('\n  - ')}`);
+  }
+
+  return { number: next, slug, file, id: `adr.${padNumber(next)}-${slug}`, content };
 }
 
 /**
@@ -160,6 +217,14 @@ export function validateAdrs(docs) {
     }
     if (doc.supersedes && !adrIds.has(doc.supersedes)) {
       problems.push(`${doc.file}: 'supersedes' -> unknown ADR '${doc.supersedes}'`);
+    }
+    // A `current` ADR is an adopted decision; it must not still carry the
+    // generated TODO placeholder in its summary.
+    if (doc.status === 'current' && ADR_PLACEHOLDER_RE.test(String(doc.summary ?? ''))) {
+      problems.push(
+        `${doc.file}: a 'current' ADR must not carry a generated TODO placeholder in ` +
+          `'summary' — fill it in, or keep status 'draft' until the decision is adopted`,
+      );
     }
   }
 

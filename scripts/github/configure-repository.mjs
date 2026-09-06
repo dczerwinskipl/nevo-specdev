@@ -14,6 +14,7 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
 import { detectRepo, diffPartial, ghApi, requireAuth } from './lib.mjs';
+import { decidePrReviewPolicy } from './policy.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const POLICY = JSON.parse(readFileSync(join(HERE, 'repository-policy.json'), 'utf8'));
@@ -37,48 +38,44 @@ const changed = [];
 const problems = [];
 
 /**
- * The pull_request rule parameters actually applied. Equals POLICY.pullRequest
- * (the durable target) when >= 2 eligible reviewers exist; a bootstrap exception
- * (0 approvals) with only 1. Computed once in main().
- * @type {{ params: Record<string, unknown>, target: Record<string, unknown>, exception: string | null }}
+ * The PR-review decision, computed once in main(). `kind: 'unverifiable'` means
+ * reviewer eligibility could not be read — the run then aborts without touching
+ * any ruleset, because a 0-approval exception must never be applied on a guess.
+ * @type {import('./policy.mjs').PrReviewDecision}
  */
 let EFFECTIVE_PR;
 
-/**
- * Eligible reviewers = collaborators who can submit an approving review that
- * counts toward the gate, i.e. write or admin.
- */
 /** Drop `$comment` (and any other `$`-prefixed) keys — they are not GitHub fields. */
 function stripMeta(obj) {
   return Object.fromEntries(Object.entries(obj).filter(([k]) => !k.startsWith('$')));
 }
 
+/**
+ * Read the collaborators who could cast a counting approval (write or admin).
+ * Returns a discovery result — a failure is reported as `{ ok: false }`, never
+ * swallowed into "zero reviewers".
+ *
+ * @param {string} repo
+ * @returns {import('./policy.mjs').ReviewerDiscovery}
+ */
+function discoverEligibleReviewers(repo) {
+  try {
+    const collaborators = ghApi(`repos/${repo}/collaborators`);
+    if (!Array.isArray(collaborators)) {
+      return { ok: false, reason: 'collaborators API did not return a list' };
+    }
+    const eligible = collaborators
+      .filter((c) => c.permissions?.push || c.permissions?.admin)
+      .map((c) => c.login);
+    return { ok: true, eligible };
+  } catch (err) {
+    return { ok: false, reason: err instanceof Error ? err.message : String(err) };
+  }
+}
+
 function computeEffectivePrPolicy(repo) {
   const target = stripMeta(POLICY.pullRequest);
-  let eligible = [];
-  try {
-    eligible = ghApi(`repos/${repo}/collaborators`).filter(
-      (c) => c.permissions?.push || c.permissions?.admin,
-    );
-  } catch {
-    // If we cannot read collaborators, fail safe: apply the bootstrap exception.
-  }
-  if (eligible.length >= 2) {
-    return { params: { ...target }, target, exception: null };
-  }
-  const who = eligible.map((c) => c.login).join(', ') || '(none readable)';
-  return {
-    params: {
-      ...target,
-      required_approving_review_count: 0,
-      require_last_push_approval: false, // moot at 0, and GitHub rejects true+0
-    },
-    target,
-    exception:
-      `only ${eligible.length} eligible reviewer${eligible.length === 1 ? '' : 's'} (${who}); ` +
-      `an author cannot approve their own PR. Add a second collaborator with write ` +
-      `access and re-run — the policy file needs no edit.`,
-  };
+  return decidePrReviewPolicy({ target, discovery: discoverEligibleReviewers(repo) });
 }
 
 function log(msg) {
@@ -202,7 +199,7 @@ function verifyRuleset(repo, id, compare) {
 
 /** Report the bootstrap review-policy exception, if one is in effect. Never silent. */
 function reportReviewPolicy() {
-  if (!EFFECTIVE_PR.exception) {
+  if (EFFECTIVE_PR.kind === 'target') {
     log(
       `\nPR review policy: target applied (${EFFECTIVE_PR.target.required_approving_review_count} approval).`,
     );
@@ -225,6 +222,20 @@ function main() {
   log(`${CHECK_ONLY ? 'Checking' : 'Configuring'} ${repo}\n`);
 
   EFFECTIVE_PR = computeEffectivePrPolicy(repo);
+  if (EFFECTIVE_PR.kind === 'unverifiable') {
+    warn('\n────────────────────────────────────────────────────────────────');
+    warn('PR REVIEW POLICY — CANNOT VERIFY REVIEWER ELIGIBILITY');
+    warn('────────────────────────────────────────────────────────────────');
+    warn(`  ${EFFECTIVE_PR.reason}`);
+    warn('────────────────────────────────────────────────────────────────');
+    warn(
+      CHECK_ONLY
+        ? 'Reported as drift: the ruleset was NOT inspected against a guessed policy.'
+        : 'No ruleset was changed. Nothing was applied.',
+    );
+    process.exitCode = 1;
+    return;
+  }
 
   reconcileMergeSettings(repo);
   for (const spec of POLICY.rulesets) reconcileRuleset(repo, spec);

@@ -2,15 +2,18 @@ import assert from 'node:assert/strict';
 
 import { describe, expect, it } from 'vitest';
 
+import { parseFrontmatter } from '../src/frontmatter.mjs';
 import {
   isIsoDate,
   isoDate,
+  NEW_ADR_STATUS,
   nextAdrNumber,
   padNumber,
   planNewAdr,
   renderAdr,
   slugify,
   validateAdrs,
+  validateRenderedAdr,
 } from '../src/adr.mjs';
 
 describe('slugify', () => {
@@ -51,7 +54,28 @@ describe('planNewAdr', () => {
     expect(plan.content).toMatch(/^---\nid: adr\.0003-use-x-for-y\ntype: adr\n/);
     expect(plan.content).toMatch(/date: 2026-09-06/);
     expect(plan.content).toMatch(/# 0003 — Use X for Y/);
-    expect(plan.content).toMatch(/## Status\n\nCurrent\./);
+    expect(plan.content).toMatch(/status: draft/);
+    expect(plan.content).toMatch(/## Status\n\nDraft/);
+    // the rendered file is a valid draft ADR
+    expect(validateRenderedAdr(plan.content, plan.file)).toEqual([]);
+    expect(parseFrontmatter(plan.content, plan.file).status).toBe(NEW_ADR_STATUS);
+  });
+
+  it('serializes YAML-hostile titles safely and preserves the human title', () => {
+    for (const title of [
+      'Adopt X: the sequel',
+      'Use #hashtags in logs',
+      'Prefer "quoted" names',
+      'Café stratégy — final',
+      'Colons: everywhere: really',
+    ]) {
+      const plan = planNewAdr({ title, filenames: ['0001-a.md'], date: '2026-09-06' });
+      const fm = parseFrontmatter(plan.content, plan.file);
+      expect(fm.title).toBe(title); // round-trips exactly
+      expect(fm.type).toBe('adr');
+      expect(validateRenderedAdr(plan.content, plan.file)).toEqual([]);
+      expect(plan.slug).toMatch(/^[a-z0-9-]+$/); // slug stays ASCII-deterministic
+    }
   });
 
   it('refuses to add on top of inconsistent numbering (cannot silently overwrite)', () => {
@@ -124,6 +148,27 @@ describe('validateAdrs', () => {
       adr({ file: 'docs/architecture/decisions/0003-z.md', id: 'adr.0003-z' }),
     ]);
     assert.match(problems.join('\n'), /numbering has a gap/);
+  });
+
+  it('rejects a current ADR that still carries a TODO placeholder summary', () => {
+    const problems = validateAdrs([
+      adr({ status: 'current', summary: 'TODO: one or two sentences stating the decision.' }),
+    ]);
+    assert.match(problems.join('\n'), /must not carry a generated TODO placeholder/);
+  });
+
+  it('allows a draft ADR to keep its TODO placeholder summary', () => {
+    expect(
+      validateAdrs([adr({ status: 'draft', summary: 'TODO: one or two sentences.' })]),
+    ).toEqual([]);
+  });
+});
+
+describe('validateRenderedAdr', () => {
+  it('catches a filename/id mismatch before the file is written', () => {
+    const plan = planNewAdr({ title: 'A B', filenames: ['0001-a.md'], date: '2026-09-06' });
+    const tampered = plan.content.replace('id: adr.0002-a-b', 'id: adr.0002-wrong');
+    expect(validateRenderedAdr(tampered, plan.file).join('\n')).toMatch(/must match the filename/);
   });
 });
 

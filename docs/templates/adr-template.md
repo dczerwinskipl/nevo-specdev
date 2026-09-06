@@ -12,7 +12,7 @@ frontmatter requirement `nevo-docs` enforces everywhere else.
 id: adr.NNNN-kebab-title
 type: adr
 title: <Decision title>
-status: current # current | superseded | deprecated
+status: draft # draft (proposed) -> current (adopted) | deprecated | superseded
 date: <YYYY-MM-DD>
 summary: >
   One or two sentences stating the decision.
@@ -21,12 +21,17 @@ related: # optional
 ---
 ```
 
+`nevo-docs adr new "…"` creates the file already filled in with this block at
+`status: draft`. A `draft` ADR may keep the `TODO:` placeholders while it is being
+written; promote it to `current` only once the decision is adopted and the
+placeholders are gone (`docs:check` enforces that).
+
 ## Sections
 
 ### Status
 
-`Current`, or `Superseded by [NNNN](NNNN-...)`, or `Deprecated`. Note if this ADR
-supersedes an earlier one.
+`Draft` while proposed, `Current` once adopted, or `Superseded by [NNNN](NNNN-...)` /
+`Deprecated`. Note if this ADR supersedes an earlier one.
 
 ### Context
 

@@ -59,9 +59,9 @@ threads resolved, squash only.
 "eligible reviewer") and:
 
 - **≥ 2 eligible reviewers** → applies the target verbatim.
-- **only 1** → applies a **bootstrap exception** (`required_approving_review_count: 0`,
-  last-push approval off) because GitHub does not let an author approve their own PR, so
-  `1` would block every PR. It prints:
+- **API readable, < 2 eligible reviewers** → applies a **bootstrap exception**
+  (`required_approving_review_count: 0`, last-push approval off) because GitHub does not
+  let an author approve their own PR, so `1` would block every PR. It prints:
 
   ```
   PR REVIEW POLICY — BOOTSTRAP EXCEPTION IN EFFECT
@@ -69,6 +69,12 @@ threads resolved, squash only.
     effective policy : 0 approvals
     reason           : only 1 eligible reviewer (…)
   ```
+
+- **collaborators API not readable** → the run **aborts without touching any ruleset**
+  and exits non-zero (`PR REVIEW POLICY — CANNOT VERIFY REVIEWER ELIGIBILITY`). The
+  0-approval exception is only ever applied from a successful read that proves fewer
+  than two eligible reviewers — a discovery failure never weakens the policy. The pure
+  decision lives in [`policy.mjs`](policy.mjs) and is covered by `policy.test.mjs`.
 
 Adding a second collaborator with Write access —
 

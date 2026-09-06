@@ -79,4 +79,30 @@ describe('searchDocs', () => {
       searchDocs(CORPUS, { query: 'component react localization git', limit: 1 }),
     ).toHaveLength(1);
   });
+
+  it('excludeStatuses drops deprecated/superseded, so a replacement wins context', () => {
+    const withHistory = [
+      ...CORPUS,
+      {
+        id: 'development.git-workflow-old',
+        type: 'development',
+        title: 'Old git workflow',
+        status: 'superseded',
+        superseded_by: 'development.git-workflow',
+        file: 'docs/development/git-workflow-old.md',
+        read_when: ['creating a branch'],
+        summary: 'Old branch naming and PR strategy. Superseded.',
+      },
+    ];
+    const context = searchDocs(withHistory, {
+      query: 'branch pull request strategy',
+      excludeStatuses: ['deprecated', 'superseded'],
+    });
+    expect(context.map((d) => d.id)).not.toContain('development.git-workflow-old');
+    expect(context[0].id).toBe('development.git-workflow');
+
+    // list/find (no exclusion) still surface the historical doc.
+    const all = searchDocs(withHistory, { query: 'branch pull request strategy' });
+    expect(all.map((d) => d.id)).toContain('development.git-workflow-old');
+  });
 });

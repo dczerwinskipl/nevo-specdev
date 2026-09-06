@@ -18,11 +18,12 @@
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { readdirSync, writeFileSync } from 'node:fs';
+import { readdirSync, rmSync, writeFileSync } from 'node:fs';
 
 import { findRepoRoot } from '../src/scan.mjs';
 import { searchDocs } from '../src/search.mjs';
 import { checkIndex, writeIndex } from '../src/index-file.mjs';
+import { INACTIVE_STATUSES } from '../src/frontmatter.mjs';
 import { loadValidatedCorpus, inspectCorpus, CorpusError } from '../src/corpus.mjs';
 import { planNewAdr } from '../src/adr.mjs';
 
@@ -90,7 +91,13 @@ function cmdContext(query, values) {
   if (!query)
     return fail('context: a query is required, e.g. `nevo-docs context "react tailwind"`');
   const limit = values.limit ? Number(values.limit) : 5;
-  const results = searchDocs(corpusOrExit(), { query, limit });
+  // Context feeds an agent — never recommend deprecated/superseded knowledge.
+  // A superseded doc's replacement outranks it naturally once it is excluded.
+  const results = searchDocs(corpusOrExit(), {
+    query,
+    limit,
+    excludeStatuses: INACTIVE_STATUSES,
+  });
   if (values.json) {
     return print(
       JSON.stringify(
@@ -150,22 +157,27 @@ function cmdAdr(positionals, values) {
     return print(plan.content);
   }
 
-  writeFileSync(join(REPO_ROOT, plan.file), plan.content);
+  const abs = join(REPO_ROOT, plan.file);
+  writeFileSync(abs, plan.content);
 
   // Regenerate the index so the repository is immediately valid after creation.
+  // planNewAdr already validated the new file in memory, so a problem here means
+  // a pre-existing corpus issue — back the new file out rather than leave a
+  // half-applied change behind.
   const corpus = inspectCorpus(OPTS);
   if (corpus.problems.length) {
+    rmSync(abs, { force: true });
     for (const p of corpus.problems) fail(p);
-    return fail(
-      `Created ${plan.file}, but the corpus is now invalid — fix it, then \`pnpm docs:check --write\`.`,
-    );
+    return fail(`Corpus is invalid — ${plan.file} was not created. Fix the problems above first.`);
   }
   writeIndex(corpus.docs, DOCS_DIR);
 
   if (values.json) return print(JSON.stringify({ ...plan, indexRegenerated: true }, null, 2));
-  print(`Created ${plan.file}`);
+  print(`Created ${plan.file} (status: draft)`);
   print('Regenerated docs/index.generated.{md,json}');
-  print('Fill in the TODO placeholders and commit.');
+  print(
+    'Fill in the TODO sections, then promote status to `current` when the decision is adopted.',
+  );
 }
 
 /** @param {CliValues} values */

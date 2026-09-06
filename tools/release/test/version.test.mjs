@@ -201,35 +201,33 @@ test('planPromotion rejects illegal transitions', () => {
 });
 
 // ── validateVersionTransition (§13) ───────────────────────────────────────
+// `targetBranch` is the protected branch the change lands on (the PR *base*, or
+// the pushed branch) — never the head branch a PR is raised from.
 
-const T = (from, to, branch) => validateVersionTransition({ from, to, branch });
+const T = (from, to, targetBranch) => validateVersionTransition({ from, to, targetBranch });
 
-test('unchanged version.json is always ok', () => {
+test('unchanged version.json is always ok (feature PR into main, no version bump)', () => {
   assert.deepEqual(
-    T({ channel: 'alpha', version: '0.1.0' }, { channel: 'alpha', version: '0.1.0' }, 'feature/x'),
+    T({ channel: 'alpha', version: '0.1.0' }, { channel: 'alpha', version: '0.1.0' }, 'main'),
     { ok: true, kind: 'unchanged' },
   );
 });
 
-test('main-line bump: next minor or major .0 only', () => {
+test('main-line bump: next minor or major .0 only (target = main)', () => {
   assert.equal(
-    T({ channel: 'alpha', version: '1.3.0' }, { channel: 'alpha', version: '1.4.0' }, 'chore/bump')
-      .kind,
+    T({ channel: 'alpha', version: '1.3.0' }, { channel: 'alpha', version: '1.4.0' }, 'main').kind,
     'main-bump',
   );
   assert.equal(
-    T({ channel: 'alpha', version: '1.3.0' }, { channel: 'alpha', version: '2.0.0' }, 'chore/bump')
-      .kind,
+    T({ channel: 'alpha', version: '1.3.0' }, { channel: 'alpha', version: '2.0.0' }, 'main').kind,
     'main-bump',
   );
   assert.equal(
-    T({ channel: 'alpha', version: '1.3.0' }, { channel: 'alpha', version: '1.5.0' }, 'chore/bump')
-      .ok,
+    T({ channel: 'alpha', version: '1.3.0' }, { channel: 'alpha', version: '1.5.0' }, 'main').ok,
     false,
   );
   assert.equal(
-    T({ channel: 'alpha', version: '1.3.0' }, { channel: 'alpha', version: '1.4.1' }, 'chore/bump')
-      .ok,
+    T({ channel: 'alpha', version: '1.3.0' }, { channel: 'alpha', version: '1.4.1' }, 'main').ok,
     false,
   );
 });
@@ -247,9 +245,16 @@ test('line cut: alpha X.Y.0 -> beta X.Y.0 on the matching release branch', () =>
   );
 });
 
-test('promotion on a release branch is accepted, illegal ones rejected', () => {
+test('promotion is validated against the PR base branch, not the head branch', () => {
+  // The real bug: a PR from `chore/promote-1.3-to-rc` INTO `release/v1.3`.
+  // The head branch name is irrelevant — only the target `release/v1.3` matters.
   assert.equal(
     T({ channel: 'beta', version: '1.3.0' }, { channel: 'rc', version: '1.3.0' }, 'release/v1.3')
+      .kind,
+    'promotion',
+  );
+  assert.equal(
+    T({ channel: 'rc', version: '1.3.0' }, { channel: 'stable', version: '1.3.0' }, 'release/v1.3')
       .kind,
     'promotion',
   );
@@ -261,6 +266,10 @@ test('promotion on a release branch is accepted, illegal ones rejected', () => {
     ).kind,
     'promotion',
   );
+});
+
+test('illegal promotions and cross-line versions are rejected', () => {
+  // beta -> stable skips rc.
   assert.equal(
     T(
       { channel: 'beta', version: '1.3.0' },
@@ -269,8 +278,15 @@ test('promotion on a release branch is accepted, illegal ones rejected', () => {
     ).ok,
     false,
   );
+  // A promotion change in a PR that targets `main` is nonsense.
   assert.equal(
-    T({ channel: 'beta', version: '1.3.0' }, { channel: 'rc', version: '1.3.0' }, 'feature/x').ok,
+    T({ channel: 'beta', version: '1.3.0' }, { channel: 'rc', version: '1.3.0' }, 'main').ok,
+    false,
+  );
+  // rc 1.3.0 -> stable 1.4.0 is a legal channel step but the version leaves line 1.3.
+  assert.equal(
+    T({ channel: 'rc', version: '1.3.0' }, { channel: 'stable', version: '1.4.0' }, 'release/v1.3')
+      .ok,
     false,
   );
 });

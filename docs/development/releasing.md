@@ -46,7 +46,12 @@ must be one of
 - a **line cut** — `alpha X.Y.0` → `beta X.Y.0` on the matching `release/vX.Y`;
 - a **promotion** — `beta→rc`, `rc→stable`, or `stable→beta|rc` of the next patch.
 
-Anything else fails CI.
+Anything else fails CI. The check is always evaluated against the **branch the change
+targets** — the PR base, or the branch a push lands on — so a promotion PR is judged
+by `release/vX.Y`'s rules no matter what the source branch is called. A local
+`pnpm version:check-transition` infers the target from `version.json` itself
+(`alpha` → `main`, any release channel → its `origin/release/vX.Y`); set `BASE_REF` to
+override.
 
 ## CI build version
 

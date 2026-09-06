@@ -20,12 +20,12 @@ related:
 
 ## Prerequisites
 
-| Tool     | Version                                                       | Notes                                                                      |
-| -------- | ------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Node.js  | `24` LTS — `.nvmrc` pins `24.20.0`, `engines` requires `>=24` | The single contributor / CI runtime. `nvm use` / `fnm use` reads `.nvmrc`. |
-| Corepack | bundled with Node (keep it current)                           | Activates the pinned pnpm — do not `npm i -g pnpm`.                        |
-| pnpm     | `10.34.5` (pinned via `packageManager`)                       | Newer pnpm lines break GitHub Dependency Graph — see ADR 0002.             |
-| Git      | any recent                                                    | —                                                                          |
+| Tool     | Version                                                                | Notes                                                                      |
+| -------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Node.js  | `24` LTS — `.nvmrc` pins `24.20.0`, `engines` requires `>=24.20.0 <25` | The single contributor / CI runtime. `nvm use` / `fnm use` reads `.nvmrc`. |
+| Corepack | bundled with Node (keep it current)                                    | Activates the pinned pnpm — do not `npm i -g pnpm`.                        |
+| pnpm     | `10.34.5` (pinned via `packageManager`)                                | Newer pnpm lines break GitHub Dependency Graph — see ADR 0002.             |
+| Git      | any recent                                                             | —                                                                          |
 
 ```bash
 corepack enable          # once per machine

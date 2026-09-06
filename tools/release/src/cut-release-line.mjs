@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 
 import semver from 'semver';
 
-import { isCoreVersion, releaseBranchFor, versionFileText } from './version.mjs';
+import { isCoreVersion, parseVersionFile, releaseBranchFor, versionFileText } from './version.mjs';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 
@@ -56,6 +56,42 @@ export function planReleaseCut({ releaseVersion, nextDevelopmentVersion }) {
     bumpBranch: `chore/bump-main-to-${nextDevelopmentVersion}`,
     step: isNextMajor ? 'major' : 'minor',
   };
+}
+
+/**
+ * Validate `origin/main`'s OWN version.json (read at the fetched commit, never
+ * the working tree) against the requested cut. `main` must be an `alpha`
+ * development line whose version is exactly the one being stabilized, and the
+ * next development version must be that version's next minor or major. Pure.
+ *
+ * @param {{ channel: string, version: string }} mainVersionFile
+ * @param {{ releaseVersion: string, nextVersion: string }} o
+ * @returns {string[]} errors (empty ⇒ ok)
+ */
+export function validateCutBaseVersion(mainVersionFile, { releaseVersion, nextVersion }) {
+  /** @type {string[]} */ const errors = [];
+  if (mainVersionFile.channel !== 'alpha') {
+    errors.push(
+      `origin/main version.json is channel '${mainVersionFile.channel}', not 'alpha' — ` +
+        `main is not a development line.`,
+    );
+  }
+  if (mainVersionFile.version !== releaseVersion) {
+    errors.push(
+      `origin/main is developing ${mainVersionFile.version}, but --release-version is ` +
+        `${releaseVersion}. Cut the line for the version main is on, or bump main first.`,
+    );
+    return errors; // the next-version check below is only meaningful once these agree
+  }
+  const nextMinor = semver.inc(mainVersionFile.version, 'minor');
+  const nextMajor = semver.inc(mainVersionFile.version, 'major');
+  if (nextVersion !== nextMinor && nextVersion !== nextMajor) {
+    errors.push(
+      `--next-development-version ${nextVersion} is neither the next minor (${nextMinor}) ` +
+        `nor the next major (${nextMajor}) of main's ${mainVersionFile.version}.`,
+    );
+  }
+  return errors;
 }
 
 // ── side effects ────────────────────────────────────────────────────────────
@@ -147,6 +183,34 @@ export function executeReleaseCut(plan, { hasToken, log }) {
   }
 
   const baseSha = git(['rev-parse', 'origin/main^{commit}']);
+
+  // Validate origin/main's own version.json AT THAT COMMIT before any remote
+  // mutation — never trust the working tree, and never cut a line from a main
+  // that is not the alpha development line for `releaseVersion`.
+  let mainVf;
+  try {
+    mainVf = parseVersionFile(
+      git(['show', `${baseSha}:version.json`]),
+      `origin/main@${baseSha.slice(0, 7)}:version.json`,
+    );
+  } catch (err) {
+    throw new Error(
+      `Cannot read/parse origin/main's version.json at ${baseSha.slice(0, 7)} — ` +
+        `refusing to cut a release line from an unverified main.\n  ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      { cause: err },
+    );
+  }
+  const baseErrors = validateCutBaseVersion(mainVf, { releaseVersion, nextVersion });
+  if (baseErrors.length) {
+    throw new Error(
+      `Refusing to cut ${releaseBranch} — origin/main is not in the expected state:\n  - ` +
+        baseErrors.join('\n  - '),
+    );
+  }
+  log(`origin/main at ${baseSha.slice(0, 7)} is alpha ${mainVf.version} — cut is consistent.`);
+
   const startRef = currentRef();
   const work = `cut-release-${Date.now()}`;
 

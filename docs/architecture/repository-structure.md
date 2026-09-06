@@ -25,8 +25,8 @@ related:
 
 ```text
 nevo-specdev/
-  apps/                 deployable applications (nevo-spec CLI, dashboard)
-  packages/             shared / publishable libraries (@nevo/* scope)
+  apps/                 deployable applications        (workspace glob; empty until one lands)
+  packages/             shared / publishable libraries (@nevo/* scope; empty until one lands)
   tools/                repository-internal tooling — never published
     docs/               nevo-repo-docs   — doc discovery, index, ADR authoring
     release/            nevo-repo-release — version model, cut-release-line, release

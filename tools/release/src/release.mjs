@@ -20,6 +20,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  highestPrereleaseTag,
   isReleaseTagVersion,
   lineOfBranch,
   nextPrereleaseTag,
@@ -41,7 +42,8 @@ export const REQUIRED_HEAD_CHECKS = Object.freeze(['quality', 'test', 'build']);
  * @param {'beta'|'rc'|'stable'} o.channel
  * @param {{channel:string,version:string}} o.versionFile
  * @param {string[]} o.existingTags
- * @returns {{ errors: string[], tag?: string, prerelease?: boolean, version?: string,
+ * @returns {{ errors: string[], tag?: string, channel?: 'beta'|'rc'|'stable',
+ *   prerelease?: boolean, version?: string,
  *   nextBranchState?: {channel:string,version:string} }}
  */
 export function planRelease({ branch, channel, versionFile, existingTags }) {
@@ -72,6 +74,7 @@ export function planRelease({ branch, channel, versionFile, existingTags }) {
     return {
       errors,
       tag,
+      channel,
       prerelease: false,
       version,
       // After the stable tag, the branch moves on to the next patch's beta.
@@ -86,7 +89,34 @@ export function planRelease({ branch, channel, versionFile, existingTags }) {
   if (!isReleaseTagVersion(tag.replace(/^v/, ''))) {
     errors.push(`Computed tag ${tag} is not a valid release tag.`);
   }
-  return errors.length ? { errors } : { errors, tag, prerelease: true, version };
+  return errors.length ? { errors } : { errors, tag, channel, prerelease: true, version };
+}
+
+/**
+ * Choose which tag `executeRelease` acts on. Normally the planned next number —
+ * but if the highest prerelease tag that already exists for this version+channel
+ * is sitting on the release-branch HEAD *without* its GitHub Release, that tag is
+ * an unfinished previous run: target it and complete the Release rather than
+ * skipping ahead to N+1. Pure — the tag/Release state is passed in.
+ *
+ * @param {object} o
+ * @param {string} o.plannedTag
+ * @param {boolean} o.prerelease
+ * @param {string | null} o.highestTag
+ * @param {{ state: 'absent'|'ok'|'mismatch', release: boolean } | null} o.highestTagState
+ * @returns {{ tag: string, recovering: boolean }}
+ */
+export function pickReleaseCandidate({ plannedTag, prerelease, highestTag, highestTagState }) {
+  if (
+    prerelease &&
+    highestTag &&
+    highestTagState &&
+    highestTagState.state === 'ok' &&
+    !highestTagState.release
+  ) {
+    return { tag: highestTag, recovering: true };
+  }
+  return { tag: plannedTag, recovering: false };
 }
 
 // ── side effects ────────────────────────────────────────────────────────────
@@ -109,35 +139,81 @@ function gh(args) {
 }
 
 /**
+ * Keep only the newest run per check name. After a re-run GitHub returns both
+ * the old and the new run for a name; the newest `id` is the current one. Pure.
+ *
+ * @param {Array<{ name?: unknown, status?: unknown, conclusion?: unknown, id?: unknown }>} runs
+ * @returns {Map<string, { name: string, status: string, conclusion: string | null, id: number }>}
+ */
+export function latestCheckRunsByName(runs) {
+  /** @type {Map<string, { name: string, status: string, conclusion: string | null, id: number }>} */
+  const byName = new Map();
+  for (const r of Array.isArray(runs) ? runs : []) {
+    if (!r || typeof r.name !== 'string') continue;
+    const run = {
+      name: r.name,
+      status: String(r.status ?? ''),
+      conclusion: r.conclusion == null ? null : String(r.conclusion),
+      id: Number(r.id ?? 0),
+    };
+    const prev = byName.get(run.name);
+    if (!prev || run.id >= prev.id) byName.set(run.name, run);
+  }
+  return byName;
+}
+
+/**
+ * Which required checks are missing / not green, given the latest run per name. Pure.
+ *
+ * @param {Map<string, { status: string, conclusion: string | null }>} byName
+ * @param {readonly string[]} required
+ * @returns {{ missing: string[], notPassing: string[] }}
+ */
+export function evaluateRequiredChecks(byName, required) {
+  /** @type {string[]} */ const missing = [];
+  /** @type {string[]} */ const notPassing = [];
+  for (const name of required) {
+    const run = byName.get(name);
+    if (!run) missing.push(name);
+    else if (run.status !== 'completed' || run.conclusion !== 'success') {
+      notPassing.push(`${name} (${run.status || 'unknown'}/${run.conclusion ?? 'pending'})`);
+    }
+  }
+  return { missing, notPassing };
+}
+
+/**
  * Verify the required checks on `sha` are all `success` on GitHub. Throws with a
  * clear message otherwise — a release is never cut from an unvalidated commit.
  *
  * @param {string} sha
  */
 export function verifyHeadChecksPassed(sha) {
+  // `--slurp` wraps every page in ONE outer array, so the output is a single
+  // JSON document (not N concatenated arrays that JSON.parse would choke on).
+  // `per_page=100` keeps a busy commit to a page or two.
   const raw = gh([
     'api',
-    `repos/{owner}/{repo}/commits/${sha}/check-runs`,
+    `repos/{owner}/{repo}/commits/${sha}/check-runs?per_page=100`,
     '--paginate',
+    '--slurp',
     '--jq',
-    '[.check_runs[] | {name, status, conclusion}]',
+    '[.[].check_runs[] | { name, status, conclusion, id }]',
   ]);
-  /** @type {Array<{name:string,status:string,conclusion:string|null}>} */
-  const runs = JSON.parse(raw || '[]');
-  const byName = new Map();
-  for (const r of runs) {
-    // keep the most recent (last) run per name
-    byName.set(r.name, r);
+  /** @type {unknown} */
+  let runs;
+  try {
+    runs = JSON.parse(raw || '[]');
+  } catch (err) {
+    throw new Error(
+      `Could not read check-run status for ${sha.slice(0, 7)} from GitHub: ` +
+        `${err instanceof Error ? err.message : String(err)}`,
+      { cause: err },
+    );
   }
-  const missing = [];
-  const notPassing = [];
-  for (const name of REQUIRED_HEAD_CHECKS) {
-    const run = byName.get(name);
-    if (!run) missing.push(name);
-    else if (run.status !== 'completed' || run.conclusion !== 'success') {
-      notPassing.push(`${name} (${run.status}/${run.conclusion ?? 'pending'})`);
-    }
-  }
+
+  const byName = latestCheckRunsByName(/** @type {any[]} */ (runs));
+  const { missing, notPassing } = evaluateRequiredChecks(byName, REQUIRED_HEAD_CHECKS);
   if (missing.length || notPassing.length) {
     throw new Error(
       `Release-branch HEAD ${sha.slice(0, 7)} has not passed CI.\n` +
@@ -223,12 +299,44 @@ export function executeRelease(plan, { hasToken, log }) {
   git(['fetch', 'origin', '--tags', '--prune']);
   const branch = git(['rev-parse', '--abbrev-ref', 'HEAD']);
   const headSha = git(['rev-parse', 'HEAD']);
+  const headShort = headSha.slice(0, 7);
 
   verifyHeadChecksPassed(headSha);
 
-  const tag = /** @type {string} */ (plan.tag);
+  const plannedTag = /** @type {string} */ (plan.tag);
+  const prerelease = plan.prerelease === true;
+
+  // Partial-run recovery: before accepting the planned next number, look at the
+  // highest prerelease tag that already exists for this version+channel. If it is
+  // on HEAD but never got its GitHub Release, finish THAT one.
+  /** @type {string | null} */ let highestTag = null;
+  /** @type {{ state: 'absent'|'ok'|'mismatch', release: boolean } | null} */
+  let highestTagState = null;
+  if (prerelease && plan.version && (plan.channel === 'beta' || plan.channel === 'rc')) {
+    const existingTags = git(['tag', '--list']).split('\n').filter(Boolean);
+    highestTag = highestPrereleaseTag({
+      version: plan.version,
+      channel: plan.channel,
+      existingTags,
+    });
+    if (highestTag) highestTagState = inspectTagState(highestTag, headSha);
+  }
+
+  const { tag, recovering } = pickReleaseCandidate({
+    plannedTag,
+    prerelease,
+    highestTag,
+    highestTagState,
+  });
+  if (recovering && tag !== plannedTag) {
+    log(
+      `Recovering ${tag}: its tag is on ${headShort} but the GitHub Release is missing. ` +
+        `Not cutting ${plannedTag}.`,
+    );
+  }
+
   const existing = inspectTagState(tag, headSha);
-  const decision = decideReleaseAction(existing, { tag, headShort: headSha.slice(0, 7), branch });
+  const decision = decideReleaseAction(existing, { tag, headShort, branch });
 
   if ('error' in decision) throw new Error(decision.error);
   log(decision.message);
@@ -238,7 +346,7 @@ export function executeRelease(plan, { hasToken, log }) {
     git(['tag', '-a', tag, '-m', tag, headSha]);
     git(['push', 'origin', `refs/tags/${tag}`]);
   }
-  createGithubRelease(tag, plan.prerelease === true, log);
+  createGithubRelease(tag, prerelease, log);
 
   if (plan.nextBranchState)
     advanceBranchAfterStable(branch, plan.nextBranchState, { hasToken, log });
@@ -263,6 +371,28 @@ function createGithubRelease(tag, prerelease, log) {
  */
 function advanceBranchAfterStable(branch, nextState, { hasToken, log }) {
   const advanceBranch = `chore/advance-${branch.replace(/\//g, '-')}-to-${nextState.version}`;
+
+  // Idempotent: a re-run after the tag succeeded but the advance PR step failed
+  // must not try to recreate a branch/PR that is already open.
+  const openAdvancePr = gh([
+    'pr',
+    'list',
+    '--head',
+    advanceBranch,
+    '--base',
+    branch,
+    '--state',
+    'open',
+    '--json',
+    'url',
+    '--jq',
+    '.[0].url // ""',
+  ]);
+  if (openAdvancePr) {
+    log(`Branch-advance PR already open — nothing to do:\n  ${openAdvancePr}`);
+    return;
+  }
+
   const startRef = git(['rev-parse', '--abbrev-ref', 'HEAD']);
   try {
     git(['switch', '--create', advanceBranch, `origin/${branch}`]);

@@ -21,8 +21,14 @@ pnpm version:print               # from version.json + $GITHUB_* (run number 0 l
 ## `bin/check-version-transition.mjs` — `pnpm version:check-transition`
 
 CI + local gate. A change to `version.json` must be a legal transition (unchanged /
-main-line bump / line cut / promotion) — otherwise it fails. Compares against the PR
-base (`GITHUB_BASE_REF`), `HEAD~1` on a branch push, or the merge-base locally.
+main-line bump / line cut / promotion) — otherwise it fails.
+
+The rules are checked against the **target** branch (the release state machine being
+mutated), never the head branch a PR is raised from: a PR into `main` is checked as
+`main`, a PR into `release/v1.3` as `release/v1.3`. Base/target is taken from
+`GITHUB_BASE_REF` (a PR), the pushed branch with `HEAD~1` (a branch push), or — for a
+local run — inferred from the working-tree `version.json` (`alpha` → `main`, any
+release channel → its `origin/release/vX.Y`). `BASE_REF` overrides all of this.
 
 ## `bin/cut-release-line.mjs`
 

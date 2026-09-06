@@ -12,13 +12,24 @@ knowledge is baked into the code.
 Run from the repository root:
 
 ```bash
-pnpm docs:list                        # every indexed document
-pnpm docs:find "git workflow"         # rank documents by a query
-pnpm docs:context "react tailwind"    # print the files to load for a task
-pnpm docs:adr new "Use X for Y"       # create the next-numbered ADR from the template
+pnpm docs:list                        # every indexed document (all statuses)
+pnpm docs:find "git workflow"         # rank documents by a query (--status to filter)
+pnpm docs:context "react tailwind"    # files to load for a task; deprecated/superseded excluded
+pnpm docs:adr new "Use X for Y"       # create the next-numbered ADR as a draft
 pnpm docs:check                       # validate the whole corpus + verify the index
 pnpm docs:check --write               # also regenerate docs/index.generated.{md,json}
 ```
+
+`context` feeds an AI agent, so it never recommends a `deprecated` or `superseded`
+document — once one is excluded its replacement ranks first naturally. `list` and
+`find` still show every status for historical lookup.
+
+`adr new` writes the file at `status: draft` with `TODO:` placeholders and
+regenerates the index. Fill the sections in, then set `status: current` when the
+decision is adopted — `docs:check` rejects a `current` ADR that still has a TODO
+placeholder summary. Titles are serialized through the YAML library, so `:`
+/ `#` / quotes / accents in a title cannot corrupt the frontmatter; the slug is
+still ASCII-only and deterministic.
 
 `--type`, `--status`, `--limit`, `--json` and (for `adr new`) `--dry-run` are accepted
 where they make sense.
@@ -27,8 +38,9 @@ where they make sense.
 inconsistent they fail loudly rather than serve partial context. `pnpm docs:check` is
 what CI runs; it exits non-zero on any authored file missing frontmatter, invalid
 frontmatter, an unresolved `related` id, an ADR whose filename and `id` disagree or
-whose date is not ISO, or a stale index. The generated index carries no timestamp, so
-`--write` twice with no source change leaves the tree clean.
+whose date is not ISO, a `current` ADR still carrying a generated `TODO` placeholder,
+or a stale index. The generated index carries no timestamp, so `--write` twice with no
+source change leaves the tree clean.
 
 ## Frontmatter contract
 

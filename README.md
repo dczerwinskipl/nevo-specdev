@@ -32,8 +32,8 @@ and every package's typecheck / test / build. Full setup and the command referen
 
 | Path              | Contents                                                                                                                                       |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/`           | Deployable applications (`nevo-spec` CLI, dashboard).                                                                                          |
-| `packages/`       | Shared and publishable libraries under the `@nevo/*` scope.                                                                                    |
+| `apps/`           | Deployable applications. Workspace glob; populated when an app lands.                                                                          |
+| `packages/`       | Shared / publishable libraries under the `@nevo/*` scope. Workspace glob; populated when a package lands.                                      |
 | `tools/`          | Repository-internal tooling — [`tools/docs`](tools/docs/README.md) (`nevo-docs`), [`tools/release`](tools/release/README.md). Never published. |
 | `docs/`           | [Documentation](docs/README.md): development, product, architecture.                                                                           |
 | `scripts/github/` | Idempotent GitHub governance apply/verify (`gh` API).                                                                                          |

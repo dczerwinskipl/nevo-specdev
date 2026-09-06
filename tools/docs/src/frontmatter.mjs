@@ -27,6 +27,13 @@ export const REQUIRED_FIELDS = {
 
 export const KNOWN_TYPES = Object.freeze(Object.keys(REQUIRED_FIELDS));
 export const KNOWN_STATUSES = Object.freeze(['current', 'draft', 'deprecated', 'superseded']);
+/**
+ * Statuses that represent superseded or retired knowledge. `nevo-docs context`
+ * (the "what should the agent read" command) excludes these so an AI is never
+ * handed guidance that a newer document has replaced. `list` / `find` still show
+ * them for historical lookup.
+ */
+export const INACTIVE_STATUSES = Object.freeze(['deprecated', 'superseded']);
 
 /**
  * YAML folded/literal block scalars keep a trailing newline; the docs only use them
