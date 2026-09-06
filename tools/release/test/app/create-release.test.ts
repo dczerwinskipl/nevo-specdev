@@ -36,15 +36,7 @@ function onReleaseBranch(vf: VersionFile): void {
   github = createFakeGitHub();
 }
 
-const deps = (hasToken = false) => ({
-  git,
-  github,
-  readWorkingVersion: () => {
-    const raw = git.state.commits.get(HEAD)?.files['version.json'] ?? '{}';
-    return JSON.parse(raw) as VersionFile;
-  },
-  hasToken,
-});
+const deps = (hasToken = false) => ({ git, github, hasToken });
 
 const run = (channel: string, mutate: boolean, hasToken = false) =>
   executeRelease({ channel }, deps(hasToken), { mutate });

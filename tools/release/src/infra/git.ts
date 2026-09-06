@@ -51,7 +51,14 @@ export function createGitClient(repoRoot: string): GitClient {
       try {
         return await git(['show', `${ref}:${path}`]);
       } catch (err) {
-        if (err instanceof CommandFailedError) return null;
+        // `null` ONLY for a genuinely-absent path — a bad ref or broken object
+        // store must surface, not be read as "the file is not there".
+        if (
+          err instanceof CommandFailedError &&
+          /does not exist in|exists on disk, but not in|Path '.*' does not exist/i.test(err.stderr)
+        ) {
+          return null;
+        }
         throw err;
       }
     },

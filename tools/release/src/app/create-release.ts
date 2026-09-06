@@ -30,7 +30,7 @@ import {
 } from '../domain/release-plan.js';
 import { parseVersionFile, versionFileText, type VersionFile } from '../domain/version.js';
 import { InconsistentStateError, UsageError, errorMessage } from '../errors.js';
-import type { GitClient, GitHubClient, ReadWorkingVersion } from '../ports.js';
+import type { GitClient, GitHubClient } from '../ports.js';
 import { info, warn, type ActionEvent } from './events.js';
 
 type ValidReleasePlan = Extract<ReleasePlan, { ok: true }>;
@@ -38,7 +38,6 @@ type ValidReleasePlan = Extract<ReleasePlan, { ok: true }>;
 export interface CreateReleaseDeps {
   readonly git: GitClient;
   readonly github: GitHubClient;
-  readonly readWorkingVersion: ReadWorkingVersion;
   readonly hasToken: boolean;
 }
 
@@ -61,10 +60,29 @@ export async function executeRelease(
   const headSha = await git.headSha();
   const headShort = headSha.slice(0, 7);
 
+  // §2 — the release must represent the CURRENT remote protected-branch commit;
+  // do this first so everything below reads verified remote state.
+  await assertLocalHeadIsRemoteHead(git, branch, headSha);
+
+  // Read version.json from origin/<branch>, not the (possibly dirty) working tree.
+  const versionRaw = await git.showFileAtRef(`origin/${branch}`, 'version.json');
+  if (versionRaw === null) {
+    throw new InconsistentStateError(`origin/${branch} has no version.json — cannot release.`);
+  }
+  let versionFile: VersionFile;
+  try {
+    versionFile = parseVersionFile(versionRaw, `origin/${branch}:version.json`);
+  } catch (err) {
+    throw new InconsistentStateError(
+      `origin/${branch} has an invalid version.json: ${errorMessage(err)}`,
+      { cause: err },
+    );
+  }
+
   const plan = planRelease({
     branch,
     channel: input.channel,
-    versionFile: deps.readWorkingVersion(),
+    versionFile,
     existingTags: await git.listTags(),
   });
   if (!plan.ok) {
@@ -84,9 +102,6 @@ export async function executeRelease(
     );
   }
   events.push(info(mutate ? '' : '(validate-only — running every check, changing nothing)'));
-
-  // §2 — the release must represent the CURRENT remote protected-branch commit.
-  await assertLocalHeadIsRemoteHead(git, branch, headSha);
 
   // The branch HEAD must have passed CI.
   await ensureHeadChecksPassed(github, headSha);
