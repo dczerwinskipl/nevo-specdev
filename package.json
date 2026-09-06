@@ -22,11 +22,11 @@
     "governance:test": "node --test \"scripts/github/**/*.test.mjs\"",
     "check:quality": "pnpm tools:build && pnpm format:check && pnpm lint && pnpm docs:check && pnpm version:check-transition && pnpm governance:test",
     "check": "pnpm check:quality && turbo run typecheck test build",
-    "docs:list": "node tools/docs/bin/docs.mjs list",
-    "docs:find": "node tools/docs/bin/docs.mjs find",
-    "docs:context": "node tools/docs/bin/docs.mjs context",
-    "docs:check": "node tools/docs/bin/docs.mjs check",
-    "docs:adr": "node tools/docs/bin/docs.mjs adr"
+    "docs:list": "node tools/docs/dist/bin.js list",
+    "docs:find": "node tools/docs/dist/bin.js find",
+    "docs:context": "node tools/docs/dist/bin.js context",
+    "docs:check": "node tools/docs/dist/bin.js check",
+    "docs:adr": "node tools/docs/dist/bin.js adr"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

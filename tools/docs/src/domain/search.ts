@@ -1,15 +1,14 @@
 // Deterministic, dependency-free doc search. Term-coverage first, then a small
-// field-weight tie-breaker, then id order. No product knowledge lives here — it
-// only reads the structured frontmatter fields.
+// field-weight tie-breaker, then id order. Reads only structured frontmatter.
 
-/** @param {string} term */
-export function normalizeTerm(term) {
-  const t = String(term || '')
+import { asString, type DocRecord } from './frontmatter.js';
+
+export function normalizeTerm(term: string): string {
+  const t = term
     .toLowerCase()
     .trim()
     .replace(/^[^a-z0-9]+|[^a-z0-9]+$/g, '');
   if (!t) return '';
-  // Light singularization so "conventions" matches "convention", "guidelines" → "guideline".
   if (t.endsWith('ies') && t.length > 4) return `${t.slice(0, -3)}y`;
   if (t.endsWith('sses')) return t.slice(0, -2);
   if (/(shes|ches|xes|zes)$/.test(t)) return t.slice(0, -2);
@@ -17,11 +16,10 @@ export function normalizeTerm(term) {
   return t;
 }
 
-/** @param {string} text @returns {string[]} normalized, de-duplicated tokens */
-export function tokenize(text) {
+export function tokenize(text: string): string[] {
   return [
     ...new Set(
-      String(text || '')
+      text
         .toLowerCase()
         .split(/[^a-z0-9]+/)
         .map(normalizeTerm)
@@ -30,8 +28,7 @@ export function tokenize(text) {
   ];
 }
 
-/** @type {ReadonlyArray<readonly [field: string, weight: number]>} */
-const FIELD_WEIGHTS = [
+const FIELD_WEIGHTS: readonly (readonly [field: string, weight: number])[] = [
   ['id', 50],
   ['title', 40],
   ['read_when', 30],
@@ -40,26 +37,30 @@ const FIELD_WEIGHTS = [
   ['related', 5],
 ];
 
-/** @param {Record<string, any>} doc @param {string} field */
-function fieldText(doc, field) {
+function fieldText(doc: DocRecord, field: string): string {
   const v = doc[field];
-  if (Array.isArray(v)) return v.join(' ');
-  return v == null ? '' : String(v);
+  if (Array.isArray(v)) return v.map((x) => asString(x)).join(' ');
+  return asString(v);
 }
 
-/**
- * Score one doc against a query. Returns `{ score, matchedTerms, matchedFields }`.
- * A score of 0 means "no match" — the caller drops it.
- *
- * @param {Record<string, any>} doc
- * @param {string} query
- */
-export function scoreDoc(doc, query) {
+export interface ScoredDoc extends DocRecord {
+  readonly score: number;
+  readonly matchedTerms: string[];
+  readonly matchedFields: string[];
+}
+
+export interface ScoreResult {
+  readonly score: number;
+  readonly matchedTerms: string[];
+  readonly matchedFields: string[];
+}
+
+export function scoreDoc(doc: DocRecord, query: string): ScoreResult {
   const queryTokens = tokenize(query);
   if (queryTokens.length === 0) return { score: 0, matchedTerms: [], matchedFields: [] };
 
-  const matchedTerms = new Set();
-  const matchedFields = new Set();
+  const matchedTerms = new Set<string>();
+  const matchedFields = new Set<string>();
   let fieldScore = 0;
 
   for (const [field, weight] of FIELD_WEIGHTS) {
@@ -88,38 +89,42 @@ export function scoreDoc(doc, query) {
   };
 }
 
-/**
- * Filter + rank a corpus.
- *
- * @param {Array<Record<string, any>>} docs
- * @param {object} opts
- * @param {string} [opts.query]
- * @param {string} [opts.type]
- * @param {string} [opts.status]           keep only this exact status
- * @param {readonly string[]} [opts.excludeStatuses] drop these statuses (e.g. deprecated/superseded)
- * @param {number} [opts.limit]
- * @returns {Array<Record<string, any>>} docs with `score` / `matchedTerms` / `matchedFields` when a query was given
- */
-export function searchDocs(docs, { query, type, status, excludeStatuses, limit } = {}) {
+export interface SearchOptions {
+  readonly query?: string;
+  readonly type?: string;
+  readonly status?: string;
+  /** drop these statuses (e.g. deprecated/superseded) */
+  readonly excludeStatuses?: readonly string[];
+  readonly limit?: number;
+}
+
+/** Filter + rank a corpus. */
+export function searchDocs(
+  docs: readonly DocRecord[],
+  { query, type, status, excludeStatuses, limit }: SearchOptions = {},
+): (DocRecord | ScoredDoc)[] {
   const excluded = new Set(excludeStatuses ?? []);
-  let results = docs.filter(
+  const filtered = docs.filter(
     (d) =>
-      (!type || d.type === type) && (!status || d.status === status) && !excluded.has(d.status),
+      (!type || d.type === type) &&
+      (!status || d.status === status) &&
+      !excluded.has(asString(d.status)),
   );
 
-  if (query && query.trim()) {
-    results = results
+  let results: (DocRecord | ScoredDoc)[];
+  if (query?.trim()) {
+    results = filtered
       .map((doc) => ({ doc, ...scoreDoc(doc, query) }))
       .filter((r) => r.score > 0)
       .sort((a, b) => b.score - a.score || String(a.doc.id).localeCompare(String(b.doc.id)))
-      .map((r) => ({
+      .map((r): ScoredDoc => ({
         ...r.doc,
         score: r.score,
         matchedTerms: r.matchedTerms,
         matchedFields: r.matchedFields,
       }));
   } else {
-    results = [...results].sort((a, b) => String(a.id).localeCompare(String(b.id)));
+    results = [...filtered].sort((a, b) => String(a.id).localeCompare(String(b.id)));
   }
 
   return typeof limit === 'number' && limit > 0 ? results.slice(0, limit) : results;

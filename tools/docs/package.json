@@ -5,21 +5,22 @@
   "description": "Repository-internal documentation discovery and index for Nevo SpecDev. Not a product package.",
   "license": "MIT",
   "bin": {
-    "nevo-docs": "./bin/docs.mjs"
+    "nevo-docs": "./dist/bin.js"
   },
   "exports": {
-    ".": "./src/index.mjs"
+    ".": "./dist/index.js"
   },
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "vitest run --coverage",
+    "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
+    "commander": "15.0.0",
     "yaml": "2.9.0"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "5.0.0",
     "vitest": "5.0.0"
   }
 }

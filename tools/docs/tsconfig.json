@@ -1,8 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "checkJs": true,
-    "allowJs": true,
     "noEmit": true,
     "composite": false,
     "declaration": false,
@@ -12,6 +10,5 @@
     "tsBuildInfoFile": "./.tsbuild/docs.tsbuildinfo",
     "types": ["node"]
   },
-  "//include": "Ships code only — test/**/*.mjs is exercised by Vitest, not tsc.",
-  "include": ["src/**/*.mjs", "bin/**/*.mjs"]
+  "include": ["src/**/*.ts", "test/**/*.ts"]
 }
