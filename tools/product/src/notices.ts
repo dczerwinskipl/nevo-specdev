@@ -7,13 +7,17 @@ import { createRequire } from 'node:module';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
+// `nevo-repo-product` depends on the same `commander` (exact pinned version) that
+// esbuild compiles into the product bundle, so resolving from here gives the
+// identical license file.
+const require = createRequire(import.meta.url);
+
 /** Packages whose source is compiled into dist/bin.js and needs its license carried. */
 const BUNDLED = ['commander'] as const;
 
-export function buildThirdPartyNotices(fromDir: string): string {
-  const require = createRequire(join(fromDir, 'noop.js'));
+export function buildThirdPartyNotices(): string {
   const blocks = BUNDLED.map((name) => {
-    const pkgDir = resolvePackageDir(require, name);
+    const pkgDir = resolvePackageDir(name);
     const pkg = JSON.parse(readFileSync(join(pkgDir, 'package.json'), 'utf8')) as {
       version: string;
       license?: string;
@@ -42,7 +46,7 @@ export function buildThirdPartyNotices(fromDir: string): string {
   ].join('\n');
 }
 
-function resolvePackageDir(require: NodeJS.Require, name: string): string {
+function resolvePackageDir(name: string): string {
   // `require.resolve(name)` lands on the package's main file; walk up to its root.
   let dir = dirname(require.resolve(name));
   while (!existsSync(join(dir, 'package.json'))) {

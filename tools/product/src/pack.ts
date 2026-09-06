@@ -87,7 +87,7 @@ export async function packProduct(opts: PackOptions = {}): Promise<PackResult> {
     copyIfPresent(join(paths.productPackage, 'README.md'), join(stage, 'README.md'));
     copyIfPresent(join(paths.root, 'LICENSE'), join(stage, 'LICENSE'));
     // Attribution for third-party code EMBEDDED in dist/bin.js (commander).
-    writeFileSync(join(stage, 'THIRD_PARTY_NOTICES.txt'), buildThirdPartyNotices(paths.root));
+    writeFileSync(join(stage, 'THIRD_PARTY_NOTICES.txt'), buildThirdPartyNotices());
 
     mkdirSync(paths.artifactsDir, { recursive: true });
     // Run pnpm from the repo root (which carries `packageManager`) and point it
