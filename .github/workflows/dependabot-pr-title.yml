@@ -1,0 +1,89 @@
+name: Dependabot PR title
+
+# Dependabot writes an upper-case subject for single-package bumps
+# (`build(deps-dev): Bump @types/node from …`). The repository's `pr-title`
+# check requires a lower-case subject (`subjectPattern: ^(?![A-Z])…`), and the
+# title becomes the squash commit on `main`, so it must genuinely conform — not
+# just be waved through for the bot. This workflow lower-cases the first letter
+# of the subject and nothing else, then re-runs `pr-title` against the fix.
+#
+# Security: `pull_request_target` runs in the base-repo context with a token, so
+# it does NOT check out or run any PR content. It only reads the PR title (from
+# an env var, never interpolated into the shell) and calls `gh` to edit the
+# title and re-run one workflow. Nothing here builds or executes bot-authored
+# code.
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+
+# Minimum scopes for what this job actually does — nothing else, no `contents`:
+#   pull-requests: write   edit the PR title
+#   actions: write         re-run the `pr-title` check so branch protection
+#                          re-evaluates it (an edit made with GITHUB_TOKEN does
+#                          not itself dispatch a new `pull_request` run)
+permissions:
+  pull-requests: write
+  actions: write
+
+concurrency:
+  group: dependabot-pr-title-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  normalize:
+    name: normalize
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    steps:
+      - name: Lower-case the Conventional Commit subject
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          # <type>(<scope>)<!>: <subject>  ->  lower-case the first char of <subject>.
+          if [[ "$PR_TITLE" =~ ^([a-z]+(\([^\)]*\))?!?:\ )(.+)$ ]]; then
+            prefix="${BASH_REMATCH[1]}"
+            subject="${BASH_REMATCH[3]}"
+            new="${prefix}${subject,}"
+          else
+            echo "Title is not <type>(<scope>): <subject> — leaving it for the pr-title check."
+            exit 0
+          fi
+
+          if [[ "$new" == "$PR_TITLE" ]]; then
+            echo "Subject already lower-case — nothing to do."
+            exit 0
+          fi
+
+          echo "Rewriting title:"
+          echo "  from: $PR_TITLE"
+          echo "  to:   $new"
+          gh pr edit "$PR_NUMBER" --title "$new"
+
+          # An edit made with GITHUB_TOKEN does not dispatch a fresh `pull_request`
+          # run, so poll for the existing `pr-title` run on this head SHA and
+          # re-run it — amannn/action-semantic-pull-request re-fetches the title
+          # from the API, so the re-run validates the corrected title.
+          for _ in $(seq 1 12); do
+            runs="$(gh run list --workflow=pr-title.yml --branch "$HEAD_REF" \
+              --json databaseId,headSha,status,conclusion --limit 20)"
+            match="$(echo "$runs" | jq -c --arg s "$HEAD_SHA" \
+              'map(select(.headSha == $s)) | .[0] // empty')"
+            if [[ -n "$match" && "$(echo "$match" | jq -r .status)" == "completed" ]]; then
+              if [[ "$(echo "$match" | jq -r .conclusion)" != "success" ]]; then
+                id="$(echo "$match" | jq -r .databaseId)"
+                echo "Re-running pr-title run $id"
+                gh run rerun "$id" --failed || gh run rerun "$id" || true
+              fi
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::warning::pr-title run for $HEAD_SHA did not settle; it will re-evaluate on the next PR event."

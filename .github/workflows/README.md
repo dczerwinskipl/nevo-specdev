@@ -1,16 +1,20 @@
 # Workflows
 
-| Workflow                                       | Trigger                             | Purpose                                                                                   | `permissions`                                             |
-| ---------------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| [`ci.yml`](ci.yml)                             | PRs; pushes to `main`, `release/v*` | `pnpm check:quality`, then affected typecheck / test / build.                             | `contents: read`                                          |
-| [`pr-title.yml`](pr-title.yml)                 | PR opened / edited / synced         | Conventional Commits check on the PR title (`<type>(<scope>): …`, scope required).        | `pull-requests: read`                                     |
-| [`release.yml`](release.yml)                   | `workflow_dispatch` on `release/v*` | Verify HEAD CI, then tag + GitHub Release (`beta`/`rc`/`stable`); post-stable advance PR. | `contents: write`, `pull-requests: write`, `checks: read` |
-| [`cut-release-line.yml`](cut-release-line.yml) | `workflow_dispatch`                 | Branch `release/vX.Y` off current `main`; open or hand off the main-bump PR.              | `contents: write`, `pull-requests: write`                 |
-| [`promote-release.yml`](promote-release.yml)   | `workflow_dispatch` on `release/v*` | Open the PR moving `release/vX.Y`'s channel forward (`beta→rc` / `rc→stable`).            | `contents: write`, `pull-requests: write`                 |
+| Workflow                                             | Trigger                                | Purpose                                                                                   | `permissions`                                             |
+| ---------------------------------------------------- | -------------------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| [`ci.yml`](ci.yml)                                   | PRs; pushes to `main`, `release/v*`    | `pnpm check:quality`, then affected typecheck / test / build.                             | `contents: read`                                          |
+| [`pr-title.yml`](pr-title.yml)                       | PR opened / edited / synced            | Conventional Commits check on the PR title (`<type>(<scope>): …`, scope required).        | `pull-requests: read`                                     |
+| [`dependabot-pr-title.yml`](dependabot-pr-title.yml) | `pull_request_target` (Dependabot PRs) | Lower-case the subject of a single-package Dependabot title, then re-run `pr-title`.      | `pull-requests: write`, `actions: write`                  |
+| [`release.yml`](release.yml)                         | `workflow_dispatch` on `release/v*`    | Verify HEAD CI, then tag + GitHub Release (`beta`/`rc`/`stable`); post-stable advance PR. | `contents: write`, `pull-requests: write`, `checks: read` |
+| [`cut-release-line.yml`](cut-release-line.yml)       | `workflow_dispatch`                    | Branch `release/vX.Y` off current `main`; open or hand off the main-bump PR.              | `contents: write`, `pull-requests: write`                 |
+| [`promote-release.yml`](promote-release.yml)         | `workflow_dispatch` on `release/v*`    | Open the PR moving `release/vX.Y`'s channel forward (`beta→rc` / `rc→stable`).            | `contents: write`, `pull-requests: write`                 |
 
 Each workflow declares the **minimum** `permissions` for the GitHub APIs it actually
 calls — `release.yml` adds `checks: read` because the release tool reads the
 release-branch HEAD check-runs; the others neither read checks nor tag, so they don't.
+`dependabot-pr-title.yml` adds `actions: write` because it re-runs the `pr-title` check
+after editing a title (an edit made with `GITHUB_TOKEN` does not itself dispatch one);
+it runs in a `pull_request_target` context but never checks out or executes PR content.
 
 The three `workflow_dispatch` workflows take an optional `CI_GITHUB_RELEASE_TOKEN`
 secret (a fine-grained, repository-scoped PAT) so a PR they open triggers `pull_request`

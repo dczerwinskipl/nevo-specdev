@@ -11,11 +11,22 @@ updates:
       timezone: Etc/UTC
     open-pull-requests-limit: 10
     # Collapse routine minor/patch bumps into one PR each week; majors stay individual.
+    # `applies-to: version-updates` keeps this scoped to the scheduled run — Dependabot
+    # SECURITY updates are never grouped here and continue to arrive as their own PRs.
     groups:
       npm-minor-patch:
         applies-to: version-updates
         patterns: ["*"]
         update-types: ["minor", "patch"]
+    ignore:
+      # @types/node major tracks the supported Node runtime major. The repository
+      # runs on Node 24 (`engines.node: ">=24.20.0 <25"`, CI on 24.20.0), so a
+      # 25.x / 26.x typings bump is a deliberate runtime decision, not a routine
+      # update — it is made by hand alongside the `engines` / `.nvmrc` change.
+      # Patch/minor bumps within the Node 24 typings line stay eligible (and are
+      # collected into the weekly npm-minor-patch group).
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     commit-message:
       prefix: "build(deps)"
       prefix-development: "build(deps-dev)"
@@ -29,8 +40,11 @@ updates:
       day: monday
       time: "06:00"
       timezone: Etc/UTC
+    # One routine PR for all Action bumps; `applies-to: version-updates` leaves any
+    # Action security advisory to its own independent PR.
     groups:
       github-actions:
+        applies-to: version-updates
         patterns: ["*"]
     commit-message:
       prefix: "ci(deps)"
