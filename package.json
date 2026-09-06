@@ -21,6 +21,8 @@
     "version:check-transition": "node tools/release/dist/bin.js check-transition",
     "check:quality": "pnpm quality:build-tools && pnpm format:check && pnpm lint && pnpm docs:check && pnpm version:check-transition",
     "check": "pnpm check:quality && turbo run typecheck test build",
+    "product:pack": "node tools/product/dist/bin.js pack",
+    "dogfood:install": "node tools/product/dist/bin.js dogfood",
     "docs:list": "node tools/docs/dist/bin.js list",
     "docs:find": "node tools/docs/dist/bin.js find",
     "docs:context": "node tools/docs/dist/bin.js context",

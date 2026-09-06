@@ -1,0 +1,28 @@
+{
+  "name": "@nevo/specdev",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Nevo SpecDev — spec-driven development for AI-assisted software engineering. Ships the public `nevo-spec` CLI.",
+  "license": "MIT",
+  "bin": {
+    "nevo-spec": "./dist/bin.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=24.20.0"
+  },
+  "scripts": {
+    "build": "node ../../tools/product/dist/bin.js bundle",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@nevo/specdev-dashboard": "workspace:*"
+  },
+  "devDependencies": {
+    "commander": "15.0.0",
+    "vitest": "5.0.0"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "nevo-repo-product",
+  "private": true,
+  "type": "module",
+  "description": "Repository-internal packaging tooling for the Nevo SpecDev product: the canonical bundle + tarball + local dogfood-install entrypoint. Not a product package.",
+  "license": "MIT",
+  "bin": {
+    "nevo-repo-product": "./dist/bin.js"
+  },
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "commander": "15.0.0",
+    "esbuild": "0.28.2"
+  },
+  "devDependencies": {
+    "vitest": "5.0.0"
+  }
+}

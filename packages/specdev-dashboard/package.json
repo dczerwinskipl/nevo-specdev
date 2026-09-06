@@ -1,0 +1,25 @@
+{
+  "name": "@nevo/specdev-dashboard",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Nevo SpecDev dashboard capability. Bootstrap only — the real dashboard runtime is not migrated yet. Bundled into @nevo/specdev at pack time; never published or installed on its own.",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "5.0.0"
+  }
+}

@@ -12,6 +12,9 @@ build/
 # Turborepo
 .turbo/
 
+# Product packaging output — `pnpm product:pack` / `pnpm dogfood:install`
+.artifacts/
+
 # Test / coverage output
 coverage/
 *.lcov
