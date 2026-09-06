@@ -81,10 +81,15 @@ A **single-package** bump, though, gets an upper-case subject
 (`build(deps-dev): Bump @types/node from …`), which `pr-title` rejects
 (`subjectPattern: ^(?![A-Z])…`). The
 [`dependabot-pr-title`](../../.github/workflows/dependabot-pr-title.yml) workflow fixes
-this: for `dependabot[bot]` PRs only, it lower-cases the first letter of the subject and
-re-runs `pr-title`. It runs in a `pull_request_target` context but never checks out or
-executes PR content, and holds only `pull-requests: write` + `actions: write`. The
-global `pr-title` convention is unchanged — human PRs are validated exactly as before.
+this: after a `PR title` run **fails**, a `workflow_run` follow-up re-reads the PR from
+the API, and — only when the author is `dependabot[bot]`, the PR is open, and its head
+still matches the failed run — lower-cases the first letter of the subject (leaving a
+missing scope or an unknown type for `pr-title` to reject) and re-runs that exact `PR
+title` run. It uses `workflow_run` rather than `pull_request_target` because GitHub
+gives a Dependabot-triggered `pull_request` / `pull_request_target` workflow a read-only
+token; the follow-up never checks out or executes PR content and holds only
+`pull-requests: write` + `actions: write`. The global `pr-title` convention is unchanged
+— human PRs are validated exactly as before.
 
 Review a Dependabot PR like any other: `pnpm check` must pass; skim the changelog for
 behavior changes; for a grouped PR, note anything that isn't purely mechanical.

@@ -1,6 +1,6 @@
 // Filesystem access to the repository root and its `version.json`.
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import process from 'node:process';
 
@@ -10,15 +10,22 @@ import { UsageError } from '../errors.js';
 /**
  * Nearest ancestor of `start` that holds `pnpm-workspace.yaml`.
  *
- * `NEVO_RELEASE_REPO_ROOT` overrides the search outright: the CLI then runs
- * every `git` / `gh` operation against that directory instead of the repository
- * the executable happens to live in. It exists so the CLI-smoke suite can point
- * the real built binary at a purpose-built temporary repository with a known
- * `origin/main` — never set it in normal use or in CI.
+ * `NEVO_RELEASE_REPO_ROOT` overrides the search outright: repository discovery
+ * then resolves to that directory instead of the one the executable lives in,
+ * and every later `git` / `gh` call runs there. It changes nothing else about
+ * release behaviour. It exists so the CLI-smoke suite can point the real built
+ * binary at a purpose-built temporary repository with a known `origin/main` —
+ * it is not part of the tool's supported interface and must not be set in
+ * normal use or in CI.
  */
 export function findRepoRoot(start: string): string {
-  const override = process.env.NEVO_RELEASE_REPO_ROOT;
-  if (override?.trim()) return override;
+  const override = process.env.NEVO_RELEASE_REPO_ROOT?.trim();
+  if (override) {
+    if (!statSync(override, { throwIfNoEntry: false })?.isDirectory()) {
+      throw new UsageError(`NEVO_RELEASE_REPO_ROOT is not a directory: ${override}`);
+    }
+    return override;
+  }
 
   let dir = start;
   for (;;) {

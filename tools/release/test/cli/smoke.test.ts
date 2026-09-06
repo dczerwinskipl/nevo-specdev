@@ -200,6 +200,14 @@ describe('nevo-release CLI', () => {
     expect(isolatedBranches().remote).toEqual(['refs/heads/main']);
   });
 
+  it('a NEVO_RELEASE_REPO_ROOT that is not a directory fails fast with a clear message', async () => {
+    const res = await cli(['version'], {
+      NEVO_RELEASE_REPO_ROOT: join(isolated.root, 'does-not-exist'),
+    });
+    expect(res.code).not.toBe(0);
+    expect(res.stderr + res.stdout).toMatch(/NEVO_RELEASE_REPO_ROOT is not a directory/);
+  });
+
   it('check-transition --json emits a single clean JSON object on stdout', async () => {
     const { code, stdout } = await cli(['check-transition', '--json']);
     expect(code).toBe(0);
