@@ -28,7 +28,12 @@ import {
   type ExistingTag,
   type ReleasePlan,
 } from '../domain/release-plan.js';
-import { parseVersionFile, versionFileText, type VersionFile } from '../domain/version.js';
+import {
+  lineOfBranch,
+  parseVersionFile,
+  versionFileText,
+  type VersionFile,
+} from '../domain/version.js';
 import { InconsistentStateError, UsageError, errorMessage } from '../errors.js';
 import type { GitClient, GitHubClient } from '../ports.js';
 import { info, warn, type ActionEvent } from './events.js';
@@ -59,6 +64,10 @@ export async function executeRelease(
   const branch = await git.currentBranch();
   const headSha = await git.headSha();
   const headShort = headSha.slice(0, 7);
+
+  if (lineOfBranch(branch) === null) {
+    throw new UsageError(`Releases must be cut from a release/vX.Y branch, not '${branch}'.`);
+  }
 
   // §2 — the release must represent the CURRENT remote protected-branch commit;
   // do this first so everything below reads verified remote state.
