@@ -5,21 +5,22 @@
   "description": "Repository-internal release tooling for Nevo SpecDev: version derivation, release-line cutting, promotion and tag/GitHub-Release orchestration. Not a product package.",
   "license": "MIT",
   "bin": {
-    "nevo-release": "./bin/release.mjs",
-    "nevo-cut-release-line": "./bin/cut-release-line.mjs",
-    "nevo-version": "./bin/version.mjs"
+    "nevo-release": "./dist/bin.js"
   },
   "exports": {
-    ".": "./src/index.mjs"
+    ".": "./dist/index.js"
   },
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "node --test test/*.test.mjs"
+    "test": "vitest run"
   },
   "dependencies": {
+    "commander": "15.0.0",
     "semver": "7.8.5"
   },
   "devDependencies": {
-    "@types/semver": "7.8.0"
+    "@types/semver": "7.8.0",
+    "vitest": "5.0.0"
   }
 }

@@ -51,6 +51,9 @@ importers:
 
   tools/release:
     dependencies:
+      commander:
+        specifier: 15.0.0
+        version: 15.0.0
       semver:
         specifier: 7.8.5
         version: 7.8.5
@@ -58,6 +61,9 @@ importers:
       '@types/semver':
         specifier: 7.8.0
         version: 7.8.0
+      vitest:
+        specifier: 5.0.0
+        version: 5.0.0(@types/node@24.13.3)(@vitest/coverage-v8@5.0.0)(vite@8.2.2(@types/node@24.13.3)(yaml@2.9.0))
 
 packages:
 
@@ -443,6 +449,10 @@ packages:
   chai@6.2.2:
     resolution: {integrity: sha512-NUPRluOfOiTKBKvWPtSD4PhFvWCqOi0BGStNWs57X9js7XGTprSmFoz5F0tWhR4WPjNeR9jXqdC7/UpSJTnlRg==}
     engines: {node: '>=18'}
+
+  commander@15.0.0:
+    resolution: {integrity: sha512-z67u4ZhzCL/Tydu1lJARtEZYWbWaN7oYLHbsuzocr6y4N6WZAagG3RQ4FW61V1/0+jImpj293XfrcYnd1qxtPg==}
+    engines: {node: '>=22.12.0'}
 
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
@@ -1294,6 +1304,8 @@ snapshots:
       qified: 0.10.1
 
   chai@6.2.2: {}
+
+  commander@15.0.0: {}
 
   cross-spawn@7.0.6:
     dependencies:

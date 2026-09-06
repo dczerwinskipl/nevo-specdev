@@ -51,10 +51,13 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+      - name: Build the release tool
+        run: pnpm --filter nevo-repo-release build
+
       - name: Release
         env:
           GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
           RELEASE_TOKEN_PRESENT: ${{ secrets.RELEASE_TOKEN != '' }}
           RELEASE_CHANNEL: ${{ inputs.channel }}
           EXECUTE: ${{ inputs.execute }}
-        run: node tools/release/bin/release.mjs
+        run: node tools/release/dist/bin.js create

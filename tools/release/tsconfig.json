@@ -1,8 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "checkJs": true,
-    "allowJs": true,
     "noEmit": true,
     "composite": false,
     "declaration": false,
@@ -10,8 +8,7 @@
     "sourceMap": false,
     "incremental": true,
     "tsBuildInfoFile": "./.tsbuild/release.tsbuildinfo",
-    "types": ["node", "semver"]
+    "types": ["node"]
   },
-  "//include": "Type-checks the library. bin/* are thin CLI wrappers; test/* run under node:test.",
-  "include": ["src/**/*.mjs"]
+  "include": ["src/**/*.ts", "test/**/*.ts"]
 }
