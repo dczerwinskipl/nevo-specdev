@@ -1,0 +1,68 @@
+name: Release
+
+# Manually triggered from a release/vX.Y branch. Verifies the branch HEAD passed
+# CI, then creates the Git tag + GitHub Release for the branch's { channel,
+# version }. Idempotent: a re-run after "tag created, Release failed" finishes the
+# Release; it never silently bumps the sequence. No npm publishing.
+
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: "Release channel"
+        type: choice
+        options: [beta, rc, stable]
+        required: true
+      execute:
+        description: "Create the tag + release (unchecked = validate only)"
+        type: boolean
+        default: false
+
+# Least privilege — exactly the GitHub APIs this workflow calls:
+#   contents: write       create + push the annotated tag; push the advance branch
+#   pull-requests: write  open the post-stable advance PR; request auto-merge
+#   checks: read          read the release-branch HEAD check-runs before tagging
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Guard — release branch only
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          case "$REF" in
+            refs/heads/release/v*) echo "ok: $REF" ;;
+            *) echo "::error::Run this workflow from a release/vX.Y branch, not $REF"; exit 1 ;;
+          esac
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.CI_GITHUB_RELEASE_TOKEN || github.token }}
+      - uses: ./.github/actions/setup
+
+      - name: Configure git identity
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Build the release tool
+        run: pnpm --filter nevo-repo-release build
+
+      - name: Release
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_RELEASE_TOKEN || github.token }}
+          CI_GITHUB_RELEASE_TOKEN_PRESENT: ${{ secrets.CI_GITHUB_RELEASE_TOKEN != '' }}
+          RELEASE_CHANNEL: ${{ inputs.channel }}
+          EXECUTE: ${{ inputs.execute }}
+        run: node tools/release/dist/bin.js create

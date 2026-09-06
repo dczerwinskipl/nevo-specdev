@@ -1,0 +1,32 @@
+{
+  "name": "@nevo/specdev-dashboard",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Nevo SpecDev dashboard vertical: the framework-independent capability (.) plus its Commander CLI adapter (./cli). Bootstrap only — the real dashboard runtime is not migrated yet. Bundled into @nevo/specdev at pack time; never published or installed on its own.",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./cli": {
+      "types": "./dist/cli/command.d.ts",
+      "default": "./dist/cli/command.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "commander": "15.0.0"
+  },
+  "devDependencies": {
+    "vitest": "5.0.0"
+  }
+}

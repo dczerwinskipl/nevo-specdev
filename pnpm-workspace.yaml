@@ -1,0 +1,28 @@
+# pnpm workspace + project settings.
+#
+# Since pnpm 10, only auth/registry settings are read from .npmrc; every other
+# project setting lives here.
+
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "tools/*"
+  # packages/  -> real product packages (@nevo/*): specdev (the public `nevo-spec`
+  #              CLI) and specdev-dashboard (the dashboard capability).
+  # apps/      -> deployable applications; still empty until one lands.
+  # tools/     -> repository-internal tooling (docs, release, github, product).
+
+# Resolve dependencies and check `engines` against the pinned Node, regardless
+# of which Node the developer is currently running. Keep in sync with .nvmrc.
+nodeVersion: "24.20.0"
+engineStrict: true
+
+# Pin exact versions on `pnpm add` so every dependency change is an explicit,
+# reviewable diff.
+savePrefix: ""
+
+# The only third-party package allowed to run an install script: esbuild fetches
+# its platform binary in a postinstall. It is used solely by `nevo-repo-product`
+# to bundle the distributable `nevo-spec` artifact.
+onlyBuiltDependencies:
+  - esbuild

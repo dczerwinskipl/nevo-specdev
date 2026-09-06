@@ -1,0 +1,5 @@
+{
+  "$comment": "The version this branch is working toward, and which channel it is in. On main: channel 'alpha', version = the next development X.Y.0. On release/vX.Y: channel 'beta' | 'rc' | 'stable', version = the X.Y.Z being stabilized (or the next patch after one ships). CI derives its build version from this file plus the run number; it is NOT rewritten per change. See docs/development/releasing.md.",
+  "channel": "alpha",
+  "version": "0.1.0"
+}

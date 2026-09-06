@@ -1,0 +1,23 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false,
+    "incremental": true,
+    "tsBuildInfoFile": "./.tsbuild/specdev.tsbuildinfo",
+    "types": ["node"],
+    // Typecheck / lint resolve the sibling package from source, so neither needs
+    // a prior build. Each mapping points at the exact file behind the matching
+    // `exports` entry, so the checked surface == the published surface. Runtime
+    // (esbuild bundle, vitest) resolves through `exports` -> dist, so the dist
+    // boundary stays real.
+    "paths": {
+      "@nevo/specdev-dashboard": ["../specdev-dashboard/src/index.ts"],
+      "@nevo/specdev-dashboard/cli": ["../specdev-dashboard/src/cli/command.ts"]
+    }
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts"]
+}

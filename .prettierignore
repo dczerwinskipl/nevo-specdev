@@ -1,0 +1,15 @@
+# Build & cache output
+**/dist/
+**/build/
+**/.output/
+**/.turbo/
+**/coverage/
+node_modules/
+
+# Generated artifacts (owned by their generators, not hand-formatted)
+**/*.generated.*
+docs/**/*.generated.*
+pnpm-lock.yaml
+
+# Local scratch area (git-ignored)
+.local/

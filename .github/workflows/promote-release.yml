@@ -1,0 +1,72 @@
+name: Promote release
+
+# Manually triggered from a release/vX.Y branch (use GitHub's Run workflow branch
+# selector). Opens a PR that moves the branch's `version.json` channel forward —
+# `beta -> rc` or `rc -> stable`. It never edits release/vX.Y directly and never
+# publishes a tag; that is the `Release` workflow's job, after the promoted
+# branch HEAD has passed CI.
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Promote to"
+        type: choice
+        options: [rc, stable]
+        required: true
+      execute:
+        description: "Open the promotion PR (unchecked = validate only)"
+        type: boolean
+        default: false
+
+# Least privilege — exactly the GitHub APIs this workflow calls:
+#   contents: write       push chore/promote-<version>-to-<target> (git plumbing)
+#   pull-requests: write   open the promotion PR; request auto-merge
+# It does not read check-runs or tag anything, so no `checks:` permission.
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  # One promotion in flight per release line; never cancel a running mutation.
+  group: promote-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    name: promote
+    runs-on: ubuntu-latest
+    steps:
+      - name: Guard — release branch only
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          case "$REF" in
+            refs/heads/release/v*) echo "ok: $REF" ;;
+            *) echo "::error::Run this workflow from a release/vX.Y branch, not $REF"; exit 1 ;;
+          esac
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          # A PAT lets the promotion PR trigger `pull_request` CI so auto-merge
+          # can land it. Without it the branch is still created and the exact
+          # `gh pr create` command is printed for a maintainer to run.
+          token: ${{ secrets.CI_GITHUB_RELEASE_TOKEN || github.token }}
+      - uses: ./.github/actions/setup
+
+      - name: Configure git identity
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Build the release tool
+        run: pnpm --filter nevo-repo-release build
+
+      - name: Promote
+        env:
+          GH_TOKEN: ${{ secrets.CI_GITHUB_RELEASE_TOKEN || github.token }}
+          CI_GITHUB_RELEASE_TOKEN_PRESENT: ${{ secrets.CI_GITHUB_RELEASE_TOKEN != '' }}
+          PROMOTE_TARGET: ${{ inputs.target }}
+          EXECUTE: ${{ inputs.execute }}
+        run: node tools/release/dist/bin.js promote

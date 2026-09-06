@@ -1,0 +1,43 @@
+{
+  "name": "nevo-specdev",
+  "private": true,
+  "type": "module",
+  "description": "Workspace root for Nevo SpecDev — a spec-driven development framework for AI-assisted software engineering.",
+  "license": "MIT",
+  "packageManager": "pnpm@10.34.5",
+  "engines": {
+    "node": ">=24.20.0 <25",
+    "pnpm": ">=10 <11"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "eslint .",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "quality:build-tools": "turbo run build --filter=nevo-repo-docs --filter=nevo-repo-release",
+    "version:print": "node tools/release/dist/bin.js version",
+    "version:check-transition": "node tools/release/dist/bin.js check-transition",
+    "check:quality": "pnpm quality:build-tools && pnpm format:check && pnpm lint && pnpm docs:check && pnpm version:check-transition",
+    "check": "pnpm check:quality && turbo run typecheck test build",
+    "product:pack": "pnpm --filter nevo-repo-product build && node tools/product/dist/bin.js pack",
+    "dogfood:install": "pnpm --filter nevo-repo-product build && node tools/product/dist/bin.js dogfood",
+    "docs:list": "node tools/docs/dist/bin.js list",
+    "docs:find": "node tools/docs/dist/bin.js find",
+    "docs:context": "node tools/docs/dist/bin.js context",
+    "docs:check": "node tools/docs/dist/bin.js check",
+    "docs:adr": "node tools/docs/dist/bin.js adr"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "24.13.3",
+    "eslint": "10.10.0",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "17.12.0",
+    "prettier": "3.9.6",
+    "turbo": "2.10.12",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.69.0"
+  }
+}
