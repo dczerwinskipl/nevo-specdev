@@ -16,19 +16,18 @@ import { createGitHubClient } from './infra/github.js';
 import { findRepoRoot, readWorkingVersion } from './infra/repo.js';
 
 async function main(argv: string[]): Promise<number> {
-  const repoRoot = findRepoRoot(dirname(fileURLToPath(import.meta.url)));
-  const program = createProgram({
-    git: createGitClient(repoRoot),
-    github: createGitHubClient(repoRoot, process.env),
-    syncGit: createSyncGitReader(repoRoot),
-    readWorkingVersion: () => readWorkingVersion(repoRoot),
-    env: process.env,
-    stdout: (line) => process.stdout.write(`${line}\n`),
-    stderr: (line) => process.stderr.write(`${line}\n`),
-  });
-
   const jsonMode = argv.includes('--json');
   try {
+    const repoRoot = findRepoRoot(dirname(fileURLToPath(import.meta.url)));
+    const program = createProgram({
+      git: createGitClient(repoRoot),
+      github: createGitHubClient(repoRoot, process.env),
+      syncGit: createSyncGitReader(repoRoot),
+      readWorkingVersion: () => readWorkingVersion(repoRoot),
+      env: process.env,
+      stdout: (line) => process.stdout.write(`${line}\n`),
+      stderr: (line) => process.stderr.write(`${line}\n`),
+    });
     await program.parseAsync(argv);
     return 0;
   } catch (err) {

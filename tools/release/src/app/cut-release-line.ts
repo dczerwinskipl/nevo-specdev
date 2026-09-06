@@ -64,10 +64,10 @@ export async function executeReleaseCut(
   const mainVf = await readVersionFileAt(git, baseSha, `origin/main@${baseShort}`);
 
   const branchExists = await git.remoteBranchExists(releaseBranch);
-  const openBumpPr = await github.findOpenPullRequest({ head: bumpBranch, base: 'main' });
 
   // ── recognise a prior run — but only by CONTENT, never by name (§3/§4) ──
   if (branchExists) {
+    const openBumpPr = await github.findOpenPullRequest({ head: bumpBranch, base: 'main' });
     const relCheck = await validateSingleFileBranch(git, {
       ref: `origin/${releaseBranch}`,
       nextState: { channel: 'beta', version: releaseVersion },
@@ -135,19 +135,23 @@ export async function executeReleaseCut(
     );
   }
 
-  if (openBumpPr) {
-    throw new InconsistentStateError(
-      `An open PR from ${bumpBranch} already exists (${openBumpPr.url}) but ${releaseBranch} ` +
-        `does not. Resolve that PR before cutting the line.`,
-    );
-  }
-
-  // ── fresh cut — validate origin/main's own state, then plan/perform ─────
+  // ── fresh cut — validate origin/main's OWN state first (a local read), then
+  // consult GitHub. Ordering the cheap deterministic check ahead of the `gh`
+  // call keeps validate-only from depending on GitHub auth just to report a
+  // wrong base version — the failure execute would hit is reached the same way.
   const baseErrors = validateCutBaseVersion(mainVf, { releaseVersion, nextVersion });
   if (baseErrors.length) {
     throw new InconsistentStateError(
       `Refusing to cut ${releaseBranch} — origin/main is not in the expected state:\n  - ` +
         baseErrors.join('\n  - '),
+    );
+  }
+
+  const openBumpPr = await github.findOpenPullRequest({ head: bumpBranch, base: 'main' });
+  if (openBumpPr) {
+    throw new InconsistentStateError(
+      `An open PR from ${bumpBranch} already exists (${openBumpPr.url}) but ${releaseBranch} ` +
+        `does not. Resolve that PR before cutting the line.`,
     );
   }
   events.push(info(`origin/main at ${baseShort} is alpha ${mainVf.version} — cut is consistent.`));

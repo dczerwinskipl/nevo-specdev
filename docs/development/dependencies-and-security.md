@@ -59,9 +59,37 @@ gh api repos/OWNER/REPO/dependency-graph/sbom --jq '.sbom.packages | length'
 | `npm` (pnpm)     | minor + patch collapsed into one `npm-minor-patch` PR; majors individual | `build(deps)` / `build(deps-dev)` |
 | `github-actions` | all in one `github-actions` PR                                           | `ci(deps)`                        |
 
-The prefixes are valid Conventional Commits types, so a Dependabot PR passes the
-`pr-title` check unchanged. Dependabot **security** updates (out-of-cycle patches for
-advisories) are enabled separately and are not grouped.
+Both groups are `applies-to: version-updates`, so grouping only affects the scheduled
+weekly run. Dependabot **security** updates (out-of-cycle patches for advisories) are
+enabled separately, are never grouped, and always arrive as their own PR.
+
+### `@types/node` tracks the runtime major
+
+`@types/node` major is **ignored** by the updater
+(`ignore: @types/node / version-update:semver-major`). The typings major must match the
+Node major the repository actually runs (`engines.node: ">=24.20.0 <25"`, CI on
+`24.20.0`), so moving to `25.x` / `26.x` typings is part of a deliberate runtime bump
+(`engines` + `.nvmrc` + CI), not a routine Dependabot PR. Patch/minor bumps inside the
+Node 24 line are still proposed and land in the weekly `npm-minor-patch` group. No other
+package's majors are suppressed — they each still get an individual PR for review.
+
+### Bot PR titles
+
+The `commit-message.prefix` values are valid Conventional Commits types, and grouped
+Dependabot PRs (`build(deps): bump the … group …`) pass the `pr-title` check unchanged.
+A **single-package** bump, though, gets an upper-case subject
+(`build(deps-dev): Bump @types/node from …`), which `pr-title` rejects
+(`subjectPattern: ^(?![A-Z])…`). The
+[`dependabot-pr-title`](../../.github/workflows/dependabot-pr-title.yml) workflow fixes
+this: after a `PR title` run **fails**, a `workflow_run` follow-up re-reads the PR from
+the API, and — only when the author is `dependabot[bot]`, the PR is open, and its head
+still matches the failed run — lower-cases the first letter of the subject (leaving a
+missing scope or an unknown type for `pr-title` to reject) and re-runs that exact `PR
+title` run. It uses `workflow_run` rather than `pull_request_target` because GitHub
+gives a Dependabot-triggered `pull_request` / `pull_request_target` workflow a read-only
+token; the follow-up never checks out or executes PR content and holds only
+`pull-requests: write` + `actions: write`. The global `pr-title` convention is unchanged
+— human PRs are validated exactly as before.
 
 Review a Dependabot PR like any other: `pnpm check` must pass; skim the changelog for
 behavior changes; for a grouped PR, note anything that isn't purely mechanical.

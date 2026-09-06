@@ -1,0 +1,122 @@
+name: Dependabot PR title
+
+# Dependabot writes an upper-case subject for single-package bumps
+# (`build(deps-dev): Bump @types/node from …`). The `pr-title` check requires a
+# lower-case subject (`subjectPattern: ^(?![A-Z])…`) and the title becomes the
+# squash commit on `main`, so it must genuinely conform — not be waved through
+# for the bot. This follow-up lower-cases the first letter of the subject (and
+# nothing else) on a Dependabot PR, then re-runs the exact `PR title` run that
+# failed.
+#
+# Why `workflow_run`, not `pull_request_target`:
+#   GitHub treats a workflow that Dependabot triggers via `push` / `pull_request`
+#   / `pull_request_target` like a fork PR — the GITHUB_TOKEN is READ-ONLY and
+#   Actions secrets are withheld, regardless of the `permissions:` block. Such a
+#   workflow therefore cannot `gh pr edit` or `gh run rerun`. The `workflow_run`
+#   event fires afterwards in the base-repo context, is NOT subject to that
+#   Dependabot fork treatment, and always runs the definition from the default
+#   branch — so this tightly-scoped follow-up gets the write token it declares.
+#
+# It never checks out the PR, never downloads or runs artifacts from the
+# triggering run, and never executes any content supplied by the PR. Its only
+# inputs are the `workflow_run` payload and live PR metadata read back from the
+# API; every value reaches the shell through an env var, never string
+# interpolation.
+
+on:
+  workflow_run:
+    workflows: ["PR title"]
+    types: [completed]
+
+# Exactly what the one job does, nothing else — no `contents`, `checks`,
+# `issues`, or secrets:
+#   pull-requests: write   edit the PR title
+#   actions: write         re-run the exact triggering `PR title` run
+permissions:
+  pull-requests: write
+  actions: write
+
+concurrency:
+  group: dependabot-pr-title-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
+
+jobs:
+  normalize:
+    name: normalize
+    runs-on: ubuntu-latest
+    # Only act on a FAILED `PR title` run: a green title needs no normalization,
+    # and this is also the loop breaker — the rerun we request completes and
+    # fires another `workflow_run`; if it now passes, `conclusion` is `success`
+    # and this job does not run again.
+    if: github.event.workflow_run.conclusion == 'failure'
+    steps:
+      - name: Lower-case a Dependabot Conventional Commit subject
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_PRS: ${{ toJSON(github.event.workflow_run.pull_requests) }}
+        run: |
+          set -euo pipefail
+
+          # 1. Resolve the associated PR from the workflow_run payload.
+          pr_number="$(jq -r 'if type == "array" and length > 0 then .[0].number else empty end' <<<"$RUN_PRS")"
+          if [[ -z "$pr_number" ]]; then
+            echo "No pull request is associated with run $RUN_ID — nothing to do."
+            exit 0
+          fi
+
+          # 2. Read CURRENT PR metadata from the API — never trust the payload or
+          #    a branch name alone.
+          pr_json="$(gh api "repos/$GH_REPO/pulls/$pr_number" \
+            --jq '{author: .user.login, state: .state, head_sha: .head.sha, title: .title}')"
+          author="$(jq -r '.author' <<<"$pr_json")"
+          state="$(jq -r '.state' <<<"$pr_json")"
+          head_sha="$(jq -r '.head_sha' <<<"$pr_json")"
+          title="$(jq -r '.title' <<<"$pr_json")"
+
+          # 3. Verify author + state + head SHA before any mutation.
+          if [[ "$author" != "dependabot[bot]" ]]; then
+            echo "PR #$pr_number author is '$author', not dependabot[bot] — no action."
+            exit 0
+          fi
+          if [[ "$state" != "open" ]]; then
+            echo "PR #$pr_number state is '$state', not open — no action."
+            exit 0
+          fi
+          if [[ "$head_sha" != "$RUN_HEAD_SHA" ]]; then
+            echo "PR #$pr_number head ($head_sha) no longer matches the triggering run ($RUN_HEAD_SHA) — stale, no action."
+            exit 0
+          fi
+
+          # 4. Transform ONLY a well-formed Conventional Commit header of an
+          #    allowed type, WITH a scope, whose subject starts upper-case:
+          #      <type>(<scope>): Subject   /   <type>(<scope>)!: Subject
+          #    Anything else (no/blank scope, unknown type, already lower-case)
+          #    is left for the normal `pr-title` check to accept or reject.
+          types='feat|fix|docs|refactor|test|build|ci|chore|perf|revert'
+          re="^(($types)\([a-zA-Z0-9._/-]+\)!?:[[:space:]])([A-Z])(.*)$"
+          if [[ "$title" =~ $re ]]; then
+            new="${BASH_REMATCH[1]}${BASH_REMATCH[3],}${BASH_REMATCH[4]}"
+          else
+            echo "Title '$title' is not an upper-case-subject Conventional Commit header — leaving it for pr-title."
+            exit 0
+          fi
+          if [[ "$new" == "$title" ]]; then
+            echo "Title is already normalized — nothing to do."
+            exit 0
+          fi
+
+          # 5. Edit ONLY the title.
+          echo "Normalizing PR #$pr_number title:"
+          echo "  from: $title"
+          echo "  to:   $new"
+          gh pr edit "$pr_number" --title "$new"
+
+          # 6. Re-run the EXACT triggering `PR title` run.
+          #    amannn/action-semantic-pull-request re-fetches the title from the
+          #    API, so the re-run validates the corrected title. A failure to
+          #    request the re-run fails this job — it is not swallowed.
+          echo "Re-running 'PR title' run $RUN_ID"
+          gh run rerun "$RUN_ID" --failed
