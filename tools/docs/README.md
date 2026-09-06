@@ -15,15 +15,20 @@ Run from the repository root:
 pnpm docs:list                        # every indexed document
 pnpm docs:find "git workflow"         # rank documents by a query
 pnpm docs:context "react tailwind"    # print the files to load for a task
-pnpm docs:check                       # validate frontmatter + verify the index is current
-pnpm docs:check --write               # regenerate docs/index.generated.{md,json}
+pnpm docs:adr new "Use X for Y"       # create the next-numbered ADR from the template
+pnpm docs:check                       # validate the whole corpus + verify the index
+pnpm docs:check --write               # also regenerate docs/index.generated.{md,json}
 ```
 
-`--type`, `--status`, `--limit` and `--json` are accepted where they make sense.
-`pnpm docs:check` is what CI runs; it exits non-zero on **any** authored file missing
-frontmatter, invalid frontmatter, an unresolved `related` id, or a stale index. The
-generated index carries no timestamp, so `--write` run twice with no source change
-leaves the working tree clean.
+`--type`, `--status`, `--limit`, `--json` and (for `adr new`) `--dry-run` are accepted
+where they make sense.
+
+`list` / `find` / `context` / `adr` load a **fully validated corpus** — if the docs are
+inconsistent they fail loudly rather than serve partial context. `pnpm docs:check` is
+what CI runs; it exits non-zero on any authored file missing frontmatter, invalid
+frontmatter, an unresolved `related` id, an ADR whose filename and `id` disagree or
+whose date is not ISO, or a stale index. The generated index carries no timestamp, so
+`--write` twice with no source change leaves the tree clean.
 
 ## Frontmatter contract
 
