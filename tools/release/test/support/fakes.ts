@@ -103,6 +103,21 @@ export function createFakeGit(overrides: Partial<FakeGitState> = {}): FakeGit {
     },
     pushTag: async () => undefined,
     remoteBranchExists: async (branch) => state.remoteBranches.has(branch),
+    isAncestor: async (candidate, ref) => {
+      const target = shaOf(candidate);
+      const start = shaOf(ref);
+      if (!target || !start) return false;
+      const seen = new Set<string>();
+      const queue = [start];
+      while (queue.length) {
+        const sha = queue.shift();
+        if (sha === undefined || seen.has(sha)) continue;
+        seen.add(sha);
+        if (sha === target) return true;
+        for (const p of state.commits.get(sha)?.parents ?? []) queue.push(p);
+      }
+      return false;
+    },
     commitSingleFileOnto: async ({ baseRef, path, content, message }) => {
       const base = commitOf(baseRef);
       const sha = addCommit({
@@ -140,6 +155,8 @@ export interface FakeGitHubState {
   failReleaseView?: Error;
   failPrList?: Error;
   failCheckRuns?: Error;
+  /** 'ok' -> enabled; 'unavailable' -> the expected non-fatal case; Error -> thrown. */
+  autoMerge: 'ok' | 'unavailable' | Error;
 }
 
 export interface FakeGitHub extends GitHubClient {
@@ -154,6 +171,7 @@ export function createFakeGitHub(overrides: Partial<FakeGitHubState> = {}): Fake
     checkRuns: greenChecks(),
     releases: new Set(),
     openPrs: [],
+    autoMerge: 'ok',
     ...overrides,
   };
   const createdReleases: string[] = [];
@@ -191,7 +209,11 @@ export function createFakeGitHub(overrides: Partial<FakeGitHubState> = {}): Fake
       return { url };
     },
     enableAutoMerge: async (prUrl) => {
+      if (state.autoMerge instanceof Error) throw state.autoMerge;
       autoMerged.push(prUrl);
+      return state.autoMerge === 'unavailable'
+        ? { outcome: 'unavailable', reason: 'the repository does not have auto-merge enabled' }
+        : { outcome: 'enabled' };
     },
   };
 }

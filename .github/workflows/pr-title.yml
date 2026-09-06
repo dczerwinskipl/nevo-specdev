@@ -35,7 +35,9 @@ jobs:
             chore
             perf
             revert
-          requireScope: false
+          # Permanent squash commits use `<type>(<scope>): <description>`.
+          # Scopes are open-ended — see docs/development/commit-conventions.md.
+          requireScope: true
           subjectPattern: ^(?![A-Z])(?!.*\.$).+$
           subjectPatternError: |
             The subject "{subject}" must start lower-case and not end with a period.

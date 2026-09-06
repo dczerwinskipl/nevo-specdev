@@ -86,6 +86,20 @@ export function createGitClient(repoRoot: string): GitClient {
       return out.trim().length > 0;
     },
 
+    async isAncestor(candidate, ref): Promise<boolean> {
+      try {
+        await git(['merge-base', '--is-ancestor', candidate, ref]);
+        return true;
+      } catch (err) {
+        // exit 1 with no diagnostics = "not an ancestor"; anything else is a
+        // real error and must surface.
+        if (err instanceof CommandFailedError && err.exitCode === 1 && err.stderr.trim() === '') {
+          return false;
+        }
+        throw err;
+      }
+    },
+
     async commitSingleFileOnto({ baseRef, path, content, message }): Promise<string> {
       // Plumbing only — the working tree and HEAD are never touched.
       const blob = (

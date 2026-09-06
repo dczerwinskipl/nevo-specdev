@@ -278,7 +278,7 @@
         "writing a commit message",
         "reviewing a pull request"
       ],
-      "summary": "Conventional Commits is the PR-title format (the squash commit message). Branch-local checkpoint commits are exempt.",
+      "summary": "Conventional Commits `<type>(<scope>): <description>` is the required PR-title format (it becomes the squash commit message). A scope is required; scopes are open-ended. Branch-local checkpoint commits are exempt.",
       "related": [
         "development.git-workflow",
         "development.pull-requests"

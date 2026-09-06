@@ -1,7 +1,7 @@
 // The real `GitHubClient` — a thin adapter over the `gh` CLI.
 
 import type { NormalizedCheckRun } from '../domain/release-plan.js';
-import type { GitHubClient, PullRequestRef } from '../ports.js';
+import type { AutoMergeResult, GitHubClient, PullRequestRef } from '../ports.js';
 import { CommandFailedError, run } from './exec.js';
 
 export function createGitHubClient(repoRoot: string): GitHubClient {
@@ -103,12 +103,31 @@ export function createGitHubClient(repoRoot: string): GitHubClient {
       return { url };
     },
 
-    async enableAutoMerge(prUrl): Promise<void> {
+    async enableAutoMerge(prUrl): Promise<AutoMergeResult> {
       try {
         await gh(['pr', 'merge', '--auto', '--squash', prUrl]);
+        return { outcome: 'enabled' };
       } catch (err) {
-        if (!(err instanceof CommandFailedError)) throw err;
-        // auto-merge is best-effort — a repo without it configured is fine.
+        // The one expected non-fatal case: the repository does not allow
+        // auto-merge. The PR is fine — it just waits for a normal merge.
+        if (
+          err instanceof CommandFailedError &&
+          /auto[- ]?merge is not (allowed|enabled)|not have auto[- ]?merge|Auto merge is not allowed/i.test(
+            err.stderr,
+          )
+        ) {
+          return {
+            outcome: 'unavailable',
+            reason: 'the repository does not have auto-merge enabled',
+          };
+        }
+        // auth / permission / network / anything else: fail closed.
+        throw new Error(
+          `could not request auto-merge for ${prUrl}: ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+          { cause: err },
+        );
       }
     },
   };

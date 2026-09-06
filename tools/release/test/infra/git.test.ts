@@ -56,6 +56,23 @@ describe('createGitClient.commitSingleFileOnto', () => {
     expect(await client.resolveCommit('HEAD')).toMatch(/^[0-9a-f]{40}$/);
   });
 
+  it('isAncestor: true for a real ancestor / self, false for an unrelated commit', async () => {
+    const client = createGitClient(repo);
+    const base = git(['rev-parse', 'HEAD']);
+    execFileSync('git', ['commit', '--allow-empty', '-qm', 'next'], { cwd: repo });
+    const head = git(['rev-parse', 'HEAD']);
+    // an orphan branch = unrelated history
+    execFileSync('git', ['checkout', '-q', '--orphan', 'other'], { cwd: repo });
+    execFileSync('git', ['commit', '--allow-empty', '-qm', 'orphan'], { cwd: repo });
+    const orphan = git(['rev-parse', 'HEAD']);
+    execFileSync('git', ['checkout', '-q', 'main'], { cwd: repo });
+
+    expect(await client.isAncestor(base, head)).toBe(true);
+    expect(await client.isAncestor(head, head)).toBe(true);
+    expect(await client.isAncestor(head, base)).toBe(false);
+    expect(await client.isAncestor(orphan, head)).toBe(false);
+  });
+
   it('commitParents and changedFiles read history without mutating anything', async () => {
     const client = createGitClient(repo);
     const baseSha = git(['rev-parse', 'HEAD']);

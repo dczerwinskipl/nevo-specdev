@@ -14,7 +14,7 @@ on:
         description: "Next line for main — next minor OR next major, e.g. 1.4.0 or 2.0.0"
         required: true
       execute:
-        description: "Create the branch and (with RELEASE_TOKEN) the PR — unchecked = validate only"
+        description: "Create the branch and (with CI_GITHUB_RELEASE_TOKEN) the PR — unchecked = validate only"
         type: boolean
         default: false
 
@@ -37,7 +37,7 @@ jobs:
           # A PAT lets the main-bump PR trigger CI so auto-merge can land it.
           # Without it the branches are still created and the exact `gh pr create`
           # command is printed for a maintainer to run. See docs/development/releasing.md.
-          token: ${{ secrets.RELEASE_TOKEN || github.token }}
+          token: ${{ secrets.CI_GITHUB_RELEASE_TOKEN || github.token }}
       - uses: ./.github/actions/setup
 
       - name: Configure git identity
@@ -50,8 +50,8 @@ jobs:
 
       - name: Cut
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
-          RELEASE_TOKEN_PRESENT: ${{ secrets.RELEASE_TOKEN != '' }}
+          GH_TOKEN: ${{ secrets.CI_GITHUB_RELEASE_TOKEN || github.token }}
+          CI_GITHUB_RELEASE_TOKEN_PRESENT: ${{ secrets.CI_GITHUB_RELEASE_TOKEN != '' }}
           RELEASE_VERSION: ${{ inputs.release_version }}
           NEXT_DEVELOPMENT_VERSION: ${{ inputs.next_development_version }}
           EXECUTE: ${{ inputs.execute }}

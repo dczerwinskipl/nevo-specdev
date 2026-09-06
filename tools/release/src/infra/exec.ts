@@ -9,6 +9,8 @@ export class CommandFailedError extends Error {
     readonly command: string,
     readonly args: readonly string[],
     readonly stderr: string,
+    /** process exit code, or `null` when the process was killed / never started. */
+    readonly exitCode: number | null,
     options?: ErrorOptions,
   ) {
     super(`${command} ${args.join(' ')} failed:\n${stderr.trim()}`, options);
@@ -35,8 +37,9 @@ export async function run(
     });
     return stdout;
   } catch (err) {
-    const e = err as { stderr?: string; stdout?: string };
-    throw new CommandFailedError(command, args, e.stderr ?? e.stdout ?? String(err), {
+    const e = err as { stderr?: string; stdout?: string; code?: number | string };
+    const exitCode = typeof e.code === 'number' ? e.code : null;
+    throw new CommandFailedError(command, args, e.stderr ?? e.stdout ?? String(err), exitCode, {
       cause: err,
     });
   }
@@ -60,7 +63,7 @@ export async function runWithInput(
     child.on('error', reject);
     child.on('close', (code) => {
       if (code === 0) resolve(stdout);
-      else reject(new CommandFailedError(command, args, stderr || stdout));
+      else reject(new CommandFailedError(command, args, stderr || stdout, code));
     });
     child.stdin.end(input);
   });

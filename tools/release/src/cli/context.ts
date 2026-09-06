@@ -13,8 +13,17 @@ export interface CliContext {
   readonly stderr: Logger;
 }
 
-export function hasReleaseToken(env: Readonly<Record<string, string | undefined>>): boolean {
-  return env.RELEASE_TOKEN_PRESENT === 'true' || Boolean(env.RELEASE_TOKEN);
+/**
+ * Is the CI GitHub release credential available? `CI_GITHUB_RELEASE_TOKEN` is a
+ * fine-grained PAT scoped to this repository, used only when a release workflow
+ * must open a PR whose `pull_request` CI must run (the default `GITHUB_TOKEN`
+ * cannot trigger that). `CI_GITHUB_RELEASE_TOKEN_PRESENT=true` is set by the
+ * workflow; locally, the token being in the environment is enough.
+ */
+export function hasCiGithubReleaseToken(
+  env: Readonly<Record<string, string | undefined>>,
+): boolean {
+  return env.CI_GITHUB_RELEASE_TOKEN_PRESENT === 'true' || Boolean(env.CI_GITHUB_RELEASE_TOKEN);
 }
 
 export function wantsExecute(

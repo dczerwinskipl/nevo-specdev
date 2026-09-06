@@ -132,6 +132,21 @@ describe('executeReleaseCut — recovery validated by CONTENT, not names §4', (
     expect(git.pushedBranches).toEqual([]);
   });
 
+  it('§3: a release-branch parent that IS a historical ancestor of advanced main is valid', async () => {
+    // main advanced past the cut point, but the cut was from real main history.
+    seedCorrectReleaseBranch(); // parent == mainSha
+    const advancedMain = git.addCommit({
+      parents: [mainSha],
+      files: { 'version.json': versionFileText({ channel: 'alpha', version: '1.4.0' }) },
+    });
+    git.state.refs.set('origin/main', advancedMain);
+    github.state.openPrs.push({ head: BUMP_BRANCH, base: 'main', url: 'u' });
+    seedCorrectBumpBranch(); // parent == mainSha, in ancestry
+    const r = await run(true, true);
+    expect(r.alreadyDone).toBe(true);
+    expect(msgs(r)).toMatch(/already cut correctly/);
+  });
+
   it('correct release branch, no bump PR, main still old -> InconsistentStateError with guidance', async () => {
     seedCorrectReleaseBranch();
     await expect(run(true, true)).rejects.toThrow(/no open main-bump PR was found/);
@@ -161,7 +176,7 @@ describe('executeReleaseCut — recovery validated by CONTENT, not names §4', (
     });
     git.state.refs.set(`origin/${RELEASE_BRANCH}`, sha);
     git.state.remoteBranches.add(RELEASE_BRANCH);
-    await expect(run(true, true)).rejects.toThrow(/its base version\.json is/);
+    await expect(run(true, true)).rejects.toThrow(/not in origin\/main history/);
   });
 
   it('names match but the bump branch content is wrong -> fail closed', async () => {

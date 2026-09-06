@@ -21,11 +21,11 @@ related:
 
 Workflows under [`.github/workflows/`](../../.github/workflows/):
 
-| Workflow                      | Trigger                                | Does                                                                          |
-| ----------------------------- | -------------------------------------- | ----------------------------------------------------------------------------- |
-| `pr-title`                    | PR opened / edited / synchronized      | Validates the PR title against [Conventional Commits](commit-conventions.md). |
-| `ci`                          | PRs; pushes to `main` and `release/v*` | The quality gate, then typecheck / test / build.                              |
-| `release`, `cut-release-line` | `workflow_dispatch`                    | See [releasing](releasing.md).                                                |
+| Workflow                                         | Trigger                                | Does                                                                                                                 |
+| ------------------------------------------------ | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `pr-title`                                       | PR opened / edited / synchronized      | Validates the PR title against [Conventional Commits](commit-conventions.md) — `<type>(<scope>): …`, scope required. |
+| `ci`                                             | PRs; pushes to `main` and `release/v*` | The quality gate, then typecheck / test / build.                                                                     |
+| `cut-release-line`, `promote-release`, `release` | `workflow_dispatch`                    | See [releasing](releasing.md).                                                                                       |
 
 ## `ci` jobs
 

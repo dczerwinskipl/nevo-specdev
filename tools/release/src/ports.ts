@@ -25,6 +25,11 @@ export interface GitClient {
   pushTag(tag: string): Promise<void>;
   remoteBranchExists(branch: string): Promise<boolean>;
   /**
+   * `git merge-base --is-ancestor <candidate> <ref>` — is `candidate` reachable
+   * from `ref`? Throws on an error that is neither "ancestor" nor "not ancestor".
+   */
+  isAncestor(candidate: string, ref: string): Promise<boolean>;
+  /**
    * Build a commit that is `baseRef` with a single file replaced, using git
    * plumbing — the working tree and HEAD are never touched. Returns the new
    * commit SHA.
@@ -63,9 +68,17 @@ export interface GitHubClient {
     title: string;
     body: string;
   }): Promise<PullRequestRef>;
-  /** Best-effort; a failure here is not fatal to the caller. */
-  enableAutoMerge(prUrl: string): Promise<void>;
+  /**
+   * Request auto-merge (squash) for a PR. `enabled` on success; `unavailable`
+   * only for the expected case where the repository does not have auto-merge
+   * turned on (the PR then just waits for a normal merge). Any other failure —
+   * auth, permission, network, unexpected — **throws**.
+   */
+  enableAutoMerge(prUrl: string): Promise<AutoMergeResult>;
 }
+
+export type AutoMergeResult =
+  { readonly outcome: 'enabled' } | { readonly outcome: 'unavailable'; readonly reason: string };
 
 /** Read the working-tree `version.json` (repo root). */
 export type ReadWorkingVersion = () => VersionFile;

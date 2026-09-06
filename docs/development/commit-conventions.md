@@ -8,8 +8,9 @@ read_when:
   - writing a commit message
   - reviewing a pull request
 summary: >
-  Conventional Commits is the PR-title format (the squash commit message). Branch-local
-  checkpoint commits are exempt.
+  Conventional Commits `<type>(<scope>): <description>` is the required PR-title format
+  (it becomes the squash commit message). A scope is required; scopes are open-ended.
+  Branch-local checkpoint commits are exempt.
 related:
   - development.git-workflow
   - development.pull-requests
@@ -19,8 +20,11 @@ related:
 
 [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) is the
 **pull request title** format. Because every PR is squash-merged, the PR title is the
-permanent commit message on `main` / `release/v*`. CI validates the PR title; it does
-**not** validate individual checkpoint commits on the branch.
+permanent commit message on `main` / `release/v*`. The `pr-title` check validates it
+(`requireScope: true`); it does **not** validate individual checkpoint commits on the
+branch — those disappear on squash, so agents and developers may use informal
+checkpoint messages freely, and the feature branch's existing history is not rewritten
+just to add scopes.
 
 ## Format
 
@@ -33,7 +37,7 @@ permanent commit message on `main` / `release/v*`. CI validates the PR title; it
 ```
 
 - `<description>`: imperative mood, lower-case start, no trailing period, ≤ ~72 chars.
-- `<scope>`: optional; see the list below.
+- `<scope>`: **required** — the area of the change; see the list below.
 - `!` before the colon marks a breaking change (also add a `BREAKING CHANGE:` footer).
 
 ## Types
@@ -53,25 +57,36 @@ permanent commit message on `main` / `release/v*`. CI validates the PR title; it
 
 ## Scopes
 
-The scope names the area of the change. Current areas:
+The scope names the area of the change and is **required** on the PR title. The list is
+**open-ended, not a whitelist** — the `pr-title` check only requires that _a_ scope is
+present, so a new real package or capability area is added simply by using it. Current
+conventional scopes:
 
-```text
-workspace   docs        docs-tools   release
-ci          github      deps
-```
+| Scope        | Area                                                     |
+| ------------ | -------------------------------------------------------- |
+| `workspace`  | root workspace config, monorepo plumbing, formatting     |
+| `cli`        | the future `nevo-spec` product CLI                       |
+| `dashboard`  | the future dashboard app                                 |
+| `core`       | shared product library                                   |
+| `release`    | `tools/release` — version model, cut / promote / release |
+| `docs`       | documentation under `docs/`                              |
+| `docs-tools` | `tools/docs` — discovery, index, ADR authoring           |
+| `github`     | `tools/github` — GitHub governance                       |
+| `ci`         | GitHub Actions workflows / CI configuration              |
+| `deps`       | dependency version bumps                                 |
 
-Package scopes (`cli`, `dashboard`, `core`, …) are used once the corresponding packages
-exist. An unknown or omitted scope is acceptable — do not invent noise.
+Pick the tightest scope that fits. Add a new one when a genuinely new area appears —
+do not stretch an existing scope, and do not invent noise.
 
 ## Examples
 
 ```text
-feat(docs-tools): add `context` command for agent file discovery
-fix(ci): give affected detection full git history on PRs
-docs(development): document the hotfix flow for maintained release lines
+feat(cli): add the command router
+fix(release): reject a stale release-branch checkout
+ci(release): add the Promote release workflow
+docs(release): document the operator release flow
 build(deps): pin turbo to 2.10.12
 chore(workspace): move project settings into pnpm-workspace.yaml
-ci: add PR title validation with amannn/action-semantic-pull-request
 ```
 
 ## Breaking changes

@@ -30,6 +30,14 @@ export {
   type CreateReleaseDeps,
   type CreateReleaseResult,
 } from './app/create-release.js';
+export {
+  promoteRelease,
+  promotionBranchName,
+  type PromoteDeps,
+  type PromoteResult,
+  type PromotionTarget,
+} from './app/promote.js';
+export { ensureVersionFileChangePr, checkSingleVersionFileCommit } from './app/version-pr.js';
 export { createProgram } from './cli/program.js';
 export type { CliContext } from './cli/context.js';
-export { hasReleaseToken, wantsExecute } from './cli/context.js';
+export { hasCiGithubReleaseToken, wantsExecute } from './cli/context.js';

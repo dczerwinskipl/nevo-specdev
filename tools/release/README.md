@@ -11,7 +11,7 @@ are custom.
 ## Commands
 
 TypeScript, `tsc` → `dist/`; the `nevo-release` executable is `dist/bin.js`. One
-program, four subcommands, each owning its own options (`nevo-release <cmd> --help`):
+program, five subcommands, each owning its own options (`nevo-release <cmd> --help`):
 
 ```bash
 nevo-release version [--with-sha]
@@ -37,9 +37,27 @@ nevo-release cut-line --release-version X.Y.Z --next-development-version X.Y.Z [
     #     beta <releaseVersion>; the bump branch (if present) the mirror on the same
     #     base. A merged bump PR (main already on the next alpha) = fully complete.
     #     Inconsistent contents -> fail closed, never overwritten / force-pushed.
+    #     Its base must also be a real ancestor of origin/main (git merge-base
+    #     --is-ancestor) — not an unrelated commit that happens to carry the right
+    #     version.json. An open bump PR whose head branch is missing/invalid -> fail closed.
     #   - with --execute: create both branches by git plumbing (no working-tree change),
-    #     then open the main-bump PR (RELEASE_TOKEN present) or print the exact
+    #     then open the main-bump PR (CI_GITHUB_RELEASE_TOKEN present) or print the exact
     #     `gh pr create` command. Env fallbacks: RELEASE_VERSION, NEXT_DEVELOPMENT_VERSION.
+
+nevo-release promote --target rc|stable [--execute]
+    # Run on a release/vX.Y branch. Moves the branch's channel forward (beta->rc,
+    # rc->stable) THROUGH A PR — never edits release/vX.Y directly, never tags.
+    #   - fetch; require release/vX.Y; require local HEAD == origin/<branch>; read
+    #     version.json from origin/<branch>; validate the transition with the shared
+    #     domain rule (beta->stable rejected; already-target -> "already promoted";
+    #     already-stable -> use Release stable).
+    #   - recovery by STRUCTURE not name: an existing chore/promote-<v>-to-<target>
+    #     (with or without an open PR) is reused only if it is a single commit on the
+    #     current origin/<branch> HEAD changing only version.json to { target, v }.
+    #     Open PR + missing/invalid branch -> fail closed.
+    #   - with --execute: push the branch by plumbing, open/hand off a PR titled
+    #     `chore(release): promote <v> to <target>`, request auto-merge when the token
+    #     is set. Env fallback: PROMOTE_TARGET, EXECUTE, CI_GITHUB_RELEASE_TOKEN_PRESENT.
 
 nevo-release create --channel beta|rc|stable [--execute]
     # Run on a release/vX.Y branch. ONE operation, explicit mutation boundary: without
@@ -57,8 +75,11 @@ nevo-release create --channel beta|rc|stable [--execute]
     #     An existing advance branch is reused only when read-only Git inspection proves
     #     it is a single commit on the current origin/release/vX.Y HEAD changing only
     #     version.json to the expected next state. Extra file / wrong base / wrong
-    #     content -> fail closed, never force-pushed, never turned into a PR.
-    # Env fallbacks: RELEASE_CHANNEL, EXECUTE, RELEASE_TOKEN_PRESENT.
+    #     content -> fail closed, never force-pushed, never turned into a PR. An open
+    #     advance PR whose head branch is missing/invalid -> fail closed.
+    #   - auto-merge: an auth/network failure is surfaced, not swallowed; a repo without
+    #     auto-merge enabled is the one expected case and is reported accurately.
+    # Env fallbacks: RELEASE_CHANNEL, EXECUTE, CI_GITHUB_RELEASE_TOKEN_PRESENT.
 ```
 
 Root scripts `pnpm version:print` / `pnpm version:check-transition` call the built
@@ -71,7 +92,8 @@ src/
   domain/     version model · transitions · release/cut planning + decisions  (all pure)
   ports.ts    GitClient / GitHubClient interfaces
   infra/      git.ts (plumbing-based GitClient) · github.ts (gh CLI) · git-sync.ts (fast reads for the gate)
-  app/        check-transition · build-version · cut-release-line · create-release  (use cases)
+  app/        check-transition · build-version · cut-release-line · promote ·
+              create-release · version-pr (the shared "change version.json via a PR" flow)
   cli/        thin Commander wiring; commands own their own options
   bin.ts      executable boundary
 ```

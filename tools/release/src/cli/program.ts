@@ -4,6 +4,7 @@ import type { CliContext } from './context.js';
 import { checkTransitionCommand } from './commands/check-transition.js';
 import { createReleaseCommand } from './commands/create.js';
 import { cutLineCommand } from './commands/cut-line.js';
+import { promoteCommand } from './commands/promote.js';
 import { versionCommand } from './commands/version.js';
 
 /** Build the `nevo-release` program. Pure wiring — no argv parsing here. */
@@ -18,6 +19,7 @@ export function createProgram(ctx: CliContext): Command {
   program.addCommand(versionCommand(ctx));
   program.addCommand(checkTransitionCommand(ctx));
   program.addCommand(cutLineCommand(ctx));
+  program.addCommand(promoteCommand(ctx));
   program.addCommand(createReleaseCommand(ctx));
 
   // Route every exit (help, parse error, our thrown errors) through bin.ts.

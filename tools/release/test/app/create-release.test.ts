@@ -146,7 +146,7 @@ describe('executeRelease — Phase B (stable advance) structural validation §3'
     const r = await run('stable', false, true);
     expect(msgs(r)).toMatch(/Would create annotated tag v1\.3\.0/);
     expect(msgs(r)).toMatch(/Would create chore\/advance-release-v1\.3-to-1\.3\.1/);
-    expect(msgs(r)).toMatch(/Would open the branch-advance PR/);
+    expect(msgs(r)).toMatch(/Would open the PR/);
     expect(git.createdTags).toEqual([]);
     expect(git.pushedBranches).toEqual([]);
     expect(github.createdPrs).toEqual([]);
@@ -192,7 +192,7 @@ describe('executeRelease — Phase B (stable advance) structural validation §3'
 
   it('advance branch: derives from the wrong base (not current release HEAD) -> reject', async () => {
     seedAdvance({ ...releaseFiles(), 'version.json': versionFileText(NEXT) }, BASE);
-    await expect(run('stable', true, true)).rejects.toThrow(/not a single commit on top of/);
+    await expect(run('stable', true, true)).rejects.toThrow(/not a single commit on the current/);
   });
 
   it('advance branch: wrong version.json -> reject', async () => {
@@ -203,7 +203,8 @@ describe('executeRelease — Phase B (stable advance) structural validation §3'
     await expect(run('stable', true, true)).rejects.toThrow(/its version\.json is/);
   });
 
-  it('advance PR already open -> phase B no-op', async () => {
+  it('valid advance branch + open PR -> phase B no-op', async () => {
+    seedAdvance({ ...releaseFiles(), 'version.json': versionFileText(NEXT) });
     github.state.openPrs.push({
       head: ADVANCE_BRANCH,
       base: RELEASE_BRANCH,
@@ -212,7 +213,38 @@ describe('executeRelease — Phase B (stable advance) structural validation §3'
     const r = await run('stable', true, true);
     expect(git.pushedBranches).toEqual([]);
     expect(github.createdPrs).toEqual([]);
-    expect(msgs(r)).toMatch(/already open/);
+    expect(msgs(r)).toMatch(/verified and its PR is open/);
+  });
+
+  it('open advance PR but the branch is missing -> fail closed (§1)', async () => {
+    github.state.openPrs.push({
+      head: ADVANCE_BRANCH,
+      base: RELEASE_BRANCH,
+      url: 'https://example.test/pull/7',
+    });
+    await expect(run('stable', true, true)).rejects.toThrow(/does not exist on origin/);
+  });
+
+  it('open advance PR + structurally invalid branch -> fail closed (§1)', async () => {
+    seedAdvance({ ...releaseFiles(), 'version.json': versionFileText(NEXT), 'x.txt': 'y' });
+    github.state.openPrs.push({
+      head: ADVANCE_BRANCH,
+      base: RELEASE_BRANCH,
+      url: 'https://example.test/pull/7',
+    });
+    await expect(run('stable', true, true)).rejects.toThrow(/not only version\.json/);
+  });
+
+  it('auto-merge unavailable (expected) -> stated accurately; PR still opened', async () => {
+    github.state.autoMerge = 'unavailable';
+    const r = await run('stable', true, true);
+    expect(github.createdPrs).toHaveLength(1);
+    expect(msgs(r)).toMatch(/Auto-merge not requested .*normal merge after CI/);
+  });
+
+  it('auto-merge unexpected failure (auth/network) -> surfaced, not swallowed', async () => {
+    github.state.autoMerge = new Error('HTTP 403: forbidden');
+    await expect(run('stable', true, true)).rejects.toThrow(/HTTP 403/);
   });
 
   it('sanity: the green-check fixture is what drives the pass', () => {

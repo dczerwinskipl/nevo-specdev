@@ -1,7 +1,7 @@
 import { Command, Option } from 'commander';
 
 import { executeRelease } from '../../app/create-release.js';
-import { hasReleaseToken, wantsExecute, type CliContext } from '../context.js';
+import { hasCiGithubReleaseToken, wantsExecute, type CliContext } from '../context.js';
 
 interface CreateOptions {
   channel?: string;
@@ -22,7 +22,7 @@ export function createReleaseCommand(ctx: CliContext): Command {
       const mutate = wantsExecute(opts.execute, ctx.env);
       const { events } = await executeRelease(
         { channel: opts.channel ?? '' },
-        { git: ctx.git, github: ctx.github, hasToken: hasReleaseToken(ctx.env) },
+        { git: ctx.git, github: ctx.github, hasToken: hasCiGithubReleaseToken(ctx.env) },
         { mutate },
       );
       for (const e of events) (e.level === 'warn' ? ctx.stderr : ctx.stdout)(e.message);

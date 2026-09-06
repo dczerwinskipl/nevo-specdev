@@ -65,12 +65,13 @@ export async function executeReleaseCut(
   const branchExists = await git.remoteBranchExists(releaseBranch);
   const openBumpPr = await github.findOpenPullRequest({ head: bumpBranch, base: 'main' });
 
-  // ── recognise a prior run — but only by CONTENT, never by name (§4) ─────
+  // ── recognise a prior run — but only by CONTENT, never by name (§3/§4) ──
   if (branchExists) {
     const relCheck = await validateSingleFileBranch(git, {
       ref: `origin/${releaseBranch}`,
       nextState: { channel: 'beta', version: releaseVersion },
       expectedParentVf: { channel: 'alpha', version: releaseVersion },
+      parentAncestorOf: 'origin/main',
     });
     if (!relCheck.ok) {
       throw new InconsistentStateError(
@@ -80,20 +81,25 @@ export async function executeReleaseCut(
     }
 
     if (openBumpPr) {
-      const bumpOnRemote = await git.remoteBranchExists(bumpBranch);
-      if (bumpOnRemote) {
-        const bumpCheck = await validateSingleFileBranch(git, {
-          ref: `origin/${bumpBranch}`,
-          nextState: { channel: 'alpha', version: nextVersion },
-          expectedParentVf: { channel: 'alpha', version: releaseVersion },
-          expectedParent: relCheck.parent,
-        });
-        if (!bumpCheck.ok) {
-          throw new InconsistentStateError(
-            `${bumpBranch} (open PR ${openBumpPr.url}) exists but ${bumpCheck.reason} — ` +
-              `refusing to treat this cut as complete. Investigate.`,
-          );
-        }
+      // §2 — an open PR and its head branch are one state: the branch MUST exist
+      // and MUST validate; do not trust the PR alone.
+      if (!(await git.remoteBranchExists(bumpBranch))) {
+        throw new InconsistentStateError(
+          `An open main-bump PR (${openBumpPr.url}) references ${bumpBranch}, but that branch does ` +
+            `not exist on origin. Fail closed — investigate.`,
+        );
+      }
+      const bumpCheck = await validateSingleFileBranch(git, {
+        ref: `origin/${bumpBranch}`,
+        nextState: { channel: 'alpha', version: nextVersion },
+        expectedParentVf: { channel: 'alpha', version: releaseVersion },
+        expectedParent: relCheck.parent,
+      });
+      if (!bumpCheck.ok) {
+        throw new InconsistentStateError(
+          `${bumpBranch} (open PR ${openBumpPr.url}) exists but ${bumpCheck.reason} — ` +
+            `refusing to treat this cut as complete. Investigate.`,
+        );
       }
       events.push(
         info(
@@ -186,15 +192,23 @@ export async function executeReleaseCut(
   if (hasToken) {
     const pr = await github.createPullRequest({ head: bumpBranch, base: 'main', title, body });
     events.push(info(`Opened main-bump PR: ${pr.url}`));
-    await github.enableAutoMerge(pr.url);
-    events.push(info('Auto-merge requested — lands when required checks pass.'));
+    const am = await github.enableAutoMerge(pr.url);
+    events.push(
+      info(
+        am.outcome === 'enabled'
+          ? 'Auto-merge requested — lands when required checks pass.'
+          : `Auto-merge not requested (${am.reason}); the PR stays open for a normal merge after CI.`,
+      ),
+    );
   } else {
     events.push(info(''));
     events.push(
-      info('No RELEASE_TOKEN — the main-bump PR was NOT created (a PR opened by the default'),
+      info('No CI_GITHUB_RELEASE_TOKEN — the main-bump PR was NOT created (a PR opened by the'),
     );
     events.push(
-      info('token does not trigger CI). Create it yourself so `pull_request` workflows run:'),
+      info(
+        'default token does not trigger CI). Create it yourself so `pull_request` workflows run:',
+      ),
     );
     events.push(info(''));
     events.push(
@@ -227,9 +241,11 @@ type BranchCheck = { ok: true; parent: string } | { ok: false; reason: string };
 
 /**
  * §4 — a single commit on top of some parent, changing only `version.json` to
- * exactly `nextState`; when `expectedParentVf` is given the parent's
+ * exactly `nextState`. When `expectedParentVf` is given the parent's
  * `version.json` must match it; when `expectedParent` is given the parent SHA
- * must equal it. Read-only Git inspection.
+ * must equal it; when `parentAncestorOf` is given the parent must be reachable
+ * from that ref (§3 — the base is real main-line history, not an unrelated
+ * commit that merely happens to carry the right version.json). Read-only.
  */
 async function validateSingleFileBranch(
   git: GitClient,
@@ -238,11 +254,13 @@ async function validateSingleFileBranch(
     nextState,
     expectedParentVf,
     expectedParent,
+    parentAncestorOf,
   }: {
     ref: string;
     nextState: VersionFile;
     expectedParentVf?: VersionFile;
     expectedParent?: string;
+    parentAncestorOf?: string;
   },
 ): Promise<BranchCheck> {
   const parents = await git.commitParents(ref);
@@ -256,6 +274,14 @@ async function validateSingleFileBranch(
     return {
       ok: false,
       reason: `its base ${parent.slice(0, 7)} is not the expected ${expectedParent.slice(0, 7)}`,
+    };
+  }
+  if (parentAncestorOf && !(await git.isAncestor(parent, parentAncestorOf))) {
+    return {
+      ok: false,
+      reason:
+        `its base ${parent.slice(0, 7)} is not in ${parentAncestorOf} history — the branch was ` +
+        `not cut from real main-line history`,
     };
   }
 

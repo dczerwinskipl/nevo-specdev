@@ -1,7 +1,7 @@
 import { Command, Option } from 'commander';
 
 import { executeReleaseCut } from '../../app/cut-release-line.js';
-import { hasReleaseToken, wantsExecute, type CliContext } from '../context.js';
+import { hasCiGithubReleaseToken, wantsExecute, type CliContext } from '../context.js';
 
 interface CutLineOptions {
   releaseVersion?: string;
@@ -30,7 +30,7 @@ export function cutLineCommand(ctx: CliContext): Command {
           releaseVersion: opts.releaseVersion ?? '',
           nextDevelopmentVersion: opts.nextDevelopmentVersion ?? '',
         },
-        { git: ctx.git, github: ctx.github, hasToken: hasReleaseToken(ctx.env) },
+        { git: ctx.git, github: ctx.github, hasToken: hasCiGithubReleaseToken(ctx.env) },
         { mutate },
       );
       for (const e of events) (e.level === 'warn' ? ctx.stderr : ctx.stdout)(e.message);

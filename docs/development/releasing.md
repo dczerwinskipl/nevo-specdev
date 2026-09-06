@@ -26,6 +26,28 @@ related:
 The tooling is the private `nevo-repo-release` package under
 [`tools/release/`](../../tools/release/README.md).
 
+## The operator flow (what to click)
+
+Everything is a **Run workflow** in the Actions tab. To ship `stable 0.1.0`:
+
+| #   | Action → run                    | On branch      | Effect                                                                |
+| --- | ------------------------------- | -------------- | --------------------------------------------------------------------- |
+| 1   | **Cut release line**            | `main`         | creates `release/v0.1` = `beta 0.1.0` + a PR moving `main` forward    |
+| 2   | **Promote release** → `rc`      | `release/v0.1` | opens a PR setting `release/v0.1` to `rc 0.1.0`; merge after CI       |
+| 3   | _(optional)_ **Release** → `rc` | `release/v0.1` | tags `v0.1.0-rc.N` + a GitHub Release (an optional publication point) |
+| 4   | **Promote release** → `stable`  | `release/v0.1` | opens a PR setting `release/v0.1` to `stable 0.1.0`; merge after CI   |
+| 5   | **Release** → `stable`          | `release/v0.1` | tags `v0.1.0` + a GitHub Release, then opens the next-patch PR        |
+
+- **Promotion** changes `version.json` on the protected branch **only through a normal
+  PR** — it never edits `release/vX.Y` directly and never tags anything.
+- **Release** creates the Git tag + GitHub Release, and only after the branch HEAD has
+  passed `quality` + `test` + `build`.
+- A `stable` Release also opens the PR that advances the branch to the next patch's
+  `beta`, so later builds never keep reporting the shipped version.
+- Every workflow has a **validate-only** mode (leave `execute` unchecked): it runs all
+  the real checks and reports what it _would_ do, changing nothing.
+- Distributing an npm package / installing the CLI is out of scope here.
+
 ## `version.json`
 
 Every branch carries `version.json = { channel, version }` (`version` is a plain
@@ -87,11 +109,14 @@ a dry run that passes means the real run would proceed. It:
    minor or major. A PR-list query failure fails closed (not read as "no PR");
 3. **recognises a prior run only by CONTENT, never by branch/PR name.** An existing
    `release/vX.Y` is accepted only when read-only Git inspection shows it is a single
-   commit on an `alpha <release_version>` base changing **only** `version.json` to
-   `beta <release_version>`; the `chore/bump-main-to-<next>` branch (when present) must
-   be the mirror on the same base. A merged bump PR (`origin/main` already on
-   `alpha <next>`) is recognised as fully complete. Inconsistent contents → fail
-   closed, never overwritten, never force-pushed;
+   commit changing **only** `version.json` to `beta <release_version>`, on a base whose
+   `version.json` is `alpha <release_version>` **and** which is a real ancestor of
+   `origin/main` (`git merge-base --is-ancestor`) — an unrelated commit that merely
+   carries the right `version.json` is rejected. When a bump PR is open, its head
+   branch **must** exist and structurally match (mirror on the same base) — the PR URL
+   alone is never evidence. A merged bump PR (`origin/main` already on `alpha <next>`)
+   is recognised as fully complete. Any inconsistency → fail closed, never overwritten,
+   never force-pushed;
 4. execute: creates `release/vX.Y` at `origin/main` **plus one commit setting that
    branch's `version.json` to `beta <release_version>`** and pushes
    `chore/bump-main-to-<next>` (`alpha <next_development_version>`). Both commits are
@@ -102,14 +127,38 @@ a dry run that passes means the real run would proceed. It:
 A PR opened by the default `GITHUB_TOKEN` does **not** trigger `pull_request`
 workflows, so its required checks never start.
 
-- **With `RELEASE_TOKEN`** (a fine-grained PAT with `contents: write` +
-  `pull requests: write` set as a repository secret): the workflow opens the PR and
-  requests auto-merge; CI runs and it lands on its own.
-- **Without `RELEASE_TOKEN`**: the workflow pushes the bump branch and prints the exact
-  `gh pr create …` command. Run it **yourself** — a PR you open triggers CI normally.
+- **With `CI_GITHUB_RELEASE_TOKEN`**: the workflow opens the PR and requests
+  squash auto-merge; CI runs and it lands on its own. If the repository does not
+  have auto-merge enabled, the tool says so and the PR simply waits for a normal
+  merge after CI. An auth / permission / network failure of the auto-merge request is
+  **not** swallowed — it surfaces.
+- **Without `CI_GITHUB_RELEASE_TOKEN`**: the workflow pushes the branch and prints the
+  exact `gh pr create …` command. Run it **yourself** — a PR you open triggers CI.
 
 Nothing is described as "merge manually" when the required checks could never turn
 green.
+
+### `CI_GITHUB_RELEASE_TOKEN`
+
+A repository secret: a **fine-grained GitHub PAT scoped to this repository only**. It is
+used solely so a release/promote workflow can open a PR whose `pull_request` CI must
+run (the built-in `GITHUB_TOKEN` cannot trigger that). Every operation that works with
+the built-in token still falls back to `github.token`; only PR creation is handed off
+when the PAT is absent.
+
+Minimum permissions for the operations the tool actually performs (push a branch by
+plumbing, open a PR, request auto-merge, tag + GitHub Release on the `Release`
+workflow):
+
+| Permission    | Level        | Why                                                         |
+| ------------- | ------------ | ----------------------------------------------------------- |
+| Contents      | Read & write | push the promotion / bump / advance branch; tags + Releases |
+| Pull requests | Read & write | open the PR, request auto-merge                             |
+| Workflows     | Read         | (only if a PR ever touches `.github/workflows/`)            |
+| Metadata      | Read         | mandatory for every fine-grained PAT                        |
+
+No token value is ever stored in the repository. If the secret is unset, the workflows
+still run and hand off PR creation safely.
 
 ### Why branch creation is allowed on a protected pattern
 
@@ -120,12 +169,37 @@ blocked. Verified against the live ruleset. To remove a mistaken release branch,
 admin sets the ruleset's `enforcement` to `disabled`, deletes it, and re-runs
 `nevo-repo-github configure`.
 
-## Promoting and releasing
+## Promoting
 
-Promotion is a one-line `version.json` edit on the release branch, via a PR:
-`beta→rc`, `rc→stable`, or (once a patch shipped) `stable→beta|rc` of the next patch.
-`tools/release` exports `planPromotion` for the legal transitions; CI's transition gate
-rejects the rest.
+Run **`Promote release`** from a `release/vX.Y` branch (pick the branch in GitHub's
+Run-workflow selector).
+
+| Input     | Meaning                                                         |
+| --------- | --------------------------------------------------------------- |
+| `target`  | `rc` (from `beta`) or `stable` (from `rc`)                      |
+| `execute` | Unchecked = **validate-only**: run every check, change nothing. |
+
+Promotion **never touches `release/vX.Y` directly and never tags anything.** It:
+
+1. fetches; requires the current branch to be `release/vX.Y`; requires local HEAD ==
+   `origin/<branch>`; reads `version.json` from `origin/<branch>`;
+2. validates the immediate transition against the shared domain rule
+   (`beta → rc`, `rc → stable` only — `beta → stable` is rejected; a branch already at
+   `stable` is told to run `Release stable`, which prepares the next patch);
+3. is **recovery-safe by structure, never by name** — an existing
+   `chore/promote-<version>-to-<target>` branch (with or without an open PR) is reused
+   only if read-only Git inspection proves it is a single commit on the current
+   `origin/<branch>` HEAD changing only `version.json` to exactly `{ target, version }`.
+   An open PR whose head branch is missing or invalid → fail closed. `origin/<branch>`
+   already in the target channel → "already promoted";
+4. execute: builds one commit by git plumbing (no working tree touched), pushes
+   `chore/promote-<version>-to-<target>`, and opens / hands off a PR back to
+   `release/vX.Y` (title `chore(release): promote <version> to <target>`), requesting
+   auto-merge when `CI_GITHUB_RELEASE_TOKEN` is set.
+
+After the promotion PR merges, run **`Release`** to cut the `<target>` tag.
+
+## Releasing
 
 Run **`Release`** from a `release/vX.Y` branch:
 
@@ -170,11 +244,12 @@ A `stable` release also ensures the branch moves to
 `X.Y.(Z+1)-beta.<n>` — never the already-shipped `X.Y.Z`. The advance branch
 (`chore/advance-release-vX.Y-to-X.Y.(Z+1)`) is **reused only when it structurally
 matches** the intended operation: read-only Git inspection must show it is a single
-commit on top of the current `origin/release/vX.Y` HEAD that changes **only**
-`version.json`, to exactly the expected next state. An advance branch with an extra
-file, a wrong base, or wrong content is **refused** — never force-pushed, never turned
-into a PR. If the advance PR is already open, nothing happens. (Same `RELEASE_TOKEN` /
-manual-`gh pr create` rule as above.)
+commit on the current `origin/release/vX.Y` HEAD that changes **only** `version.json`,
+to exactly the expected next state. An advance branch with an extra file, a wrong base,
+or wrong content is **refused** — never force-pushed, never turned into a PR. An open
+advance PR whose head branch is missing or does not structurally match is a fail-closed
+error; the PR URL alone is never taken as evidence. (Same
+`CI_GITHUB_RELEASE_TOKEN` / manual-`gh pr create` rule as above.)
 
 ## Hotfix on a released line
 

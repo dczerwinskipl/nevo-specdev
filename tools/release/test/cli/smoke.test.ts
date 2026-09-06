@@ -51,9 +51,15 @@ describe('nevo-release CLI', () => {
   it('--help lists every subcommand', async () => {
     const { code, stdout } = await cli(['--help']);
     expect(code).toBe(0);
-    for (const cmd of ['version', 'check-transition', 'cut-line', 'create']) {
+    for (const cmd of ['version', 'check-transition', 'cut-line', 'promote', 'create']) {
       expect(stdout).toContain(cmd);
     }
+  });
+
+  it('promote --help documents --target', async () => {
+    const { code, stdout } = await cli(['promote', '--help']);
+    expect(code).toBe(0);
+    expect(stdout).toContain('--target');
   });
 
   it('an unknown command exits non-zero', async () => {
@@ -63,6 +69,11 @@ describe('nevo-release CLI', () => {
 
   it('create with an invalid channel exits non-zero', async () => {
     const { code } = await cli(['create', '--channel', 'ga']);
+    expect(code).not.toBe(0);
+  });
+
+  it('promote with an invalid target exits non-zero', async () => {
+    const { code } = await cli(['promote', '--target', 'ga']);
     expect(code).not.toBe(0);
   });
 
