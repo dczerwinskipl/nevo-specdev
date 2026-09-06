@@ -86,6 +86,27 @@ reads the product version by running `nevo-release version` (exactly what the ro
 `pnpm version:print` script does), rather than importing `nevo-repo-release` and taking
 on a build-graph edge — the version string is a documented contract, not internal state.
 
+### Product CLI — the shell composes, each vertical owns its command
+
+For the `nevo-spec` product CLI (multiple capability packages, more coming), split
+ownership:
+
+- **`@nevo/specdev` owns the shell** — the root program, `--version`, global options,
+  and the output / error / exit conventions — and **composes** top-level commands
+  (`program.addCommand(createDashboardCommand(ctx))`). It does **not** define a
+  command's name, options, help, or subcommands.
+- **Each capability vertical owns its command**, as a Commander adapter in its own
+  package, exported from a dedicated subpath (`@nevo/specdev-dashboard/cli` →
+  `createDashboardCommand`). Commander is a dependency of that adapter subpath, **not**
+  of the capability/runtime it wraps — exactly like a web framework belongs in a
+  feature's `http/routes`, never in its application/domain. `runDashboard()` stays
+  framework-independent so it is reusable from a non-CLI surface.
+
+This keeps the shell from becoming a second implementation site for every feature as
+`nevo-spec workflow …`, `nevo-spec init`, etc. arrive. Do **not** invent a command
+descriptor / plugin framework to achieve it — plain Commander composition and ordinary
+functions are enough.
+
 ## 3. Organize by cohesive capability
 
 Within a layer, name modules after what they do (`search.ts`, `index-file.ts`,

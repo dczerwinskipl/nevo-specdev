@@ -8,7 +8,7 @@
       "outputs": ["dist/**"]
     },
     "test": {
-      "dependsOn": ["^build", "build"],
+      "dependsOn": ["^build", "build", "nevo-repo-product#test"],
       "inputs": ["$TURBO_DEFAULT$", "!**/*.md"],
       "outputs": []
     }

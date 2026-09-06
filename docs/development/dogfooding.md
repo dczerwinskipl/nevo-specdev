@@ -26,12 +26,16 @@ This is a **repository developer workflow**, not the future public
 `nevo-spec install` / `nevo-spec update` (those are not designed yet — see
 [repository-structure](../architecture/repository-structure.md)). It:
 
-1. builds the packaging inputs and runs [`pnpm product:pack`](product-packaging.md);
-2. `pnpm add -g <the packed tarball>`;
-3. runs the installed binary from pnpm's global bin dir:
-   `nevo-spec --version` (must equal the packed version), `nevo-spec --help`
-   (must list `dashboard`), `nevo-spec dashboard` (must print the sibling-package
-   marker);
+1. builds the packaging tool if needed, then runs
+   [`pnpm product:pack`](product-packaging.md) (self-bootstrapping — no prior
+   `pnpm build` / `pnpm check` required);
+2. `pnpm add -g <the packed tarball>` — on the **repository-pinned pnpm** (every child
+   `pnpm` runs from the repo root, so Corepack never downloads "latest");
+3. puts pnpm's global bin dir on `PATH` and runs the **real installed `nevo-spec`
+   executable shim** (the `.cmd` shim on Windows, the shell shim on Unix — not
+   `node dist/bin.js`): `nevo-spec --version` (must equal the packed version),
+   `nevo-spec --help` (must list `dashboard`), `nevo-spec dashboard` (must print the
+   dashboard-capability marker);
 4. fails with a diagnostic and a non-zero exit if pack or any smoke step fails.
 
 ## Why a tarball and not `pnpm link`

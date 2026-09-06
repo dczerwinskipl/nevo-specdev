@@ -383,7 +383,7 @@
         "reviewing @nevo/specdev package metadata",
         "wiring a CI or release job that needs the product tarball"
       ],
-      "summary": "How the Nevo SpecDev product is turned into one installable artifact: nevo-repo-product bundles the nevo-spec entry, the internal workspace capability packages and commander with esbuild, then pnpm pack produces .artifacts/nevo-specdev-<version>.tgz. Source package boundaries stay real; only the distribution is a single file.",
+      "summary": "How the Nevo SpecDev product is turned into one installable artifact: nevo-repo-product bundles the nevo-spec entry, the internal workspace capability packages and commander with esbuild, then packs on the pinned pnpm to produce .artifacts/nevo-specdev-<version>.tgz (with a THIRD_PARTY_NOTICES.txt). Source package boundaries stay real — the shell composes, each vertical owns its CLI adapter — only the distribution is a single file.",
       "related": [
         "adr.0006-product-ships-as-a-single-bundled-artifact",
         "development.dogfooding",

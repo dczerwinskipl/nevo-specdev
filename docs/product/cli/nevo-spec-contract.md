@@ -37,10 +37,11 @@ nevo-spec dashboard     # bootstrap proof (see below); exit 0
 - `--version` prints the version baked into the installed build (from the repository's
   release model). It does not depend on any file outside the installed package.
 - An unknown command or bad usage exits non-zero with usage on stderr.
-- `dashboard` currently **only routes into the `@nevo/specdev-dashboard` capability
-  package and prints a deterministic marker** (`Nevo SpecDev dashboard command is
-available.`). It does **not** start the dashboard server, UI, or runtime — those are
-  not migrated yet.
+- `dashboard` is defined by the dashboard vertical (`@nevo/specdev-dashboard/cli`) and
+  composed into the shell. It currently **only routes into that vertical's capability
+  and prints a deterministic marker** (`Nevo SpecDev dashboard command is available.`).
+  It does **not** start the dashboard server, UI, or runtime — those are not migrated
+  yet.
 
 ## Not implemented
 

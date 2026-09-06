@@ -45,8 +45,13 @@ Current pins:
 
 ## CodeQL
 
-Deliberately **not** enabled yet: there is no product source code in the repository, so
-CodeQL would scan only small Node tooling scripts and report nothing useful. Enable it
-in the same change that migrates the first real product package — add a
-`github/codeql-action` workflow for `javascript-typescript` and make `CodeQL` a
-required check.
+Deliberately **not** enabled yet. The repository so far is Node tooling under `tools/*`
+plus `packages/specdev` / `packages/specdev-dashboard`, and the latter are a
+deliberately minimal routing / packaging **bootstrap** (a Commander router, one
+capability function returning a marker) — not substantive application code. CodeQL would
+have almost nothing to analyse.
+
+Enable it in the change that lands the **first substantive migrated product
+implementation** (real dashboard runtime / server / providers / spec engine): add a
+`github/codeql-action` workflow for `javascript-typescript` and make `CodeQL` a required
+check in the branch rulesets.

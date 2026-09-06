@@ -1,10 +1,13 @@
-// The `nevo-spec` command router. Thin Commander composition — no product logic
-// lives here, and no product logic lives in the executable (`bin.ts`). Each
-// command handler calls a capability API and presents the result.
+// The `nevo-spec` composition root. `@nevo/specdev` owns the CLI SHELL — the root
+// program, global flags, version, and the output / error / exit conventions —
+// and COMPOSES top-level commands. It does not define them: each capability
+// vertical owns its own Commander adapter (`@nevo/specdev-dashboard/cli`
+// exports `createDashboardCommand`), the same way a feature owns its HTTP routes
+// while the server root just mounts them.
 
+import { createDashboardCommand } from '@nevo/specdev-dashboard/cli';
 import { Command } from 'commander';
 
-import { dashboardCommand } from './cli/dashboard.js';
 import { NEVO_SPEC_VERSION } from './version.js';
 
 /** Line sinks so the program never touches `process` directly (testable). */
@@ -18,7 +21,7 @@ export interface ProgramIO {
  * The real command tree is intentionally minimal for this bootstrap:
  *   nevo-spec --help
  *   nevo-spec --version
- *   nevo-spec dashboard
+ *   nevo-spec dashboard   (defined in @nevo/specdev-dashboard/cli)
  */
 export function createProgram(io: ProgramIO): Command {
   const program = new Command('nevo-spec')
@@ -30,7 +33,7 @@ export function createProgram(io: ProgramIO): Command {
     })
     .showHelpAfterError();
 
-  program.addCommand(dashboardCommand(io));
+  program.addCommand(createDashboardCommand({ stdout: io.stdout }));
 
   // Route every exit (help, version, parse error) through the caller.
   program.exitOverride();

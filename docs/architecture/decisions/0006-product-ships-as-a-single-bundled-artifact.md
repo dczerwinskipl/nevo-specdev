@@ -52,10 +52,20 @@ registry is a different problem.
   artifact. Repository tools stay plain `tsc`. `@nevo/specdev`'s `build` script is
   exactly `node ../../tools/product/dist/bin.js bundle`.
 - **Source boundaries are real and unchanged.** `@nevo/specdev` depends on
-  `@nevo/specdev-dashboard` as a genuine `workspace:*` package with a typed capability
-  API (`runDashboard(): DashboardResult`). The dashboard package never imports
-  Commander. Only the _distribution_ is single-artifact; the _source_ stays a real
-  multi-package boundary, and CI builds/tests it as such.
+  `@nevo/specdev-dashboard` as a genuine `workspace:*` package. Only the _distribution_
+  is single-artifact; the _source_ stays a real multi-package boundary, and CI
+  builds/tests it as such.
+- **Vertical command ownership.** `@nevo/specdev` owns the CLI **shell** — the root
+  `nevo-spec` program, `--version`, global flags, and the output / error / exit
+  conventions — and **composes** top-level commands. Each capability vertical owns its
+  own Commander adapter: `@nevo/specdev-dashboard` exposes the framework-independent
+  capability at `.` (`runDashboard(): DashboardResult`, no Commander) **and** its
+  command adapter at `./cli` (`createDashboardCommand(ctx): Command` — `commander` is a
+  dependency of that subpath only, never of the capability). The shell does
+  `program.addCommand(createDashboardCommand(ctx))` — it registers the command, it does
+  not define its name, options, help or subcommands. This mirrors how a feature owns its
+  HTTP routes while the server root only mounts them: Commander, like a web framework,
+  is confined to the adapter and never leaks into the capability / runtime.
 - **`@nevo/specdev-dashboard` is `private: true`** — never published or installed on its
   own. It reaches users only bundled inside `@nevo/specdev`.
 - **The version comes from the release model.** The bundle's `NEVO_SPEC_VERSION_INJECTED`

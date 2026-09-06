@@ -1,6 +1,6 @@
 // Thin subprocess smoke of the built executable — wiring contracts only.
 
-import { execFile } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -23,7 +23,15 @@ async function cli(args: string[]): Promise<{ code: number; stdout: string; stde
 }
 
 beforeAll(() => {
-  if (!existsSync(bin)) throw new Error(`build nevo-repo-product first (${bin} missing)`);
+  // The fresh-state test in this same package deletes and rebuilds dist; rebuild
+  // here too if we happen to run while it is gone, so file order does not matter.
+  if (!existsSync(bin)) {
+    execFileSync('pnpm', ['--filter', 'nevo-repo-product', 'build'], {
+      cwd: join(pkgRoot, '..', '..'),
+      stdio: 'ignore',
+      shell: process.platform === 'win32',
+    });
+  }
 });
 
 describe('nevo-repo-product CLI', () => {

@@ -12,8 +12,8 @@ TypeScript, `tsc` → `dist/`; the `nevo-repo-product` executable is `dist/bin.j
 ```bash
 nevo-repo-product bundle [--entry src/bin.ts] [--outfile dist/bin.js] [--version <v>]
     # esbuild the self-contained `nevo-spec` bundle. Compiles the entry, every
-    # INTERNAL workspace package it imports (@nevo/specdev-dashboard) and commander
-    # into one ESM file with a `#!/usr/bin/env node` banner and
+    # INTERNAL workspace package it imports (@nevo/specdev-dashboard `.` + `./cli`)
+    # and commander into one ESM file with a `#!/usr/bin/env node` banner and
     # NEVO_SPEC_VERSION_INJECTED defined. `@nevo/specdev`'s `build` script is
     # exactly `node ../../tools/product/dist/bin.js bundle`.
 
@@ -24,18 +24,25 @@ nevo-repo-product pack [--json] [--skip-build]
     #   -> version from `nevo-release version` (the repo's canonical model; no
     #      SemVer/channel logic is duplicated here)
     #   -> esbuild bundle into a scratch stage
-    #   -> minimal package.json (real version, NO dependencies, NO scripts)
+    #   -> minimal package.json (real version, NO dependencies, NO scripts,
+    #      engines copied verbatim from source)
+    #   -> THIRD_PARTY_NOTICES.txt (verbatim license of code EMBEDDED in the bundle
+    #      — commander; not build-only tools like esbuild)
     #   -> `pnpm pack` -> .artifacts/nevo-specdev-<version>.tgz
-    # --json prints { name, version, tarball }.
+    # Every child `pnpm` runs with cwd = repo root and `--dir <target>`, so Corepack
+    # uses the repository-pinned pnpm, never "latest". --json prints { name, version, tarball }.
 
 nevo-repo-product dogfood [--json]
-    # pack, then `pnpm add -g <tarball>`, then smoke the installed `nevo-spec`
-    # (`--version` must equal the packed version, `--help` must list `dashboard`,
-    # `dashboard` must print the sibling-package marker). Never `pnpm link`,
+    # pack, then `pnpm add -g <tarball>` (pinned pnpm), then put pnpm's global bin
+    # dir on PATH and smoke the REAL installed `nevo-spec` shim (not node dist/bin.js):
+    # `--version` must equal the packed version, `--help` must list `dashboard`,
+    # `dashboard` must print the dashboard-capability marker. Never `pnpm link`,
     # never a `file:` path, never installs from packages/specdev.
 ```
 
-Root scripts: `pnpm product:pack` and `pnpm dogfood:install`.
+Root scripts `pnpm product:pack` / `pnpm dogfood:install` build this tool first
+(`pnpm --filter nevo-repo-product build && …`), so they work straight after
+`pnpm install --frozen-lockfile` with no prior repo build.
 
 ## Why a bundler here
 
@@ -50,7 +57,10 @@ See [`docs/development/product-packaging.md`](../../docs/development/product-pac
 
 ## Tests
 
-`vitest run`: `resolveProductVersion` units, a `bundleProduct` integration (define +
-shebang + self-containment), and a subprocess CLI smoke. The full
-pack → isolated install → run-installed-`nevo-spec` proof lives with the product package
-(`packages/specdev/test/packaging.smoke.test.ts`).
+`vitest run --no-file-parallelism`: `resolveProductVersion` units, a `bundleProduct`
+integration (define + shebang + self-containment), a subprocess CLI smoke, and
+`fresh-state.test.ts` — deletes `dist` / `.tsbuild` / `.artifacts` and proves
+`pnpm product:pack` still works and runs on the pinned pnpm. The full
+pack → isolated install → run-installed-`nevo-spec`-**shim** proof lives with the
+product package (`packages/specdev/test/packaging.smoke.test.ts`), sequenced after this
+suite via a `nevo-repo-product#test` turbo edge.

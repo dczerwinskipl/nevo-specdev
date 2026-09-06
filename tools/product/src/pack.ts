@@ -2,11 +2,16 @@
 // Nevo SpecDev product artifact. Local dogfooding, and any future CI / release
 // job, call this same function; there is no second pack implementation.
 //
-//   build the product graph (turbo, scoped — never a global pre-build)
+//   build the pack inputs (scoped `pnpm --filter` — never a global pre-build)
 //     -> resolve the canonical version from `nevo-release version`
 //     -> esbuild the self-contained bundle into a scratch stage
 //     -> write minimal package metadata (no deps, no scripts, real version)
+//     -> write THIRD_PARTY_NOTICES.txt for code embedded in the bundle
 //     -> `pnpm pack` -> deterministic `.artifacts/nevo-specdev-<version>.tgz`
+//
+// Every child `pnpm` runs with `cwd` = the repository root (which carries
+// `packageManager`) and targets other directories with `--dir`, so Corepack
+// always uses the repository-pinned pnpm, never "latest".
 
 import { cpSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -14,6 +19,7 @@ import { basename, join } from 'node:path';
 
 import { bundleProduct } from './bundle.js';
 import { run, StepFailedError } from './exec.js';
+import { buildThirdPartyNotices } from './notices.js';
 import { findRepoRoot, readJson, repoPaths, type RepoPaths } from './paths.js';
 import { resolveProductVersion } from './version.js';
 
@@ -80,9 +86,20 @@ export async function packProduct(opts: PackOptions = {}): Promise<PackResult> {
     writeStageManifest(stage, paths, version);
     copyIfPresent(join(paths.productPackage, 'README.md'), join(stage, 'README.md'));
     copyIfPresent(join(paths.root, 'LICENSE'), join(stage, 'LICENSE'));
+    // Attribution for third-party code EMBEDDED in dist/bin.js (commander).
+    writeFileSync(join(stage, 'THIRD_PARTY_NOTICES.txt'), buildThirdPartyNotices(paths.root));
 
     mkdirSync(paths.artifactsDir, { recursive: true });
-    const printed = run('pnpm', ['pack', '--pack-destination', paths.artifactsDir], { cwd: stage });
+    // Run pnpm from the repo root (which carries `packageManager`) and point it
+    // at the stage with `--dir`, so Corepack uses the pinned pnpm, not "latest".
+    const printed = run(
+      'pnpm',
+      ['--dir', stage, 'pack', '--pack-destination', paths.artifactsDir],
+      {
+        cwd: paths.root,
+        env: opts.env,
+      },
+    );
     const tarball = resolveTarball(paths.artifactsDir, printed, version);
     log(`packed: ${tarball}`);
 
@@ -104,7 +121,7 @@ function writeStageManifest(stage: string, paths: RepoPaths, version: string): v
     license: src.license,
     type: src.type ?? 'module',
     bin: src.bin,
-    files: ['dist'],
+    files: ['dist', 'THIRD_PARTY_NOTICES.txt', 'README.md', 'LICENSE'],
     engines: src.engines,
   };
   writeFileSync(join(stage, 'package.json'), `${JSON.stringify(out, null, 2)}\n`);
