@@ -97,7 +97,8 @@ surface, not a product navigation entry.
 | ------------------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
 | Specs Overview            | global Specs / default product entry                                                                           | Primary                                                   |
 | Specification             | Specification row/identity or stable route                                                                     | Primary                                                   |
-| Task Detail               | Task row from Specification or explicit Task target from another owning context                                | Secondary on split layouts; pushed local detail on narrow |
+| Task Preview              | Task row from Specification or explicit Task target from another owning context                                | Secondary on split layouts; pushed local detail on narrow |
+| Full Task                 | explicit promotion from Preview, Task menu, or stable resource URL                                             | main routable Primary                                     |
 | Floating Session          | existing-Session conversation target on Wide only                                                              | floating presentation outside AppWorkspace stack          |
 | Full Session              | existing Session target on Compact/Narrow; explicit full-session action; Floating Session header; stable route | main Primary + optional Secondary                         |
 | Session Context           | Full Session Context action/default split entry                                                                | Secondary or pushed local detail                          |
@@ -112,26 +113,25 @@ Task/issue deep links inside that row.
 
 ## 5. Specification and Task navigation
 
-The later local Specification UX draft compares a
-Specification-local main-view navigation layer for Documents, Sessions and available capabilities.
-It retains Task/evidence as local inspectors but proposes router-owned main local destinations.
-That proposal is not yet implemented by the placeholder and must be reviewed before freezing
-the earlier contextual-only collection placement described here.
+The implementation separates canonical Primary pages from local Secondary
+inspectors. Specification Overview is `/specs/:specId`; Documents List and
+Full Document use `/specs/:specId/documents` and
+`/specs/:specId/documents/:documentId`. Full Task uses
+`/specs/:specId/tasks/:taskId`. Sessions List, Changes and Repository have
+their own sibling Primary routes. Legacy `?view` URLs redirect.
 
-The owner-refined model also separates local short Task preview from explicit Full Task promotion.
-Inspector-only Task statements below describe the earlier proposal, not a prohibition on the new
-main destination. Default Work Secondary shows Specification activity/history; preview replaces
-it only on user action.
+On split layouts Task/Document previews live in Secondary. On Narrow the same
+inspectors are locally pushed without becoming routes. A new Primary route
+disposes the previous local inspector state.
 
 A Specs Overview row always opens the Specification Primary. It must not redirect the user to
 whichever Task/issue happens to be highest priority at that moment, and ordinary status/reason prose
 inside that row is non-interactive.
 
-The current route is `/specs/:specId?collection=current|archive`; both Current and Archive rows and
-their Open specification menu action use it. The guarded destination is currently an explicitly
-labelled owned placeholder, without fabricated detail or mutations. Its parent Back link returns to
-the chosen collection (Current by default on direct entry). The full Task/Session behavior below is
-the next product direction, not a capability claimed by this placeholder.
+The Specification entry route is `/specs/:specId?collection=current|archive`, and the explicit
+Full Task route is `/specs/:specId/tasks/:taskId`. The Task read is independent of the
+Specification Workspace projection. Legacy `?view=task&task=...` links redirect to the
+canonical Full Task URL. The collection is optional return context, not Task identity.
 
 After entering the Specification, its Task collection and attention/current-work context make the
 responsible Task(s) explicit. Selecting a Task row there opens Task Detail. Other owning contexts
@@ -252,12 +252,13 @@ Routable state includes, as appropriate:
 
 - Specs collection / Current versus Archive (`current` / `archive`);
 - selected Specification;
+- Full Task (`specId` and `taskId`);
 - Full Session;
 - Project Settings and a stable Settings section.
 
 Local state includes:
 
-- selected Task Secondary;
+- selected Task Preview Secondary;
 - Context/detail inspector stack;
 - Handover/artifact/Work/File detail opened in Secondary;
 - Floating Session position/size/minimized order;

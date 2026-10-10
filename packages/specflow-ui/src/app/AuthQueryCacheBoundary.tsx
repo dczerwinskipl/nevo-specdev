@@ -1,11 +1,34 @@
 import { useEffect, type ReactNode } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import type { AuthStore } from '../auth/store';
+import { useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { authSessionIdentity, type AuthStore } from '../auth/store';
+
+/** Install application cache isolation once per AuthStore/QueryClient pair. */
+export function bindAuthQueryCache(auth: AuthStore, queryClient: QueryClient): () => void {
+  let previousIdentity: string | undefined;
+  const sync = () => {
+    const state = auth.getState();
+    if (state.status === 'ready') {
+      const session = state.session;
+      const identity = authSessionIdentity(session);
+      if (previousIdentity !== undefined && previousIdentity !== identity) {
+        void queryClient.cancelQueries();
+        queryClient.clear();
+      }
+      previousIdentity = identity;
+    } else if (state.status === 'loading' && state.reason === 'logout') {
+      void queryClient.cancelQueries();
+      queryClient.clear();
+      previousIdentity = undefined;
+    }
+  };
+  sync();
+  return auth.subscribe(sync);
+}
 
 /**
  * AuthStore controls bootstrap, while TanStack Query owns feature data.
- * Purge feature cache when the authenticated identity changes or session
- * refresh leaves the authenticated state.
+ * Purge feature cache only on a real authentication boundary change.
+ * Revalidating a previously confirmed session must not erase feature data.
  */
 export function AuthQueryCacheBoundary({
   auth,
@@ -16,26 +39,7 @@ export function AuthQueryCacheBoundary({
 }) {
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    let previousIdentity: string | undefined;
-    let hadReadySession = false;
-    const sync = () => {
-      const state = auth.getState();
-      if (state.status === 'ready') {
-        const identity = state.session.user?.id ?? 'anonymous';
-        if (hadReadySession && previousIdentity !== identity) {
-          queryClient.clear();
-        }
-        previousIdentity = identity;
-        hadReadySession = true;
-      } else if (hadReadySession) {
-        queryClient.clear();
-        hadReadySession = false;
-      }
-    };
-    sync();
-    return auth.subscribe(sync);
-  }, [auth, queryClient]);
+  useEffect(() => bindAuthQueryCache(auth, queryClient), [auth, queryClient]);
 
   return <>{children}</>;
 }

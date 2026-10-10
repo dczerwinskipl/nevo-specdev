@@ -11,24 +11,34 @@ import {
   type NavigationAdapter,
   type NavigationNode,
 } from '@nevo/ui';
-import { Link, useRouter, useRouterState } from '@tanstack/react-router';
+import { Link, useMatch, useMatchRoute, useRouter, useRouterState } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
 
 import type { AuthStore } from '../auth/store';
 import { defaultNevoBrand, NevoBrandLogo } from '../brand';
-import type { SpecificationWorkspaceView } from '../features/specs/workspace/model';
 import { AccountMenu } from './AccountMenu';
 
-import { useSpecificationWorkspace } from '../features/specs/useSpecificationWorkspace';
+import { useSpecificationNavigationMetadata } from '../features/specs/overview/useSpecificationNavigationMetadata';
 
-interface NavigationTarget {
-  readonly to: '/' | '/specs/$specId';
-  readonly params?: { readonly specId: string };
-  readonly search?: {
-    readonly collection?: 'current' | 'archive';
-    readonly view?: SpecificationWorkspaceView;
-  };
-}
+/** Sidebar destinations only; Full Task and Document Detail are not menu entries. */
+type SidebarTarget =
+  | {
+      readonly to: '/';
+      readonly search: { readonly collection: 'current' | 'archive' };
+    }
+  | {
+      readonly to:
+        | '/specs/$specId'
+        | '/specs/$specId/documents'
+        | '/specs/$specId/sessions'
+        | '/specs/$specId/changes'
+        | '/specs/$specId/repository';
+      readonly params: { readonly specId: string };
+      readonly search: {
+        readonly collection: 'current' | 'archive';
+        readonly source?: 'base';
+      };
+    };
 
 function ProductNavigation({
   auth,
@@ -39,20 +49,17 @@ function ProductNavigation({
 }) {
   const { t } = useTranslation();
   const { closeNavigation } = useAppNavigation();
-  const pathname = useRouterState({ select: (routerState) => routerState.location.pathname });
-  const search = useRouterState({
-    select: (routerState) =>
-      routerState.location.search as {
-        readonly collection?: 'current' | 'archive';
-        readonly view?: string;
-      },
+  const matchRoute = useMatchRoute();
+  const collection = useRouterState({
+    select: (state) => (state.location.search.collection === 'archive' ? 'archive' : 'current'),
   });
-  const specMatch = /^\/specs\/([^/]+)/.exec(pathname);
-  const activeSpecId = specMatch?.[1] ? decodeURIComponent(specMatch[1]) : null;
-  const activeView = search?.view ?? 'work';
-  const collection = search?.collection ?? 'current';
-
-  const { data: specData } = useSpecificationWorkspace(activeSpecId ?? '');
+  const activeSpecId =
+    useMatch({
+      from: '/_app/specs/$specId',
+      shouldThrow: false,
+      select: (match) => match.params.specId,
+    }) ?? null;
+  const specMetadata = useSpecificationNavigationMetadata(activeSpecId);
 
   const state = useSyncExternalStore(
     (listener) => auth.subscribe(listener),
@@ -72,8 +79,8 @@ function ProductNavigation({
     }
   }, [activeSpecId]);
 
-  const navigationNodes = useMemo<readonly NavigationNode<NavigationTarget>[]>(() => {
-    const rootNodes: NavigationNode<NavigationTarget>[] = [
+  const navigationNodes = useMemo<readonly NavigationNode<SidebarTarget>[]>(() => {
+    const rootNodes: NavigationNode<SidebarTarget>[] = [
       {
         key: 'specs',
         label: t('navigation.specifications'),
@@ -82,47 +89,42 @@ function ProductNavigation({
     ];
 
     if (activeSpecId) {
-      const docCount = specData?.documents.length;
+      const docCount = specMetadata?.documentCount;
       const docsLabel =
         docCount !== undefined
           ? `${t('specification.viewDocuments')} ${docCount}`
           : t('specification.viewDocuments');
-      const hasGit = specData?.hasGit !== false;
+      const hasGit = specMetadata?.hasGit !== false;
 
       rootNodes.push({
         key: `spec-${activeSpecId}`,
-        label: activeSpecId,
-        target: {
-          to: '/specs/$specId',
-          params: { specId: activeSpecId },
-          search: { collection, view: 'work' },
-        },
+        label: specMetadata?.title ?? activeSpecId,
         children: [
           {
-            key: `spec-view-work`,
-            label: t('specification.viewWork'),
+            key: 'spec-view-overview',
+            label: t('specification.viewOverview'),
             target: {
               to: '/specs/$specId',
               params: { specId: activeSpecId },
-              search: { collection, view: 'work' },
+              search: { collection },
             },
           },
           {
             key: `spec-view-documents`,
             label: docsLabel,
             target: {
-              to: '/specs/$specId',
+              to: '/specs/$specId/documents',
               params: { specId: activeSpecId },
-              search: { collection, view: 'documents' },
+              search: { collection },
             },
           },
           {
             key: `spec-view-sessions`,
             label: t('specification.viewSessions'),
             target: {
-              to: '/specs/$specId',
+              to: '/specs/$specId/sessions',
               params: { specId: activeSpecId },
-              search: { collection, view: 'sessions' },
+              search: { collection },
             },
           },
           ...(hasGit
@@ -131,18 +133,18 @@ function ProductNavigation({
                   key: `spec-view-changes`,
                   label: t('specification.viewChanges'),
                   target: {
-                    to: '/specs/$specId' as const,
+                    to: '/specs/$specId/changes' as const,
                     params: { specId: activeSpecId },
-                    search: { collection, view: 'changes' as const },
+                    search: { collection, source: 'base' } as const,
                   },
                 },
                 {
                   key: `spec-view-repository`,
                   label: t('specification.viewRepository'),
                   target: {
-                    to: '/specs/$specId' as const,
+                    to: '/specs/$specId/repository' as const,
                     params: { specId: activeSpecId },
-                    search: { collection, view: 'repository' as const },
+                    search: { collection } as const,
                   },
                 },
               ]
@@ -152,7 +154,7 @@ function ProductNavigation({
     }
 
     return rootNodes;
-  }, [activeSpecId, collection, specData, t]);
+  }, [activeSpecId, collection, specMetadata, t]);
 
   const rootIcons = useMemo(() => {
     const icons: Record<string, IconName> = {
@@ -164,32 +166,33 @@ function ProductNavigation({
     return icons;
   }, [activeSpecId]);
 
-  const navigationAdapter = useMemo<NavigationAdapter<NavigationTarget>>(
+  const navigationAdapter = useMemo<NavigationAdapter<SidebarTarget>>(
     () => ({
       match: (node) => {
-        if (node.key === 'specs') {
-          return pathname === '/' ? 'active' : 'none';
+        const target = node.target;
+        if (!target) {
+          // Full Task has no list destination yet; keep the owning Specification group visible.
+          return activeSpecId && node.key === `spec-${activeSpecId}` ? 'ancestor' : 'none';
         }
-        if (node.key === `spec-view-${activeView}`) {
-          return 'active';
+
+        // The Router owns route matching. Child routes keep their parent expanded,
+        // while a detail Document keeps its Documents destination selected.
+        if (target.to === '/') {
+          return matchRoute({ to: '/', fuzzy: false }) ? 'active' : 'none';
         }
-        if (node.key === `spec-${activeSpecId}`) {
-          return 'ancestor';
+        if (matchRoute({ to: target.to, params: target.params, fuzzy: false })) return 'active';
+        if (target.to === '/specs/$specId') return 'none';
+        if (matchRoute({ to: target.to, params: target.params, fuzzy: true })) {
+          return node.children?.length ? 'ancestor' : 'active';
         }
         return 'none';
       },
       renderLink: ({ children, className, node }) => {
-        if (!node.target) {
-          return <span className={className}>{children}</span>;
-        }
-        if (node.target.to === '/') {
+        const target = node.target;
+        if (!target) return <span className={className}>{children}</span>;
+        if (target.to === '/') {
           return (
-            <Link
-              className={className}
-              to="/"
-              search={{ collection: node.target.search?.collection ?? 'current' }}
-              onClick={closeNavigation}
-            >
+            <Link className={className} to="/" search={target.search} onClick={closeNavigation}>
               {children}
             </Link>
           );
@@ -197,12 +200,9 @@ function ProductNavigation({
         return (
           <Link
             className={className}
-            to="/specs/$specId"
-            params={node.target.params!}
-            search={{
-              collection: node.target.search?.collection ?? collection,
-              view: node.target.search?.view,
-            }}
+            to={target.to}
+            params={target.params}
+            search={target.search}
             onClick={closeNavigation}
           >
             {children}
@@ -210,7 +210,7 @@ function ProductNavigation({
         );
       },
     }),
-    [closeNavigation, pathname, activeSpecId, activeView, collection],
+    [closeNavigation, matchRoute],
   );
 
   return (
@@ -262,10 +262,14 @@ export function SpecFlowShell({ auth, children }: PropsWithChildren<{ readonly a
   const capture = useDesignMetadata('SpecFlowApplicationShell', { viewport: 'desktop' });
 
   const signOut = async () => {
+    const operation = auth.logout();
+    const expectedMutation = auth.mutationGeneration();
     try {
-      await auth.logout();
+      await operation;
+      if (auth.mutationGeneration() !== expectedMutation) return;
       await router.navigate({ to: '/login', search: { returnTo: '/' }, replace: true });
     } catch {
+      if (auth.mutationGeneration() !== expectedMutation) return;
       await router.navigate({
         to: '/runtime-unavailable',
         search: { returnTo: '/' },

@@ -1,1 +1,1 @@
-export * from './tasks/TaskRow';
+export * from '../../tasks/contributions/specification-work/TaskRow';

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import {
   Alert,
   AppContent,
@@ -13,34 +14,29 @@ import {
 } from '@nevo/ui';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
-import { specificationKeys } from './queries';
+import { invalidateSpecificationWorkspace } from './queries';
 
-import type { SpecificationWorkspaceData, SpecificationWorkspaceView } from './workspace/model';
+import type { SpecificationWorkspaceData } from './workspace/model';
 import { SpecificationWorkspace } from './workspace/SpecificationWorkspace';
 import { useSpecificationWorkspace } from './useSpecificationWorkspace';
-import { SpecificationDocumentContent } from './connected/SpecificationDocumentContent';
-import { SpecificationTaskContent } from './connected/SpecificationTaskContent';
 
 export interface SpecificationSurfaceProps {
   readonly specId: string;
+  readonly collection?: 'current' | 'archive';
   readonly overviewHref?: string;
+  readonly renderBackLink?: (children: ReactNode, className: string) => ReactNode;
   readonly onBack?: () => void;
-  readonly initialView?: SpecificationWorkspaceView;
-  readonly initialTask?: string;
-  /** @deprecated Use onNavigateView instead */
-  readonly onViewChange?: (view: SpecificationWorkspaceView) => void;
-  /** @deprecated Use onNavigateView instead */
-  readonly onTaskChange?: (taskId: string | null) => void;
-  readonly onNavigateView?: (target: {
-    view: SpecificationWorkspaceView;
-    taskId?: string | null;
-  }) => void;
+  readonly onOpenDocuments?: () => void;
+  readonly onOpenSessions?: () => void;
+  readonly onOpenRepository?: () => void;
+  readonly onOpenChanges?: (source?: 'base' | 'uncommitted' | 'mr') => void;
+  readonly onOpenTask?: (taskId: string) => void;
+  readonly onOpenFullDocument?: (documentId: string) => void;
   readonly data?: SpecificationWorkspaceData;
   readonly onRefresh?: () => void | Promise<void>;
   readonly onExecute?: (agent: string, tasks: readonly string[]) => void | Promise<void>;
   readonly onNewConversation?: (agent: string) => void | Promise<void>;
   readonly onOpenSession?: (sessionId: string) => void;
-  readonly onDiff?: (file: string) => void;
 }
 
 /** Specification workspace screen. */
@@ -58,25 +54,27 @@ export function SpecificationSurface(props: SpecificationSurfaceProps) {
 
 function SpecificationSurfaceConnected({
   specId,
+  collection,
   overviewHref,
+  renderBackLink,
   onBack,
-  initialView,
-  initialTask,
-  onViewChange,
-  onTaskChange,
-  onNavigateView,
+  onOpenDocuments,
+  onOpenSessions,
+  onOpenRepository,
+  onOpenChanges,
+  onOpenTask,
+  onOpenFullDocument,
   onRefresh,
   onExecute,
   onNewConversation,
   onOpenSession,
-  onDiff,
 }: SpecificationSurfaceProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { data, isLoading, isError, errorStatus, isDomainNotFound, refetch } =
     useSpecificationWorkspace(specId);
 
-  if (isError && (!data || errorStatus === 401 || errorStatus === 403)) {
+  if (isError && (!data || errorStatus === 401 || errorStatus === 403 || errorStatus === 404)) {
     return (
       <AppWorkspace
         split="primary"
@@ -90,24 +88,16 @@ function SpecificationSurfaceConnected({
           <AppContent className="w-content-xwide max-w-full">
             <AppWorkspaceBody className="py-8">
               <AppContentContainer align="start" size="full" className="grid gap-6">
-                {overviewHref ? (
-                  <Link
-                    href={overviewHref}
-                    className="w-fit"
-                    onClick={(event) => {
-                      if (
-                        onBack &&
-                        event.button === 0 &&
-                        !event.metaKey &&
-                        !event.ctrlKey &&
-                        !event.shiftKey &&
-                        !event.altKey
-                      ) {
-                        event.preventDefault();
-                        onBack();
-                      }
-                    }}
-                  >
+                {renderBackLink ? (
+                  renderBackLink(
+                    <>
+                      <Icon name="arrow-right" size="sm" className="rotate-180" />
+                      <span data-spec-back-label>{t('specification.backToSpecifications')}</span>
+                    </>,
+                    'w-fit inline-flex items-center gap-2 text-body-sm font-medium',
+                  )
+                ) : overviewHref ? (
+                  <Link href={overviewHref} className="w-fit">
                     <span className="inline-flex items-center gap-2 text-body-sm font-medium">
                       <Icon name="arrow-right" size="sm" className="rotate-180" />
                       <span data-spec-back-label>{t('specification.backToSpecifications')}</span>
@@ -119,16 +109,20 @@ function SpecificationSurfaceConnected({
                   role="alert"
                   tone="attention"
                   title={
-                    isDomainNotFound
-                      ? t('specification.notFoundTitle')
-                      : t('specification.unavailableTitle')
+                    errorStatus === 403
+                      ? t('specification.resourceAccessDeniedTitle')
+                      : isDomainNotFound
+                        ? t('specification.notFoundTitle')
+                        : t('specification.unavailableTitle')
                   }
                   className="max-w-content-standard"
                 >
                   <Typography variant="body-sm" className="text-content-secondary">
-                    {isDomainNotFound
-                      ? t('specification.notFoundDescription', { id: specId })
-                      : t('specification.unavailableDescription', { id: specId })}
+                    {errorStatus === 403
+                      ? t('specification.resourceAccessDeniedDescription')
+                      : isDomainNotFound
+                        ? t('specification.notFoundDescription', { id: specId })
+                        : t('specification.unavailableDescription', { id: specId })}
                   </Typography>
 
                   <div className="mt-3 flex items-center gap-3">
@@ -181,33 +175,28 @@ function SpecificationSurfaceConnected({
   }
 
   const refreshWorkspace = async () => {
-    await queryClient.invalidateQueries({
-      queryKey: specificationKeys.spec(specId),
-      refetchType: 'active',
-    });
+    await invalidateSpecificationWorkspace(queryClient, specId);
   };
 
   return (
     <SpecificationWorkspace
       specId={specId}
+      collection={collection}
       data={data}
       overviewHref={overviewHref}
+      renderBackLink={renderBackLink}
       onBack={onBack}
-      initialView={initialView}
-      initialTask={initialTask}
-      onViewChange={onViewChange}
-      onTaskChange={onTaskChange}
-      onNavigateView={onNavigateView}
+      onOpenDocuments={onOpenDocuments}
+      onOpenSessions={onOpenSessions}
+      onOpenRepository={onOpenRepository}
+      onOpenChanges={onOpenChanges}
+      onOpenTask={onOpenTask}
+      onOpenFullDocument={onOpenFullDocument}
       onRefresh={onRefresh ?? refreshWorkspace}
       onExecute={onExecute}
       onNewConversation={onNewConversation}
       onOpenSession={onOpenSession}
-      onDiff={onDiff}
       refreshFailed={isError && Boolean(data)}
-      renderDocument={(doc) => <SpecificationDocumentContent specId={specId} documentId={doc.id} />}
-      renderTask={(task, back) => (
-        <SpecificationTaskContent specId={specId} task={task} onBack={back} />
-      )}
     />
   );
 }

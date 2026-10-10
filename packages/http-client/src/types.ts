@@ -110,3 +110,6 @@ export interface HttpClient {
     config?: SseRequestConfig<TEvent, TParams>,
   ): SseStream<TEvent>;
 }
+
+/** A transport-only interface for typed feature APIs. Does not expose raw Axios. */
+export type HttpRequestClient = Omit<HttpClient, 'axios'>;

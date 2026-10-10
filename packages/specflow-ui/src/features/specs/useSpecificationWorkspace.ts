@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { isHttpClientError } from '@nevo/http-client';
 
-import { useSpecFlowServices } from '../../services';
+import { useAppServices } from '../../app/useAppServices';
 import type { SpecificationApi } from './api';
 import { specificationKeys } from './queries';
+import { getHttpErrorStatus } from './httpErrorStatus';
 import type { SpecificationWorkspaceData } from './workspace/model';
 import { mapWorkspaceResponse } from './workspace/mapWorkspaceResponse';
 
@@ -24,7 +25,7 @@ export function useSpecificationWorkspace(
   specId: string,
   api?: SpecificationApi,
 ): UseSpecificationWorkspaceResult {
-  const services = useSpecFlowServices();
+  const services = useAppServices();
   const activeApi = api ?? services.specificationApi;
 
   const query = useQuery({
@@ -42,15 +43,7 @@ export function useSpecificationWorkspace(
     'error' in query.error.data &&
     query.error.data.error === 'specification_not_found';
 
-  const errorStatus =
-    query.error && isHttpClientError(query.error)
-      ? query.error.status
-      : query.error &&
-          typeof query.error === 'object' &&
-          'status' in query.error &&
-          typeof (query.error as { status?: unknown }).status === 'number'
-        ? (query.error as { status: number }).status
-        : undefined;
+  const errorStatus = getHttpErrorStatus(query.error);
 
   return {
     data: query.data,

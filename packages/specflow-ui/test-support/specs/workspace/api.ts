@@ -1,4 +1,6 @@
 import type { SpecificationApi } from '../../../src/features/specs/api';
+import type { TaskApi } from '../../../src/features/tasks/api';
+import type { DocumentApi } from '../../../src/features/documents/api';
 import type { SpecificationWorkspaceResponse } from '@nevo/specflow-contracts/specs/workspace';
 
 /** Story-only typed API responses. The route still runs real Query + DTO mapper. */
@@ -10,9 +12,9 @@ export function createWorkspaceIntegrationApi(): SpecificationApi {
       title: 'Integrated API Workspace',
       summary: 'This screen comes from an HTTP-shaped DTO through the real mapper.',
       preparationState: 'prepared',
+      attention: [],
     },
     sections: {
-      attention: { state: 'available', data: { items: [] } },
       tasks: {
         state: 'available',
         data: {
@@ -31,13 +33,14 @@ export function createWorkspaceIntegrationApi(): SpecificationApi {
           ],
           total: 1,
           completed: 0,
+          attention: [],
         },
       },
       documents: {
         state: 'available',
         data: { items: [{ id: 'spec', title: 'Integration document', kind: 'markdown' }] },
       },
-      sessions: { state: 'available', data: { items: [] } },
+      sessions: { state: 'available', data: { items: [], attention: [] } },
       activity: { state: 'available', data: { items: [] } },
       changes: { state: 'unavailable', reason: 'not_implemented' },
       repository: { state: 'unavailable', reason: 'not_implemented' },
@@ -54,6 +57,12 @@ export function createWorkspaceIntegrationApi(): SpecificationApi {
         ? Promise.resolve(snapshot)
         : Promise.reject(new Error('Unconfigured test Specification'));
     },
+  };
+}
+
+/** Story-only Task detail adapter, separate from Specification Workspace reads. */
+export function createTaskIntegrationApi(): TaskApi {
+  return {
     getTask: (specId, taskId, signal) => {
       signal?.throwIfAborted();
       if (specId !== 'api-integration' || taskId !== 'TASK-01') {
@@ -69,6 +78,11 @@ export function createWorkspaceIntegrationApi(): SpecificationApi {
         acceptanceCriteria: ['Latest acceptance criterion'],
       });
     },
+  };
+}
+
+export function createDocumentIntegrationApi(): DocumentApi {
+  return {
     getDocument: (specId, documentId, signal) => {
       signal?.throwIfAborted();
       if (specId !== 'api-integration' || documentId !== 'spec') {

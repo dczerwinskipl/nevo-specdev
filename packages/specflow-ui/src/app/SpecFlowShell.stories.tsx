@@ -3,7 +3,7 @@ import { DesignCaptureProvider } from '@nevo/figma-capture/metadata';
 import { RouterProvider, createMemoryHistory } from '@tanstack/react-router';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useMemo } from 'react';
-import { HttpClientError } from '@nevo/http-client';
+import { HttpClientError, createHttpClient } from '@nevo/http-client';
 
 import type { AppLocale } from '../i18n';
 import { StoryLocalization } from '../i18n/StoryLocalization';
@@ -17,8 +17,12 @@ type AuthMode =
 
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createSpecFlowQueryClient } from './queryClient';
-import { createSpecFlowAppServices, SpecFlowServicesProvider } from '../services';
+import { builtInUiModuleRegistry } from './ui-modules/builtInUiModules';
+import { UiModulesProvider } from './ui-modules/UiModulesProvider';
+import { createSpecFlowAppServices } from '../services';
 import { specificationKeys } from '../features/specs/queries';
+import { taskKeys } from '../features/tasks/queries';
+import { documentKeys } from '../features/documents/queries';
 import {
   createSpecificationWorkspaceFixture,
   type SpecificationScenario,
@@ -26,7 +30,11 @@ import {
 import { createSpecsFixture } from '../../test-support/specs/overview/fixtures';
 import type { SpecsOverviewApi } from '../features/specs/overview/api';
 import { createFixtureSpecsOverviewApi } from '../../test-support/specs/overview/api';
-import { createWorkspaceIntegrationApi } from '../../test-support/specs/workspace/api';
+import {
+  createWorkspaceIntegrationApi,
+  createTaskIntegrationApi,
+  createDocumentIntegrationApi,
+} from '../../test-support/specs/workspace/api';
 
 export function RoutedApplication({
   authMode = 'local',
@@ -82,7 +90,7 @@ export function RoutedApplication({
       query.setQueryData(specificationKeys.detail(id), fixture);
       for (const group of fixture.taskGroups) {
         for (const task of group.tasks) {
-          query.setQueryData(specificationKeys.task(id, task.id), {
+          query.setQueryData(taskKeys.detail(id, task.id), {
             task: {
               id: task.id,
               title: task.title,
@@ -99,7 +107,7 @@ export function RoutedApplication({
         }
       }
       for (const doc of fixture.documents) {
-        query.setQueryData(specificationKeys.document(id, doc.id), {
+        query.setQueryData(documentKeys.detail(id, doc.id), {
           id: doc.id,
           title: doc.title,
           content:
@@ -131,11 +139,30 @@ export function RoutedApplication({
         }
       : createFixtureSpecsOverviewApi();
 
+    const http = createHttpClient();
+    if (specsStatus === 401) {
+      // Exercise real application composition: typed API -> protected transport
+      // -> AuthRecoveryCoordinator -> session -> Login. A fake feature API
+      // would bypass the global mechanism and falsely test route-local recovery.
+      http.get = (url: string) => {
+        if (url === '/api/specs/overview') {
+          return Promise.reject(new HttpClientError('Unauthorized', { kind: 'http', status: 401 }));
+        }
+        return Promise.reject(new Error(`Unconfigured Storybook HTTP GET: ${url}`));
+      };
+    }
     return createSpecFlowAppServices({
+      http,
       authStore: auth,
       runtimeInfoApi: { getInfo: () => Promise.resolve({ dataMode: 'demo' }) },
-      specsOverviewApi,
-      ...(integrationDto ? { specificationApi: createWorkspaceIntegrationApi() } : {}),
+      ...(specsStatus === 401 ? {} : { specsOverviewApi }),
+      ...(integrationDto
+        ? {
+            specificationApi: createWorkspaceIntegrationApi(),
+            taskApi: createTaskIntegrationApi(),
+            documentApi: createDocumentIntegrationApi(),
+          }
+        : {}),
     });
   }, [auth, specsStatus, integrationDto]);
 
@@ -146,11 +173,11 @@ export function RoutedApplication({
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SpecFlowServicesProvider services={services}>
+      <UiModulesProvider modules={builtInUiModuleRegistry}>
         <StoryLocalization locale={locale}>
           <RouterProvider router={router} />
         </StoryLocalization>
-      </SpecFlowServicesProvider>
+      </UiModulesProvider>
     </QueryClientProvider>
   );
 }
@@ -313,6 +340,122 @@ export const Navigation: Story = {
     const selected = await canvas.findByRole('radio', { name: 'Archive' });
     if (selected.getAttribute('aria-checked') !== 'true')
       throw new Error('Returning from Archive Specification must restore Archive.');
+  },
+};
+
+function assertSpecificationNavigation(
+  navigation: HTMLElement,
+  specId: string,
+  activeDestination: string | null,
+  collection: 'current' | 'archive' = 'current',
+) {
+  const destinations = [
+    `/specs/${specId}`,
+    `/specs/${specId}/documents`,
+    `/specs/${specId}/sessions`,
+    `/specs/${specId}/changes`,
+    `/specs/${specId}/repository`,
+  ];
+  const links = [...navigation.querySelectorAll<HTMLAnchorElement>('a[href]')];
+  const group = navigation.querySelector(
+    '[data-navigation-depth="1"][data-navigation-state="ancestor"]',
+  );
+  if (!group) throw new Error('The Specification folder should be the active route ancestor.');
+  if (group.querySelector('a')) {
+    throw new Error('Clicking the Specification folder must not navigate.');
+  }
+  const folder = group.querySelector<HTMLButtonElement>('button[aria-expanded]');
+  if (!folder) throw new Error('Specification folder must have an expandable button.');
+  const firstChild = navigation.querySelector<HTMLAnchorElement>(
+    '[data-navigation-depth="2"] a[href]',
+  );
+  if (!firstChild || new URL(firstChild.href).pathname !== destinations[0]) {
+    throw new Error('Overview must be the first Specification subpage.');
+  }
+  for (const route of destinations) {
+    const link = links.find((item) => new URL(item.href).pathname === route);
+    if (!link) throw new Error(`Missing specification destination ${route}`);
+    if (new URL(link.href).searchParams.get('collection') !== collection) {
+      throw new Error(`Navigation did not preserve collection for ${route}`);
+    }
+    const state = link.closest('[data-navigation-state]')?.getAttribute('data-navigation-state');
+    if (state !== (route === activeDestination ? 'active' : 'none')) {
+      throw new Error(`Unexpected navigation state ${state} for ${route}`);
+    }
+  }
+}
+
+export const NavigationSpecificationActive: Story = {
+  args: { path: '/specs/admission?collection=current' },
+  tags: ['integration'],
+  play: async ({ canvas, userEvent }) => {
+    const nav = await canvas.findByRole('navigation', { name: 'Product navigation' });
+    assertSpecificationNavigation(nav, 'admission', '/specs/admission');
+    const folder = nav.querySelector<HTMLButtonElement>('button[aria-expanded]');
+    if (!folder) throw new Error('Expected Specification folder button');
+    if (!folder.textContent?.includes('Deterministic admission and execution boundaries')) {
+      throw new Error('Specification folder should show its title from the existing projection');
+    }
+    await userEvent.click(folder);
+    if (folder.getAttribute('aria-expanded') !== 'false') {
+      throw new Error('Specification folder should collapse without navigating');
+    }
+    await userEvent.click(folder);
+    assertSpecificationNavigation(nav, 'admission', '/specs/admission');
+  },
+};
+
+export const NavigationDocumentDetailActive: Story = {
+  args: { path: '/specs/admission/documents/spec?collection=current' },
+  tags: ['integration'],
+  play: async ({ canvas }) => {
+    const nav = await canvas.findByRole('navigation', { name: 'Product navigation' });
+    assertSpecificationNavigation(nav, 'admission', '/specs/admission/documents');
+  },
+};
+
+export const NavigationFullTaskAncestor: Story = {
+  args: { path: '/specs/admission/tasks/TASK-03?collection=current' },
+  tags: ['integration'],
+  play: async ({ canvas }) => {
+    const nav = await canvas.findByRole('navigation', { name: 'Product navigation' });
+    assertSpecificationNavigation(nav, 'admission', null);
+  },
+};
+
+export const NavigationSessionsActive: Story = {
+  args: { path: '/specs/admission/sessions?collection=current' },
+  tags: ['integration'],
+  play: async ({ canvas }) => {
+    const nav = await canvas.findByRole('navigation', { name: 'Product navigation' });
+    assertSpecificationNavigation(nav, 'admission', '/specs/admission/sessions');
+  },
+};
+
+export const NavigationChangesActive: Story = {
+  args: { path: '/specs/admission/changes?collection=current&source=base' },
+  tags: ['integration'],
+  play: async ({ canvas }) => {
+    const nav = await canvas.findByRole('navigation', { name: 'Product navigation' });
+    assertSpecificationNavigation(nav, 'admission', '/specs/admission/changes');
+  },
+};
+
+export const NavigationRepositoryActive: Story = {
+  args: { path: '/specs/admission/repository?collection=current' },
+  tags: ['integration'],
+  play: async ({ canvas }) => {
+    const nav = await canvas.findByRole('navigation', { name: 'Product navigation' });
+    assertSpecificationNavigation(nav, 'admission', '/specs/admission/repository');
+  },
+};
+
+export const NavigationArchiveSpecification: Story = {
+  args: { path: '/specs/archive-0?collection=archive' },
+  tags: ['integration'],
+  play: async ({ canvas }) => {
+    const nav = await canvas.findByRole('navigation', { name: 'Product navigation' });
+    assertSpecificationNavigation(nav, 'archive-0', '/specs/archive-0', 'archive');
   },
 };
 

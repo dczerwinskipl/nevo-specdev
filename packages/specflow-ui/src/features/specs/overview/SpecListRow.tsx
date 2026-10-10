@@ -4,14 +4,25 @@ import type { SpecRowModel } from './presentation';
 import type { CurrentSpecTarget } from './model';
 import { SpecRowSummary } from './SpecRowSummary';
 import { OperationalRow } from '../shared/OperationalList';
+import type { ReactNode } from 'react';
 
 export interface SpecListRowProps {
   readonly item: SpecRowModel;
   readonly specificationHref?: string;
   readonly onOpenTarget?: (target: CurrentSpecTarget) => void;
+  readonly renderSpecificationLink?: (
+    specId: string,
+    children: ReactNode,
+    ariaLabel: string,
+  ) => ReactNode;
 }
 
-export function SpecListRow({ item, specificationHref, onOpenTarget }: SpecListRowProps) {
+export function SpecListRow({
+  item,
+  specificationHref,
+  onOpenTarget,
+  renderSpecificationLink,
+}: SpecListRowProps) {
   const { t } = useTranslation();
   const target: CurrentSpecTarget = { kind: 'specification', specId: item.id };
   const pr = item.pullRequests;
@@ -59,7 +70,7 @@ export function SpecListRow({ item, specificationHref, onOpenTarget }: SpecListR
     >
       <MenuItem
         leadingIcon="file"
-        disabled={!specificationHref}
+        disabled={!onOpenTarget && !specificationHref}
         onSelect={() => {
           if (onOpenTarget) onOpenTarget(target);
           else if (specificationHref) window.location.assign(specificationHref);
@@ -80,20 +91,28 @@ export function SpecListRow({ item, specificationHref, onOpenTarget }: SpecListR
   return (
     <OperationalRow
       primary={item.title}
-      primaryHref={specificationHref}
+      primaryLink={renderSpecificationLink?.(
+        item.id,
+        item.title,
+        t('specifications.openSpec', { title: item.title }),
+      )}
+      primaryHref={renderSpecificationLink ? undefined : specificationHref}
       onPrimaryClick={
-        onOpenTarget
+        !renderSpecificationLink && onOpenTarget
           ? (event) => {
-              if (
-                event.button === 0 &&
-                !event.metaKey &&
-                !event.ctrlKey &&
-                !event.shiftKey &&
-                !event.altKey
-              ) {
+              if (specificationHref) {
+                if (
+                  event.button !== 0 ||
+                  event.metaKey ||
+                  event.ctrlKey ||
+                  event.shiftKey ||
+                  event.altKey
+                ) {
+                  return;
+                }
                 event.preventDefault();
-                onOpenTarget(target);
               }
+              onOpenTarget(target);
             }
           : undefined
       }

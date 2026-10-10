@@ -91,6 +91,9 @@ function buildWorkspace(record: DemoSpec): WorkspaceReadModel {
                 : ('specification' as const),
           title: item.label,
           reason: item.reason ?? item.label,
+          // The demo's explicit input reason is a fact about required human action,
+          // not a UI inference from a generic Session kind.
+          priority: item.attentionReason === 'input' ? ('high' as const) : ('normal' as const),
           ...(item.target.kind === 'session'
             ? { targetId: item.target.sessionId }
             : item.target.kind === 'task'
@@ -112,19 +115,23 @@ function buildWorkspace(record: DemoSpec): WorkspaceReadModel {
           : isCurrent(record) && !record.readyForWork
             ? 'preparing'
             : 'prepared',
+      attention: attention.filter((item) => item.kind === 'specification'),
     },
     sections: {
-      attention: { state: 'available', data: { items: attention } },
       tasks: {
         state: 'available',
         data: {
           groups: tasks.length ? [{ id: 'tasks', name: 'Tasks', tasks }] : [],
           completed: record.progress.completed,
           total: record.progress.total,
+          attention: attention.filter((item) => item.kind === 'task'),
         },
       },
       documents: { state: 'available', data: { items: docs } },
-      sessions: { state: 'available', data: { items: sessions } },
+      sessions: {
+        state: 'available',
+        data: { items: sessions, attention: attention.filter((item) => item.kind === 'session') },
+      },
       activity: { state: 'available', data: { items: [] } },
       repository: { state: 'unavailable', reason: 'not_implemented' },
       changes: { state: 'unavailable', reason: 'not_implemented' },

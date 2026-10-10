@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useMemo, type ReactNode } from 'react';
 import {
   Alert,
   AppContent,
@@ -6,26 +6,14 @@ import {
   AppWorkspace,
   AppWorkspaceBody,
   AppWorkspaceProvider,
-  Button,
   Icon,
   Link,
-  Typography,
   useSecondaryNavigation,
   WorkspaceHeader,
 } from '@nevo/ui';
 import { useTranslation } from 'react-i18next';
-import type {
-  DocumentItem,
-  TaskItem,
-  SpecificationWorkspaceData,
-  SpecificationWorkspaceView,
-} from './model';
+import type { SpecificationWorkspaceData } from './model';
 import { WorkView } from './WorkView';
-import { DocumentsView } from './DocumentsView';
-import { SessionsView } from './SessionsView';
-import { ChangesView } from './ChangesView';
-import { RepositoryView } from './RepositoryView';
-import { FullTaskView } from './FullTaskView';
 import { ActivityHistory } from './ActivityHistory';
 import { ExecuteModal } from './ExecuteModal';
 import { NewConversationModal } from './NewConversationModal';
@@ -33,34 +21,34 @@ import { WorkspaceProvider, type WorkspaceRuntime } from './WorkspaceContext';
 import {
   SpecificationSecondaryDataContext,
   taskPreviewStack,
+  documentPreviewStack,
   historyStack,
   type SpecificationSecondaryContextValue,
 } from './specificationSecondaryStack';
-import { useSpecificationViewNavigation } from './useSpecificationViewNavigation';
 import { useSpecificationDialogs } from './useSpecificationDialogs';
+
+function fullTaskHref(specId: string, taskId: string, collection: 'current' | 'archive'): string {
+  const search = collection === 'archive' ? '?collection=archive' : '';
+  return `/specs/${encodeURIComponent(specId)}/tasks/${encodeURIComponent(taskId)}${search}`;
+}
 
 export interface SpecificationWorkspaceProps {
   readonly specId: string;
+  readonly collection?: 'current' | 'archive';
   readonly data: SpecificationWorkspaceData;
   readonly overviewHref?: string;
+  readonly renderBackLink?: (children: ReactNode, className: string) => ReactNode;
   readonly onBack?: () => void;
-  readonly initialView?: SpecificationWorkspaceView;
-  readonly initialTask?: string;
-  /** @deprecated Use onNavigateView instead */
-  readonly onViewChange?: (view: SpecificationWorkspaceView) => void;
-  /** @deprecated Use onNavigateView instead */
-  readonly onTaskChange?: (taskId: string | null) => void;
-  readonly onNavigateView?: (target: {
-    view: SpecificationWorkspaceView;
-    taskId?: string | null;
-  }) => void;
+  readonly onOpenDocuments?: () => void;
+  readonly onOpenSessions?: () => void;
+  readonly onOpenRepository?: () => void;
+  readonly onOpenChanges?: (source?: 'base' | 'uncommitted' | 'mr') => void;
+  readonly onOpenTask?: (taskId: string) => void;
+  readonly onOpenFullDocument?: (documentId: string) => void;
   readonly onRefresh?: () => void | Promise<void>;
   readonly onExecute?: (agent: string, tasks: readonly string[]) => void | Promise<void>;
   readonly onNewConversation?: (agent: string) => void | Promise<void>;
   readonly onOpenSession?: (sessionId: string) => void;
-  readonly onDiff?: (file: string) => void;
-  readonly renderDocument?: (doc: DocumentItem) => ReactNode;
-  readonly renderTask?: (task: TaskItem, onBack: () => void) => ReactNode;
   readonly refreshFailed?: boolean;
 }
 
@@ -75,33 +63,23 @@ export function SpecificationWorkspace(props: SpecificationWorkspaceProps) {
 function SpecificationWorkspaceInner({
   specId,
   data,
+  collection = 'current',
   overviewHref,
-  onBack,
-  initialView = 'work',
-  initialTask,
-  onViewChange,
-  onTaskChange,
-  onNavigateView,
+  renderBackLink,
+  onOpenDocuments,
+  onOpenSessions,
+  onOpenRepository,
+  onOpenChanges,
+  onOpenTask,
+  onOpenFullDocument,
   onRefresh,
   onExecute,
   onNewConversation,
   onOpenSession,
-  onDiff,
-  renderDocument,
-  renderTask,
   refreshFailed,
 }: SpecificationWorkspaceProps) {
   const { t } = useTranslation();
   const secondaryNavigation = useSecondaryNavigation();
-
-  const { currentView, fullTaskId, navigateToView, handleViewChange } =
-    useSpecificationViewNavigation({
-      initialView,
-      initialTask,
-      onNavigateView,
-      onViewChange,
-      onTaskChange,
-    });
 
   const {
     executeDialogOpen,
@@ -118,10 +96,6 @@ function SpecificationWorkspaceInner({
     onNewConversation,
   });
 
-  const [activeDocId, setActiveDocId] = useState<string | null>(null);
-  const [docOrigin, setDocOrigin] = useState<'work' | 'documents'>('documents');
-  const [changesSource, setChangesSource] = useState<'base' | 'uncommitted' | 'mr'>('base');
-
   const handlePreviewTask = useCallback(
     (taskId: string) => {
       void secondaryNavigation.open(taskPreviewStack, { specId, taskId });
@@ -136,47 +110,46 @@ function SpecificationWorkspaceInner({
   const handleOpenFullTask = useCallback(
     (taskId: string) => {
       void secondaryNavigation.close();
-      navigateToView('task', taskId);
+      if (onOpenTask) {
+        onOpenTask(taskId);
+        return;
+      }
+      // Standalone presentation surfaces also promote Full Task to its canonical route.
+      window.location.assign(fullTaskHref(specId, taskId, collection));
     },
-    [secondaryNavigation, navigateToView],
+    [secondaryNavigation, onOpenTask, collection, specId],
   );
-
-  const handleBackFromFullTask = useCallback(() => {
-    navigateToView('work', null);
-  }, [navigateToView]);
 
   const handleOpenDoc = useCallback(
-    (docId: string, origin: 'work' | 'documents' = 'work') => {
-      setActiveDocId(docId);
-      setDocOrigin(origin);
-      navigateToView('documents', null);
+    (docId: string, _origin: 'work' | 'documents' = 'work') => {
+      void secondaryNavigation.open(documentPreviewStack, { specId, documentId: docId });
     },
-    [navigateToView],
+    [secondaryNavigation, specId],
   );
-
-  const handleOpenChanges = useCallback(
-    (source: 'base' | 'uncommitted' | 'mr' = 'base') => {
-      setChangesSource(source);
-      navigateToView('changes', null);
-    },
-    [navigateToView],
-  );
-
-  const fullTask = useMemo(() => {
-    if (!fullTaskId) return null;
-    return data.taskGroups.flatMap((g) => g.tasks).find((t) => t.id === fullTaskId) ?? null;
-  }, [data.taskGroups, fullTaskId]);
 
   const secondaryContextValue: SpecificationSecondaryContextValue = useMemo(
     () => ({
       specId,
       data,
       openFullTask: handleOpenFullTask,
+      openFullDocument: (documentId: string) => {
+        void secondaryNavigation.close();
+        if (onOpenFullDocument) onOpenFullDocument(documentId);
+      },
       openSession: onOpenSession,
       openDoc: (docId) => handleOpenDoc(docId, 'work'),
       previewTask: handlePreviewTask,
     }),
-    [specId, data, handleOpenFullTask, onOpenSession, handleOpenDoc, handlePreviewTask],
+    [
+      specId,
+      data,
+      handleOpenFullTask,
+      onOpenFullDocument,
+      secondaryNavigation,
+      onOpenSession,
+      handleOpenDoc,
+      handlePreviewTask,
+    ],
   );
 
   const runtime: WorkspaceRuntime = useMemo(
@@ -184,11 +157,11 @@ function SpecificationWorkspaceInner({
       previewTask: handlePreviewTask,
       openTask: handleOpenFullTask,
       openSession: (id) => onOpenSession?.(id),
-      openSessionsView: () => handleViewChange('sessions'),
+      openSessionsView: () => onOpenSessions?.(),
       openDoc: (docId, origin = 'work') => handleOpenDoc(docId, origin),
-      openDocumentsView: () => handleViewChange('documents'),
-      openRepository: () => handleViewChange('repository'),
-      openChanges: handleOpenChanges,
+      openDocumentsView: () => onOpenDocuments?.(),
+      openRepository: () => onOpenRepository?.(),
+      openChanges: (source) => onOpenChanges?.(source),
       openHistory: handleOpenHistory,
       startConversation: (_agent) => openConversationDialog(),
       executeTasks: (taskIds, _agent) => openExecuteDialog(taskIds),
@@ -196,36 +169,27 @@ function SpecificationWorkspaceInner({
       canExecute: Boolean(onExecute),
       canStartConversation: Boolean(onNewConversation),
       canOpenSession: Boolean(onOpenSession),
-      fullTaskHref: (taskId) => {
-        const params = new URLSearchParams();
-        if (overviewHref?.includes('collection=archive')) {
-          params.set('collection', 'archive');
-        }
-        params.set('view', 'task');
-        params.set('task', taskId);
-        return `/specs/${encodeURIComponent(specId)}?${params.toString()}`;
-      },
+      fullTaskHref: (taskId) => fullTaskHref(specId, taskId, collection),
     }),
     [
       handlePreviewTask,
       handleOpenFullTask,
       onOpenSession,
-      handleViewChange,
+      onOpenDocuments,
+      onOpenSessions,
+      onOpenRepository,
+      onOpenChanges,
       handleOpenDoc,
-      handleOpenChanges,
       handleOpenHistory,
       openConversationDialog,
       openExecuteDialog,
       onRefresh,
       onExecute,
       onNewConversation,
-      overviewHref,
+      collection,
       specId,
     ],
   );
-
-  const headerTitle =
-    currentView === 'task' && fullTask ? `Task / ${fullTask.id}` : t('specification.title');
 
   return (
     <SpecificationSecondaryDataContext.Provider value={secondaryContextValue}>
@@ -241,7 +205,7 @@ function SpecificationWorkspaceInner({
           <AppWorkspace.Primary
             header={
               <WorkspaceHeader
-                title={headerTitle}
+                title={t('specification.title')}
                 actions={
                   onRefresh
                     ? [
@@ -265,33 +229,28 @@ function SpecificationWorkspaceInner({
                   {/* Eyebrow: Spec / ${specId} with back link */}
                   <div className="flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center gap-1.5 text-body-sm text-content-muted">
-                      {overviewHref ? (
-                        <Link
-                          href={overviewHref}
-                          className="w-fit"
-                          onClick={(event) => {
-                            if (
-                              onBack &&
-                              event.button === 0 &&
-                              !event.metaKey &&
-                              !event.ctrlKey &&
-                              !event.shiftKey &&
-                              !event.altKey
-                            ) {
-                              event.preventDefault();
-                              onBack();
-                            }
-                          }}
-                        >
-                          <span className="inline-flex items-center gap-1.5 font-medium text-content-secondary hover:text-content-primary">
+                      {renderBackLink ? (
+                        renderBackLink(
+                          <>
                             <Icon name="arrow-right" size="sm" className="rotate-180" />
                             <span data-spec-back-label>
                               {t('specification.backToSpecifications')}
                             </span>
+                          </>,
+                          'w-fit inline-flex items-center gap-1.5 font-medium text-content-secondary hover:text-content-primary',
+                        )
+                      ) : overviewHref ? (
+                        <Link
+                          href={overviewHref}
+                          className="w-fit inline-flex items-center gap-1.5 font-medium text-content-secondary hover:text-content-primary"
+                        >
+                          <Icon name="arrow-right" size="sm" className="rotate-180" />
+                          <span data-spec-back-label>
+                            {t('specification.backToSpecifications')}
                           </span>
                         </Link>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 font-medium text-content-secondary">
+                        <span className="font-medium text-content-secondary">
                           <span data-spec-back-label>
                             {t('specification.backToSpecifications')}
                           </span>
@@ -320,89 +279,8 @@ function SpecificationWorkspaceInner({
                     </Alert>
                   ) : null}
 
-                  {/* View Content */}
-                  {currentView === 'work' ? (
-                    <WorkView specId={specId} data={data} />
-                  ) : currentView !== 'task' &&
-                    data.sectionAvailability?.[
-                      currentView === 'documents' ? 'documents' : currentView
-                    ] !== undefined &&
-                    data.sectionAvailability?.[
-                      currentView === 'documents' ? 'documents' : currentView
-                    ] !== 'available' ? (
-                    <Alert
-                      tone="attention"
-                      role="status"
-                      title={t('specification.unavailableTitle')}
-                    >
-                      {t('specification.unavailableDescription', { id: specId })}
-                    </Alert>
-                  ) : currentView === 'documents' ? (
-                    <DocumentsView
-                      documents={data.documents}
-                      renderContent={renderDocument}
-                      activeDocId={activeDocId}
-                      docOrigin={docOrigin}
-                      onSelectDoc={(id) => setActiveDocId(id)}
-                      onBackToOrigin={() => {
-                        if (docOrigin === 'work') {
-                          handleViewChange('work');
-                        }
-                        setActiveDocId(null);
-                      }}
-                    />
-                  ) : currentView === 'sessions' ? (
-                    <SessionsView
-                      sessions={data.sessions}
-                      onOpenSession={onOpenSession}
-                      onNewConversation={
-                        onNewConversation ? () => openConversationDialog() : undefined
-                      }
-                    />
-                  ) : currentView === 'changes' ? (
-                    <ChangesView
-                      currentSource={changesSource}
-                      changes={data.changes}
-                      onSourceChange={setChangesSource}
-                      onDiff={onDiff}
-                    />
-                  ) : currentView === 'repository' ? (
-                    <RepositoryView
-                      repoContext={data.repoContext}
-                      onGoToChanges={() => navigateToView('changes', null)}
-                    />
-                  ) : currentView === 'task' ? (
-                    fullTask ? (
-                      renderTask ? (
-                        renderTask(fullTask, handleBackFromFullTask)
-                      ) : (
-                        <FullTaskView
-                          task={fullTask}
-                          specKey={specId}
-                          onBack={handleBackFromFullTask}
-                          onOpenSession={onOpenSession}
-                        />
-                      )
-                    ) : (
-                      <Alert
-                        role="alert"
-                        tone="attention"
-                        title={t('specification.taskNotFoundTitle')}
-                        className="max-w-content-standard"
-                      >
-                        <Typography variant="body-sm" className="text-content-secondary">
-                          {t('specification.taskNotFoundDescription', {
-                            taskId: fullTaskId ?? '',
-                          })}
-                        </Typography>
-                        <div className="mt-3 flex items-center gap-3">
-                          <Button variant="secondary" size="sm" onClick={handleBackFromFullTask}>
-                            {t('specification.backToTasks')}
-                          </Button>
-                        </div>
-                      </Alert>
-                    )
-                  ) : null}
+                  {/* Specification Overview contributions. Primary destinations belong to Router. */}
+                  <WorkView specId={specId} data={data} />
                 </AppContentContainer>
               </AppWorkspaceBody>
             </AppContent>

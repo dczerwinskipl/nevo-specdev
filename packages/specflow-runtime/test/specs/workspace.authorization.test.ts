@@ -14,10 +14,14 @@ describe('Workspace Session authorization projection', () => {
       recommendedSessionId: 'sample-session-23',
       sections: {
         ...source.sections,
-        attention: {
+        sessions: {
           state: 'available',
           data: {
-            items: [
+            items:
+              source.sections.sessions.state === 'available'
+                ? source.sections.sessions.data.items
+                : [],
+            attention: [
               {
                 id: 'blocked',
                 kind: 'session',
@@ -68,6 +72,44 @@ describe('Workspace Session authorization projection', () => {
         },
       },
     });
+    // Domain sources are independent. A Session reference accidentally placed
+    // in another section must not bypass Session-level authorization.
+    const hiddenCrossSection = {
+      id: 'hidden-in-another-source',
+      kind: 'session' as const,
+      title: 'Secret cross-section item',
+      reason: 'Hidden Session',
+      targetId: 'sample-session-23',
+    };
+    const withCrossSectionItems: SpecificationWorkspaceResponse = {
+      ...snapshot,
+      specification: {
+        ...snapshot.specification,
+        attention: [...snapshot.specification.attention, hiddenCrossSection],
+      },
+      sections: {
+        ...snapshot.sections,
+        tasks:
+          snapshot.sections.tasks.state === 'available'
+            ? {
+                state: 'available',
+                data: {
+                  ...snapshot.sections.tasks.data,
+                  attention: [
+                    ...(snapshot.sections.tasks.data.attention ?? []),
+                    hiddenCrossSection,
+                  ],
+                },
+              }
+            : snapshot.sections.tasks,
+        repository: {
+          state: 'available',
+          data: {
+            attention: [hiddenCrossSection],
+          },
+        },
+      },
+    };
     const permitted = (id: string) => id === 'sample-session-24';
     const check = (value: SpecificationWorkspaceResponse) => {
       const filtered = authorizeSessionReferences(value, permitted);
@@ -79,6 +121,17 @@ describe('Workspace Session authorization projection', () => {
       expect(filtered.recommendedSessionId).toBeUndefined();
       return filtered;
     };
+    const crossSectionFiltered = check(withCrossSectionItems);
+    expect(crossSectionFiltered.specification.attention).not.toContainEqual(hiddenCrossSection);
+    if (crossSectionFiltered.sections.tasks.state === 'available') {
+      expect(crossSectionFiltered.sections.tasks.data.attention).not.toContainEqual(
+        hiddenCrossSection,
+      );
+    }
+    if (crossSectionFiltered.sections.repository.state === 'available') {
+      expect(crossSectionFiltered.sections.repository.data.attention).toEqual([]);
+    }
+
     const filtered = check(snapshot);
     expect(filtered.sections.sessions.state).toBe('available');
     const unavailable = check({
@@ -106,9 +159,6 @@ describe('Workspace Session authorization projection', () => {
     const filtered = authorizeSessionReferences(presentWorkspace(source), () => false);
     expect(filtered.sections.sessions).toEqual({ state: 'forbidden' });
     expect(filtered.recommendedSessionId).toBeUndefined();
-    const attention = filtered.sections.attention;
-    if (attention.state === 'available') {
-      expect(attention.data.items.every((item) => item.kind !== 'session')).toBe(true);
-    }
+    expect(JSON.stringify(filtered)).not.toContain('sample-session-23');
   });
 });

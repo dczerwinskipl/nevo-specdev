@@ -10,9 +10,13 @@ function isSemanticSupporting(value: unknown): value is SemanticSupporting {
   );
 }
 
+export const operationalPrimaryLinkClassName =
+  'pointer-events-auto static cursor-pointer truncate outline-none after:absolute after:inset-0 after:rounded-control focus-visible:after:outline-2 focus-visible:after:outline-focus-ring hover:text-accent-primary';
+
 export function OperationalRow({
   primary,
   primaryHref,
+  primaryLink,
   onPrimaryClick,
   primaryAriaLabel,
   compactFacts = [],
@@ -26,13 +30,14 @@ export function OperationalRow({
   className,
   dataAttributes = {},
 }: OperationalRowProps) {
-  const isRowInteractive = interactive || Boolean(primaryHref) || Boolean(onPrimaryClick);
+  const isRowInteractive =
+    interactive || Boolean(primaryLink) || Boolean(primaryHref) || Boolean(onPrimaryClick);
 
-  const primaryContent = primaryHref ? (
+  const fallbackPrimary = primaryHref ? (
     <a
       href={primaryHref}
       data-focus-ring="delegated"
-      className="pointer-events-auto static cursor-pointer truncate outline-none after:absolute after:inset-0 after:rounded-control focus-visible:after:outline-2 focus-visible:after:outline-focus-ring hover:text-accent-primary"
+      className={operationalPrimaryLinkClassName}
       aria-label={primaryAriaLabel}
       onClick={onPrimaryClick}
     >
@@ -51,6 +56,8 @@ export function OperationalRow({
   ) : (
     <span className="truncate">{primary}</span>
   );
+
+  const primaryContent = primaryLink ?? fallbackPrimary;
 
   let supportingContent: React.ReactNode = null;
   if (supporting) {
