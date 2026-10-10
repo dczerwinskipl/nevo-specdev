@@ -70,6 +70,8 @@
     "staleDataDescription": "Nie udało się pobrać najnowszych danych. Poniższe informacje mogą być nieaktualne.",
     "sectionRenderFailedTitle": "Nie udało się wyświetlić sekcji",
     "sectionRenderFailedDescription": "Wystąpił błąd podczas wyświetlania sekcji. Spróbuj wyświetlić ją ponownie.",
+    "attentionSourceFailedTitle": "Nie udało się wczytać części uwag",
+    "attentionSourceFailedDescription": "Jedno ze źródeł uwag zakończyło się błędem. Pozostałe dostępne wpisy są nadal widoczne.",
     "unavailableTitle": "Specyfikacja jest niedostępna",
     "unavailableDescription": "Obszar roboczy specyfikacji nie jest jeszcze wspierany przez Runtime lub nie mógł zostać załadowany.",
     "notFoundTitle": "Nie znaleziono specyfikacji",

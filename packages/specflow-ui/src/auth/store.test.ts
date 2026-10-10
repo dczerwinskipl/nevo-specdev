@@ -2,7 +2,7 @@ import type { AuthSessionResponse } from '@nevo/specflow-contracts/authenticatio
 import { describe, expect, it } from 'vitest';
 
 import type { AuthApi } from './api';
-import { createAuthStore } from './store';
+import { authSessionIdentity, createAuthStore } from './store';
 
 const anonymous: AuthSessionResponse = {
   authenticationRequired: true,
@@ -14,6 +14,52 @@ const anonymous: AuthSessionResponse = {
 };
 
 describe('AuthStore', () => {
+  it('invalidates same-user trusted-local auth transitions', async () => {
+    const localAuthenticated: AuthSessionResponse = {
+      authenticationRequired: false,
+      authenticated: true,
+      user: { id: 'local', name: 'Local' },
+      authenticatedWith: { kind: 'password' },
+      loginMethods: anonymous.loginMethods,
+    };
+    const localUnauthenticated: AuthSessionResponse = {
+      authenticationRequired: false,
+      authenticated: false,
+      user: { id: 'local', name: 'Local' },
+      loginMethods: anonymous.loginMethods,
+    };
+    expect(authSessionIdentity(localAuthenticated)).not.toBe(
+      authSessionIdentity(localUnauthenticated),
+    );
+
+    const store = createAuthStore(
+      fakeApi({ getSession: () => Promise.resolve(localUnauthenticated) }),
+      localAuthenticated,
+    );
+    const before = store.sessionGeneration();
+    await store.refresh();
+    expect(store.sessionGeneration()).toBe(before + 1);
+    await store.refresh();
+    expect(store.sessionGeneration()).toBe(before + 1);
+  });
+
+  it('invalidates a mode transition for the same user', async () => {
+    const required: AuthSessionResponse = {
+      authenticationRequired: true,
+      authenticated: true,
+      user: { id: 'local', name: 'Local' },
+      authenticatedWith: { kind: 'password' },
+      loginMethods: anonymous.loginMethods,
+    };
+    const trusted = { ...required, authenticationRequired: false };
+    const store = createAuthStore(
+      fakeApi({ getSession: () => Promise.resolve(trusted) }),
+      required,
+    );
+    await store.refresh();
+    expect(store.sessionGeneration()).toBe(1);
+  });
+
   it('coalesces bootstrap requests and publishes the loaded session', async () => {
     let calls = 0;
     const api = fakeApi({

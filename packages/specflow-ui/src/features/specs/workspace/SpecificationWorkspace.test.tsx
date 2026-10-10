@@ -117,44 +117,62 @@ describe('SpecificationWorkspace', () => {
     expect(markup).toContain('w przygotowaniu');
   });
 
-  it('preserves Runtime attention ordering across contributing modules', () => {
+  it('sorts feature-owned Attention by priority without deriving it from the kind', () => {
     const source = createSpecificationWorkspaceFixture('working', 'UI-1234');
-    const attentionItems = [
-      {
-        id: 's',
-        kind: 'session' as const,
-        title: 'First session attention',
-        reason: 'Needs a response',
-        targetId: 'S1',
-        actionLabel: 'Open',
+    const task = {
+      id: 't',
+      kind: 'task' as const,
+      title: 'Normal task attention',
+      reason: 'Review task',
+      targetId: 'T1',
+      actionLabel: '',
+      priority: 'normal' as const,
+    };
+    const session = {
+      id: 's',
+      kind: 'session' as const,
+      title: 'High priority session attention',
+      reason: 'Needs a response',
+      targetId: 'S1',
+      actionLabel: '',
+      priority: 'high' as const,
+    };
+    const git = {
+      id: 'g',
+      kind: 'git' as const,
+      title: 'Critical Git attention',
+      reason: 'Resolve conflicts',
+      actionLabel: '',
+      priority: 'critical' as const,
+    };
+    const specification = {
+      id: 'c',
+      kind: 'specification' as const,
+      title: 'Normal specification attention',
+      reason: 'Needs preparation',
+      actionLabel: '',
+      priority: 'normal' as const,
+    };
+    const markup = renderWorkspaceMarkup({
+      data: {
+        ...source,
+        attentionItems: [specification],
+        featureAttention: {
+          tasks: { state: 'available', items: [task] },
+          sessions: { state: 'available', items: [session] },
+          git: { state: 'available', items: [git] },
+        },
       },
-      {
-        id: 'g',
-        kind: 'git' as const,
-        title: 'Second git attention',
-        reason: 'Resolve conflicts',
-        actionLabel: 'Review',
-      },
-      {
-        id: 't',
-        kind: 'task' as const,
-        title: 'Third task attention',
-        reason: 'Review task',
-        targetId: 'T1',
-        actionLabel: 'Inspect',
-      },
-      {
-        id: 'c',
-        kind: 'specification' as const,
-        title: 'Fourth specification attention',
-        reason: 'Needs preparation',
-        actionLabel: '',
-      },
+    });
+    const names = [
+      'Critical Git attention',
+      'High priority session attention',
+      'Normal specification attention',
+      'Normal task attention',
     ];
-    const markup = renderWorkspaceMarkup({ data: { ...source, attentionItems } });
-    const titles = attentionItems.map((item) => markup.indexOf(item.title));
-    expect(titles.every((position) => position > 0)).toBe(true);
-    expect(titles).toEqual([...titles].sort((a, b) => a - b));
+    const positions = names.map((title) => markup.indexOf(title));
+    expect(positions.every((position) => position > 0)).toBe(true);
+    expect(positions).toEqual([...positions].sort((a, b) => a - b));
   });
 
   it('renders git-conflict scenario with conflict attention item', () => {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, InformationList, Typography } from '@nevo/ui';
 import { useTranslation } from 'react-i18next';
 import type { TaskExecutionReadiness, TaskGroup } from '../../model';
@@ -60,6 +60,17 @@ export function TasksSection({
   };
 
   const tasks = taskGroups.flatMap((group) => group.tasks);
+  const availableIds = new Set(tasks.map((task) => task.id));
+  const effectiveSelectedTasks = [...selectedTasks].filter((id) => availableIds.has(id));
+
+  // Drop vanished Task IDs; if the same ID reappears later it must not be
+  // silently re-selected from an earlier Workspace revision.
+  useEffect(() => {
+    setSelectedTasks((prev) => {
+      if ([...prev].every((id) => availableIds.has(id))) return prev;
+      return new Set([...prev].filter((id) => availableIds.has(id)));
+    });
+  }, [taskGroups]);
   const completedCount =
     completedTasksCount ?? tasks.filter((task) => task.lifecycle === 'completed').length;
   const totalTasks = totalTasksCount ?? tasks.length;
@@ -95,20 +106,22 @@ export function TasksSection({
         icon="list-checks"
         count={countLabel}
         actions={
-          selectedTasks.size > 0 ? (
+          effectiveSelectedTasks.length > 0 ? (
             <div className="flex items-center gap-3">
               <span className="text-body-xs text-content-muted">
-                {t('specification.selectedTasksCount', { count: selectedTasks.size })}
+                {t('specification.selectedTasksCount', { count: effectiveSelectedTasks.length })}
               </span>
               <Button
                 size="sm"
                 disabled={isExecutionDisabled}
                 title={executionTitle}
-                onClick={() => onExecuteTasks(Array.from(selectedTasks))}
+                onClick={() => onExecuteTasks(effectiveSelectedTasks)}
               >
-                {selectedTasks.size === 1
+                {effectiveSelectedTasks.length === 1
                   ? t('specification.executeSingleTask')
-                  : t('specification.executeMultipleTasks', { count: selectedTasks.size })}
+                  : t('specification.executeMultipleTasks', {
+                      count: effectiveSelectedTasks.length,
+                    })}
               </Button>
             </div>
           ) : null

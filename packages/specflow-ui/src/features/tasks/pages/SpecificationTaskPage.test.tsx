@@ -6,7 +6,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { createSpecFlowQueryClient } from '../../../app/queryClient';
 import { LocalizationProvider } from '../../../i18n';
-import { createSpecFlowAppServices, SpecFlowServicesProvider } from '../../../services';
+import { createSpecFlowAppServices } from '../../../services';
+import { TestServicesRouterContext } from '../../../../test-support/app/TestServicesRouterContext';
 import { taskKeys } from '../queries';
 import { mapFullTaskResponse } from '../model';
 import { SpecificationTaskPage } from './SpecificationTaskPage';
@@ -53,13 +54,13 @@ function renderTask(options: { error?: HttpClientError; seedDetail?: boolean } =
   }
   return renderToStaticMarkup(
     <QueryClientProvider client={queryClient}>
-      <SpecFlowServicesProvider services={createSpecFlowAppServices()}>
+      <TestServicesRouterContext services={createSpecFlowAppServices()}>
         <LocalizationProvider>
           <AppShell navigation={<div>Nav</div>}>
             <TaskHarness />
           </AppShell>
         </LocalizationProvider>
-      </SpecFlowServicesProvider>
+      </TestServicesRouterContext>
     </QueryClientProvider>,
   );
 }

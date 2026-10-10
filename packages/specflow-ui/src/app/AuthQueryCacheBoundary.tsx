@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
 import { useQueryClient, type QueryClient } from '@tanstack/react-query';
-import type { AuthStore } from '../auth/store';
+import { authSessionIdentity, type AuthStore } from '../auth/store';
 
 /** Install application cache isolation once per AuthStore/QueryClient pair. */
 export function bindAuthQueryCache(auth: AuthStore, queryClient: QueryClient): () => void {
@@ -9,12 +9,7 @@ export function bindAuthQueryCache(auth: AuthStore, queryClient: QueryClient): (
     const state = auth.getState();
     if (state.status === 'ready') {
       const session = state.session;
-      // Cache isolation also tracks authenticated -> unauthenticated transitions in local mode.
-      const identity = session.authenticated
-        ? `user:${session.user.id}`
-        : session.authenticationRequired
-          ? 'unauthenticated'
-          : `trusted-local:${session.user?.id ?? 'local'}`;
+      const identity = authSessionIdentity(session);
       if (previousIdentity !== undefined && previousIdentity !== identity) {
         void queryClient.cancelQueries();
         queryClient.clear();

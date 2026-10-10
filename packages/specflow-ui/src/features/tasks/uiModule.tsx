@@ -51,21 +51,25 @@ export const tasksUiModule: UiModule = {
     }),
     contributeTo(specificationAttentionItems, {
       id: 'specflow.tasks.attention',
-      getItems: ({ data, actions }) =>
-        data.attentionItems
-          .filter((item) => item.kind === 'task')
-          .map((item) => ({
-            item,
-            icon: 'list-checks',
-            action: item.targetId
-              ? {
-                  label: item.actionLabel,
-                  labelKey:
-                    item.actionCode === 'task' ? 'specification.attentionViewTask' : undefined,
-                  onClick: () => actions.previewTask(item.targetId!),
-                }
-              : undefined,
-          })),
+      getItems: ({ data, actions }) => {
+        const source = data.featureAttention?.tasks;
+        if (!source || (source.state === 'unavailable' && source.reason === 'source_unavailable')) {
+          return { state: 'unavailable' };
+        }
+        if (source.state !== 'available') return { state: 'excluded' };
+        return source.items.map((item) => ({
+          item,
+          icon: 'list-checks',
+          action: item.targetId
+            ? {
+                label: item.actionLabel,
+                labelKey:
+                  item.actionCode === 'task' ? 'specification.attentionViewTask' : undefined,
+                onClick: () => actions.previewTask(item.targetId!),
+              }
+            : undefined,
+        }));
+      },
     }),
   ],
 };

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { isHttpClientError } from '@nevo/http-client';
-import { useSpecFlowServices } from '../../services';
+import { useAppServices } from '../../app/useAppServices';
 import type { TaskApi } from './api';
 import { taskKeys } from './queries';
 
@@ -10,7 +10,7 @@ export function useSpecificationTask(
   api?: TaskApi,
   enabled = true,
 ) {
-  const services = useSpecFlowServices();
+  const services = useAppServices();
   const activeApi = api ?? services.taskApi;
   const query = useQuery({
     queryKey: taskKeys.detail(specId, taskId),

@@ -1,4 +1,3 @@
-import { createContext, useContext, type ReactNode } from 'react';
 import { createHttpClient, type HttpClient } from '@nevo/http-client';
 
 import { createBrowserAuthApi, type AuthApi } from '../auth/api';
@@ -70,26 +69,3 @@ export function createSpecFlowAppServices(
 }
 
 export const defaultSpecFlowServices: SpecFlowAppServices = createSpecFlowAppServices();
-
-// Services are composed once by the application. Never silently fall back to the
-// production instance when a Storybook/test/secondary tree omits its provider.
-const SpecFlowServicesContext = createContext<SpecFlowServices | null>(null);
-
-export interface SpecFlowServicesProviderProps {
-  readonly services: SpecFlowServices;
-  readonly children: ReactNode;
-}
-
-export function SpecFlowServicesProvider({ services, children }: SpecFlowServicesProviderProps) {
-  return (
-    <SpecFlowServicesContext.Provider value={services}>{children}</SpecFlowServicesContext.Provider>
-  );
-}
-
-export function useSpecFlowServices(): SpecFlowServices {
-  const services = useContext(SpecFlowServicesContext);
-  if (!services) {
-    throw new Error('useSpecFlowServices must be used within SpecFlowServicesProvider');
-  }
-  return services;
-}

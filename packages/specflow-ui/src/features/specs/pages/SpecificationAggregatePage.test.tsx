@@ -5,7 +5,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createSpecFlowQueryClient } from '../../../app/queryClient';
 import { appI18n, LocalizationProvider } from '../../../i18n';
-import { createSpecFlowAppServices, SpecFlowServicesProvider } from '../../../services';
+import { createSpecFlowAppServices } from '../../../services';
+import { TestServicesRouterContext } from '../../../../test-support/app/TestServicesRouterContext';
 import { createSpecificationWorkspaceFixture } from '../../../../test-support/specs/workspace/fixtures';
 import { specificationKeys } from '../queries';
 import { SpecificationAggregatePage } from './SpecificationAggregatePage';
@@ -40,7 +41,7 @@ describe('Specification aggregate resource boundary', () => {
 
     const html = renderToStaticMarkup(
       <QueryClientProvider client={client}>
-        <SpecFlowServicesProvider services={createSpecFlowAppServices()}>
+        <TestServicesRouterContext services={createSpecFlowAppServices()}>
           <LocalizationProvider>
             <AppShell navigation={<div>Nav</div>}>
               <SpecificationAggregatePage specId={specId} title="Documents" section="documents">
@@ -48,7 +49,7 @@ describe('Specification aggregate resource boundary', () => {
               </SpecificationAggregatePage>
             </AppShell>
           </LocalizationProvider>
-        </SpecFlowServicesProvider>
+        </TestServicesRouterContext>
       </QueryClientProvider>,
     );
 
@@ -80,7 +81,7 @@ describe('Specification aggregate resource boundary', () => {
 
     const html = renderToStaticMarkup(
       <QueryClientProvider client={client}>
-        <SpecFlowServicesProvider services={createSpecFlowAppServices()}>
+        <TestServicesRouterContext services={createSpecFlowAppServices()}>
           <LocalizationProvider>
             <AppShell navigation={<div>Nav</div>}>
               <SpecificationAggregatePage specId={specId} title="Documents" section="documents">
@@ -88,7 +89,7 @@ describe('Specification aggregate resource boundary', () => {
               </SpecificationAggregatePage>
             </AppShell>
           </LocalizationProvider>
-        </SpecFlowServicesProvider>
+        </TestServicesRouterContext>
       </QueryClientProvider>,
     );
 
@@ -109,7 +110,7 @@ describe('Specification aggregate resource boundary', () => {
 
     const html = renderToStaticMarkup(
       <QueryClientProvider client={client}>
-        <SpecFlowServicesProvider services={createSpecFlowAppServices()}>
+        <TestServicesRouterContext services={createSpecFlowAppServices()}>
           <LocalizationProvider>
             <AppShell navigation={<div>Nav</div>}>
               <SpecificationAggregatePage specId={specId} title="Documents" section="documents">
@@ -117,7 +118,7 @@ describe('Specification aggregate resource boundary', () => {
               </SpecificationAggregatePage>
             </AppShell>
           </LocalizationProvider>
-        </SpecFlowServicesProvider>
+        </TestServicesRouterContext>
       </QueryClientProvider>,
     );
 

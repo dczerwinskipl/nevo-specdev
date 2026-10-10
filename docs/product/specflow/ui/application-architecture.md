@@ -140,10 +140,23 @@ points without changing the generic registry:
   pages are owned by feature-specific TanStack Router routes, including
   Documents List, Full Document, Sessions List, Changes, Repository and Full Task.
   `/specs/:specId` is Specification Overview; old `?view` addresses redirect.
-- `specification.attention.items`: Tasks, Sessions and Git select/present Runtime attention
-  items, with feature-specific actions and icons. Specification owns the combined
-  Requires Attention surface and preserves the order of the Runtime aggregate. Requests
-  with no registered handler remain visible without an action instead of being dropped.
+- `specification.attention.items`: Tasks, Sessions, Git and Specification own their
+  own Attention facts, priority, actions, and presentation. The backend's domain
+  sections provide the corresponding attention arrays within a coherent Workspace
+  transport snapshot. Each contribution's `AttentionItem.id` is unique **within that
+  contribution**, not globally; different features may use the same local ID. The host
+  creates a stable render identity from `(contribution.id, item.id)` without changing
+  the domain item ID, and orders entries by explicit `critical > high > normal`
+  priority (stable within each level). Duplicate or empty local IDs fail their
+  contribution visibly rather than silently discarding another entry. The slot
+  does not infer priorities from feature kinds or silently recover domain items from
+  a global Specs attention array. An available Tasks, Sessions or Git Runtime section MUST
+  contain its complete `attention` collection; `[]` means authoritative no Attention.
+  `source_unavailable` is never mapped to `[]`: the feature reports its unknown state
+  and the host shows a partial-Attention warning alongside healthy entries.
+  `not_implemented` and `forbidden` remain explicit source states and do not
+  reveal entries or create a misleading availability alarm. Failures of a
+  contribution are isolated and visible.
 
 Git, Sessions and Documents own `specification.work.sections` contributions.
 Their links navigate to canonical Primary routes or open contextual Secondary previews; they never
@@ -151,9 +164,13 @@ instantiate an independent Workspace HTTP client. `SpecificationSummarySection`,
 `PreparationSection`, the attention container and Activity History remain host-owned
 cross-feature coordination for now.
 
-The host extension contexts still include transitional aggregate Workspace data and
-semantic actions; the migration does not imply new per-feature backend endpoints,
-dynamic plugin installation or independent React Query caches.
+Work section extension contexts still carry transitional aggregate Workspace data
+and semantic actions. Attention comes from each owning domain section of the Runtime
+read model, not from a global host-owned Attention list. The current HTTP snapshot
+is shared for coherence; separate per-feature read endpoints, event lifecycles,
+dynamic plugins and additional Query clients are not implied. Runtime producers own these facts directly in their respective sections;
+the Specification projection owns only Specification-level entries. No central
+Attention collection or global fallback remains.
 
 ### Transitional context and future plugins
 
@@ -239,7 +256,7 @@ Presentational components (`SpecificationWorkspace`, `WorkView`, `SpecsOverview`
 ### Application services boundary (`SpecFlowServices`)
 
 The browser/application-level HTTP transport (`HttpClient`) is created once at the application composition root.
-Feature APIs are composed from this boundary via `SpecFlowServicesProvider` and `useSpecFlowServices()`:
+Feature APIs are composed once and exposed to guarded routes and connected components through TanStack Router context (`useAppServices()`):
 
 - `SpecFlowServices` exposes `authApi`, `authStore`, `specsOverviewApi`,
   `specificationApi`, `taskApi` and `runtimeInfoApi`. The one shared `HttpClient` stays private
@@ -250,11 +267,12 @@ Feature APIs are composed from this boundary via `SpecFlowServicesProvider` and 
   explicit unavailable responses rather than browser fixtures.
 - Storybook/test fixtures live under `test-support` and must not be imported by production UI.
 
-Connected components use an explicitly provided `SpecFlowServicesProvider`; missing providers fail
-immediately rather than silently falling back to the production singleton. Route guards access
-**the same composed service instance** through TanStack Router context. These two contexts are
-access paths, not separate service instances or independent reactive stores. Neither may hold
-rapidly changing Task/Session/Workspace data.
+Connected components and route guards consume the same Router context; there is no
+parallel React services provider or runtime dependency-injection container. Missing Router
+context is an explicit error. Isolated tests use a **test-only** `RouterContextProvider`
+adapter with a real injected router, and standalone presentational components require
+neither services nor a router. Dynamic Task/Session/Workspace state stays in TanStack
+Query and local UI state, never on the router services object.
 
 Component code never instantiates ad-hoc transport clients and does not know arbitrary endpoint URLs.
 
@@ -297,7 +315,7 @@ The application provides real Specification URLs for Current and Archive records
 `/specs/:specId` route reads the Runtime Workspace projection and separately loads Markdown
 documents and Task detail through real HTTP, while unknown sources remain explicitly unavailable.
 Creation, execution and archive/delete commands are not implemented by this increment.
-URL search still owns the remaining Specification-local main views pending their route migration.
+Specification-local main views now use canonical child routes (Documents, Sessions, Git, Full Task). URL search carries validated collection and source/return context; legacy `?view=...` links only redirect to those routes.
 Full Task has a canonical resource path rather than `?view=task&task=...`; legacy links redirect.
 Full Task uses its own detail query and presentation model, and Workspace list membership is never
 a prerequisite for direct navigation. Local Task Preview remains a Secondary inspection surface.

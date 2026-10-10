@@ -5,7 +5,8 @@ import { appI18n, LocalizationProvider } from '../../i18n';
 import { createSpecFlowQueryClient } from '../../app/queryClient';
 import { builtInUiModuleRegistry } from '../../app/ui-modules/builtInUiModules';
 import { UiModulesProvider } from '../../app/ui-modules/UiModulesProvider';
-import { createSpecFlowAppServices, SpecFlowServicesProvider } from '../../services';
+import { createSpecFlowAppServices } from '../../services';
+import { TestServicesRouterContext } from '../../../test-support/app/TestServicesRouterContext';
 import { SpecificationSurface } from './SpecificationSurface';
 import { HttpClientError } from '@nevo/http-client';
 import { specificationKeys } from './queries';
@@ -27,11 +28,11 @@ describe('SpecificationSurface', () => {
     return renderToStaticMarkup(
       <QueryClientProvider client={queryClient}>
         <UiModulesProvider modules={builtInUiModuleRegistry}>
-          <SpecFlowServicesProvider services={services}>
+          <TestServicesRouterContext services={services}>
             <LocalizationProvider>
               <AppShell navigation={<div>Nav</div>}>{component}</AppShell>
             </LocalizationProvider>
-          </SpecFlowServicesProvider>
+          </TestServicesRouterContext>
         </UiModulesProvider>
       </QueryClientProvider>,
     );
@@ -75,13 +76,13 @@ describe('SpecificationSurface', () => {
     const markup = renderToStaticMarkup(
       <QueryClientProvider client={queryClient}>
         <UiModulesProvider modules={builtInUiModuleRegistry}>
-          <SpecFlowServicesProvider services={services}>
+          <TestServicesRouterContext services={services}>
             <LocalizationProvider>
               <AppShell navigation={<div>Nav</div>}>
                 <SpecificationSurface specId="spec-missing" />
               </AppShell>
             </LocalizationProvider>
-          </SpecFlowServicesProvider>
+          </TestServicesRouterContext>
         </UiModulesProvider>
       </QueryClientProvider>,
     );
@@ -113,13 +114,13 @@ describe('SpecificationSurface', () => {
     const markup = renderToStaticMarkup(
       <QueryClientProvider client={queryClient}>
         <UiModulesProvider modules={builtInUiModuleRegistry}>
-          <SpecFlowServicesProvider services={services}>
+          <TestServicesRouterContext services={services}>
             <LocalizationProvider>
               <AppShell navigation={<div>Nav</div>}>
                 <SpecificationSurface specId="spec-404" />
               </AppShell>
             </LocalizationProvider>
-          </SpecFlowServicesProvider>
+          </TestServicesRouterContext>
         </UiModulesProvider>
       </QueryClientProvider>,
     );
@@ -139,13 +140,13 @@ describe('SpecificationSurface', () => {
     const markup = renderToStaticMarkup(
       <QueryClientProvider client={queryClient}>
         <UiModulesProvider modules={builtInUiModuleRegistry}>
-          <SpecFlowServicesProvider services={services}>
+          <TestServicesRouterContext services={services}>
             <LocalizationProvider>
               <AppShell navigation={<div>Nav</div>}>
                 <SpecificationSurface specId="spec-123" />
               </AppShell>
             </LocalizationProvider>
-          </SpecFlowServicesProvider>
+          </TestServicesRouterContext>
         </UiModulesProvider>
       </QueryClientProvider>,
     );
@@ -170,13 +171,13 @@ describe('SpecificationSurface', () => {
     const markup = renderToStaticMarkup(
       <QueryClientProvider client={queryClient}>
         <UiModulesProvider modules={builtInUiModuleRegistry}>
-          <SpecFlowServicesProvider services={services}>
+          <TestServicesRouterContext services={services}>
             <LocalizationProvider>
               <AppShell navigation={<div>Nav</div>}>
                 <SpecificationSurface specId="spec-forbidden" />
               </AppShell>
             </LocalizationProvider>
-          </SpecFlowServicesProvider>
+          </TestServicesRouterContext>
         </UiModulesProvider>
       </QueryClientProvider>,
     );
@@ -208,13 +209,13 @@ describe('SpecificationSurface', () => {
     const markup = renderToStaticMarkup(
       <QueryClientProvider client={queryClient}>
         <UiModulesProvider modules={builtInUiModuleRegistry}>
-          <SpecFlowServicesProvider services={createSpecFlowAppServices()}>
+          <TestServicesRouterContext services={createSpecFlowAppServices()}>
             <LocalizationProvider>
               <AppShell navigation={<div>Nav</div>}>
                 <SpecificationSurface specId={specId} />
               </AppShell>
             </LocalizationProvider>
-          </SpecFlowServicesProvider>
+          </TestServicesRouterContext>
         </UiModulesProvider>
       </QueryClientProvider>,
     );

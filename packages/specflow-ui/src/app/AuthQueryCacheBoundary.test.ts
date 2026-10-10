@@ -69,7 +69,7 @@ describe('Auth Query cache isolation', () => {
       initiallyAuthenticated,
     );
     await auth.refresh();
-    expect(auth.sessionGeneration()).toBe(0);
+    expect(auth.sessionGeneration()).toBe(1);
     expect(queryClient.getQueryData(key)).toBeUndefined();
     detach();
   });

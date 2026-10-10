@@ -1,5 +1,6 @@
 import { specificationWorkSections } from '../../features/specs/extensions/specificationWorkSections';
 import { specificationAttentionItems } from '../../features/specs/extensions/specificationAttentionItems';
+import { specsUiModule } from '../../features/specs/uiModule';
 import { gitUiModule } from '../../features/git/uiModule';
 import { sessionsUiModule } from '../../features/sessions/uiModule';
 import { tasksUiModule } from '../../features/tasks/uiModule';
@@ -18,6 +19,7 @@ export function createSpecFlowUiRegistry(modules: readonly UiModule[]): UiRegist
 
 /** Static application composition: feature modules register without registry changes. */
 export const builtInUiModuleRegistry = createSpecFlowUiRegistry([
+  specsUiModule,
   gitUiModule,
   sessionsUiModule,
   tasksUiModule,

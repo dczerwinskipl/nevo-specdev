@@ -2,7 +2,8 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { createSpecFlowQueryClient } from '../../../app/queryClient';
-import { createSpecFlowAppServices, SpecFlowServicesProvider } from '../../../services';
+import { createSpecFlowAppServices } from '../../../services';
+import { TestServicesRouterContext } from '../../../../test-support/app/TestServicesRouterContext';
 import { taskKeys } from '../../tasks/queries';
 import { createSpecificationWorkspaceFixture } from '../../../../test-support/specs/workspace/fixtures';
 import {
@@ -33,7 +34,7 @@ describe('Task preview by identity', () => {
     const data = { ...createSpecificationWorkspaceFixture('working', specId), taskGroups: [] };
     const markup = renderToStaticMarkup(
       <QueryClientProvider client={queryClient}>
-        <SpecFlowServicesProvider services={createSpecFlowAppServices()}>
+        <TestServicesRouterContext services={createSpecFlowAppServices()}>
           <SpecificationSecondaryDataContext.Provider
             value={{
               specId,
@@ -44,7 +45,7 @@ describe('Task preview by identity', () => {
           >
             <PreviewStatus />
           </SpecificationSecondaryDataContext.Provider>
-        </SpecFlowServicesProvider>
+        </TestServicesRouterContext>
       </QueryClientProvider>,
     );
     expect(markup).toContain('Referenced outside Task list');

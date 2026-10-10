@@ -384,7 +384,20 @@ export function createSpecificationWorkspaceFixture(
     isEmpty,
     isPreparing,
     hasGit,
-    attentionItems,
+    attentionItems: attentionItems.filter((item) => item.kind === 'specification'),
+    featureAttention: {
+      tasks: {
+        state: 'available',
+        items: attentionItems.filter((item) => item.kind === 'task'),
+      },
+      sessions: {
+        state: 'available',
+        items: attentionItems.filter((item) => item.kind === 'session'),
+      },
+      git: hasGit
+        ? { state: 'available', items: attentionItems.filter((item) => item.kind === 'git') }
+        : { state: 'unavailable', reason: 'not_implemented' },
+    },
     repoContext,
     resumeSession: isEmpty ? undefined : defaultSessions[0],
     taskGroups,

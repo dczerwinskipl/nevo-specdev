@@ -50,6 +50,7 @@ describe('typed UI extension registry', () => {
 
   it('registers feature-owned attention contributions without a tab-view registry', () => {
     expect(builtInUiModuleRegistry.get(specificationAttentionItems).map(({ id }) => id)).toEqual([
+      'specflow.specifications.attention',
       'specflow.git.attention',
       'specflow.sessions.attention',
       'specflow.tasks.attention',

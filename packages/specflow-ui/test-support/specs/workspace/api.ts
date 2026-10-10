@@ -12,9 +12,9 @@ export function createWorkspaceIntegrationApi(): SpecificationApi {
       title: 'Integrated API Workspace',
       summary: 'This screen comes from an HTTP-shaped DTO through the real mapper.',
       preparationState: 'prepared',
+      attention: [],
     },
     sections: {
-      attention: { state: 'available', data: { items: [] } },
       tasks: {
         state: 'available',
         data: {
@@ -33,13 +33,14 @@ export function createWorkspaceIntegrationApi(): SpecificationApi {
           ],
           total: 1,
           completed: 0,
+          attention: [],
         },
       },
       documents: {
         state: 'available',
         data: { items: [{ id: 'spec', title: 'Integration document', kind: 'markdown' }] },
       },
-      sessions: { state: 'available', data: { items: [] } },
+      sessions: { state: 'available', data: { items: [], attention: [] } },
       activity: { state: 'available', data: { items: [] } },
       changes: { state: 'unavailable', reason: 'not_implemented' },
       repository: { state: 'unavailable', reason: 'not_implemented' },

@@ -2,36 +2,38 @@ import { createMemoryHistory } from '@tanstack/react-router';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { createSpecFlowRouter } from '../app/router';
-import { createSpecFlowAppServices, SpecFlowServicesProvider, useSpecFlowServices } from './index';
+import { useAppServices } from '../app/useAppServices';
+import { TestServicesRouterContext } from '../../test-support/app/TestServicesRouterContext';
+import { createSpecFlowAppServices } from './index';
 
 describe('SpecFlow application services composition', () => {
-  it('fails explicitly without a provider instead of using production services', () => {
+  it('fails without a Router context rather than falling back to production services', () => {
     function Consumer() {
-      useSpecFlowServices();
+      useAppServices();
       return null;
     }
 
     expect(() => renderToStaticMarkup(<Consumer />)).toThrow(
-      'useSpecFlowServices must be used within SpecFlowServicesProvider',
+      'useAppServices requires the SpecFlow Router context',
     );
   });
 
-  it('passes the exact same stable services instance to connected components', () => {
+  it('uses the explicitly supplied instance in a connected component', () => {
     const services = createSpecFlowAppServices();
     function Consumer() {
-      return <span>{useSpecFlowServices() === services ? 'same' : 'different'}</span>;
+      return <span>{useAppServices() === services ? 'same' : 'different'}</span>;
     }
 
     expect(
       renderToStaticMarkup(
-        <SpecFlowServicesProvider services={services}>
+        <TestServicesRouterContext services={services}>
           <Consumer />
-        </SpecFlowServicesProvider>,
+        </TestServicesRouterContext>,
       ),
     ).toContain('same');
   });
 
-  it('Router context and React provider share an explicitly injected services instance', () => {
+  it('shares Router dependencies and connected feature APIs without a second provider', () => {
     const services = createSpecFlowAppServices();
     const router = createSpecFlowRouter(
       createMemoryHistory({ initialEntries: ['/login'] }),
@@ -39,14 +41,14 @@ describe('SpecFlow application services composition', () => {
     );
 
     function Consumer() {
-      const fromReact = useSpecFlowServices();
-      return <span>{router.options.context.services === fromReact ? 'same' : 'different'}</span>;
+      const fromRouter = useAppServices();
+      return <span>{fromRouter.taskApi === services.taskApi ? 'same' : 'different'}</span>;
     }
 
     const markup = renderToStaticMarkup(
-      <SpecFlowServicesProvider services={services}>
+      <TestServicesRouterContext services={services}>
         <Consumer />
-      </SpecFlowServicesProvider>,
+      </TestServicesRouterContext>,
     );
 
     expect(markup).toContain('same');

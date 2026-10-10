@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { isHttpClientError } from '@nevo/http-client';
 import { Alert, Button, MarkdownDocument, Typography } from '@nevo/ui';
 import { useTranslation } from 'react-i18next';
-import { useSpecFlowServices } from '../../../services';
+import { useAppServices } from '../../../app/useAppServices';
 import { documentKeys } from '../queries';
 
 export function DocumentContent({
@@ -13,7 +13,7 @@ export function DocumentContent({
   readonly documentId: string;
 }) {
   const { t } = useTranslation();
-  const { documentApi } = useSpecFlowServices();
+  const { documentApi } = useAppServices();
   const query = useQuery({
     queryKey: documentKeys.detail(specId, documentId),
     queryFn: ({ signal }) => documentApi.getDocument(specId, documentId, signal),

@@ -70,6 +70,8 @@
     "staleDataDescription": "The latest data could not be loaded. Information below may be out of date.",
     "sectionRenderFailedTitle": "Section could not be displayed",
     "sectionRenderFailedDescription": "This section encountered a rendering error. Try displaying it again.",
+    "attentionSourceFailedTitle": "Some attention items could not be loaded",
+    "attentionSourceFailedDescription": "An attention source failed. Other available items are still shown.",
     "unavailableTitle": "Specification is unavailable",
     "unavailableDescription": "The specification workspace is not supported by Runtime yet or could not be loaded.",
     "notFoundTitle": "Specification not found",

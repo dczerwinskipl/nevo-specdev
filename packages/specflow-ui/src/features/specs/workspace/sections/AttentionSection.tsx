@@ -3,7 +3,7 @@ import type { SpecificationAttentionEntry } from '../../extensions/specification
 import { useTranslation } from 'react-i18next';
 
 export interface AttentionSectionProps {
-  readonly items: readonly SpecificationAttentionEntry[];
+  readonly items: readonly (SpecificationAttentionEntry & { readonly renderKey: string })[];
 }
 
 export function AttentionSection({ items }: AttentionSectionProps) {
@@ -36,10 +36,10 @@ export function AttentionSection({ items }: AttentionSectionProps) {
       </div>
 
       <div className="mt-3 divide-y divide-border-subtle">
-        {items.map(({ item, icon, action }) => {
+        {items.map(({ item, icon, action, renderKey }) => {
           return (
             <div
-              key={item.id}
+              key={renderKey}
               className="flex flex-col gap-3 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="flex items-start gap-2.5 min-w-0">

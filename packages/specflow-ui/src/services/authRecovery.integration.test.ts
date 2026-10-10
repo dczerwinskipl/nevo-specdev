@@ -281,6 +281,52 @@ describe('application-composed Runtime authentication recovery', () => {
     expect(events).toEqual([]);
   });
 
+  it('rejects a late HTTP response after trusted-local auth changes', async () => {
+    const localAuthenticated: AuthSessionResponse = {
+      ...authenticated,
+      authenticationRequired: false,
+      user: { id: 'local', name: 'Local' },
+    };
+    const pending = deferred<unknown>();
+    const nextSession = () => Promise.resolve(trustedLocal);
+    const { http, services, authStore } = setup(localAuthenticated, nextSession);
+    vi.spyOn(http, 'get').mockImplementation(() => pending.promise);
+    const request = services.taskApi.getTask('s', 'task-a');
+    const oldGeneration = authStore.sessionGeneration();
+
+    await authStore.refresh();
+    expect(authStore.sessionGeneration()).toBe(oldGeneration + 1);
+    pending.resolve({ task: { id: 'task-a', title: 'Former auth context' } });
+
+    await expect(request).rejects.toBeInstanceOf(AuthSessionSupersededError);
+  });
+
+  it('closes trusted-local SSE on auth changes without waiting for an event', async () => {
+    const localAuthenticated: AuthSessionResponse = {
+      ...authenticated,
+      authenticationRequired: false,
+      user: { id: 'local', name: 'Local' },
+    };
+    const pending = deferred<SseEvent>();
+    const nextSession = () => Promise.resolve(trustedLocal);
+    const { http, services, authStore } = setup(localAuthenticated, nextSession);
+    const close = vi.fn();
+    const source: SseStream<SseEvent> = {
+      close,
+      async *[Symbol.asyncIterator]() {
+        yield await pending.promise;
+      },
+    };
+    vi.spyOn(http, 'sse').mockImplementation(() => source);
+    const stream = createProtectedRuntimeHttpClient(http, services.authRecovery).sse('/api/events');
+    const next = stream[Symbol.asyncIterator]().next();
+
+    await authStore.refresh();
+    expect(close).toHaveBeenCalledOnce();
+    pending.resolve({ type: 'message', data: 'former-context-event' });
+    await expect(next).rejects.toBeInstanceOf(AuthSessionSupersededError);
+  });
+
   it('actively closes an idle SSE stream on logout, without needing a new event', async () => {
     const pending = deferred<SseEvent>();
     const { http, services, authStore } = setup();

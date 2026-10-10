@@ -14,12 +14,16 @@ export class AuthSessionSupersededError extends Error {
     this.name = 'AuthSessionSupersededError';
   }
 }
-function identity(session: AuthSessionResponse): string {
-  return session.authenticationRequired
-    ? session.authenticated
-      ? `user:${session.user.id}`
-      : 'unauthenticated'
-    : `trusted-local:${session.user?.id ?? 'local'}`;
+/**
+ * Canonical protected-data identity: cache invalidation and in-flight HTTP/SSE
+ * lifetimes must agree even when local mode toggles its authenticated state.
+ */
+export function authSessionIdentity(session: AuthSessionResponse): string {
+  const mode = session.authenticationRequired ? 'required' : 'trusted-local';
+  const principal = session.authenticated
+    ? `user:${session.user.id}`
+    : `anonymous:${session.user?.id ?? 'local'}`;
+  return `${mode}:${session.authenticated ? 'authenticated' : 'unauthenticated'}:${principal}`;
 }
 
 export interface AuthStore {
@@ -45,7 +49,7 @@ export function createAuthStore(api: AuthApi, initialSession?: AuthSessionRespon
   let explicitMutation = 0;
   let sessionEpoch = 0;
   // Preserve the last confirmed principal across transient loading/error states.
-  let confirmedIdentity = initialSession ? identity(initialSession) : undefined;
+  let confirmedIdentity = initialSession ? authSessionIdentity(initialSession) : undefined;
   const listeners = new Set<() => void>();
 
   const setState = (next: AuthStoreState) => {
@@ -54,7 +58,7 @@ export function createAuthStore(api: AuthApi, initialSession?: AuthSessionRespon
   };
 
   const confirmSession = (session: AuthSessionResponse, mutationAlreadyAdvanced = false) => {
-    const nextIdentity = identity(session);
+    const nextIdentity = authSessionIdentity(session);
     if (
       !mutationAlreadyAdvanced &&
       confirmedIdentity !== undefined &&

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { isHttpClientError } from '@nevo/http-client';
 
-import { useSpecFlowServices } from '../../services';
+import { useAppServices } from '../../app/useAppServices';
 import type { SpecificationApi } from './api';
 import { specificationKeys } from './queries';
 import { getHttpErrorStatus } from './httpErrorStatus';
@@ -25,7 +25,7 @@ export function useSpecificationWorkspace(
   specId: string,
   api?: SpecificationApi,
 ): UseSpecificationWorkspaceResult {
-  const services = useSpecFlowServices();
+  const services = useAppServices();
   const activeApi = api ?? services.specificationApi;
 
   const query = useQuery({

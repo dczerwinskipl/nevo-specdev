@@ -19,10 +19,14 @@ export interface SpecificationAttentionEntry {
   };
 }
 
+/** A data source can be healthy with no items, unavailable or intentionally excluded. */
+export type SpecificationAttentionResult =
+  | readonly SpecificationAttentionEntry[]
+  | { readonly state: 'unavailable' }
+  | { readonly state: 'excluded' };
+
 export interface SpecificationAttentionContribution extends UiContribution {
-  readonly getItems: (
-    context: SpecificationWorkSectionContext,
-  ) => readonly SpecificationAttentionEntry[];
+  readonly getItems: (context: SpecificationWorkSectionContext) => SpecificationAttentionResult;
 }
 
 export const specificationAttentionItems =
