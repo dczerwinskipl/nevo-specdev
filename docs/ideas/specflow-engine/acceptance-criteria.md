@@ -31,15 +31,15 @@ These are **candidate** gates, not adopted production contracts. An implementati
 
 | ID | Acceptance | Required evidence |
 | --- | --- | --- |
-| FA01 | Runtime stopped: separate CLI processes create/list/resolve a title-only Specification | C01, C04, H02 |
-| FA02 | CLI and authenticated HTTP call one application use case; production returns real data without fixture fallback | H01, H02, H04–H06, architecture/import check |
+| FA01 | Runtime stopped: separate CLI processes create/list/resolve a title-only Specification | C01, C04, C10; verify process runs with HTTP Runtime absent |
+| FA02 | CLI and authenticated HTTP call one application use case; production returns real data without fixture fallback **and sees offline mutations while Runtime remains running** | H01–H06, architecture/import check; H03 must warm read cache then refresh/re-read without restart, SSE optional |
 | FA03 | Git feature disabled rejects new worktree **before side effects**; ordinary supported Git-backed Spec create still works | C03 + negative-side-effect snapshot |
 | FA04 | Enabled Git creates one verified branch/worktree with untouched primary HEAD/files | C02, C06, C12 |
-| FA05 | Primary and linked checkout resolve identical Project Home/local config/registry; independent clone is separate | C10, C11, P01–P04 |
+| FA05 | Primary and linked checkout resolve identical Project Home/local config/registry; independent clone is separate; linked committed config cannot silently override home-owned policy | C10, C11, P01–P04, P06 |
 | FA06 | Registered spec has one canonical source; duplicate manifest doesn't duplicate row; missing binding/worktree is not silently read from main | C07–C09, P05 |
 | FA07 | Concurrent OS processes serialize spec/branch/registry reservation; no lost update or destructive rollback | L01, L02, L07 |
 | FA08 | Crash at each create stage can resume safely, or report actionable ambiguity, with no duplicate spec/worktree and stable idempotency | C05, R01–R05 |
-| FA09 | Versioned config/local state, path safety and HTTP permissions fail closed; no invented Runtime Session or shadow product state | H06, H08, C09, C12 |
+| FA09 | Versioned config/local state, path safety and HTTP permissions fail closed; portable Auth grants do not use workstation-local workspace IDs; no invented Runtime Session or shadow state | H06, H08, H10, C09, C12 |
 | FA10 | Known creation scaffold/dirty baseline is documented so later authoring admission need not treat Engine-created files as unknown changes | baseline evidence + design test SC01, not automatic workflow migration |
 | FA11 | One installed product CLI remains; Engine has no HTTP/provider/Commander dependency; Windows and POSIX critical Git/process tests run | build/import checks; platform result |
 | FA12 | Scope, tradeoffs and unsupported cases are recorded; PR #45 is preview only and all docs/index checks are valid | decision report; `pnpm docs:check` |
@@ -60,6 +60,7 @@ These are **candidate** gates, not adopted production contracts. An implementati
 | FB06 | External actor trust and human gate provenance are a documented owner decision; arbitrary owner/role/session string cannot self-approve | W09, AG01–AG03, security review |
 | FB07 | Dirty-state admission distinguishes known scaffold from unrelated edits without disabling required clean-tree gates | SC01, SC02 |
 | FB08 | No provider/HTTP dependency, import directions and cross-process replay evidence hold after Kernel integration | separate-process test run; dependency check |
+| FB09 | Workflow attempt is bound to the verified definition revision resolved from its execution workspace; changed HEAD/home/worktree definition cannot silently reinterpret the attempt | W10 + mismatch/recovery evidence |
 
 **Foundation B pass** means safe offline workflow coordination primitives exist; it does not certify Sessions or provider migrations.
 

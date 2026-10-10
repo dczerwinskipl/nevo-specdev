@@ -33,7 +33,7 @@ For each case capture: setup, command/API, machine-readable result, files/refs/r
 
 ## Layers and explicit gates
 
-**Foundation A** owns C01–C12, L01/L02/L07 (registry/control locks only), R01–R05, H01–H06/H08, P01–P05 and SC00 (known scaffold classification only). **Foundation B** owns L03–L06, W01–W09, H07, AG01–AG03 and SC01–SC02; it needs a real minimal workflow step, not a fake acceptance endpoint. **Sessions integration** owns R06, H09 and S01–S08. **Binding lifecycle** owns B01–B04 after managed execution; R07 belongs to later complete deterministic workflow migration. None of these are Foundation A preconditions. OS/platform evidence applies to all stages when implemented.
+**Foundation A** owns C01–C12, L01/L02/L07 (registry/control locks only), R01–R05, H01–H06/H08/H10, P01–P06 and SC00 (known scaffold classification only). **Foundation B** owns L03–L06, W01–W10, H07, AG01–AG03 and SC01–SC02; it needs a real minimal workflow step, not a fake acceptance endpoint. **Sessions integration** owns R06, H09 and S01–S08. **Binding lifecycle** owns B01–B04 after managed execution; R07 belongs to later complete deterministic workflow migration. None of these are Foundation A preconditions. OS/platform evidence applies to all stages when implemented.
 
 1. **Pure/domain:** validation, id/slug collision rules, read projections, location binding precedence, error taxonomy, transition/idempotency planning.
 2. **Filesystem+Git integration:** real `git init`, initial commit, `git worktree add/list/remove`, inspect membership, branch and dirty state.
@@ -67,6 +67,7 @@ For each case capture: setup, command/API, machine-readable result, files/refs/r
 | P03 | Explicit home locator points to unrelated Git common-dir | Rejected even with supplied absolute path |
 | P04 | Independent clone with same remote URL | Separate local state, no shared claim/registry |
 | P05 | Bound worktree unavailable but same-id manifest in primary | Unavailable source, no stale fallback |
+| P06 | Primary and linked checkout contain different committed project configuration | Runtime and CLI consistently use designated Project Home operational policy and local config; linked branch does not override Auth/Git policy |
 
 ## Initial creation baseline
 
@@ -108,6 +109,7 @@ For each case capture: setup, command/API, machine-readable result, files/refs/r
 | W07 | Proven terminal external execution, valid journal | Inspect then safe reconcile + CAS release; workspace unblocked |
 | W08 | Abandoned/unknown external writer | Actionable inspection, safe owner release or explicit escalation; no TTL/PID theft |
 | W09 | Wrong owner/role or agent-supplied human review | No forged human approval, even when valid claim exists |
+| W10 | Active attempt created under workflow definition v1; workspace definition later changes to v2 | Inspect/resume/finish uses pinned verified v1 evidence or blocks for explicit compatible migration; never silently adopts v2 or Project Home's HEAD |
 
 ## Operator identity and human approval policy
 
@@ -123,13 +125,14 @@ For each case capture: setup, command/API, machine-readable result, files/refs/r
 | --- | --- | --- |
 | H01 | Offline CLI create then start Runtime and GET Overview/Workspace | Same canonical spec, correct root |
 | H02 | HTTP create then stop Runtime and invoke CLI | Same manifest and registry visible |
-| H03 | CLI modifies spec while Runtime runs | Backend refresh/invalidation exposes change without restart |
+| H03 | CLI modifies spec while Runtime runs and a previous HTTP read populated cache | Subsequent supported HTTP refresh/re-read exposes updated canonical source without Runtime restart; on-demand refresh/invalidation suffices, SSE not required |
 | H04 | Missing production source | Honest 503/unavailable, never demo fallback |
 | H05 | Demo mode | No writes to production Git/registry |
 | H06 | Unauthorized create/worktree request | 401/403 as relevant, zero side effects |
 | H07 | External agent progresses Engine workflow | Workflow state visible, no fabricated managed Session |
 | H08 | Invalid file/document ID or target path escapes workspace | Rejected without path disclosure/read/write |
 | H09 | Scope-limited user accesses Session references in spec projection | Unauthorized Session data redacted/forbidden |
+| H10 | Committed Authorization policy names a workstation-local workspaceId as portable grant | Product/resource scope validation rejects unsupported nonportable grants; stable specId/project-level grant is resolved to current bound workspace at request time |
 
 ## Managed Sessions integration (later gate, mock provider)
 
@@ -171,8 +174,8 @@ Test reports should include OS, Git/Node versions, revision under test, per-ID P
 
 ## Exit criteria per stage
 
-- **Foundation A:** C01–C12, L01–L02/L07, R01–R05, H01–H06/H08, P01–P05 and SC00 all pass on the supported platforms; if a scenario is explicitly excluded from supported topology, owner records the exception and the related no-go limitation. **Do not require** L03–L06, H07, R06/R07 or full Workflow here.
-- **Foundation B:** L03–L06, W01–W09, H07, SC01–SC02 and AG01–AG03 pass (or owner explicitly approves a documented cooperative-only trust model where strong actor separation is not technically enforced). Demonstrate a **real minimal deterministic step**, not a stub coordinator API. H07 tests an external CLI workflow through Runtime read projections, not provider execution. No AI provider required.
+- **Foundation A:** C01–C12, L01–L02/L07, R01–R05, H01–H06/H08/H10, P01–P06 and SC00 all pass on the supported platforms; if a scenario is explicitly excluded from supported topology, owner records the exception and the related no-go limitation. **Do not require** L03–L06, H07, R06/R07 or full Workflow here.
+- **Foundation B:** L03–L06, W01–W10, H07, SC01–SC02 and AG01–AG03 pass (or owner explicitly approves a documented cooperative-only trust model where strong actor separation is not technically enforced). Demonstrate a **real minimal deterministic step**, not a stub coordinator API. H07 tests an external CLI workflow through Runtime read projections, not provider execution. No AI provider required.
 - **Sessions / Managed integration:** S01–S08, H09 and R06 pass with mock provider and actual Engine coordinator from B. **Later binding/finalization** owns B01–B04 and F01–F05; **later full deterministic workflow migration** owns R07. Their contracts must still be reviewed before the relevant API is frozen.
 
 A skipped critical required test is **not** success. Report actual PASS/FAIL/SKIP, per-stage counts, OS/Node/Git versions, fault injection checkpoints, artifact links and justified deferrals. See [staged acceptance](acceptance-criteria.md).

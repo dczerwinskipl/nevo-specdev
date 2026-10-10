@@ -47,6 +47,16 @@ Distinguish committed `.nevo/config.yaml` and workflow definitions (versioned po
 
 It is permissible to start the experiment with the primary checkout as Project Home, **provided** this dependency and failure mode are explicit. A later external per-clone state directory is an alternative if moving/deleting the primary home proves too brittle. Do not quietly store canonical Engine state inside Git internals.
 
+## Two configuration provenances: project policy versus workspace definitions
+
+Project Home is the **operational configuration authority** for one local project instance: validated committed `.nevo/config.yaml` from the designated home checkout, ignored `.nevo/local/config.yaml` from that home, and the central local registry/journal. This includes Runtime authentication/authorization and enabled Git capabilities, under the existing project-versus-local ownership rules. The same local project must not change those permissions because a CLI command started from a different linked checkout whose committed config happens to differ. Changes to operational policy need explicit validation/reload or a designated-home migration, not implicit last-checkout-wins.
+
+By contrast, committed workflow definitions (`.nevo/workflows/**`) and other **execution artifacts** should be selected from the *verified target execution workspace*, subject to the project-owned capability/policy boundary. A linked branch can legitimately contain a different workflow revision from the home checkout. **No Engine step may implicitly replace the definition of an active attempt with the definition at the Project Home's current HEAD**.
+
+At attempt activation, resolve the intended workspace version and persist a stable provenance reference (workspace identity, definition ID and relative path, schema/version, content digest or Git blob identity, and any required immutable snapshot/retention evidence). Inspect/resume/finish must use or verify that pinned definition. If the original content is unavailable, modified or incompatible, report a structured recovery/migration blocker; adopting v2 is a separate explicit validated transition. A Git commit hash alone is not sufficient when an uncommitted definition is allowed; decide whether uncommitted definitions are rejected or snapshot immutably. Portability of this evidence across clones is also a decision, not an assumed feature.
+
+The versioned definition may govern workflow behavior **but cannot alter Runtime user grants or elevate Engine actor permissions merely because it came from another checkout**. Keep operational policy provenance distinct from attempt definition provenance. Foundation A tests divergent project configs (P06); Foundation B tests pinned workflow revisions (W10).
+
 ## Moves, deletion and ambiguity
 
 | Condition | Candidate behavior |
@@ -71,6 +81,7 @@ Treat realpath/symlink substitution, junctions on Windows, linked checkout `.git
 - Broken/multiple home and independent-clone cases fail deterministically, without creating a second local registry or dropping locks.
 - `--project-root` is an explicit verified escape hatch, not an alternate project identity.
 - A missing home does not cause Runtime or CLI to present a phantom empty Spec list.
+- Divergent committed config in a linked branch does not implicitly replace home-owned Auth/Git operational policy (P06).
 - Git metadata path resolution and local config provenance are inspected at every mutating boundary.
 
-**Decision before implementation:** choose home marker/locator, move/recovery procedure and state directory retention, or narrow Foundation A's supported topology explicitly. See [decision register](decisions-and-promotion.md).
+**Decision before implementation:** choose home marker/locator and state directory retention, or narrow Foundation A's supported topology explicitly. **Foundation A must fail safely when Project Home was moved or deleted; a successful automated home relocation/repair workflow is explicitly deferred** until a separately scoped lifecycle/repair gate. Do not promise working relocation from P02's detection-only test. See [decision register](decisions-and-promotion.md).

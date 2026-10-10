@@ -66,6 +66,14 @@ Git's `git rev-parse --show-toplevel` alone returns the *current checkout*, not 
 
 Git shared metadata is useful for membership proofs but does not by itself define who owns SpecFlow's local state. Avoid writing private product state into Git internals without an explicit portability/ownership decision. Document what happens when the designated home checkout moves, is deleted, or is no longer checked out at `main`. Foundation A must implement and test one deterministic discovery strategy, with explicit repair/ambiguity outcomes. Neither `git worktree list` alone nor the presence of `.nevo/config.yaml` proves which checkout owns ignored local state. See [Project Home discovery](project-home-discovery.md).
 
+## Configuration and workflow-definition provenance
+
+Two checkout roots may contain different Git-tracked `.nevo/config.yaml` or `.nevo/workflows/**` files. Treat them differently: **operational project policy** (including Runtime Auth, Git enablement, and local configuration/secrets) comes from the one designated [Project Home](project-home-discovery.md); **versioned workflow definitions** for an execution come from the verified bound execution workspace, subject to project policy. Do not merge configuration arbitrarily across branches or permit a linked checkout to override project authorization.
+
+A real workflow attempt records the precise definition revision/content provenance resolved when it started. Later `inspect`, `resume` and `finish` may not silently adopt new workflow YAML because the home checkout HEAD moved or a linked branch changed. Missing/changed provenance blocks for explicit compatible migration/recovery, never a best-guess replacement. Initial proof: P06 in Foundation A for config ownership and W10 in Foundation B for definition pinning.
+
+A local `projectId` / `workspaceId` identifies the **local** coordination environment, not necessarily a portable security scope; [local actor and authorization policy](local-actor-and-human-gates.md) separates persisted grants from runtime-resolved paths.
+
 ## Path safety and isolation
 
 Resolve/canonicalize roots; verify parent boundaries, reserved destinations, symlinks, unexpected nested repositories, duplicate real paths and branch checkout constraints before creating or deleting. File API paths must be bounded to the resolved workspace and prohibit traversal via document IDs. A path's existence alone cannot authorize cleanup or serving its files.

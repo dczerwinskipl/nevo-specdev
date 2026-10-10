@@ -43,6 +43,8 @@ A process being alive does not automatically make its state canonical. Conversel
 | HTTP identity and scoped authorization | Runtime Auth | Config + request context | HTTP boundary only |
 | UI Query cache/Attention presentation | UI and Runtime projection | Derived/refreshable | Browser |
 
+**Source provenance is part of authority.** The Project Home's committed config plus ignored local config determines effective local operational/project policy; a linked checkout's alternate `.nevo/config.yaml` is not an implicit replacement. Versioned workflow definition content is selected from the actual execution workspace, and its exact revision is pinned to the Engine's workflow attempt. This is not a second mutable workflow-status store; see [Project Home provenance](project-home-discovery.md).
+
 Avoid persisting derived readiness, computed lane, live-process guesses or the same canonical state in competing mutable stores. A runtime cache may subscribe to changes but is never the owner.
 
 ## Split local storage without splitting identity

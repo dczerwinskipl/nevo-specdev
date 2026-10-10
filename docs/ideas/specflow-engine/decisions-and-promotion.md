@@ -64,8 +64,12 @@ These are intent/constraints, not approvals of every candidate code shape in thi
 | D21 | How are human approvals trusted if agent has local CLI/file access? | Distinguish cooperative OS account model versus authenticated human channel; AG01–AG03 |
 | D22 | What is the exact managed dispatch intent/unknown-outcome protocol? | Persist correlatable claim and invocation milestones; S02/S06 |
 | D23 | How is Engine-produced dirty scaffold admitted to authoring without global gate bypass? | SC00–SC02, owner decision on auto-commit versus declared baseline |
+| D24 | Which committed configuration is operational policy and which workflow revision is executed? | Project Home policy P06 (Foundation A); workspace-bound immutable attempt definition W10 (Foundation B), decide uncommitted snapshot support |
+| D25 | Which Authorization scope dimensions are portable across clones and which are local only? | Reject unsupported versioned workspaceId grants; validate canonical specId/project-level assignment via H10 |
+| D26 | How is Runtime read cache refreshed after an offline CLI mutation while the server stays up? | Required H03/FA02: cached read -> CLI mutation -> supported refresh/re-read; no SSE mandate |
+| D27 | Must Foundation A repair physically moved Project Home or only detect it safely? | A must detect and not initialize new state (P02); defer successful home relocation/repair to a separately approved lifecycle gate |
 
-**Do not silently decide D02, D07, D08, D09, D17 or D21 while implementing a happy-path create endpoint.** They determine actual correctness. The PoC may narrow its supported cases explicitly while demonstrating chosen behavior.
+**Do not silently decide D02, D07, D08, D09, D17, D21, D24 or D25 while implementing a happy-path create endpoint.** They determine actual correctness. The PoC may narrow its supported cases explicitly while demonstrating chosen behavior.
 
 ## Alternatives and why they are not the first approach
 

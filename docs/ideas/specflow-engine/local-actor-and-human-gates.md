@@ -53,6 +53,17 @@ A review outcome may be stored as a committed domain fact **only when** backed b
 
 For existing spec/task/session: resolve canonical Spec -> Workspace ownership through Engine then enforce authoritative HTTP capability/scope, not the caller-provided workspace ID. For creation before spec/workspace IDs exist: authorize project-level create + Git resource creation as appropriate; perform Engine admission separately. For viewing Session history, guard the Session itself and any referenced Spec/Task data against accidental disclosure in aggregated responses.
 
+## Portable authorization scope versus local Workspace identity
+
+Current `runtime.authorization` role assignments are **Git-tracked project policy**; local Authorization overrides are rejected. `workspaceId` is a workstation-local registry handle, and another clone may assign a different one to equivalent content. Do **not** serialize a grant tied to such a local ID in versioned project policy and assume that it travels safely.
+
+A proposed product authorization contract differentiates:
+- **Portable grant target:** project-level privileges and stable domain identities such as canonical `specId` (and a suitable stable Task reference when needed). A **local** `projectId` should not be written into portable grants without an explicitly stable cross-clone definition.
+- **Runtime target resolution:** Engine looks up `specId -> workspaceId -> verified physical root` and the HTTP adapter derives the *authorized domain resource*, rather than trusting a caller-provided workspace/path or granting by matching an arbitrary local `workspaceId`.
+- **Local operational constraints:** project/workspace writer claims and Git worktree creation checks are execution admission, not automatically new permission scopes. If local worktree-specific authorization is ever needed, design a separately governed local policy layer without bypassing the current rule that local files cannot override project-owned `runtime.authorization`.
+
+The generic `@nevo/authorization` `Scope` is a string-keyed equality map; it does **not** decide which dimensions are portable. Define and validate allowed dimensions at the product resource/assignment boundary, with explicit rejection of unsupported local `workspaceId` grants in committed policy for this model. For creating a Spec/worktree before its ID exists, authorize at the canonical project capability scope first; bind the new resource only after successful admission and create. See H10 in the [test plan](test-plan.md). Exact scope names remain a design decision.
+
 ## Recommended future commands
 
 Engine owns `inspect human gate` (read-only evidence/readiness) and `recordHumanDecision` with trusted actor context; CLI/HTTP provide suitable authorization and interaction. An external agent may request human review but cannot submit approval solely by claiming to be a human actor. Reconciliation cannot convert successful automated tests into a human decision.
