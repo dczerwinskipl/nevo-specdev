@@ -33,7 +33,7 @@ For each case capture: setup, command/API, machine-readable result, files/refs/r
 
 ## Layers and explicit gates
 
-**Foundation A** owns C01–C12, L01/L02/L07 (registry/control locks only), R01–R05, H01–H06/H08, P01–P05 and SC00 (known scaffold classification only). **Foundation B** owns L03–L06, W01–W09 and SC01–SC02; it needs a real minimal workflow step, not a fake acceptance endpoint. **Sessions integration** owns R06/R07, H07/H09 and S01–S08 plus rebind-specific tests B01–B04; they are not Foundation A preconditions. OS/platform evidence applies to all stages when implemented.
+**Foundation A** owns C01–C12, L01/L02/L07 (registry/control locks only), R01–R05, H01–H06/H08, P01–P05 and SC00 (known scaffold classification only). **Foundation B** owns L03–L06, W01–W09, H07, AG01–AG03 and SC01–SC02; it needs a real minimal workflow step, not a fake acceptance endpoint. **Sessions integration** owns R06, H09 and S01–S08. **Binding lifecycle** owns B01–B04 after managed execution; R07 belongs to later complete deterministic workflow migration. None of these are Foundation A preconditions. OS/platform evidence applies to all stages when implemented.
 
 1. **Pure/domain:** validation, id/slug collision rules, read projections, location binding precedence, error taxonomy, transition/idempotency planning.
 2. **Filesystem+Git integration:** real `git init`, initial commit, `git worktree add/list/remove`, inspect membership, branch and dirty state.
@@ -104,7 +104,7 @@ For each case capture: setup, command/API, machine-readable result, files/refs/r
 | W03 | Spec Writer scope with no taskId | Workspace writer claim allowed when effects require it |
 | W04 | Enforced read-only analysis | No writer claim; if write restriction unproven, fail conservative |
 | W05 | Claim survives command termination | Other competing writer blocked, different worktree may proceed |
-| W06 | Terminal Turn/release evidence (without provider) | Release does not finish active workflow attempt |
+| W06 | External execution settles/releases without a Runtime Turn | Release does not finish active workflow attempt |
 | W07 | Proven terminal external execution, valid journal | Inspect then safe reconcile + CAS release; workspace unblocked |
 | W08 | Abandoned/unknown external writer | Actionable inspection, safe owner release or explicit escalation; no TTL/PID theft |
 | W09 | Wrong owner/role or agent-supplied human review | No forged human approval, even when valid claim exists |
@@ -172,7 +172,7 @@ Test reports should include OS, Git/Node versions, revision under test, per-ID P
 ## Exit criteria per stage
 
 - **Foundation A:** C01–C12, L01–L02/L07, R01–R05, H01–H06/H08, P01–P05 and SC00 all pass on the supported platforms; if a scenario is explicitly excluded from supported topology, owner records the exception and the related no-go limitation. **Do not require** L03–L06, H07, R06/R07 or full Workflow here.
-- **Foundation B:** L03–L06, W01–W09, SC01–SC02 and AG01–AG03 pass (or owner explicitly approves a documented cooperative-only trust model where strong actor separation is not technically enforced). Demonstrate a **real minimal deterministic step**, not a stub coordinator API. No AI provider required.
-- **Sessions / Managed integration:** S01–S08, H07/H09 and R06/R07 pass with mock provider and actual Engine coordinator from B. B01–B04 and F01–F05 are later binding/finalization gates, but their contracts must be reviewed before API freeze.
+- **Foundation B:** L03–L06, W01–W09, H07, SC01–SC02 and AG01–AG03 pass (or owner explicitly approves a documented cooperative-only trust model where strong actor separation is not technically enforced). Demonstrate a **real minimal deterministic step**, not a stub coordinator API. H07 tests an external CLI workflow through Runtime read projections, not provider execution. No AI provider required.
+- **Sessions / Managed integration:** S01–S08, H09 and R06 pass with mock provider and actual Engine coordinator from B. **Later binding/finalization** owns B01–B04 and F01–F05; **later full deterministic workflow migration** owns R07. Their contracts must still be reviewed before the relevant API is frozen.
 
 A skipped critical required test is **not** success. Report actual PASS/FAIL/SKIP, per-stage counts, OS/Node/Git versions, fault injection checkpoints, artifact links and justified deferrals. See [staged acceptance](acceptance-criteria.md).

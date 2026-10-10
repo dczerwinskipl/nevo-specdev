@@ -57,7 +57,6 @@ These are intent/constraints, not approvals of every candidate code shape in thi
 | D14 | Is local filesystem-only coordination a documented constraint or do we need shared/network support? | Initial support only local supported filesystems; defer network/multi-host |
 | D15 | Where to run two-level lock coordination and what order? | Cross-process deadlock and crash scenarios |
 | D16 | Config namespace, default Git enablement and capability discovery API? | Product config provenance / local override policy review |
-
 | D17 | What proves Project Home after moved/deleted primary checkout or multiple config copies? | Exercise explicit verified locator, ambiguous/missing-home and repair cases in Foundation A |
 | D18 | How is canonical binding relocated/rebound after merge? | Verify destination manifest/content and CAS binding revision before cleanup; B01–B04 |
 | D19 | What is the stable product Session ID and new Turn workspace resolution policy? | Contract + S01/S07, reconcile current provisional ProviderSessionRef architecture |

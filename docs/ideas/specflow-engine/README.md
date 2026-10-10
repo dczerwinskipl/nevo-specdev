@@ -49,7 +49,7 @@ related:
 18. [Execution scopes and recovery](execution-scopes-and-recovery.md): read-only vs writing, claims, human-accessible reconcile.
 19. [Managed Sessions integration](managed-session-integration.md): stable product Session ID, Turn handshake, provider uncertainty, batch/handover.
 20. [Workspace binding lifecycle](workspace-binding-lifecycle.md): verified rebind after integration, move, cleanup, session history.
-21. [Local actors and human gates](local-actor-and-human-gates.md): OS/HTTP trust, actor provenance, signed/verified human decisions.
+21. [Local actors and human gates](local-actor-and-human-gates.md): OS/HTTP trust, actor provenance and limits of human decision verification.
 
 ## Staged experiments and independent acceptance gates
 
