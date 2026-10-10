@@ -18,6 +18,7 @@ related:
   - ideas.specflow-engine.workspace-registry
   - ideas.specflow-engine.project-workspace
   - ideas.specflow-engine.locking
+  - ideas.specflow-engine.workspace-binding-lifecycle
 ---
 
 # Optional per-Specification worktree
@@ -59,7 +60,7 @@ Spec ID resolves to bound worktree, independent of the caller's `cwd`. Git check
 
 ### Finalization boundary
 
-Do **not** reuse legacy `git checkout main` in the spec's linked worktree: a branch is typically checked out in one worktree only, and main may already be checked out elsewhere. Split workflow completion, integration/merge confirmation and worktree cleanup. Before removing a worktree, verify committed spec/archive outcome is represented in the intended destination branch, not only in the worktree that will disappear.
+Do **not** reuse legacy `git checkout main` in the spec's linked worktree: a branch is typically checked out in one worktree only, and main may already be checked out elsewhere. Split workflow completion, integration/merge confirmation and worktree cleanup. Before removing a worktree, verify committed spec/archive outcome is represented in the intended destination branch, not only in the worktree that will disappear. Then perform an explicit [canonical binding rebind](workspace-binding-lifecycle.md) **before** cleanup; a workflow completion or merged PR alone cannot redirect the registry.
 
 ### Cleanup conditions
 
@@ -75,7 +76,7 @@ If removal fails, keep registry/journal for repair and return an explicit reason
 
 ## Move/delete outside SpecFlow
 
-A manually moved worktree or deleted directory becomes unavailable/needs repair. Reattach only after matching Git membership and validated identity; do not guess based on basename or slug. `git worktree prune` and worktree removal metadata need careful handling. A worktree may continue to exist while its local product registry binding is invalid; report both independently.
+A manually moved worktree or deleted directory becomes unavailable/needs repair. Runtime must retain already authorized historical Session/Turn views; a new Turn resolves and checks the updated workspace before dispatch/native provider resume. Reattach only after matching Git membership and validated identity; do not guess based on basename or slug. `git worktree prune` and worktree removal metadata need careful handling. A worktree may continue to exist while its local product registry binding is invalid; report both independently.
 
 ## Alternatives rejected for MVP
 

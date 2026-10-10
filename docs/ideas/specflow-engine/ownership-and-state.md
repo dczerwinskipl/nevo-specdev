@@ -86,3 +86,9 @@ An HTTP user must pass Auth/authorization before invoking Engine. Local CLI deri
 ## Existing contract tension
 
 Current `docs/architecture/runtime/ownership-and-lifecycle.md` says Runtime owns local execution records; proposed split narrows that to Runtime's own live Sessions/Turns and associated recovery. `docs/architecture/workflow/deterministic-workflow.md` already requires transport-neutral application operations, but its trusted executor wording may need clarification for offline CLI. **Document the conflict, seek owner decision, then update normative text after PoC**.
+
+## Approval provenance and ownership reconciliation
+
+Do not equate the existence of a locally persisted `humanVerification` JSON record with an authenticated human decision. Human-gate evidence is per spec/task/step/attempt/gate and carries verifiable actor provenance under an adopted trust model. Under an unrestricted shared OS account, a CLI argument `--role owner` or workspace claim token is not strong proof of a human. Offline agents may request review but must not self-approve solely through their execution identity; see [local actors and human gates](local-actor-and-human-gates.md).
+
+**Runtime Session state and Engine workflow state may refer to the same execution without either owning the other.** Runtime owns dispatch, interactions and provider liveness; Engine owns physical workspace admission and workflow attempt state. Their correlation requires an explicit [managed execution handshake](managed-session-integration.md) and evidence-based [claim recovery](execution-scopes-and-recovery.md). Keep runtime transcript history readable when a workspace is moved/unavailable.

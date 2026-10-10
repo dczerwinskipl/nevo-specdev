@@ -73,3 +73,9 @@ If the UI create action is included in this vertical slice, integrate it with th
 - Unauthorized HTTP creation is rejected before any filesystem/Git side effect.
 - Demo mode cannot mutate production project state.
 - A multi-worktree change stream does not leak another user's unauthorized Session references.
+
+## Canonical resource scope and pre-creation authorization
+
+An HTTP client-supplied `workspaceId` or route `specId` is a selector, never a grant. Resolve authoritative Spec -> Workspace binding through Engine, then authorize with the canonical resource scope before returning protected data or performing a mutation. Avoid leaking details about unauthorized resources during resolve/errors. For **new** Specification/worktree creation there is no `workspaceId` yet: authorize at the established project-level scope plus any Git-worktree-create capability, then reserve/bind the new resource. A managed Session read additionally applies Session ownership/scope and redacts unauthorized Task associations. See [binding lifecycle](workspace-binding-lifecycle.md) and [local actors](local-actor-and-human-gates.md).
+
+A later managed Turn must resolve the **current** workspace root immediately before provider dispatch/resume. Do not use a provider instance with a constructor-time global `cwd`. Missing/moved worktree blocks new writes but leaves authorized Session history readable; see [managed Sessions](managed-session-integration.md).

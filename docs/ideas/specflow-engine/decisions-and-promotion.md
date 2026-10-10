@@ -18,6 +18,9 @@ related:
   - ideas.specflow-engine.ownership
   - ideas.specflow-engine.test-plan
   - ideas.specflow-engine.acceptance
+  - ideas.specflow-engine.managed-session-integration
+  - ideas.specflow-engine.project-home
+  - ideas.specflow-engine.local-actors
 ---
 
 # Decisions, alternatives and documentation freeze
@@ -55,7 +58,15 @@ These are intent/constraints, not approvals of every candidate code shape in thi
 | D15 | Where to run two-level lock coordination and what order? | Cross-process deadlock and crash scenarios |
 | D16 | Config namespace, default Git enablement and capability discovery API? | Product config provenance / local override policy review |
 
-**Do not silently decide D02, D07, D08 or D09 while implementing a happy-path create endpoint.** They determine actual correctness. The PoC may narrow its supported cases explicitly while demonstrating chosen behavior.
+| D17 | What proves Project Home after moved/deleted primary checkout or multiple config copies? | Exercise explicit verified locator, ambiguous/missing-home and repair cases in Foundation A |
+| D18 | How is canonical binding relocated/rebound after merge? | Verify destination manifest/content and CAS binding revision before cleanup; B01–B04 |
+| D19 | What is the stable product Session ID and new Turn workspace resolution policy? | Contract + S01/S07, reconcile current provisional ProviderSessionRef architecture |
+| D20 | Does read-only provider transport actually prevent writes? | Derive effect scope from enforced capabilities, not 'readOnly' request flag |
+| D21 | How are human approvals trusted if agent has local CLI/file access? | Distinguish cooperative OS account model versus authenticated human channel; AG01–AG03 |
+| D22 | What is the exact managed dispatch intent/unknown-outcome protocol? | Persist correlatable claim and invocation milestones; S02/S06 |
+| D23 | How is Engine-produced dirty scaffold admitted to authoring without global gate bypass? | SC00–SC02, owner decision on auto-commit versus declared baseline |
+
+**Do not silently decide D02, D07, D08, D09, D17 or D21 while implementing a happy-path create endpoint.** They determine actual correctness. The PoC may narrow its supported cases explicitly while demonstrating chosen behavior.
 
 ## Alternatives and why they are not the first approach
 
@@ -69,6 +80,16 @@ These are intent/constraints, not approvals of every candidate code shape in thi
 - **Everything in a single YAML config:** confuses human policy with machine-managed journal/registry, complicates safe mutation.
 - **Mirror every spec manifest into central state:** creates competing sources of truth with divergent branches.
 - **Package per small concern:** unnecessary boundaries; verify one Engine source boundary before splitting further.
+
+## Staged release and independent evidence
+
+- **Foundation A:** prove Project Home/config/registry, real Specs create, optional worktree, HTTP/CLI parity, journal and process-safe create/registry locks. No fake workflow admission endpoint.
+- **Foundation B:** prove one real deterministic start/finish, non-Task authoring writer, read-only execution, explicit claim inspect/reconcile/release and safe escalation. External CLI remains usable without Runtime.
+- **Sessions Foundation:** stable Session/Turn/Work persistence, HTTP and mock provider; works ad hoc without workflow.
+- **Managed Integration:** Runtime Turn coordinator calls Engine admission with resolved current workspace and persists invocation intent; staged crash/unknown-outcome and Task batch/handover tests.
+- **Legacy migration:** provider adapters and remaining deterministic workflow steps, reviews and Git actions can evolve in parallel after handshake approval; finalization/rebind/cleanup remains separate.
+
+See [managed Sessions](managed-session-integration.md), [recovery scopes](execution-scopes-and-recovery.md), [binding lifecycle](workspace-binding-lifecycle.md) and [human gates](local-actor-and-human-gates.md).
 
 ## Implementation-to-decision pipeline
 

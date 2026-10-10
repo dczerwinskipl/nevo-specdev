@@ -85,3 +85,9 @@ Feature operations own their own validation, state transitions and persistence p
 - No mutation algorithm duplicated in endpoint and command adapters.
 - One npm product install remains supported. Private source package count is not a public API.
 - A file lock/admission conflict is reported consistently in HTTP and CLI; neither bypasses a shared gate.
+
+## Explicit managed Sessions seam
+
+The shared Engine is not a substitute for Runtime's canonical Session/Turn/Work lifecycle. Managed Turns derive their **effect scope** before dispatch, optionally acquire an Engine workspace writer claim, and persist an invocation intent so crashes between provider launch and native-session correlation cannot trigger blind replay. Terminal Turns do **not** automatically finish workflow steps. Read-only or ad-hoc Turns need no Task and no writer claim when their write restrictions are actually enforced. See [managed Sessions handshake](managed-session-integration.md) and [execution scopes](execution-scopes-and-recovery.md).
+
+The Engine's mutation/admission API should receive a trusted execution context from its calling adapter; it must not accept unauthenticated `sessionId`/role claims as authority. Local CLI human sign-off has its own [trust boundary](local-actor-and-human-gates.md).

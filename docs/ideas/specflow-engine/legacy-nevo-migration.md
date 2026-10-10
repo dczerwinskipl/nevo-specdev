@@ -83,3 +83,13 @@ Old `tools/specs.mjs` and `tools/specs/agent-session.mjs` directly import `tools
 ## Explicit deferred work
 
 Full Task Planner, provider parity, batch protocol, PR merge and archived lifecycle, application-level batching/caching optimization, distributed/multi-host filesystem, multi-project selection and externally attached provider Sessions are follow-on tasks. Preserve their constraints here, but do not block the narrow creation proof with full feature delivery.
+
+## Per-module disposition and sequencing gate
+
+Before porting any module, label its disposition: **port** (semantics preserved), **refactor** (boundary/persistence changed), **replace** (new implementation), **delete** (unsupported legacy mode/queue), or **defer** (not part of current slice). Record owner, source revision, target capability and regression proof per row. The initial table is an **inspection routing map**, not an instruction to copy every file.
+
+**Gates:** Foundation A proves Specs/Workspace/Git and offline CLI. Foundation B proves actual workflow start/finish/claim recovery against an external process. Sessions Foundation can implement Session/Turn persistence and mock provider with no workflow. Managed integration then proves Runtime ↔ Engine dispatch handshake and crash settlement; provider adapters and remaining deterministic workflow features migrate incrementally afterward. Do not make all Sessions wait for full workflow migration, but do not test managed coordination only with a fake Engine.
+
+The legacy `ai/orchestration/admission.mjs` is split by authority: Engine owns physical-workspace claims/readiness; Runtime owns Session/Turn dispatch. Preserve staged invocation intent and unknown-outcome semantics; do not copy the giant AgentSessionService unchanged. One Session can execute an explicit Task batch sequentially, and handover requires an explicit new execution intent; neither automatically advances workflow or spawns an unrequested reviewer.
+
+Legacy human-verification file records are **not** automatically strong human identity proof. Review local actor trust before porting `workflow verify-human --confirm`; see [human gates](local-actor-and-human-gates.md). Worktree cleanup requires verified binding [rebind](workspace-binding-lifecycle.md), not legacy `git checkout main`.

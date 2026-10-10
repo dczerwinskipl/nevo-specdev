@@ -18,6 +18,9 @@ related:
   - ideas.specflow-engine.locking
   - ideas.specflow-engine.recovery
   - ideas.specflow-engine.acceptance
+  - ideas.specflow-engine.managed-session-integration
+  - ideas.specflow-engine.execution-scopes
+  - ideas.specflow-engine.project-home
 ---
 
 # Test plan
@@ -28,7 +31,9 @@ A passing mock repository/DI unit test **does not** prove actual Git worktree be
 
 For each case capture: setup, command/API, machine-readable result, files/refs/registry state, side-effect count, and cleanup verification. Failure tests must establish *absence* of unintended effects.
 
-## Layers
+## Layers and explicit gates
+
+**Foundation A** owns C01–C12, L01/L02/L07 (registry/control locks only), R01–R05, H01–H06/H08, P01–P05 and SC00 (known scaffold classification only). **Foundation B** owns L03–L06, W01–W09 and SC01–SC02; it needs a real minimal workflow step, not a fake acceptance endpoint. **Sessions integration** owns R06/R07, H07/H09 and S01–S08 plus rebind-specific tests B01–B04; they are not Foundation A preconditions. OS/platform evidence applies to all stages when implemented.
 
 1. **Pure/domain:** validation, id/slug collision rules, read projections, location binding precedence, error taxonomy, transition/idempotency planning.
 2. **Filesystem+Git integration:** real `git init`, initial commit, `git worktree add/list/remove`, inspect membership, branch and dirty state.
@@ -53,6 +58,24 @@ For each case capture: setup, command/API, machine-readable result, files/refs/r
 | C11 | Another clone shares remote URL | Not implicitly adopted into same local project |
 | C12 | Space/non-ASCII paths, branch exists, symlink substitution | Correct handling/explicit conflict; no wrong directory mutation |
 
+## Project Home and binding provenance (Foundation A)
+
+| ID | Scenario | Expected |
+| --- | --- | --- |
+| P01 | CLI from primary and registered linked checkout | Same projectId, registry/state/config owner, distinct workspace IDs |
+| P02 | Two home markers or home missing | Explicit ambiguity/unavailable, no empty-project reinitialization |
+| P03 | Explicit home locator points to unrelated Git common-dir | Rejected even with supplied absolute path |
+| P04 | Independent clone with same remote URL | Separate local state, no shared claim/registry |
+| P05 | Bound worktree unavailable but same-id manifest in primary | Unavailable source, no stale fallback |
+
+## Initial creation baseline
+
+| ID | Stage | Scenario | Expected |
+| --- | --- | --- | --- |
+| SC00 | A | Create scaffold, persist provenance | Machine-readable known files/fingerprint; unknown dirty state not automatically trusted |
+| SC01 | B | Start spec authoring immediately after create | Known Engine scaffold can be admitted for writing under action policy |
+| SC02 | B | Unrelated dirty edits or clean-tree gate | Correct explicit blocker/remediation; no global dirty bypass |
+
 ## Concurrency and crash matrix
 
 | ID | Scenario | Expected |
@@ -72,6 +95,28 @@ For each case capture: setup, command/API, machine-readable result, files/refs/r
 | R06 | Runtime shutdown during managed operation | Own resource settles; external claims not confiscated |
 | R07 | Process restarts with an interrupted workflow finish (later migration) | No duplicated stage or attempt |
 
+## Minimal real workflow and claim recovery (Foundation B)
+
+| ID | Scenario | Expected |
+| --- | --- | --- |
+| W01 | Separate CLI starts actual simple deterministic workflow with Runtime stopped | Real attempt identity, not mock or Session |
+| W02 | Separate CLI finishes same step | Explicit transition/evidence, no implicit next start |
+| W03 | Spec Writer scope with no taskId | Workspace writer claim allowed when effects require it |
+| W04 | Enforced read-only analysis | No writer claim; if write restriction unproven, fail conservative |
+| W05 | Claim survives command termination | Other competing writer blocked, different worktree may proceed |
+| W06 | Terminal Turn/release evidence (without provider) | Release does not finish active workflow attempt |
+| W07 | Proven terminal external execution, valid journal | Inspect then safe reconcile + CAS release; workspace unblocked |
+| W08 | Abandoned/unknown external writer | Actionable inspection, safe owner release or explicit escalation; no TTL/PID theft |
+| W09 | Wrong owner/role or agent-supplied human review | No forged human approval, even when valid claim exists |
+
+## Operator identity and human approval policy
+
+| ID | Scenario | Expected |
+| --- | --- | --- |
+| AG01 | Agent uses CLI human confirmation without independent trusted actor | No privileged approval under secure policy |
+| AG02 | Human gate evidence from previous attempt or another task/gate | Rejected; no evidence bleed |
+| AG03 | Shared OS-account agent with full file access | Threat model explicitly states advisory—not adversarial—security; no false guarantee |
+
 ## HTTP/observability and security
 
 | ID | Scenario | Expected |
@@ -85,6 +130,28 @@ For each case capture: setup, command/API, machine-readable result, files/refs/r
 | H07 | External agent progresses Engine workflow | Workflow state visible, no fabricated managed Session |
 | H08 | Invalid file/document ID or target path escapes workspace | Rejected without path disclosure/read/write |
 | H09 | Scope-limited user accesses Session references in spec projection | Unauthorized Session data redacted/forbidden |
+
+## Managed Sessions integration (later gate, mock provider)
+
+| ID | Scenario | Expected |
+| --- | --- | --- |
+| S01 | Standalone managed Session/Turn without Task workflow | Stable product sessionId, read-only mode needs no writer, history reload-equivalent |
+| S02 | Managed writable Turn performing one Engine Task step | Current resolved cwd, writer claim + persisted invocation intent, deterministic release |
+| S03 | Turn settles terminal before explicit workflow finish | Task stays unfinished, no automatic reviewer Session |
+| S04 | One Session performs explicit Task batch sequentially | Per-Task attempt identity and current execution scope, no historical binding ambiguity |
+| S05 | Handover creates successor Session | Explicit lineage/context; no silent claim transfer/step advance |
+| S06 | Crash at prepared, dispatching, spawned-but-not-correlated, started | No duplicate dispatch under uncertain outcome; positive evidence for safe replay only |
+| S07 | Workspace root moved/rebound/missing then new Turn resumes | Revalidate binding/current cwd/native compatibility; preserve readable history |
+| S08 | Limited HTTP actor reads Session/Task/Specs projections | Scoped redaction/403/404 without cross-resource leakage |
+
+## Binding change and cleanup (later gate)
+
+| ID | Scenario | Expected |
+| --- | --- | --- |
+| B01 | Merge content into destination, rebind canonical source | Destination verified, CAS binding generation, one canonical spec |
+| B02 | Merge claimed but destination files stale | Explicit rebind conflict, no cleanup |
+| B03 | Active Turn or unresolved writer during rebind | Operation blocked/reconciled; history unaffected |
+| B04 | Worktree manually removed/moved then reattach | Verify Git membership and identity; no guessed main fallback |
 
 ## Finalization/cleanup probes (later slice, design must accommodate)
 
@@ -102,8 +169,10 @@ No concrete command names are prescribed until tests exist. Proposed categories:
 
 Test reports should include OS, Git/Node versions, revision under test, per-ID PASS/FAIL/SKIP, reason for every skip and physical fixture cleanup result. Do not claim acceptance if required L/R/H tests are skipped.
 
-## Exit criterion
+## Exit criteria per stage
 
-All **foundation** tests C01–C12, L01–L07, R01–R06, H01–H08 must pass on the agreed supported OSes, with any scope exception explicitly approved. H09 and F01–F05 may be deferred only if their security/cleanup behavior is not exposed by the PoC. Later workflow R07 must pass before claiming workflow migration readiness.
+- **Foundation A:** C01–C12, L01–L02/L07, R01–R05, H01–H06/H08, P01–P05 and SC00 all pass on the supported platforms; if a scenario is explicitly excluded from supported topology, owner records the exception and the related no-go limitation. **Do not require** L03–L06, H07, R06/R07 or full Workflow here.
+- **Foundation B:** L03–L06, W01–W09, SC01–SC02 and AG01–AG03 pass (or owner explicitly approves a documented cooperative-only trust model where strong actor separation is not technically enforced). Demonstrate a **real minimal deterministic step**, not a stub coordinator API. No AI provider required.
+- **Sessions / Managed integration:** S01–S08, H07/H09 and R06/R07 pass with mock provider and actual Engine coordinator from B. B01–B04 and F01–F05 are later binding/finalization gates, but their contracts must be reviewed before API freeze.
 
-Use [acceptance criteria](acceptance-criteria.md) for human-readable review gate and definition of done.
+A skipped critical required test is **not** success. Report actual PASS/FAIL/SKIP, per-stage counts, OS/Node/Git versions, fault injection checkpoints, artifact links and justified deferrals. See [staged acceptance](acceptance-criteria.md).

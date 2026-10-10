@@ -16,6 +16,8 @@ related:
   - ideas.specflow-engine
   - ideas.specflow-engine.boundaries
   - ideas.specflow-engine.workspace-registry
+  - ideas.specflow-engine.project-home
+  - ideas.specflow-engine.workspace-binding-lifecycle
   - architecture.runtime.configuration
 ---
 
@@ -54,7 +56,7 @@ Avoid injecting this entire object into every small function. Resolve once at th
 
 1. Resolve real absolute filesystem path and nearest Git checkout root where Git is in use. Distinguish primary checkout, linked checkout and bare repository.
 2. Inspect Git's common-dir/worktree metadata via Git commands, not by concatenating `.git/` assumptions. Linked checkout `.git` is often a file.
-3. Locate the validated configured SpecFlow project/home for that Git repository. The exact bootstrap mechanism is **undecided**: enumerate linked worktrees and confirm one designated home, or an explicit `--project`/environment-assisted locator with validation; a local non-Git discovery mode is deferred.
+3. Locate exactly one designated SpecFlow Project Home via the candidate explicit locator/validated Git worktree enumeration algorithm in [Project Home discovery](project-home-discovery.md). The marker format and state-home relocation procedure remain decisions; do not use branch names or current checkout as implicit authority.
 4. Resolve the central local registry and `workspaceId`; ensure recorded roots still refer to the same Git repository, not a symlink/substitution to an unrelated location.
 5. Fail clearly when zero or multiple candidate homes exist. Never silently treat an arbitrary linked checkout as a second independent project.
 
@@ -62,7 +64,7 @@ Git's `git rev-parse --show-toplevel` alone returns the *current checkout*, not 
 
 ## Open design: home discovery and moves
 
-Git shared metadata is useful for membership proofs but does not by itself define who owns SpecFlow's local state. Avoid writing private product state into Git internals without an explicit portability/ownership decision. Document what happens when the designated home checkout moves, is deleted, or is no longer checked out at `main`. A robust PoC must choose one tested strategy; do not claim this is solved by `git worktree list` alone.
+Git shared metadata is useful for membership proofs but does not by itself define who owns SpecFlow's local state. Avoid writing private product state into Git internals without an explicit portability/ownership decision. Document what happens when the designated home checkout moves, is deleted, or is no longer checked out at `main`. Foundation A must implement and test one deterministic discovery strategy, with explicit repair/ambiguity outcomes. Neither `git worktree list` alone nor the presence of `.nevo/config.yaml` proves which checkout owns ignored local state. See [Project Home discovery](project-home-discovery.md).
 
 ## Path safety and isolation
 
@@ -78,4 +80,4 @@ State authority and cache location are separate. Candidate: a central registry/j
 - Distinguish another independent clone from a registered checkout.
 - Reject relative/path collisions and escaped/symlinked destinations.
 - Move or remove a worktree: report repairable state without selecting an unrelated checkout.
-- Relocation policy must explicitly account for native-provider Session compatibility before reusing a managed session.
+- Relocation policy must explicitly account for native-provider Session compatibility before reusing a managed session; [binding lifecycle](workspace-binding-lifecycle.md) owns rebind/move protocol.

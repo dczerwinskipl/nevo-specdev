@@ -81,3 +81,9 @@ HTTP authorization answers **may this user request an operation**. Engine admiss
 ## Test requirement
 
 Use **separate OS processes**, not just Promise concurrency or an in-memory fake. Inject crash between lock and journal stages. Assert that no conflicting operation enters critical mutation region and that machine-readable blockers are stable across adapters.
+
+## Recovery is an operation, not only a blocker
+
+A long-lived claim must expose actionable `inspect`, `reconcile`, owner-verified `release`, and authorization-gated intervention. Inspect lists verified scope, operation, last observed evidence, and whether the original writer may still execute. Reconcile uses positive evidence of settlement, replayable stage checkpoints and compare-and-set under a short control lock. Only after provable settlement may ownership be released automatically; an ambiguous external writer remains blocked with explicit safe options. Merely expiring a TTL, losing the last CLI PID or observing no heartbeat does **not** revoke OS-level write capability. See [execution scopes](execution-scopes-and-recovery.md).
+
+The admission target need not have a Task. Spec authoring and editing can hold a workspace claim, while enforced read-only provider work need not. A Git worktree add or rebind has separate repository-scoped coordination even when unrelated worktrees are independently writable. Foundation A tests registry/worktree create races; Foundation B tests the **actual** minimal workflow attempt and writer lease against independent CLI processes. Do not fake a workflow step just to make Foundation A pass.

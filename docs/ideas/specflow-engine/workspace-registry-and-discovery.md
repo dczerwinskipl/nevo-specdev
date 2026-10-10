@@ -17,6 +17,8 @@ related:
   - ideas.specflow-engine.project-workspace
   - ideas.specflow-engine.worktrees
   - ideas.specflow-engine.recovery
+  - ideas.specflow-engine.project-home
+  - ideas.specflow-engine.workspace-binding-lifecycle
 ---
 
 # Workspace registry and Specification discovery
@@ -52,7 +54,7 @@ Proposed machine-owned ignored file under project home: `.nevo/local/state/works
 }
 ```
 
-This is a **shape example** rather than an approved schema. In particular, decide whether primary workspace is explicitly stored and how local `projectId` is generated. Paths should be resolved relative to one well-defined home and verified with Git before use; stale paths cannot be trusted as commands.
+This is a **shape example** rather than an approved schema. In particular, decide whether primary workspace is explicitly stored and how local `projectId` is generated. Paths should be resolved relative to one [verified Project Home](project-home-discovery.md) and verified with Git before use; stale paths cannot be trusted as commands. The registry needs a monotonic binding revision/generation for compare-and-set rebinds.
 
 ## List algorithm
 
@@ -68,7 +70,7 @@ Do not choose whichever manifest is newest by timestamp, status or file modifica
 
 ## Missing workspace semantics
 
-When bound root disappears, keep the binding and report a distinguishable `workspace_unavailable` state, with repair/removal options. Do **not** fall back to a stale same-ID copy in the primary checkout. Do not auto-delete specs from Overview. A truly non-existent manifest in a verified workspace is different from a missing workspace; preserve that distinction.
+When bound root disappears, keep the binding and report a distinguishable `workspace_unavailable` state, with repair/removal options. A missing Project Home is a *different* error from a missing linked workspace. Do **not** fall back to a stale same-ID copy in the primary checkout. Do not auto-delete specs from Overview. A truly non-existent manifest in a verified workspace is different from a missing workspace; preserve that distinction.
 
 Runtime may cache or subscribe to filesystem changes, but must refresh/regenerate snapshots when files change from an offline CLI or external editor. Polling/index revision can supplement watchers; watcher events are hints, not authority.
 
@@ -80,6 +82,10 @@ Runtime may cache or subscribe to filesystem changes, but must refresh/regenerat
 - Persist durable operation intent so register-after-create can be recovered.
 - Local registry may be recreated from evidence only with explicit reconstruction and collision review; avoid pretending Git object store itself remembers workstation decisions.
 - A portable clone on another machine can legitimately have its own registry and different worktree layout; its Git manifest identities remain the same.
+
+## Rebinding after integration
+
+The spec binding is not permanent. After changes are safely integrated into the destination branch and **actually present** in its checkout, an explicit durable [rebind operation](workspace-binding-lifecycle.md) can atomically change canonical `specId -> workspaceId` after verifying identity, integration evidence, active claims and Runtime Turn ownership. Reads thereafter follow the new binding. Cleanup is separate and may not delete a still-bound worktree. Do not infer rebind from PR merged status alone.
 
 ## Index and query performance
 

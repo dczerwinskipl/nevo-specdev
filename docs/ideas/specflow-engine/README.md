@@ -45,10 +45,21 @@ related:
 14. [Test plan](test-plan.md): actual Git repositories, CLI + server, concurrency and failure injection.
 15. [Acceptance criteria](acceptance-criteria.md): independent, measurable release gates.
 16. [Open decisions and promotion](decisions-and-promotion.md): alternatives, assumptions, ADR freeze procedure.
+17. [Project Home discovery](project-home-discovery.md): one local state/config owner from primary or linked checkout.
+18. [Execution scopes and recovery](execution-scopes-and-recovery.md): read-only vs writing, claims, human-accessible reconcile.
+19. [Managed Sessions integration](managed-session-integration.md): stable product Session ID, Turn handshake, provider uncertainty, batch/handover.
+20. [Workspace binding lifecycle](workspace-binding-lifecycle.md): verified rebind after integration, move, cleanup, session history.
+21. [Local actors and human gates](local-actor-and-human-gates.md): OS/HTTP trust, actor provenance, signed/verified human decisions.
 
-## Proposed first experiment
+## Staged experiments and independent acceptance gates
 
-Implement one small vertical slice **on a branch based on current `main` at execution time**, using #45 only to review design direction. Create a Specification with only a title, optionally provision an isolated Git worktree when the Git capability is enabled, discover it from either checkout, read it through actual Runtime HTTP, and use CLI without a running Runtime. Include a minimal cross-process conflict test; **do not** migrate providers, entire workflow engine, task lifecycle, PR finalization, or UI composition for this experiment.
+Use the freshest `main` at implementation time; #45 is **preview only** and does not become the base by reference. Distinguish these three proof levels:
+
+1. **Foundation A — Specs and Workspace:** resolve Project Home from primary/linked checkout, create Specification from title, optionally create a verified Git worktree, persist registry/journal, prove offline CLI/real HTTP parity, idempotent crash recovery and cross-process **create/registry serialization**. Do not fake a workflow step merely to exercise creation locks.
+2. **Foundation B — Execution Coordinator + minimal real Workflow Kernel:** one representative deterministic step with actual admission, claims, inspect/reconcile/release and external CLI work without Runtime. No AI provider needed. This is a separate gate for workflow-migration readiness, not Foundation A's hidden prerequisite.
+3. **Sessions integration gate — Runtime-managed execution:** build Session/Turn/Work and mock provider without workflow, then prove managed dispatch handshake, current workspace resolution, optional writer admission, crash/replay, batch/handover and scope authorization. Actual provider migration is later.
+
+A and B establish Engine foundations; Sessions may be developed against the **documented handshake** without waiting for full workflow migration. See [test plan](test-plan.md), [acceptance criteria](acceptance-criteria.md), [managed integration](managed-session-integration.md) and [open decisions](decisions-and-promotion.md). **Do not** migrate all providers, the old queue system, full finalize or broad UI composition during Foundation A.
 
 ## Non-goals and constraints
 

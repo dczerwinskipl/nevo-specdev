@@ -93,3 +93,13 @@ CLI stdout for machine JSON; diagnostics on stderr; stable nonzero exit codes fo
 - Wrong owner handle cannot finish/release another execution.
 - Expired/unknown claim is not automatically overwritten if durable operation ambiguity remains.
 - Managed Runtime provider turnover does not reset workflow attempt.
+
+## End-to-end effect scope, not mandatory workflow
+
+External CLI work may start as spec authoring before any Task exists. A writer claim covers a verified physical workspace and its intended effects, not a Task or Session lifecycle. Truly enforced read-only analysis does not require an exclusive writer. A new managed Runtime Turn follows the **same Engine admission contract** when it can write but remains a distinct Session/Turn lifecycle; see [execution scopes and recovery](execution-scopes-and-recovery.md) and [managed Sessions](managed-session-integration.md).
+
+## Unblocking abandoned work
+
+`recovery-required` is a diagnosis with an actionable remediation path, not a terminal workflow status. The proposed protocol separates read-only `inspect`, deterministic evidence-based `reconcile`, owner-scoped `release`, and separately authorized operator intervention with explicit limits on stale/unknown writer fencing. Missing heartbeat or a dead short-lived CLI PID is insufficient evidence of safe takeover. An unsupervised external agent with raw filesystem write access cannot be physically stopped by revoking a JSON claim; see [recovery contract](execution-scopes-and-recovery.md).
+
+Human approval cannot be issued by claiming agent role/operator identity in an arbitrary CLI parameter. That separate trust question belongs to [local actors and human gates](local-actor-and-human-gates.md).

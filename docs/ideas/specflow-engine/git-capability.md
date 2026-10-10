@@ -82,3 +82,9 @@ Removal uses a managed-worktree record **plus** validation of current Git member
 ## Tests
 
 Use real local Git repos and worktrees. Test space-containing paths, branch checkout conflicts, race on same branch, invalid base, missing executable, disabled capability, symlink escape, branch names with special characters, and stop/retry after process interruption.
+
+## Shared Git versus workspace coordination
+
+Git worktrees have distinct working files and indexes, but share references and object storage. A workspace-specific claim does not serialize cross-worktree branch creation, deletion or `rebind`. Reserve branch/path under project/Git-repository coordination, journal multi-stage operations, and validate actual target checkout membership; do not hold a global lock while awaiting provider work.
+
+After merge/finalize, changing the authoritative spec's checkout is a separate [binding lifecycle](workspace-binding-lifecycle.md) operation: prove content is present in destination and use compare-and-set before optional cleanup. The feature's capability switch and HTTP project-level permission are separate: presence of `git` executable or a Git-backed init does not authorize worktree creation.

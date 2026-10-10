@@ -88,3 +88,9 @@ If an operation has created a managed worktree and fails later, automatic rollba
 ## Verification
 
 Kill subprocess at each stage and start **a fresh process** to recover. Assert no duplicate Spec/branch/worktree, no lost registry update, same canonical result for same operation ID, structured conflict if filesystem diverges, and no requirement to start the HTTP Runtime. See [test plan](test-plan.md).
+
+## Two independent recovery authorities
+
+Creation/rebind/workflow operations use Engine-owned durable journals. Runtime-managed provider invocation needs a **separate** durable dispatch intent and Turn lifecycle; the Engine claim and Runtime invocation may correlate, but neither journal replaces the other. If Runtime crashes after provider spawn and before correlation is stored, provider work is **unknown** and automatic replay is unsafe. Runtime may settle its Turn while Engine workflow remains unfinished; claim release requires its own proof. See [managed execution integration](managed-session-integration.md).
+
+For an external CLI writer, `recovery-required` should include proof requirements and an action plan: inspect claim and Git/current artifacts, reconcile idempotent stages, safely release verified terminal work, or escalate when the agent may still write. Never delete the only available worktree or forge successful human review to clear a blocked state. See [execution-scopes recovery](execution-scopes-and-recovery.md).

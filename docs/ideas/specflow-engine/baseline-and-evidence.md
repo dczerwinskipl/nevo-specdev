@@ -72,3 +72,9 @@ related:
 There is tension between Runtime owning 'local execution records' and the offline Engine owning canonical workflow operation records. Treat this as a **proposed adjustment** to `architecture/runtime/ownership-and-lifecycle.md`, `architecture/runtime/configuration.md` and possibly ADR 0012 after proof; **do not edit normative docs to pretend acceptance**.
 
 The preexisting provider Session/Turn model and provider worktree-resume compatibility remain authoritative for Runtime-managed sessions. Independent CLI work may have no such session.
+
+## Review follow-up: Session readiness and new contract seams
+
+On `main`, `packages/specflow-runtime/src/features/sessions/feature.ts` currently registers Session capabilities only; the authoritative `docs/architecture/ai/canonical-session-turn-work.md` permits a composite `ProviderSessionRef` as the interim Session locator until a product session ID exists. The new proposal must intentionally choose an application-owned stable `sessionId` *when Sessions migrate* rather than assert it already exists. Current workflow architecture's trusted executor/admission invariant still applies when CLI is offline: the new local actor contract must define a trustworthy application context, not accept agent-authored Session IDs.
+
+PR #45 HEAD is a **dated preview only** and may change independently. Re-evaluate its merged successor immediately before implementing Spec reads; never count a preview endpoint as working `main` capability.
