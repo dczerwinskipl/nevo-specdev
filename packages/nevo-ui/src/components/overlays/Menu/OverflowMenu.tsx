@@ -11,11 +11,13 @@ export interface OverflowMenuProps {
   /** Applied to the ellipsis trigger; its layout footprint remains stable while open. */
   className?: string;
   size?: IconButtonSize;
+  disabled?: boolean;
+  title?: string;
 }
 
 /** An overflow menu that expands over its trigger rather than floating below it. */
 export const OverflowMenu = forwardRef<HTMLButtonElement, OverflowMenuProps>(function OverflowMenu(
-  { children, className, label, size = 'md', triggerLabel },
+  { children, className, label, size = 'md', triggerLabel, disabled, title },
   ref,
 ) {
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -42,6 +44,8 @@ export const OverflowMenu = forwardRef<HTMLButtonElement, OverflowMenuProps>(fun
           }}
           aria-label={triggerLabel}
           className={cn('data-[state=open]:opacity-0', className)}
+          disabled={disabled}
+          title={title}
           icon="ellipsis"
           size={size}
           variant="ghost"

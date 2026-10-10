@@ -25,6 +25,23 @@ describe('Runtime CLI adapters', () => {
     expect(cmd.description()).toMatch(/SpecFlow local server/i);
   });
 
+  it('passes the demo option explicitly to Runtime instead of changing project configuration', async () => {
+    const received: boolean[] = [];
+    const cmd = createStartCommand({
+      stdout: () => undefined,
+      start: (options) => {
+        received.push(options.demo);
+        return Promise.resolve({
+          address: 'http://127.0.0.1:4318',
+          close: () => Promise.resolve(),
+        });
+      },
+    });
+    cmd.exitOverride();
+    await cmd.parseAsync(['node', 'start', '--demo']);
+    expect(received).toEqual([true]);
+  });
+
   it('starts the Runtime and reports its listening address', async () => {
     const out: string[] = [];
     let closed = false;

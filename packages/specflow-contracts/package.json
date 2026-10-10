@@ -37,6 +37,14 @@
     "./authorization/capability-discovery": {
       "types": "./dist/authorization/capability-discovery.d.ts",
       "default": "./dist/authorization/capability-discovery.js"
+    },
+    "./specs/workspace": {
+      "types": "./dist/specs/workspace/index.d.ts",
+      "default": "./dist/specs/workspace/index.js"
+    },
+    "./runtime": {
+      "types": "./dist/runtime/index.d.ts",
+      "default": "./dist/runtime/index.js"
     }
   },
   "files": [

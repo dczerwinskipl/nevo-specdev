@@ -51,6 +51,7 @@ import { designSpec as surfaceDesignSpec } from '../components/surfaces/Surface/
 import { designSpec as statusIndicatorDesignSpec } from '../components/feedback/StatusIndicator/StatusIndicator.figma';
 import { designSpec as progressDesignSpec } from '../components/feedback/Progress/Progress.figma';
 import { designSpec as collapsibleDesignSpec } from '../components/content/Collapsible/Collapsible.figma';
+import { designSpec as informationListDesignSpec } from '../components/content/InformationList/InformationList.figma';
 // Deliberately explicit: this is the single deterministic registration point for
 // design authoring modules. Runtime component barrels never export *.figma files.
 export const nevoUiDesignSystem = defineDesignSystem([
@@ -99,6 +100,7 @@ export const nevoUiDesignSystem = defineDesignSystem([
   statusIndicatorDesignSpec,
   progressDesignSpec,
   collapsibleDesignSpec,
+  informationListDesignSpec,
   ...appDesignSpecs,
   standaloneShellDesignSpec,
 ] as const);

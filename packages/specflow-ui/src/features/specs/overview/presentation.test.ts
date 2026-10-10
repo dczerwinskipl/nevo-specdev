@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { createArchiveItem, createSpecItem, createSpecsFixture } from './fixtures';
+import {
+  createArchiveItem,
+  createSpecItem,
+  createSpecsFixture,
+} from '../../../../test-support/specs/overview/fixtures';
 import { sectionTranslationKey } from './model';
 import { archiveRow, currentRow } from './presentation';
 
@@ -80,6 +84,24 @@ describe('Specs Overview presentation boundary', () => {
     expect(multiple.pullRequests).toEqual({ kind: 'multiple', count: 3 });
     expect(multiple.tags).toEqual(['one', 'two']);
     expect(multiple.omittedTags).toBe(1);
+  });
+
+  it('provides complete Archive fixture metadata while keeping it optional in the API', () => {
+    const archive = createSpecsFixture('archive');
+    expect(archive.items).toHaveLength(18);
+    for (const item of archive.items) {
+      expect(item.key).toMatch(/^(UI|RT|CORE)-[0-9]+$/);
+      expect(item.tags?.length).toBeGreaterThan(0);
+      expect(item.pullRequests?.length).toBeGreaterThan(0);
+      const row = archiveRow(item);
+      expect(row.key).toBe(item.key);
+      expect(row.tags.length).toBeGreaterThan(0);
+    }
+
+    const missing = archiveRow(createArchiveItem({ key: undefined, tags: [], pullRequests: [] }));
+    expect(missing.key).toBeUndefined();
+    expect(missing.tags).toEqual([]);
+    expect(missing.pullRequests).toBeUndefined();
   });
 
   it.each([

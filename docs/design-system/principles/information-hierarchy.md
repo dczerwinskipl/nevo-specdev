@@ -54,7 +54,7 @@ This document owns semantic information roles and their default typography/empha
 
 It does not replace component-owned typography contracts or specialized structural patterns.
 Existing design-system components and patterns remain authoritative for typography they explicitly
-own, such as navigation labels, menu/floating section labels, workspace/page titles, document/prose
+own, such as navigation item labels, workspace/page titles, document/prose
 rendering, or other specialized structures.
 
 Geometry, tracks, spacing, containment, and responsive placement are owned by
@@ -65,7 +65,7 @@ Geometry, tracks, spacing, containment, and responsive placement are owned by
 Structural labels name a region of ordinary product content. They are not ordinary product values.
 
 These default structural roles do not supersede specialized component-owned labels. If an
-established navigation, menu, floating-content, workspace-header, page-title, or other reusable
+established navigation, menu, workspace-header, page-title, or other reusable
 component owns its typography contract, use that contract rather than remapping it through the
 generic roles below.
 
@@ -77,8 +77,9 @@ a comparable product section.
 Default treatment:
 
 - semantic role: section title;
-- typography: `label-md`;
+- typography: `section-label`;
 - emphasis: primary content colour;
+- uppercase treatment: provided canonical by `section-label` (12px, 16px line height, semibold, uppercase, 0.12em letter spacing);
 - use a real heading element when it participates in the document/accessibility outline.
 
 Do not use section-title styling for a branch, Task, Session, identifier, state, or other value

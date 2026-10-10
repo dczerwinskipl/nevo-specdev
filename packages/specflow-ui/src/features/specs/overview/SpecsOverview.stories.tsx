@@ -22,18 +22,31 @@ import {
   createSpecItem,
   createSpecsFixture,
   createArchiveItem,
-} from './fixtures';
+} from '../../../../test-support/specs/overview/fixtures';
 import type {
   SpecsCollection,
   SpecsOverview as SpecsOverviewData,
-  SpecsOverviewSource,
   SpecsOverviewState,
   CurrentSpecTarget,
 } from './model';
 import { SpecsOverview } from './SpecsOverview';
 import { useSpecsOverview } from './useSpecsOverview';
+import type { SpecsOverviewApi } from './api';
+
+import { QueryClientProvider } from '@tanstack/react-query';
+import { createSpecFlowQueryClient } from '../../../app/queryClient';
+import { operationalPrimaryLinkClassName } from '../shared/OperationalList/OperationalRow';
 
 function SourceLifecycleFixture() {
+  const queryClient = useMemo(() => createSpecFlowQueryClient(), []);
+  return (
+    <QueryClientProvider client={queryClient}>
+      <SourceLifecycleComponent />
+    </QueryClientProvider>
+  );
+}
+
+function SourceLifecycleComponent() {
   const [collection, setCollection] = useState<SpecsCollection>('current');
   const pending = useRef<
     {
@@ -42,9 +55,9 @@ function SourceLifecycleFixture() {
       reject: (error: Error) => void;
     }[]
   >([]);
-  const source = useMemo<SpecsOverviewSource>(
+  const source = useMemo<SpecsOverviewApi>(
     () => ({
-      read: (scope) =>
+      getOverview: (scope) =>
         new Promise((resolve, reject) => {
           // Deliberately ignores cancellation: the owner must also guard late responses.
           pending.current.push({ collection: scope, resolve, reject });
@@ -90,6 +103,7 @@ function OverviewFixture({
   locale?: AppLocale;
   interactive?: boolean;
 }) {
+  const queryClient = useMemo(() => createSpecFlowQueryClient(), []);
   const router = useMemo(() => {
     const signedIn: AuthSessionResponse = {
       authenticationRequired: true,
@@ -150,9 +164,11 @@ function OverviewFixture({
     });
   }, [state, interactive]);
   return (
-    <StoryLocalization locale={locale}>
-      <RouterProvider router={router} />
-    </StoryLocalization>
+    <QueryClientProvider client={queryClient}>
+      <StoryLocalization locale={locale}>
+        <RouterProvider router={router} />
+      </StoryLocalization>
+    </QueryClientProvider>
   );
 }
 
@@ -184,6 +200,24 @@ function OverviewFixtureContent({
         onCreateSession={interactive ? () => setSessionStarts((count) => count + 1) : undefined}
         onOpenTarget={interactive ? setTarget : undefined}
         specificationHref={interactive ? (id) => `/specs/${id}` : undefined}
+        renderSpecificationLink={
+          interactive
+            ? (specId, children, ariaLabel) => (
+                <a
+                  href={`/specs/${specId}`}
+                  className={operationalPrimaryLinkClassName}
+                  aria-label={ariaLabel}
+                  data-focus-ring="delegated"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    setTarget({ kind: 'specification', specId });
+                  }}
+                >
+                  {children}
+                </a>
+              )
+            : undefined
+        }
       />
       <output className="sr-only" aria-label="Fixture interaction result">
         {JSON.stringify({ target, refreshes, sessionStarts })}
@@ -235,11 +269,16 @@ export const CurrentContract: Story = {
     canvas.getByText('Agent input required');
     canvas.getByText(/1 session active/);
     canvas.getByText('1 active session');
-    const edges = [
-      ...canvasElement.querySelectorAll('[data-spec-title], [data-spec-section-header] h2'),
-    ].map((el) => el.getBoundingClientRect().left);
-    if (edges.some((left) => Math.abs(left - edges[0]!) > 1))
-      throw new Error('Shared content axis drift.');
+    const titleEdges = [...canvasElement.querySelectorAll('[data-spec-title]')].map(
+      (el) => el.getBoundingClientRect().left,
+    );
+    if (titleEdges.some((left) => Math.abs(left - titleEdges[0]!) > 1))
+      throw new Error('Specification title axis drift.');
+    const headerEdges = [...canvasElement.querySelectorAll('[data-spec-section-header] h2')].map(
+      (el) => el.getBoundingClientRect().left,
+    );
+    if (headerEdges.some((left) => Math.abs(left - headerEdges[0]!) > 1))
+      throw new Error('Section header axis drift.');
     const progressEdges = [...canvasElement.querySelectorAll('[data-spec-progress]')].map(
       (el) => el.getBoundingClientRect().left,
     );
@@ -373,6 +412,48 @@ export const Archive: Story = {
   args: { state: { ...loaded, collection: 'archive', projection: createSpecsFixture('archive') } },
   tags: ['visual'],
   parameters: { chromatic: { disableSnapshot: false } },
+};
+
+/** Full metadata is the normal Archive visual fixture; incomplete records are tested separately. */
+export const ArchiveWithCompleteMetadata: Story = {
+  ...Archive,
+  play: ({ canvasElement }) => {
+    const rows = [...canvasElement.querySelectorAll<HTMLElement>('[data-spec-id]')];
+    if (rows.length !== 18) throw new Error('Expected all archived specifications.');
+    if (rows.some((row) => !row.getAttribute('data-spec-key'))) {
+      throw new Error('Archive fixture must render a stable Specification key on every row.');
+    }
+    if (rows.some((row) => !row.querySelector('[data-spec-metadata]'))) {
+      throw new Error('Archive fixture should cover tags and linked PR metadata.');
+    }
+  },
+};
+
+export const ArchiveMissingOptionalMetadata: Story = {
+  args: {
+    state: {
+      ...loaded,
+      collection: 'archive',
+      projection: {
+        ...createSpecsFixture('archive'),
+        items: [
+          createArchiveItem({
+            id: 'legacy-import',
+            key: undefined,
+            tags: [],
+            pullRequests: [],
+            title: 'Imported archive without optional identifiers',
+          }),
+        ],
+      },
+    },
+  },
+  play: ({ canvasElement }) => {
+    const row = canvasElement.querySelector<HTMLElement>('[data-spec-id="legacy-import"]');
+    if (!row || row.getAttribute('data-spec-key') || row.querySelector('[data-spec-metadata]')) {
+      throw new Error('Legacy record must not fabricate absent optional metadata.');
+    }
+  },
 };
 
 export const ArchiveContract: Story = {

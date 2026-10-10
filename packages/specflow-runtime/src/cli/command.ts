@@ -8,14 +8,15 @@ import type { RuntimeHandle } from '../runtime';
 export interface RuntimeCommandContext {
   readonly stdout: (line: string) => void;
   readonly signal?: AbortSignal;
-  readonly start: () => Promise<RuntimeHandle>;
+  readonly start: (options: { readonly demo: boolean }) => Promise<RuntimeHandle>;
 }
 
 export function createStartCommand(ctx: RuntimeCommandContext): Command {
   return new Command('start')
     .description('Start the Nevo SpecFlow local server')
-    .action(async () => {
-      const handle = await ctx.start();
+    .option('--demo', 'Use explicit demonstration data instead of project sources')
+    .action(async (options: { demo?: boolean }) => {
+      const handle = await ctx.start({ demo: options.demo === true });
       ctx.stdout(`Nevo SpecFlow available at ${handle.address}`);
 
       if (!ctx.signal) return;

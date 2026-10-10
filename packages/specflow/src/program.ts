@@ -55,7 +55,7 @@ export function createProgram(io: ProgramIO): Command {
   program.addCommand(
     createStartCommand({
       stdout: io.stdout,
-      start: io.startRuntime ?? (() => startProjectRuntime(io.cwd ?? '.')),
+      start: io.startRuntime ?? ((options) => startProjectRuntime(io.cwd ?? '.', {}, options)),
       ...(io.signal ? { signal: io.signal } : {}),
     }),
   );

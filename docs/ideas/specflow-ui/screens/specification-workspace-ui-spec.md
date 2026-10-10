@@ -21,6 +21,11 @@ related:
 
 # Specification UI spec
 
+The complete composition/navigation draft is currently kept in the ignored local planning area.
+It combines the owner clarifications below with a rendered navigation comparison. This ideas document remains discovery
+and migration evidence; earlier Secondary-only document/Session sketches are not final navigation
+requirements.
+
 ## 1. Purpose and ownership
 
 The Specification surface is the main working context for one Specification.
@@ -42,6 +47,8 @@ It owns:
 - Task collection and selection;
 - supporting Spec-level evidence/history;
 - contextual entry into Task detail and related Sessions.
+- discoverable access to the configured Specification document collection;
+- relevant repository/worktree/change context and capability-provided sections when available.
 
 It does not flatten Task detail, Session transcript, review evidence, change inspection, or raw workflow
 internals into the Primary.
@@ -51,6 +58,69 @@ open questions that should be exercised with the hardened UX Designer before pro
 authoritative product documentation.
 
 ## 2. User use cases
+
+### Owner clarification: Specification lifecycle and extensibility
+
+The owner clarified the following product direction during UX discovery on 2026-10-07.
+These decisions refine the draft inputs; they do not claim that the current SpecFlow placeholder
+implements the old product's capabilities.
+
+- Creation establishes the Specification and its empty scaffold independently of an agent Session.
+  The owner may populate prepared content manually. An optional initialization-with-agent choice
+  starts a Session that fills the files; the agent does not own Specification creation.
+- Specification preparation currently has no deterministic workflow. Tasks emerge while the agent
+  refines/extends the Specification, followed by review. No manual Add Task control is required for
+  this design scope.
+- Once Tasks have passed review and left Draft, the owner can start their deterministic work.
+  Task workflow and Specification preparation are separate concerns.
+- A new Specification-related Session remains possible during execution. Refinement can add Tasks
+  after earlier work has started; do not treat a prepared Specification as a frozen Task set.
+- The screen design covers empty/preparing Specifications as well as prepared and executing ones.
+  An absent Task collection must not make Specification content and Session entry unreachable.
+- A future iteration will add deterministic Specification workflow. Its steps, statuses, and
+  actions are unresolved. Do not invent a current Refine/Progress/Deploy command or stepper.
+
+### Owner clarification: Task grouping
+
+Task groups are configured by the user/project and supplied by the backend in display order with
+their Task members. User-defined workflow statuses may map several statuses to one group. Group
+identity is stable independently of individual status changes; membership may change as work moves.
+
+Do not prescribe Overview's Requires attention / Active / Ready / Draft taxonomy for Tasks, or
+replace configured groups with a fixed implementation-plan ordering. The backend owns semantic
+membership and mapping; the frontend renders the returned grouping rather than classifying raw
+status strings. Exact configuration and transport schemas remain deferred.
+
+Requires attention is a separate cross-object priority region, not one of those Task groups. It
+can point to a Task, Session, or relevant CI/deployment condition when authoritative facts actually
+require the human. These operational integrations are future scope, not fabricated current data.
+
+### Owner clarification: Session intents and future Specification operations
+
+Distinguish these user intents even when they reuse the shared Session-start interaction:
+
+- Execute with agent for selected Tasks: validate the complete selected set and create a
+  Task-associated Session with that scope. Exact action wording remains a UX design decision.
+- Discuss/refine this Specification: start a Specification-associated Session without requiring
+  Task selection. This remains useful before Tasks exist and during later scope expansion.
+- Future Specification-workflow execution: start or continue the formal Specification steps once
+  that capability exists. Step names, transitions and readiness are not defined by this screen.
+
+Every Session belongs to a Specification in the current product scope. "Independent" conversation
+means no Task execution binding, not absence of Specification ownership. The Session list therefore
+belongs to the Specification's contextual detail; no global Sessions navigation is needed. It is a
+collection of conversations, including active and settled ones, rather than only completed history.
+The existing bounded recent-Session target remains the main-screen resume proposal.
+
+Execution context can change within the same Session. See
+[Session association vs current execution](../../../product/specflow/ui/ai-session-ux.md#session-association-vs-current-execution)
+for the owning shared UX guidance. Do not add a permanent Session-type picker to this screen.
+
+Specification-wide deployment may eventually be a Task or a Specification workflow step driven by
+an agent/automation. The owner explicitly left this choice open. Design future action ownership
+around the operation's scope and evidence, without selecting its workflow representation now.
+
+### Use-case inventory
 
 - Understand what change the Specification represents.
 - Read a concise Specification description without forcing the full body into the initial layout.
@@ -65,6 +135,93 @@ authoritative product documentation.
 - Start a new Session when needed using the shared Session-start interaction.
 - Follow relevant links to project-level changes/PRs/deployment/release facts when those capabilities
   exist.
+
+### Scope correction: documents and plugin-contributed sections
+
+The owner explicitly clarified that the screen's scope is broader than Tasks and Sessions. The
+first-scan direction above is a candidate for the main work view, not a complete information
+architecture for everything owned by or related to a Specification.
+
+Specification documents are a configurable collection returned by the backend, not one fixed
+Specification Markdown body. The configured files may include the main Specification, area
+documents, architecture drafts, and future Markdown resources. The frontend must not enumerate
+business document kinds or reconstruct this manifest from filenames. File reading needs a
+discoverable collection and comfortable full-workspace reading; it is not satisfied by a More
+disclosure on the description or by placing every document below the Task list.
+
+Enabled product plugins/capabilities may contribute relevant sections. Git/worktree is a baseline
+example. CI/CD, release and deployment are future examples for extensibility validation, not requests
+to design those operational products now. This concerns SpecFlow product plugins, not Codex plugins.
+
+Latest owner scope: widget-specific contents/data are deferred; Git remains an illustrative fixture.
+The proposed backend-ordered section manifest is recorded in that local screen draft,
+not this discovery sketch. Backend presence/order must not be reconstructed from hard-coded plugin
+names or frontend severity sorting.
+
+The existing shared navigation keeps global product areas small. Whether Specification-local
+sections become dedicated main-workspace destinations rather than only contextual inspectors is
+now a material design question. Do not freeze the earlier Secondary-only Session/document proposal
+before exercising the complete collection/navigation model.
+
+### Discovery inventory and candidate placement
+
+This matrix records a recommendation to compare, not an approved layout or plugin API.
+
+| User need                       | Main work view candidate                                                | Deliberate deeper destination                                     | Availability/ownership                                                                 |
+| ------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Understand the change           | Title and bounded description                                           | Main Specification document                                       | Core; description is not the whole document manifest                                   |
+| Find prepared context           | Discoverable Documents entry, optional bounded references when relevant | Configured document collection and comfortable Markdown reading   | Backend supplies manifest/order; no hard-coded Areas/Architecture tabs                 |
+| Choose/inspect Task work        | Configured grouped Task collection and selection actions                | Task Secondary/local evidence stack                               | Core; backend supplies group semantics                                                 |
+| Resume or start a conversation  | One relevant Session target and conversation entry                      | All Sessions belonging to this Specification                      | Core; exact collection surface still under review                                      |
+| Understand repository/worktree  | Compact current context when it affects orientation or next work        | Repository/worktree detail                                        | Enabled capability; identify whether context is Spec-specific or shared                |
+| Review changes                  | Bounded change summary/link when useful                                 | Changes collection and diff inspection                            | Git/source integration capability; no Git means no fabricated Git destination          |
+| Reach a PR/MR                   | Concise related reference when useful                                   | Explicit linked PR/MR source/detail                               | Available integration; provider is source metadata                                     |
+| See CI/deployment/release facts | Optional relevant summary; human-required item in Requires attention    | Capability's contextual section or owning operational surface     | Future enabled capability; do not assume project facts belong exclusively to this Spec |
+| Review evidence/history         | Decision-relevant references                                            | Evidence from its owning decision; broader history when requested | Do not reduce all evidence to one unstructured Attachments bucket                      |
+
+Changes inspection must distinguish uncommitted work from comparison to the configured base branch
+(often main) and from linked PR/MR changes. These may overlap: do not add their counts as though they
+were disjoint or silently call all current worktree changes this Specification's changes. Exact
+attribution remains a capability/read-model question.
+
+### Specification-local navigation model (Owner decision)
+
+The owner decision settles **Specification-local contextual navigation** for the Specification Workspace:
+
+- **Decided model**: Specification-local contextual navigation. On Wide, it provides discoverable Specification-local navigation without a horizontal tab strip and without an extra permanent width-consuming rail; on Compact/Narrow, it collapses into a contextual view selector.
+- **Historical alternative (rejected)**: Specification-local horizontal tabs / SegmentedControl strip. Rejected because:
+  - the number of local destinations can grow and capability/plugin sections may appear;
+  - labels can be long or dynamic;
+  - horizontal tabs scale poorly on Compact/Narrow and horizontal overflow can hide important destinations;
+  - local navigation must remain clearly subordinate to global product navigation;
+  - a permanent third rail inside the workspace would consume vital content width.
+
+Quick Task/evidence inspection uses Secondary; extended document reading or Changes inspection uses its dedicated local view. Do not introduce a third simultaneous workspace content pane.
+
+### Candidate contribution rules to validate
+
+- Summary and destination are separate contribution needs. A capability may justify one or both;
+  enabled plugins do not automatically earn a permanent main-screen widget.
+- A normal main-view summary should explain a relevant current fact or next step and link to its
+  detail. A plugin-supplied human-required condition belongs in cross-object Requires attention
+  with its real owner/target, not a duplicate alert per widget.
+- A section earns a local destination when the user has an independent inspection/work task there,
+  such as reading documents or comparing changed files. A short supporting fact can stay inline.
+- Core identity, attention, Session and Task hierarchy must remain recognizable as sections are
+  added. Do not permit unbounded plugin insertion ahead of the main first-scan answers.
+- No plugin-specific visual language or Card-per-plugin treatment follows merely from extensibility.
+- Distinguish a capability that is absent/disabled from an enabled contribution that failed to load;
+  failure must not erase the user's current work view or unrelated core content.
+- Plugin identifiers, contribution schemas, rendering mechanism and action protocols are deferred.
+  Settings catalog extensibility is evidence, not an already-defined Specification UI plugin API.
+
+### Expanded composition validation
+
+Compare the candidate navigation with: no Git; Git/worktree only; several configured documents;
+many/long document labels; many Sessions; uncommitted plus base-branch plus PR/MR change sources;
+several future capability sections; a failed enabled contribution; and a Task inspector open.
+Include preparing and executing Specifications on Wide, Compact and Narrow, and verify that users
+can find Documents and the owning context of Changes without scrolling through unrelated Tasks.
 
 ## 3. Entry and navigation
 
@@ -97,12 +254,13 @@ Backend/application owns:
 - Spec-level workflow projection;
 - authoritative human-attention semantics;
 - Task summaries and semantic signals;
+- configured Task group identities/display order and their members;
 - current single/batch execution projections;
 - action readiness/reasons;
 - relevant evidence/artifact references;
 - related Session summaries and the facts needed to choose/present a relevant recent Session.
 
-Frontend may compose/group those projections and reduce them into bounded presentation models, but
+Frontend may compose those projections and reduce them into bounded presentation models, but
 must not reconstruct workflow or Session semantics from arbitrary status strings, DTO shape,
 repository files, or historical association.
 
@@ -354,6 +512,53 @@ override the current shared product contract.
 
 ## 10. Interaction flows
 
+### Create, prepare and refine a Specification
+
+```text
+create Specification (optional prepared content; optional agent initialization)
+  -> Specification exists independently of the initialization Session
+  -> open Specification and orient from title/available description
+  -> resume initialization Session or explicitly start a Specification conversation
+  -> agent fills/refines files and adds Tasks
+  -> Specification content/Task projection updates from authoritative changes
+  -> inspect documents and Tasks, including Draft/review work
+  -> select legally executable Tasks once preparation/review permits execution
+```
+
+Before Tasks exist, expose a readable Specification-content target and the normal Session entry.
+Do not simulate deterministic Specification phases or present Add Task as the expected path.
+An empty Specification must explain the preparation path rather than imply that no work is possible.
+
+### Return, inspect and execute Tasks
+
+```text
+open Specification from Overview or its route
+  -> recognize Specification and any cross-object human attention
+  -> inspect attention context when required, or resume a relevant Session
+  -> scan configured Task groups
+  -> open a Task for context or select several Tasks for execution
+  -> validate the whole selected set and explain warnings/blockers
+  -> start shared agent interaction with the complete Task scope when legal
+  -> display authoritative feedback and return/resume with context preserved
+```
+
+Opening an attention item or Task does not execute or decide. A Session may cover several Tasks;
+do not reduce its scope to the Task from which it was opened.
+
+### Extend a Specification during execution
+
+```text
+Specification contains existing/in-progress/completed Task work
+  -> explicitly start or resume a Specification conversation
+  -> discuss scope expansion/refinement
+  -> agent adds/refines content and Tasks through the shared product operations
+  -> new Tasks appear in backend-supplied groups
+  -> existing execution, inspection context and checkbox selection remain understandable
+```
+
+Starting a conversation is distinct from executing selected Tasks. Unselected Tasks must not be
+silently added to an execution batch merely because refinement created them.
+
 ### Select Task
 
 Task row -> local Task Secondary; no workflow mutation.
@@ -418,8 +623,10 @@ question defined in the responsive contract above.
 
 ### Session history
 
-Session history opens deliberate contextual detail instead of expanding all historical Sessions on
-the main Specification surface.
+Session list/history opens deliberate contextual detail instead of expanding all Sessions on the
+main Specification surface. It belongs to this Specification, includes current and settled
+conversations, and offers the shared start action for a new Specification conversation. The exact
+entry label and visible-action placement remain composition decisions.
 
 ### New Session
 
@@ -600,6 +807,11 @@ The screen is borderless-first.
 The eventual UX exercise should include at least:
 
 - normal Specification with recent Session and grouped Tasks;
+- empty Specification created without agent initialization;
+- preparing Specification with initialization Session and no Tasks yet;
+- Tasks present but still in Draft/review;
+- later refinement adding Tasks alongside existing execution/completed work;
+- custom ordered Task groups with several workflow statuses mapped to one group;
 - attention from a Task;
 - attention from a Session;
 - heterogeneous multiple attention items;
@@ -653,13 +865,21 @@ These are draft design inputs, not yet an authoritative Specification screen con
 
 The later UX Designer exercise should explicitly resolve or validate:
 
-- exact Task groups and their ordering;
+- capability-provided local destination inventory beyond core views;
+- document collection/reading flow, including parent Back and preserved work-view context;
+- whether Sessions remains contextual Secondary or becomes a Specification-local main destination;
+- summary placement/information budgets for capability-provided sections and their detail targets;
+- repository/worktree ownership and trustworthy change attribution when context is shared;
+- default Task group examples and presentation of user-configured groups; user/backend ownership
+  of group definitions, ordering and status mapping is settled above;
 - exact Task-row information budget and comparison columns;
 - how the product selects the one recent/relevant Session when several Sessions are plausible resume
   targets;
 - exact maximum number of attention summaries before the region needs bounded disclosure/overflow;
 - whether New session deserves the persistent visible header primary slot or remains in
   overflow/body context;
+- future deterministic Specification steps/statuses and whether Specification-wide deployment
+  belongs to a Task or a Specification step;
 - whether Floating Session should also be supported on some Compact widths when enough usable
   workspace remains, or whether Full Session is still materially better;
 - final Spec workflow/read-model shape, after UX semantics above are settled;

@@ -16,7 +16,7 @@
     "typecheck": "turbo run typecheck",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "quality:build-prerequisites": "turbo run build --filter=nevo-repo-agents --filter=nevo-repo-docs --filter=nevo-repo-release --filter=@nevo/figma-core --filter=@nevo/figma-capture",
+    "quality:build-prerequisites": "turbo run build --filter=nevo-repo-agents --filter=nevo-repo-docs --filter=nevo-repo-release --filter=@nevo/figma-core --filter=@nevo/figma-capture --filter=@nevo/http-client --filter=@nevo/specflow-contracts",
     "version:print": "node tools/release/dist/bin.js version",
     "version:check-transition": "node tools/release/dist/bin.js check-transition",
     "check:quality": "pnpm quality:build-prerequisites && pnpm format:check && pnpm lint && node tools/docs/dist/bin.js check && node tools/agents/dist/bin.js check && pnpm version:check-transition",

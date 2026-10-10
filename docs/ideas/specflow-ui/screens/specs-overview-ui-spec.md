@@ -247,8 +247,14 @@ New specification
 [Create and start with agent]
 ```
 
-Create produces the deterministic Specification scaffold. The application derives slug/technical
+Create produces the empty Specification scaffold independently of agent initialization. The
+application derives slug/technical
 defaults; there is no Legacy/Deterministic choice.
+
+Specification preparation currently has no deterministic workflow; deterministic Task execution
+does not imply deterministic Specification preparation. See the
+[owner lifecycle clarification](specification-workspace-ui-spec.md#owner-clarification-specification-lifecycle-and-extensibility)
+for the current preparation path and future Specification-workflow boundary.
 
 Create-and-start continues into the shared Session-start interaction (agent/provider selection as
 needed, then normal composer/session experience). Do not maintain a separate rich prompt editor

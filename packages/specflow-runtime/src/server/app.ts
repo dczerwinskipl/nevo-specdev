@@ -1,4 +1,6 @@
 import cookie from '@fastify/cookie';
+import { RuntimeInfoResponseSchema } from '@nevo/specflow-contracts/runtime';
+import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import type { CapabilityId } from '@nevo/authorization';
 import Fastify, {
   type FastifyInstance,
@@ -85,6 +87,19 @@ export async function configureRuntimeApp<RawServer extends RawServerBase>(
   });
 
   await authFeature.register(app);
+
+  app.withTypeProvider<TypeBoxTypeProvider>().get(
+    '/api/runtime/info',
+    {
+      schema: { response: { 200: RuntimeInfoResponseSchema } },
+    },
+    (_request, reply) => {
+      reply.header('Cache-Control', 'no-store');
+      return {
+        dataMode: dependencies.specs?.mode === 'demo' ? ('demo' as const) : ('project' as const),
+      };
+    },
+  );
 
   for (const feature of productFeatures) {
     await feature.register?.(app);

@@ -1,55 +1,36 @@
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { isHttpClientError } from '@nevo/http-client';
 
-import type { SpecsCollection, SpecsOverviewSource, SpecsOverviewState } from './model';
+import type { SpecsOverview } from '@nevo/specflow-contracts/specs/overview';
+import type { SpecsCollection, SpecsOverviewState } from './model';
+import type { SpecsOverviewApi } from './api';
+import { specsOverviewKeys } from './queries';
 
-export function useSpecsOverview(source: SpecsOverviewSource, collection: SpecsCollection) {
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [result, setResult] = useState<SpecsOverviewState>({
-    collection,
-    loading: true,
-    refreshing: false,
-    error: false,
+export function useSpecsOverview(api: SpecsOverviewApi, collection: SpecsCollection) {
+  const query = useQuery({
+    queryKey: specsOverviewKeys.collection(collection),
+    queryFn: async ({ signal }): Promise<SpecsOverview> => {
+      const projection = await api.getOverview(collection, signal);
+      if (projection.collection !== collection) {
+        throw new Error('Specs projection scope mismatch.');
+      }
+      return projection;
+    },
   });
 
-  useEffect(() => {
-    const controller = new AbortController();
-    setResult((previous) => {
-      const projection =
-        previous.projection?.collection === collection ? previous.projection : undefined;
-      return {
-        collection,
-        projection,
-        loading: !projection,
-        refreshing: Boolean(projection),
-        error: false,
-      };
-    });
-    void source
-      .read(collection, controller.signal)
-      .then((projection) => {
-        if (controller.signal.aborted) return;
-        if (projection.collection !== collection)
-          throw new Error('Specs projection scope mismatch.');
-        setResult({ collection, projection, loading: false, refreshing: false, error: false });
-      })
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return;
-        setResult((previous) => ({
-          ...previous,
-          collection,
-          loading: false,
-          refreshing: false,
-          error: true,
-          errorStatus: isHttpClientError(error) ? error.status : undefined,
-        }));
-      });
-    return () => controller.abort();
-  }, [source, collection, refreshKey]);
+  const state: SpecsOverviewState = {
+    collection,
+    projection: query.data?.collection === collection ? query.data : undefined,
+    loading: query.isLoading,
+    refreshing: query.isRefetching,
+    error: query.isError,
+    errorStatus: query.error && isHttpClientError(query.error) ? query.error.status : undefined,
+  };
 
-  const state =
-    result.collection === collection
-      ? result
-      : { collection, loading: true, refreshing: false, error: false };
-  return { state, refresh: () => setRefreshKey((key) => key + 1) };
+  return {
+    state,
+    refresh: () => {
+      void query.refetch();
+    },
+  };
 }

@@ -8,7 +8,7 @@ import type {
   CurrentSpecTarget,
   SpecsCollection,
   SpecsOverview,
-} from './model';
+} from '../../../src/features/specs/overview/model';
 
 const specTarget = (specId: string): CurrentSpecTarget => ({ kind: 'specification', specId });
 
@@ -55,6 +55,9 @@ export function createArchiveItem(
 ): ArchivedSpecOverviewItem {
   return {
     id: 'archive-spec',
+    key: 'UI-1200',
+    tags: ['UI', 'Workspace'],
+    pullRequests: [{ number: 18, url: 'https://example.test/pull/18' }],
     title: 'Archived specification',
     updatedAt: '2026-10-01T12:00:00Z',
     progress: { completed: 5, total: 9 },
@@ -73,6 +76,13 @@ export function createSpecsFixture(collection: SpecsCollection = 'current'): Spe
       items: Array.from({ length: 18 }, (_, index) =>
         createArchiveItem({
           id: `archive-${index}`,
+          key: `${['UI', 'RT', 'CORE'][index % 3]}-${1200 + index}`,
+          tags: [
+            ['UI', 'Workspace'],
+            ['Runtime', 'Security'],
+            ['Core', 'Delivery'],
+          ][index % 3],
+          pullRequests: [{ number: 18 + index, url: `https://example.test/pull/${18 + index}` }],
           title:
             [
               'Canonical Session, Turn and Work model',

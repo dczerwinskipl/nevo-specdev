@@ -22,11 +22,6 @@ export type {
   SpecsOverview,
 } from '@nevo/specflow-contracts/specs/overview';
 
-export interface SpecsOverviewSource {
-  readonly sample?: boolean;
-  read(collection: SpecsCollection, signal: AbortSignal): Promise<SpecsOverview>;
-}
-
 export interface SpecsOverviewState {
   readonly collection: SpecsCollection;
   readonly projection?: SpecsOverview;

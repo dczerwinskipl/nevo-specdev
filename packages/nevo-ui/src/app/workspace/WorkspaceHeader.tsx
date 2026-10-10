@@ -28,6 +28,7 @@ export interface WorkspaceHeaderAction {
 
 export interface WorkspaceHeaderProps {
   actions?: readonly WorkspaceHeaderAction[];
+  as?: 'h1' | 'h2' | 'h3' | 'h4' | 'span';
   className?: string;
   icon?: IconGlyph;
   labels?: Partial<WorkspaceHeaderLabels>;
@@ -157,11 +158,12 @@ function DirectPrimaryAction({ action }: { action: WorkspaceHeaderAction }) {
 
 export interface WorkspaceHeaderIdentityProps extends Pick<
   WorkspaceHeaderProps,
-  'icon' | 'status' | 'subtitle' | 'title' | 'headingLevel'
+  'as' | 'icon' | 'status' | 'subtitle' | 'title' | 'headingLevel'
 > {}
 
 /** Product-owned heading content; the workspace owns its surrounding action chrome. */
 export function WorkspaceHeaderIdentity({
+  as,
   icon,
   status,
   subtitle,
@@ -174,7 +176,7 @@ export function WorkspaceHeaderIdentity({
       <div className="min-w-0">
         <div className="flex min-w-0 items-center gap-2">
           <Typography
-            as={headingLevel === 2 ? 'h2' : 'h1'}
+            as={as ?? (headingLevel === 2 ? 'h2' : 'h1')}
             className="min-w-0 truncate outline-none"
             data-workspace-header-title="true"
             tabIndex={-1}
@@ -231,6 +233,7 @@ export function WorkspaceHeaderFrame({
 
 export function WorkspaceHeader({
   actions = [],
+  as,
   className,
   icon,
   labels,
@@ -246,6 +249,7 @@ export function WorkspaceHeader({
       labels={labels}
       content={
         <WorkspaceHeaderIdentity
+          as={as}
           headingLevel={headingLevel}
           icon={icon}
           status={status}

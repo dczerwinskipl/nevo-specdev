@@ -31,10 +31,9 @@ contracts are filled in with the implementation.
 - **Back follows the product hierarchy**, not raw browser history.
 - **Do not expose the internal model as navigation.** Users navigate product concepts,
   not database entities or provider payloads.
-- **A route is not automatically global navigation.** Full Session can have a stable product route
-  without earning a persistent sidebar item. Contextual inspector targets such as Task detail or
-  future file preview remain local unless a future capability explicitly promotes them to a main
-  routed surface.
+- **A route is not automatically global navigation.** Full Session and Full Task can have stable
+  product routes without earning persistent sidebar items. Task Preview and contextual inspectors
+  remain local Secondary state; Full Task is the explicit main routed destination.
 - **Preserve the current work context when possible.** Use Secondary or floating interaction for
   contextual exploration; use a main workspace route when the user explicitly promotes that context
   into their primary task.
@@ -68,6 +67,19 @@ Detail, Full Session, Project Settings.
 
 ## Product hierarchy
 
+Specification Overview owns `/specs/:specId`. Documents, Sessions, Changes
+and Repository are feature-owned canonical Primary pages under that specification,
+not tabs controlled by `?view`. They do not become global product areas.
+
+TanStack Router owns routable Primary surfaces. Nevo UI Secondary Stack owns
+contextual Task/Document previews, independent from URL search state.
+Promoting a preview to Full is an explicit Primary route navigation.
+
+The Specification design separates short Task Preview in Secondary from explicit Full Task
+promotion into a main routed page (`/specs/:specId/tasks/:taskId`). Work defaults to
+Specification history in Secondary. A Full Task deep link reads the Task by ID through the
+authenticated Runtime detail API, not through the Workspace Task collection.
+
 For the current spec-driven MVP, global product navigation stays deliberately small. The default
 product entry is Specs Overview:
 
@@ -95,9 +107,10 @@ sidebar area while they remain owned by/spec-driven from Specifications.
 The implemented increment has only Specs in global navigation; Project Settings awaits a real
 surface. UI Playground is development-only direct navigation. Every Current/Archive Overview row
 uses a real owning Specification link at `/specs/:specId`, including Open specification in overflow.
-The current destination is an explicitly labelled placeholder with a Back link to the originating
-collection, not fabricated document, Task, Session or workflow detail. Navigation is real even while
-those details and mutations remain unimplemented.
+The Specification destination is an actual Workspace connected to the Runtime read API.
+Work, Documents and Task details use typed projections; absent project read sources are shown
+as unavailable rather than fabricated content. Runtime does not yet implement the workflow
+mutations or the full Session conversation surface.
 
 Changes, pull requests, documentation, files, Work details, and similar concepts are contextual
 surfaces until a proven independent human task justifies promoting them into global navigation.

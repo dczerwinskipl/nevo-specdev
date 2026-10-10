@@ -716,6 +716,23 @@
       ]
     },
     {
+      "id": "product.specflow.ui.authentication-recovery",
+      "type": "architecture",
+      "title": "SpecFlow UI authentication recovery",
+      "status": "current",
+      "file": "docs/product/specflow/ui/authentication-recovery.md",
+      "read_when": [
+        "changing authenticated Runtime HTTP requests or session revalidation",
+        "adding an application-level HTTP error recovery policy",
+        "changing TanStack Query cache isolation or global auth redirects"
+      ],
+      "summary": "Centralized Runtime authentication recovery, safe request replay, AuthStore concurrency, and authenticated Query cache isolation in SpecFlow UI.",
+      "related": [
+        "product.specflow.ui.application-architecture",
+        "product.specflow.ui.interaction-model"
+      ]
+    },
+    {
       "id": "product.specflow.ui.data-loading-and-integration",
       "type": "architecture",
       "title": "SpecFlow UI data, loading and integration contract",
@@ -2809,6 +2826,23 @@
         "server",
         "runtime",
         "security"
+      ]
+    },
+    {
+      "id": "reference.api.specification-workspace",
+      "type": "reference",
+      "title": "Specification Workspace HTTP API",
+      "status": "current",
+      "file": "docs/reference/api/specification-workspace.md",
+      "read_when": [
+        "implementing or consuming the Specification Workspace API",
+        "validating Workspace authentication and feature availability"
+      ],
+      "summary": "Typed Specification Workspace, document and Task read endpoints with explicit Runtime data source, authorization and independent detail loading.",
+      "related": [
+        "reference.api.specs-overview",
+        "architecture.runtime.authorization",
+        "product.specflow.ui.data-loading-and-integration"
       ]
     },
     {

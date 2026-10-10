@@ -2,7 +2,7 @@ import { createHttpClient } from '@nevo/http-client';
 import type { AuthSessionResponse } from '@nevo/specflow-contracts/authentication';
 import { describe, expect, it, vi } from 'vitest';
 
-import { createSpecsFixture } from '../features/specs/overview/fixtures';
+import { createSpecsFixture } from '../../test-support/specs/overview/fixtures';
 import { createSpecFlowAppServices } from './dependencies';
 
 const localSession: AuthSessionResponse = {
@@ -24,8 +24,10 @@ describe('SpecFlow application services', () => {
     const services = createSpecFlowAppServices(client);
     const signal = new AbortController().signal;
 
-    await expect(services.auth.ensureSession()).resolves.toEqual(localSession);
-    await expect(services.specs.read('archive', signal)).resolves.toEqual(projection);
+    await expect(services.authStore.ensureSession()).resolves.toEqual(localSession);
+    await expect(services.specsOverviewApi.getOverview('archive', signal)).resolves.toEqual(
+      projection,
+    );
 
     expect(get).toHaveBeenNthCalledWith(1, '/api/auth/session');
     expect(get).toHaveBeenNthCalledWith(2, '/api/specs/overview', {

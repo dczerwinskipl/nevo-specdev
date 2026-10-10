@@ -21,6 +21,12 @@ related:
 
 # Task Detail UI spec
 
+The owner refined presentation during Specification UX review: row activation opens a short
+description/metadata preview; a distinct trailing action or preview action opens Full Task as a
+main surface. The complete screen draft is currently kept in the ignored local planning area.
+The decision/evidence inventory below remains input for Full Task, not a requirement to put it all
+in preview. Earlier inspector-only/deep-link statements describe the previous proposal.
+
 ## 1. Purpose and ownership
 
 Task Detail answers within seconds:
@@ -56,7 +62,9 @@ Entry:
 Specs Overview does not deep-link directly to Task Detail from dynamic summary/status content; it
 first enters the owning Specification, where the concrete Task context becomes explicit.
 
-Task Detail is local Secondary/pushed-detail state. It is not a standalone URL/deep-link contract.
+Short Task Preview is local Secondary/pushed-detail state. Full Task is a distinct main route at
+`/specs/:specId/tasks/:taskId`, not a substate of the Workspace Task list. It is addressable
+from other product surfaces and must resolve detail via the independent Task read API.
 
 Wide/Compact:
 

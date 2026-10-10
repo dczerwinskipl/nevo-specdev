@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createSpecsFixture } from './fixtures';
+import { createSpecsFixture } from '../../../../test-support/specs/overview/fixtures';
 import { filterSpecsOverview } from './search';
 
 describe('one authoritative Overview search view', () => {

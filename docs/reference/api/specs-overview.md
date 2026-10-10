@@ -111,8 +111,11 @@ readArchive();
 ```
 
 The Overview use cases then apply authorization, Current classification where applicable, and
-mapping to the public transport contract. The current fixed catalogue is a sample `SpecsOverviewRepository` adapter,
-not a property of the public API, so responses do not expose a `sample` field.
+mapping to the public transport contract. The fixed example catalogue is an explicit Runtime demonstration repository,
+available when the Runtime starts with `--demo`. Normal project mode never
+falls back silently to sample data. The response schema does not expose a
+`sample` property; the separate `GET /api/runtime/info` reports
+`dataMode: 'project' | 'demo'` for environment-level presentation.
 
 ## Access
 

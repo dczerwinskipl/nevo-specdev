@@ -17,11 +17,13 @@ export interface StartProjectRuntimeDependencies {
 export async function startProjectRuntime(
   cwd: string,
   dependencies: StartProjectRuntimeDependencies = {},
+  options: { readonly demo?: boolean } = {},
 ): Promise<RuntimeHandle> {
   const layout = await (dependencies.resolveLayout ?? resolveProjectLayout)(cwd);
   const webApp = await (dependencies.loadWebApp ?? loadProductWebApp)();
   return (dependencies.start ?? startRuntime)({
     projectRoot: layout.root,
+    ...(options.demo ? { demo: true } : {}),
     projectConfigPath: layout.projectConfigPath,
     localConfigPath: layout.localConfigPath,
     dependencies: { webApp },

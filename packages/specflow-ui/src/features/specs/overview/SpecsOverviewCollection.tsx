@@ -1,4 +1,5 @@
-import { useId, useState } from 'react';
+import { useId, useState, type ReactNode } from 'react';
+import { InformationList } from '@nevo/ui';
 import { useTranslation } from 'react-i18next';
 
 import { sectionTranslationKey, type SpecsOverview, type CurrentSpecTarget } from './model';
@@ -10,11 +11,17 @@ export function SpecsOverviewCollection({
   projection,
   onOpenTarget,
   specificationHref,
+  renderSpecificationLink,
   searching = false,
 }: {
   readonly projection: SpecsOverview;
   readonly onOpenTarget?: (target: CurrentSpecTarget) => void;
   readonly specificationHref?: (id: string) => string;
+  readonly renderSpecificationLink?: (
+    specId: string,
+    children: ReactNode,
+    ariaLabel: string,
+  ) => ReactNode;
   readonly searching?: boolean;
 }) {
   const { t } = useTranslation();
@@ -23,16 +30,17 @@ export function SpecsOverviewCollection({
 
   if (projection.collection === 'archive') {
     return (
-      <ul className="m-0 min-w-0 list-none divide-y divide-border-subtle p-0">
+      <InformationList>
         {projection.items.map((item) => (
           <SpecListRow
             key={item.id}
             item={archiveRow(item)}
             specificationHref={specificationHref?.(item.id)}
             onOpenTarget={onOpenTarget}
+            renderSpecificationLink={renderSpecificationLink}
           />
         ))}
-      </ul>
+      </InformationList>
     );
   }
 
@@ -63,20 +71,19 @@ export function SpecsOverviewCollection({
                 })
               }
             />
-            <ul
-              id={controls}
-              hidden={!expanded}
-              className="m-0 min-w-0 list-none divide-y divide-border-subtle p-0"
-            >
-              {rows.map((item) => (
-                <SpecListRow
-                  key={item.id}
-                  item={currentRow(item)}
-                  specificationHref={specificationHref?.(item.id)}
-                  onOpenTarget={onOpenTarget}
-                />
-              ))}
-            </ul>
+            {expanded ? (
+              <InformationList id={controls}>
+                {rows.map((item) => (
+                  <SpecListRow
+                    key={item.id}
+                    item={currentRow(item)}
+                    specificationHref={specificationHref?.(item.id)}
+                    onOpenTarget={onOpenTarget}
+                    renderSpecificationLink={renderSpecificationLink}
+                  />
+                ))}
+              </InformationList>
+            ) : null}
           </section>
         );
       })}

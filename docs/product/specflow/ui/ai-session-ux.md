@@ -70,6 +70,22 @@ preserves unsent text.
 
 ## Session association vs current execution
 
+Every Session in the current product scope belongs to a Specification. A casual conversation with
+no Task execution still has that Specification context; there is no project-global unassociated
+Session collection in this scope.
+
+Distinguish Specification ownership from the Session's current execution context:
+
+- a casual Specification conversation, currently also used for non-deterministic preparation;
+- deterministic execution of one or more Tasks;
+- future deterministic execution/refinement of the Specification itself, not currently supported.
+
+These are not immutable Session types. A conversation may later enter workflow execution through
+the shared application/CLI operations. The UI reflects the authoritative execution context as it
+changes without creating a replacement Session or inferring execution from the user's message.
+Turn/activity updates must keep displayed execution context current through authoritative metadata
+updates; this does not prescribe a request per Turn event.
+
 A Session's historical/contextual Task associations do not prove what the current Turn is executing.
 
 "Working on TASK-03" requires authoritative current execution scope. A generic/spec-level Turn can

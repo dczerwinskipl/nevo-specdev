@@ -323,6 +323,30 @@ Batch transport optimization must not destroy independent cache/invalidation bou
 
 ---
 
+### Deferred implementation: legacy Nevo batch queries
+
+The previous dashboard had one confirmed production adapter for generic query batching:
+`usePullRequestFileDiffs` in
+[legacy Pull Request queries](https://github.com/dczerwinskipl/nevo/blob/main/tools/dashboard/ui/features/pull-requests/queries.ts)
+used
+[legacy `useBatchQueries`](https://github.com/dczerwinskipl/nevo/blob/main/tools/dashboard/ui/features/pull-requests/use-batch-queries.ts).
+It combined individually keyed TanStack queries through `@yornaath/batshit` for
+Git file diffs (default 20 ms scheduling window, at most 15 requests per batch),
+with revision-aware `headSha` keys, in-flight deduplication, and progressive
+background prefetch. No other production domain adapter was found in the old repo.
+
+**Decision for SpecFlow MVP: document and defer; do not port the helper or its dependency.**
+Feature queries use plain TanStack Query until an actual screen needs homogeneous,
+independently cacheable bulk reads. In particular, do not implement an unused
+`BatchQueriesProvider`, transport plugin or generic request queue.
+
+If the Git Changes implementation eventually needs this capability, evaluate the
+legacy code rather than copying it unchanged. Preserve explicit-open priority over
+background hydration, scope requests by repository/revision, and let independent
+items succeed or fail without discarding unrelated results. Benchmark real network
+and server cost; batching should reduce overhead, not fetch hundreds of heavy diffs
+merely because a PR's file manifest is visible.
+
 ## 10. Domain batch commands
 
 If one user action semantically operates on many domain objects, expose one domain batch operation

@@ -277,13 +277,13 @@ describe('packaged @nevo/specflow — isolated tarball install', () => {
     const installedBin = join(prefix, 'node_modules', '@nevo', 'specflow', 'dist', 'bin.js');
     const child =
       process.platform === 'win32'
-        ? spawn(process.execPath, [installedBin, 'start'], {
+        ? spawn(process.execPath, [installedBin, 'start', '--demo'], {
             cwd: prefix,
             env: runEnv,
             stdio: ['ignore', 'pipe', 'pipe'],
             windowsHide: true,
           })
-        : crossSpawn('nevo-specflow', ['start'], {
+        : crossSpawn('nevo-specflow', ['start', '--demo'], {
             cwd: prefix,
             env: runEnv,
             stdio: ['ignore', 'pipe', 'pipe'],
