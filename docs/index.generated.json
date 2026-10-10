@@ -1100,9 +1100,9 @@
         "ideas.specflow-engine",
         "ideas.specflow-engine.boundaries",
         "ideas.specflow-engine.workspace-registry",
-        "architecture.runtime.configuration",
         "ideas.specflow-engine.project-home",
-        "ideas.specflow-engine.workspace-binding-lifecycle"
+        "ideas.specflow-engine.workspace-binding-lifecycle",
+        "architecture.runtime.configuration"
       ],
       "scope": "specflow",
       "areas": [
