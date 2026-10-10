@@ -62,7 +62,7 @@ export function createFakeWorkspaceRuntime(
     startConversation: noop,
     executeTasks: noop,
     refresh: noop,
-    fullTaskHref: (taskId) => `/specs/fake?view=task&task=${taskId}`,
+    fullTaskHref: (taskId) => `/specs/fake/tasks/${encodeURIComponent(taskId)}`,
     canExecute: true,
     canStartConversation: true,
     canOpenSession: true,

@@ -35,6 +35,7 @@ import type { SpecsOverviewApi } from './api';
 
 import { QueryClientProvider } from '@tanstack/react-query';
 import { createSpecFlowQueryClient } from '../../../app/queryClient';
+import { operationalPrimaryLinkClassName } from '../shared/OperationalList/OperationalRow';
 
 function SourceLifecycleFixture() {
   const queryClient = useMemo(() => createSpecFlowQueryClient(), []);
@@ -199,6 +200,24 @@ function OverviewFixtureContent({
         onCreateSession={interactive ? () => setSessionStarts((count) => count + 1) : undefined}
         onOpenTarget={interactive ? setTarget : undefined}
         specificationHref={interactive ? (id) => `/specs/${id}` : undefined}
+        renderSpecificationLink={
+          interactive
+            ? (specId, children, ariaLabel) => (
+                <a
+                  href={`/specs/${specId}`}
+                  className={operationalPrimaryLinkClassName}
+                  aria-label={ariaLabel}
+                  data-focus-ring="delegated"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    setTarget({ kind: 'specification', specId });
+                  }}
+                >
+                  {children}
+                </a>
+              )
+            : undefined
+        }
       />
       <output className="sr-only" aria-label="Fixture interaction result">
         {JSON.stringify({ target, refreshes, sessionStarts })}

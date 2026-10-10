@@ -89,7 +89,7 @@ export const FullTaskPromotionFlow: Story = {
 
     await canvas.findByRole('heading', { name: /Task \/ TASK-03/i }, { timeout: 5000 });
 
-    const backBtn = await canvas.findByRole('button', {
+    const backBtn = await canvas.findByRole('link', {
       name: /Back to specification|Wróć do specyfikacji/i,
     });
     await userEvent.click(backBtn);
@@ -134,11 +134,74 @@ export const NoGit: Story = {
 };
 
 export const Documents: Story = {
-  args: { path: '/specs/docs-spec?view=documents' },
+  args: { path: '/specs/docs-spec/documents' },
+};
+
+/**
+ * Routed interaction coverage: Full Document promoted from Work returns to Work;
+ * direct and list-origin Full Documents fall back to Documents List.
+ */
+export const DocumentReturnNavigation: Story = {
+  args: { path: '/specs/docs-spec?collection=current' },
+  play: async ({ canvas, userEvent }) => {
+    await canvas.findByText('Specification ID: docs-spec', {}, { timeout: 10000 });
+    await userEvent.click(await canvas.findByRole('button', { name: 'Obszar: uwierzytelnianie' }));
+    await canvas.findByRole('button', { name: 'Open full document' });
+    await userEvent.click(await canvas.findByRole('button', { name: 'Open full document' }));
+    await canvas.findByRole('link', { name: /Back to specification/i });
+    await userEvent.click(await canvas.findByRole('link', { name: /Back to specification/i }));
+    await canvas.findByText('Specification ID: docs-spec', {}, { timeout: 5000 });
+  },
+};
+
+/** Clicking a document in Primary Documents must return to the owning list. */
+export const DocumentBackFromList: Story = {
+  args: { path: '/specs/docs-spec/documents?collection=archive' },
+  play: async ({ canvas, userEvent }) => {
+    await canvas.findByRole('heading', { name: 'Documents', level: 2 });
+    const read = await canvas.findAllByRole('button', { name: 'Read' });
+    if (!read[0]) throw new Error('Expected an actionable document in the list.');
+    await userEvent.click(read[0]);
+    const back = await canvas.findByRole('link', { name: 'Back to documents' });
+    if (back.getAttribute('href') !== '/specs/docs-spec/documents?collection=archive')
+      throw new Error('Document list return must retain Archive context.');
+    await userEvent.click(back);
+    await canvas.findByRole('heading', { name: 'Documents', level: 2 });
+  },
+};
+
+/** Direct links have no ephemeral origin and must fall back to the Documents List. */
+export const DocumentBackFromDirectLink: Story = {
+  args: { path: '/specs/docs-spec/documents/spec?collection=current' },
+  play: async ({ canvas, userEvent }) => {
+    const back = await canvas.findByRole('link', { name: 'Back to documents' });
+    if (back.getAttribute('href') !== '/specs/docs-spec/documents?collection=current')
+      throw new Error('Direct document link must have a stable list fallback.');
+    await userEvent.click(back);
+    await canvas.findByRole('heading', { name: 'Documents', level: 2 });
+  },
+};
+
+export const RepositoryNavigation: Story = {
+  args: { path: '/specs/admission/repository' },
+  play: async ({ canvas, userEvent }) => {
+    const toChanges = await canvas.findByRole('button', {
+      name: /Go to changes|Przejdź do zmian/i,
+    });
+    await userEvent.click(toChanges);
+    await canvas.findByRole('heading', { name: /Changes|Zmiany/i, level: 2 }, { timeout: 5000 });
+  },
+};
+
+export const LegacyFullTaskLink: Story = {
+  args: { path: '/specs/admission?collection=archive&view=task&task=TASK-03' },
+  play: async ({ canvas }) => {
+    await canvas.findByRole('heading', { name: /Task \/ TASK-03/i }, { timeout: 5000 });
+  },
 };
 
 export const FullTask: Story = {
-  args: { path: '/specs/admission?task=TASK-03' },
+  args: { path: '/specs/admission/tasks/TASK-03?collection=current' },
   play: async ({ canvas }) => {
     await canvas.findByRole('heading', { name: /Task \/ TASK-03/i }, { timeout: 5000 });
     await canvas.findByText('TASK-03 · admission', {}, { timeout: 5000 });
@@ -181,12 +244,12 @@ export const Polish: Story = { args: { locale: 'pl' } };
 
 /**
  * Deliberately bypasses cache seeding. Exercises typed API -> Query ->
- * mapWorkspaceResponse -> routed Workspace -> lazy Task and document reads.
+ * independent routed Full Task, without requiring a Workspace Task list.
  */
 export const ApiDtoToTaskScreen: Story = {
-  args: { path: '/specs/api-integration?task=TASK-01', integrationDto: true },
+  args: { path: '/specs/api-integration/tasks/TASK-01', integrationDto: true },
   play: async ({ canvas }) => {
-    await canvas.findByText('Specification ID: api-integration', {}, { timeout: 10000 });
+    await canvas.findByRole('heading', { name: 'Task / TASK-01' }, { timeout: 10000 });
     await canvas.findByRole(
       'heading',
       { name: 'Fresh task detail from Runtime API' },
@@ -197,9 +260,9 @@ export const ApiDtoToTaskScreen: Story = {
 };
 
 export const ApiDtoToDocumentScreen: Story = {
-  args: { path: '/specs/api-integration?view=documents', integrationDto: true },
+  args: { path: '/specs/api-integration/documents', integrationDto: true },
   play: async ({ canvas, userEvent }) => {
-    await canvas.findByText('Specification ID: api-integration', {}, { timeout: 10000 });
+    await canvas.findByRole('heading', { name: 'Documents', level: 2 }, { timeout: 10000 });
     const button = await canvas.findByRole('button', { name: 'Read' }, { timeout: 10000 });
     await userEvent.click(button);
     await canvas.findByRole(

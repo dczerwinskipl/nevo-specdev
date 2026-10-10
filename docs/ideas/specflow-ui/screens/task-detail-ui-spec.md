@@ -62,7 +62,9 @@ Entry:
 Specs Overview does not deep-link directly to Task Detail from dynamic summary/status content; it
 first enters the owning Specification, where the concrete Task context becomes explicit.
 
-Task Detail is local Secondary/pushed-detail state. It is not a standalone URL/deep-link contract.
+Short Task Preview is local Secondary/pushed-detail state. Full Task is a distinct main route at
+`/specs/:specId/tasks/:taskId`, not a substate of the Workspace Task list. It is addressable
+from other product surfaces and must resolve detail via the independent Task read API.
 
 Wide/Compact:
 

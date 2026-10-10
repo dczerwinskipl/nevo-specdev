@@ -23,6 +23,8 @@ export type CompactFacts =
 export interface OperationalRowProps {
   readonly primary: ReactNode;
   readonly primaryHref?: string;
+  /** A framework-owned link, e.g. a TanStack Router Link, for primary navigation. */
+  readonly primaryLink?: ReactNode;
   readonly onPrimaryClick?: (event: React.MouseEvent) => void;
   readonly primaryAriaLabel?: string;
   readonly compactFacts?: CompactFacts;

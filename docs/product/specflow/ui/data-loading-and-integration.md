@@ -125,6 +125,33 @@ Keep independently loadable when appropriate:
 A screen projection may carry lightweight references and summary metadata for independently loaded
 resources.
 
+## Workspace aggregation versus independent freshness
+
+A Specification Workspace may initially load one coherent, lightweight steering snapshot.
+Its Task readiness/actions, human Attention and current execution pointers must agree with
+one another. This does **not** make every feature's detail data part of the same freshness
+or rendering lifecycle:
+
+- Live Session Turn/Work updates are consumed by Session-owned snapshot/cursor/SSE
+  processing. Ordinary streaming deltas must not refetch the whole Workspace.
+- Changes that affect human steering (for example a Session requiring interaction or a
+  Task transition) update or invalidate the **coherent steering projection**, not an
+  arbitrary mixture of independently inferred UI facts.
+- Document bodies, Task evidence/detail and Git file diffs have independently scoped
+  cache keys and refresh policies. A Workspace header Refresh does not reload them.
+- One HTTP Workspace response may be observed through narrow Query `select` projections
+  where useful. This can isolate cache subscriptions but **does not** reduce the cost
+  of a refetched endpoint. A parent subscribed to the complete snapshot still
+  rerenders its own subtree unless composition boundaries are actually split.
+- Independent endpoints are introduced only when measured read cost, change frequency
+  or security/coherence boundaries justify them. Never duplicate server-derived
+  readiness rules on the frontend to manufacture independent projections.
+
+A future SSE integration must invalidate the smallest coherent projection it can
+identify, recover missed updates on reconnect (revision/cursor or reconciliation),
+and remain bound to the authenticated identity. High-frequency Session streams and
+resource-change notifications need not share the same state/store semantics.
+
 ## Batch loading
 
 Use a bounded batch read when the client intentionally needs several homogeneous resources at once and

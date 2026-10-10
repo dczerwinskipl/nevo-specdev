@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { InformationList } from '@nevo/ui';
 import { useTranslation } from 'react-i18next';
 
@@ -11,11 +11,17 @@ export function SpecsOverviewCollection({
   projection,
   onOpenTarget,
   specificationHref,
+  renderSpecificationLink,
   searching = false,
 }: {
   readonly projection: SpecsOverview;
   readonly onOpenTarget?: (target: CurrentSpecTarget) => void;
   readonly specificationHref?: (id: string) => string;
+  readonly renderSpecificationLink?: (
+    specId: string,
+    children: ReactNode,
+    ariaLabel: string,
+  ) => ReactNode;
   readonly searching?: boolean;
 }) {
   const { t } = useTranslation();
@@ -31,6 +37,7 @@ export function SpecsOverviewCollection({
             item={archiveRow(item)}
             specificationHref={specificationHref?.(item.id)}
             onOpenTarget={onOpenTarget}
+            renderSpecificationLink={renderSpecificationLink}
           />
         ))}
       </InformationList>
@@ -72,6 +79,7 @@ export function SpecsOverviewCollection({
                     item={currentRow(item)}
                     specificationHref={specificationHref?.(item.id)}
                     onOpenTarget={onOpenTarget}
+                    renderSpecificationLink={renderSpecificationLink}
                   />
                 ))}
               </InformationList>

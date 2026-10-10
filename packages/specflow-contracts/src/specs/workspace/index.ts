@@ -76,6 +76,9 @@ export const WorkspaceAttentionSchema = Type.Object({
   title: Type.String(),
   reason: Type.String(),
   targetId: Type.Optional(IdSchema),
+  priority: Type.Optional(
+    Type.Union([Type.Literal('critical'), Type.Literal('high'), Type.Literal('normal')]),
+  ),
 });
 const ActivitySchema = Type.Object({
   id: IdSchema,
@@ -97,6 +100,7 @@ const RepoSchema = Type.Object({
   branch: Type.Optional(Type.String()),
   baseBranch: Type.Optional(Type.String()),
   uncommittedCount: Type.Optional(Type.Integer({ minimum: 0 })),
+  attention: Type.Array(WorkspaceAttentionSchema),
 });
 const ChangesSchema = Type.Object({
   base: Type.Array(Type.String()),
@@ -107,11 +111,14 @@ const TaskCollectionSchema = Type.Object({
   groups: Type.Array(WorkspaceTaskGroupSchema),
   completed: Type.Integer({ minimum: 0 }),
   total: Type.Integer({ minimum: 0 }),
+  attention: Type.Array(WorkspaceAttentionSchema),
 });
 const DocumentCollectionSchema = Type.Object({ items: Type.Array(WorkspaceDocumentSchema) });
-const SessionCollectionSchema = Type.Object({ items: Type.Array(WorkspaceSessionSchema) });
+const SessionCollectionSchema = Type.Object({
+  items: Type.Array(WorkspaceSessionSchema),
+  attention: Type.Array(WorkspaceAttentionSchema),
+});
 const ActivityCollectionSchema = Type.Object({ items: Type.Array(ActivitySchema) });
-const AttentionCollectionSchema = Type.Object({ items: Type.Array(WorkspaceAttentionSchema) });
 const ActionSchema = Type.Object({
   available: Type.Boolean(),
   reason: Type.Optional(Type.String()),
@@ -128,9 +135,9 @@ export const SpecificationWorkspaceResponseSchema = Type.Object({
       Type.Literal('preparing'),
       Type.Literal('prepared'),
     ]),
+    attention: Type.Array(WorkspaceAttentionSchema),
   }),
   sections: Type.Object({
-    attention: ReadSectionSchema(AttentionCollectionSchema),
     tasks: ReadSectionSchema(TaskCollectionSchema),
     documents: ReadSectionSchema(DocumentCollectionSchema),
     sessions: ReadSectionSchema(SessionCollectionSchema),

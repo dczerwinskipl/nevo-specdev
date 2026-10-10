@@ -1,15 +1,13 @@
 import { Button, Icon, Typography } from '@nevo/ui';
+import type { SpecificationAttentionEntry } from '../../extensions/specificationAttentionItems';
 import { useTranslation } from 'react-i18next';
-import type { AttentionItem } from '../model';
-import { useWorkspaceRuntime } from '../WorkspaceContext';
 
 export interface AttentionSectionProps {
-  readonly items: readonly AttentionItem[];
+  readonly items: readonly (SpecificationAttentionEntry & { readonly renderKey: string })[];
 }
 
 export function AttentionSection({ items }: AttentionSectionProps) {
   const { t } = useTranslation();
-  const runtime = useWorkspaceRuntime();
 
   if (items.length === 0) {
     return null;
@@ -38,23 +36,15 @@ export function AttentionSection({ items }: AttentionSectionProps) {
       </div>
 
       <div className="mt-3 divide-y divide-border-subtle">
-        {items.map((item) => {
-          const isSessionDisabled = item.kind === 'session' && runtime.canOpenSession === false;
-
+        {items.map(({ item, icon, action, renderKey }) => {
           return (
             <div
-              key={item.id}
+              key={renderKey}
               className="flex flex-col gap-3 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="flex items-start gap-2.5 min-w-0">
                 <span className="flex size-4 shrink-0 items-center justify-center text-content-secondary mt-1">
-                  {item.kind === 'task' ? (
-                    <Icon name="list-checks" size="sm" />
-                  ) : item.kind === 'session' ? (
-                    <Icon name="chat" size="sm" />
-                  ) : (
-                    <Icon name="branch" size="sm" />
-                  )}
+                  <Icon name={icon} size="sm" />
                 </span>
                 <div className="min-w-0 flex-1">
                   <Typography
@@ -74,30 +64,16 @@ export function AttentionSection({ items }: AttentionSectionProps) {
                 </div>
               </div>
 
-              {item.kind !== 'specification' ? (
+              {action ? (
                 <Button
                   variant="secondary"
                   size="sm"
                   className="self-start sm:self-center shrink-0"
-                  disabled={isSessionDisabled}
-                  title={isSessionDisabled ? t('common.notImplemented') : undefined}
-                  onClick={() => {
-                    if (item.kind === 'task' && item.targetId) {
-                      runtime.previewTask(item.targetId);
-                    } else if (item.kind === 'session' && item.targetId) {
-                      runtime.openSession(item.targetId);
-                    } else if (item.kind === 'git') {
-                      runtime.openRepository();
-                    }
-                  }}
+                  disabled={action.disabled}
+                  title={action.disabledTitleKey ? t(action.disabledTitleKey) : undefined}
+                  onClick={action.onClick}
                 >
-                  {item.actionCode === 'session'
-                    ? t('specification.openSessionAction')
-                    : item.actionCode === 'task'
-                      ? t('specification.attentionViewTask')
-                      : item.actionCode === 'git'
-                        ? t('specification.viewRepository')
-                        : item.actionLabel}
+                  {action.labelKey ? t(action.labelKey) : action.label}
                 </Button>
               ) : null}
             </div>

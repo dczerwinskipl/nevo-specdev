@@ -11,13 +11,16 @@ import {
 import { useTranslation } from 'react-i18next';
 import { appI18n } from '../../../i18n';
 import type { ActivityEvent, SpecificationWorkspaceData, TaskGroup, TaskItem } from './model';
-import { TaskPreview } from './TaskPreview';
+import { TaskPreview } from '../../tasks/inspectors/TaskPreview';
+import { useSpecificationTask } from '../../tasks/useSpecificationTask';
 import { ActivityHistory } from './ActivityHistory';
+import { DocumentContent } from '../../documents/connected/DocumentContent';
 
 export interface SpecificationSecondaryContextValue {
   readonly specId: string;
   readonly data: SpecificationWorkspaceData;
   readonly openFullTask: (taskId: string) => void;
+  readonly openFullDocument?: (documentId: string) => void;
   readonly openSession?: (sessionId: string) => void;
   readonly openDoc?: (docId: string) => void;
   readonly previewTask: (taskId: string) => void;
@@ -29,7 +32,6 @@ export const SpecificationSecondaryDataContext =
 export interface TaskPreviewSecondaryData {
   readonly specId: string;
   readonly task: TaskItem;
-  readonly group?: TaskGroup;
   readonly groups: readonly TaskGroup[];
   readonly openFullTask: (taskId: string) => void;
 }
@@ -42,28 +44,83 @@ export function useTaskPreviewData({
   taskId: string;
 }): SecondaryData<TaskPreviewSecondaryData> {
   const context = useContext(SpecificationSecondaryDataContext);
-  if (!context) {
-    return { status: 'loading' };
-  }
-  const task = context.data.taskGroups.flatMap((g) => g.tasks).find((t) => t.id === taskId);
-  if (!task) {
-    return {
-      status: 'unavailable',
-      message: appI18n.t('specification.taskNotFoundDescription', { taskId }),
+  const listTask = context?.data.taskGroups
+    .flatMap((group) => group.tasks)
+    .find((task) => task.id === taskId);
+  // Attention/Activity may reference a Task absent from the current Workspace projection.
+  const detail = useSpecificationTask(specId, taskId, undefined, Boolean(context) && !listTask);
+  if (!context) return { status: 'loading' };
+
+  let task: TaskItem;
+  if (listTask) {
+    task = listTask;
+  } else {
+    if (detail.isPending) return { status: 'loading' };
+    if (detail.isError) {
+      return taskPreviewFailure(detail.errorStatus, detail.isTaskNotFound, taskId, () => {
+        void detail.refetch();
+      });
+    }
+
+    const detailTask = detail.data?.task;
+    if (detailTask?.id !== taskId) {
+      return {
+        status: 'error',
+        message: appI18n.t('specification.taskPreviewLoadFailed'),
+        retry: () => {
+          void detail.refetch();
+        },
+      };
+    }
+    task = {
+      id: taskId,
+      title: detailTask.title,
+      status: detailTask.status.lifecycle,
+      statusCode: detailTask.status.lifecycle,
+      lifecycle: detailTask.status.lifecycle,
+      group: '',
     };
   }
-  const group = context.data.taskGroups.find(
-    (g) => g.id === task.group || g.tasks.some((t) => t.id === task.id),
-  );
+
   return {
     status: 'ready',
     data: {
       specId,
       task,
-      group,
       groups: context.data.taskGroups,
       openFullTask: context.openFullTask,
     },
+  };
+}
+
+/** Map the Runtime Task error into the existing Secondary Stack states. */
+export function taskPreviewFailure(
+  httpStatus: number | undefined,
+  isTaskNotFound: boolean,
+  taskId: string,
+  retry: () => void,
+): SecondaryData<TaskPreviewSecondaryData> {
+  if (httpStatus === 403) {
+    return {
+      status: 'access-denied',
+      message: appI18n.t('specification.taskPreviewAccessDenied'),
+    };
+  }
+  if (httpStatus === 404 && isTaskNotFound) {
+    return {
+      status: 'unavailable',
+      message: appI18n.t('specification.taskNotFoundDescription', { taskId }),
+    };
+  }
+  return {
+    status: 'error',
+    message:
+      httpStatus === 401
+        ? appI18n.t('specification.taskPreviewSessionExpired')
+        : httpStatus === 503
+          ? appI18n.t('specification.taskPreviewSourceUnavailable')
+          : appI18n.t('specification.taskPreviewLoadFailed'),
+    retry,
   };
 }
 
@@ -121,6 +178,73 @@ export const taskPreviewStack = defineSecondaryStack<
         },
       ],
       component: TaskPreviewScreen,
+    },
+  },
+});
+
+export interface DocumentPreviewData {
+  readonly specId: string;
+  readonly documentId: string;
+  readonly title: string;
+  readonly openFullDocument?: (documentId: string) => void;
+}
+export interface DocumentPreviewPages {
+  preview: Record<never, never>;
+}
+function useDocumentPreviewData({
+  specId,
+  documentId,
+}: {
+  specId: string;
+  documentId: string;
+}): SecondaryData<DocumentPreviewData> {
+  const context = useContext(SpecificationSecondaryDataContext);
+  if (!context) return { status: 'loading' };
+  const title = context.data.documents.find((item) => item.id === documentId)?.title ?? documentId;
+  return {
+    status: 'ready',
+    data: { specId, documentId, title, openFullDocument: context.openFullDocument },
+  };
+}
+function DocumentPreviewHeader({
+  data,
+}: SecondaryScreenProps<DocumentPreviewData, DocumentPreviewPages['preview']>) {
+  return <WorkspaceHeaderIdentity headingLevel={2} title={data.title} subtitle={data.documentId} />;
+}
+function DocumentPreviewScreen({
+  data,
+}: SecondaryScreenProps<DocumentPreviewData, DocumentPreviewPages['preview']>) {
+  return (
+    <AppContent>
+      <DocumentContent specId={data.specId} documentId={data.documentId} />
+    </AppContent>
+  );
+}
+export const documentPreviewStack = defineSecondaryStack<
+  { specId: string; documentId: string },
+  DocumentPreviewData,
+  DocumentPreviewPages
+>({
+  id: 'specification-document-preview',
+  initial: 'preview',
+  useData: useDocumentPreviewData,
+  screens: {
+    preview: {
+      title: 'Document preview',
+      header: DocumentPreviewHeader,
+      actions: ({ data }): readonly WorkspaceHeaderAction[] =>
+        data.openFullDocument
+          ? [
+              {
+                id: 'open-full-document',
+                label: appI18n.t('specification.openFullDocument'),
+                icon: 'open-full',
+                primary: true,
+                onPress: () => data.openFullDocument?.(data.documentId),
+              },
+            ]
+          : [],
+      component: DocumentPreviewScreen,
     },
   },
 });

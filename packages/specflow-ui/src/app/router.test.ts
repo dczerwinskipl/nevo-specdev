@@ -1,6 +1,6 @@
 import type { AuthSessionResponse } from '@nevo/specflow-contracts/authentication';
 import { describe, expect, it } from 'vitest';
-import { createMemoryHistory } from '@tanstack/react-router';
+import { createMemoryHistory, isRedirect } from '@tanstack/react-router';
 
 import type { AuthApi } from '../auth/api';
 import { createAuthStore } from '../auth/store';
@@ -11,6 +11,7 @@ import {
   resolveAppAccess,
   resolveLoginAccess,
   validateSpecificationSearch,
+  specificationRoute,
 } from './router';
 
 const noAuth: AuthSessionResponse = {
@@ -53,38 +54,56 @@ describe('SpecFlow router access policy', () => {
     },
   );
 
-  it('reaches a specific task view directly via search parameters', async () => {
-    const router = createSpecFlowRouter(
-      createMemoryHistory({
-        initialEntries: ['/specs/admission?collection=current&view=task&task=TASK-03'],
-      }),
-      createSpecFlowAppServices({
-        authStore: storeWith(authenticated),
-        specsOverviewApi: { getOverview: (value) => Promise.resolve(createSpecsFixture(value)) },
-      }),
-    );
-    await router.load();
-    const match = router.state.matches.find((item) => item.routeId === '/_app/specs/$specId');
-    expect(match?.status).toBe('success');
-    expect(match?.params).toEqual({ specId: 'admission' });
-    expect(match?.search).toEqual({ collection: 'current', view: 'task', task: 'TASK-03' });
+  it.each(['current', 'archive'] as const)(
+    'reaches Full Task directly by stable Task ID (%s) without Workspace state',
+    async (collection) => {
+      const router = createSpecFlowRouter(
+        createMemoryHistory({
+          initialEntries: [`/specs/admission/tasks/TASK-77?collection=${collection}`],
+        }),
+        createSpecFlowAppServices({
+          authStore: storeWith(authenticated),
+          specsOverviewApi: { getOverview: (value) => Promise.resolve(createSpecsFixture(value)) },
+        }),
+      );
+      await router.load();
+      const match = router.state.matches.find(
+        (item) => item.routeId === '/_app/specs/$specId/tasks/$taskId',
+      );
+      expect(match?.status).toBe('success');
+      expect(match?.params).toEqual({ specId: 'admission', taskId: 'TASK-77' });
+      expect(match?.search).toEqual({ collection });
+    },
+  );
+
+  it('redirects legacy Task search state to the canonical resource route', () => {
+    const beforeLoad = specificationRoute.options.beforeLoad;
+    expect(beforeLoad).toBeDefined();
+    const result: unknown = beforeLoad?.({
+      params: { specId: 'admission' },
+      search: { collection: 'archive', view: 'task', task: 'TASK-03' },
+    } as Parameters<NonNullable<typeof beforeLoad>>[0]);
+    expect(isRedirect(result)).toBe(true);
+    if (isRedirect(result)) {
+      expect(result.options.to).toBe('/specs/$specId/tasks/$taskId');
+      expect(result.options.params).toEqual({ specId: 'admission', taskId: 'TASK-03' });
+      expect(result.options.search).toEqual({ collection: 'archive' });
+    }
   });
 
-  it('reaches documents view directly via search parameters', async () => {
-    const router = createSpecFlowRouter(
-      createMemoryHistory({
-        initialEntries: ['/specs/admission?collection=current&view=documents'],
-      }),
-      createSpecFlowAppServices({
-        authStore: storeWith(authenticated),
-        specsOverviewApi: { getOverview: (value) => Promise.resolve(createSpecsFixture(value)) },
-      }),
-    );
-    await router.load();
-    const match = router.state.matches.find((item) => item.routeId === '/_app/specs/$specId');
-    expect(match?.status).toBe('success');
-    expect(match?.params).toEqual({ specId: 'admission' });
-    expect(match?.search).toEqual({ collection: 'current', view: 'documents' });
+  it('redirects the legacy Documents tab to the canonical Primary URL', () => {
+    const beforeLoad = specificationRoute.options.beforeLoad;
+    const result: unknown = beforeLoad?.({
+      params: { specId: 'admission' },
+      search: { collection: 'current', view: 'documents' },
+    } as Parameters<NonNullable<typeof beforeLoad>>[0]);
+    expect(isRedirect(result)).toBe(true);
+    if (isRedirect(result)) {
+      expect(result.options.to).toBe('/specs/$specId/documents');
+      expect(result.options.params).toEqual({ specId: 'admission' });
+      expect(result.options.search).toEqual({ collection: 'current' });
+      expect(result.options.replace).toBe(true);
+    }
   });
 
   it('normalizes search parameters: strips task when view is documents', () => {
@@ -108,6 +127,18 @@ describe('SpecFlow router access policy', () => {
       view: 'task',
     });
     expect(validated).toEqual({ collection: 'current', view: 'task' });
+  });
+
+  it('preserves a Full Task deep link through authentication', async () => {
+    const returnTo = '/specs/admission/tasks/TASK-77?collection=archive';
+    await expect(resolveAppAccess(storeWith(loginRequired), returnTo)).resolves.toEqual({
+      kind: 'login',
+      returnTo,
+    });
+    await expect(resolveLoginAccess(storeWith(authenticated), returnTo)).resolves.toEqual({
+      kind: 'app',
+      returnTo,
+    });
   });
 
   it('preserves the Specification deep link through authentication', async () => {

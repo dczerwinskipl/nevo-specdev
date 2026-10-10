@@ -13,10 +13,15 @@ import {
   specsRootRoutes,
   specsRoute,
   specificationRoute,
+  specificationIndexRoute,
   validateSpecificationSearch,
   specsForbiddenRoute,
 } from '../features/specs/routes';
 import { defaultSpecFlowServices } from '../services';
+import { taskAppRoutes, specificationTaskRoute } from '../features/tasks/routes';
+import { documentsAppRoutes } from '../features/documents/routes';
+import { sessionsAppRoutes } from '../features/sessions/routes';
+import { gitAppRoutes } from '../features/git/routes';
 import { createSpecFlowAppServices, type SpecFlowAppServices } from './dependencies';
 import { UiPlaygroundScreen } from './screens';
 import { rootRoute, appRoute, type SpecFlowRouterContext } from './router/root';
@@ -28,6 +33,7 @@ export {
   runtimeUnavailableRoute,
   specsRoute,
   specificationRoute,
+  specificationTaskRoute,
   validateSpecificationSearch,
   specsForbiddenRoute,
   resolveAppAccess,
@@ -47,7 +53,17 @@ export const uiPlaygroundRoute = createRoute({
 export const routeTree = rootRoute.addChildren([
   ...authRoutes,
   ...specsRootRoutes,
-  appRoute.addChildren([...specsAppRoutes, uiPlaygroundRoute]),
+  appRoute.addChildren([
+    ...specsAppRoutes,
+    specificationRoute.addChildren([
+      specificationIndexRoute,
+      ...taskAppRoutes,
+      ...documentsAppRoutes,
+      ...sessionsAppRoutes,
+      ...gitAppRoutes,
+    ]),
+    uiPlaygroundRoute,
+  ]),
 ]);
 
 export function createSpecFlowRouter(
@@ -72,5 +88,9 @@ export const router = createSpecFlowRouter(undefined, defaultSpecFlowServices);
 declare module '@tanstack/react-router' {
   interface Register {
     router: ReturnType<typeof createSpecFlowRouter>;
+  }
+  interface HistoryState {
+    /** Primary location that promoted a Document Preview or list item to Full. */
+    specflowDocumentReturnTo?: 'overview' | 'documents';
   }
 }

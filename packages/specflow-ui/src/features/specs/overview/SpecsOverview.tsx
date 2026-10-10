@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Alert,
@@ -28,6 +28,11 @@ export interface SpecsOverviewProps {
   readonly onCreateSession?: () => void;
   readonly sample?: boolean;
   readonly specificationHref?: (specId: string) => string;
+  readonly renderSpecificationLink?: (
+    specId: string,
+    children: ReactNode,
+    ariaLabel: string,
+  ) => ReactNode;
 }
 
 export function SpecsOverview({
@@ -39,6 +44,7 @@ export function SpecsOverview({
   onCreateSession,
   sample = false,
   specificationHref,
+  renderSpecificationLink,
 }: SpecsOverviewProps) {
   const { t } = useTranslation();
   const [search, setSearch] = useState({ collection: state.collection, value: '' });
@@ -120,7 +126,7 @@ export function SpecsOverview({
                   </Typography>
                 ) : null}
               </div>
-              {sample && !specificationHref ? (
+              {sample && !specificationHref && !renderSpecificationLink ? (
                 <Typography className="text-content-secondary" variant="body-sm">
                   {t('specifications.previewDescription')}
                 </Typography>
@@ -178,6 +184,7 @@ export function SpecsOverview({
                   searching={term.trim().length > 0}
                   onOpenTarget={onOpenTarget}
                   specificationHref={specificationHref}
+                  renderSpecificationLink={renderSpecificationLink}
                 />
               ) : null}
               {visible && !visible.items.length && !state.loading ? (

@@ -44,7 +44,7 @@ export function WorkspaceSectionHeader({
           >
             {title}
           </Typography>
-          {count !== undefined && count !== null ? (
+          {count !== undefined ? (
             <span className="font-normal normal-case tracking-normal text-content-muted text-body-xs">
               {count}
             </span>

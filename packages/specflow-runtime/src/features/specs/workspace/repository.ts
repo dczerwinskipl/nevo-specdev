@@ -27,6 +27,7 @@ export interface WorkspaceAttentionRecord {
   readonly title: string;
   readonly reason: string;
   readonly targetId?: string;
+  readonly priority?: 'critical' | 'high' | 'normal';
 }
 export interface WorkspaceActivityRecord {
   readonly id: string;
@@ -45,10 +46,10 @@ export interface WorkspaceReadModel {
     readonly title: string;
     readonly summary: string;
     readonly preparationState: 'empty' | 'preparing' | 'prepared';
+    readonly attention: WorkspaceAttentionRecord[];
   };
   readonly recommendedSessionId?: string;
   readonly sections: {
-    readonly attention: SourceSection<{ readonly items: WorkspaceAttentionRecord[] }>;
     readonly tasks: SourceSection<{
       readonly groups: {
         readonly id: string;
@@ -57,6 +58,7 @@ export interface WorkspaceReadModel {
       }[];
       readonly completed: number;
       readonly total: number;
+      readonly attention: WorkspaceAttentionRecord[];
     }>;
     readonly documents: SourceSection<{
       readonly items: {
@@ -66,13 +68,17 @@ export interface WorkspaceReadModel {
         readonly summary?: string;
       }[];
     }>;
-    readonly sessions: SourceSection<{ readonly items: WorkspaceSessionRecord[] }>;
+    readonly sessions: SourceSection<{
+      readonly items: WorkspaceSessionRecord[];
+      readonly attention: WorkspaceAttentionRecord[];
+    }>;
     readonly activity: SourceSection<{ readonly items: WorkspaceActivityRecord[] }>;
     readonly repository: SourceSection<{
       readonly repositoryName?: string;
       readonly branch?: string;
       readonly baseBranch?: string;
       readonly uncommittedCount?: number;
+      readonly attention: WorkspaceAttentionRecord[];
     }>;
     readonly changes: SourceSection<{
       readonly base: string[];
