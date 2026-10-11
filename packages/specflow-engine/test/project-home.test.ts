@@ -216,7 +216,7 @@ describe('Project Home discovery (real Git worktrees, read-only)', () => {
   it('rejects a marker-only Git ignore rule that exposes secrets and registry data', async () => {
     const primary = await repository();
     await designateHome(primary);
-    await writeFile(join(primary, '.gitignore'), '.nevo/local/state/project-home.json\\n');
+    await writeFile(join(primary, '.gitignore'), '.nevo/local/state/project-home.json\n');
 
     // The identity marker is ignored, but local credentials and registry are not.
     expect(git(primary, 'check-ignore', '.nevo/local/state/project-home.json')).toContain(
@@ -231,7 +231,7 @@ describe('Project Home discovery (real Git worktrees, read-only)', () => {
     await designateHome(primary);
     await writeFile(
       join(primary, '.gitignore'),
-      '.nevo/local/*\\n!.nevo/local/state/\\n.nevo/local/state/*\\n!.nevo/local/state/workspaces.json\\n',
+      '.nevo/local/*\n!.nevo/local/state/\n.nevo/local/state/*\n!.nevo/local/state/workspaces.json\n',
     );
 
     expect(git(primary, 'check-ignore', '.nevo/local/state/project-home.json')).toContain(
