@@ -191,19 +191,20 @@ async function readDesignatedHome(
   expectedCommonDir: string,
 ): Promise<{ checkout: GitCheckout; marker: HomeMarker } | undefined> {
   const markerPath = join(root, PROJECT_HOME_MARKER_RELATIVE_PATH);
-  let source: string;
+  // Inspect the file and every parent before reading through them. A replaced
+  // symlink must not redirect discovery to another workstation's local state.
   try {
-    source = await readFile(markerPath, 'utf8');
+    await lstat(markerPath);
   } catch (error) {
     if (isMissing(error)) return undefined;
     throw error;
   }
-
   await requireDirectory(root, '.nevo');
   await requireDirectory(root, '.nevo/local');
   await requireDirectory(root, PROJECT_STATE_RELATIVE_PATH);
   await requirePlainFile(markerPath);
   await requirePlainFile(join(root, PROJECT_CONFIG_RELATIVE_PATH));
+  const source = await readFile(markerPath, 'utf8');
 
   let parsed: unknown;
   try {
