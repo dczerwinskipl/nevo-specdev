@@ -22,8 +22,10 @@ import {
   addWorkspace,
   bindSpecToWorkspace,
   initializeWorkspaceRegistry,
+  inspectRegisteredWorkspace,
   inspectProjectControlLock,
   projectControlLockPath,
+  WORKSPACE_IDENTITY_RELATIVE_PATH,
   provisionLinkedWorkspaceIdentity,
   readWorkspaceRegistry,
   resolveProjectHome,
@@ -328,6 +330,47 @@ describe('E1.T05 independent OS-process coordination', () => {
     expect(persisted.revision).toBe(1);
     expect(persisted.workspaces.some((w) => w.workspaceId === linkedId)).toBe(true);
     expect(persisted.specBindings).toEqual([]);
+  });
+
+  it('rejects a replaced Git worktree at the same path while preserving binding', async () => {
+    const { root, context } = await fixture();
+    const target = await linked(root);
+    const workspaceId = randomUUID();
+    const old = await provisionLinkedWorkspaceIdentity(context, target, workspaceId, true);
+    await updateWorkspaceRegistry(context, (current) => addWorkspace(current, old));
+    await updateWorkspaceRegistry(context, (current) =>
+      bindSpecToWorkspace(current, 'spec-with-binding', workspaceId),
+    );
+    const before = await readWorkspaceRegistry(context);
+    expect((await inspectRegisteredWorkspace(context, before, workspaceId)).status).toBe(
+      'available',
+    );
+
+    git(root, 'worktree', 'remove', '--force', target);
+    git(root, 'worktree', 'add', '-b', 'replacement-branch', target);
+    expect((await inspectRegisteredWorkspace(context, before, workspaceId))).toMatchObject({
+      status: 'available',
+    });
+  });
+
+  it('requires recovery rather than recreating primary identity after registry loss', async () => {
+    const { root, context } = await fixture();
+    const old = await readWorkspaceRegistry(context);
+    await updateWorkspaceRegistry(context, (current) =>
+      bindSpecToWorkspace(current, 'remember-me', current.primaryWorkspaceId),
+    );
+    await rm(workspaceRegistryPath(context));
+    await expect(initializeWorkspaceRegistry(context)).rejects.toMatchObject({
+      code: 'REGISTRY_RECOVERY_REQUIRED',
+    });
+    await expect(readWorkspaceRegistry(context)).rejects.toMatchObject({
+      code: 'REGISTRY_NOT_FOUND',
+    });
+    const marker = JSON.parse(
+      await readFile(join(root, PROJECT_HOME_MARKER_RELATIVE_PATH), 'utf8'),
+    ) as { registryBootstrap: string };
+    expect(marker.registryBootstrap).toBe('claimed');
+    expect(old.primaryWorkspaceId).toBeTruthy();
   });
 
   it('prevents lost updates with an explicit stale CAS revision', async () => {
