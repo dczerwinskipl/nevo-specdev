@@ -259,14 +259,20 @@ async function requireDirectory(root: string, relative: string): Promise<void> {
   const path = join(root, relative);
   const stat = await lstat(path);
   if (!stat.isDirectory() || stat.isSymbolicLink()) {
-    throw new ProjectHomeError('PROJECT_HOME_INVALID', 'Project Home state path is not a physical directory.');
+    throw new ProjectHomeError(
+      'PROJECT_HOME_INVALID',
+      'Project Home state path is not a physical directory.',
+    );
   }
 }
 
 async function requirePlainFile(path: string): Promise<void> {
   const stat = await lstat(path);
   if (!stat.isFile() || stat.isSymbolicLink()) {
-    throw new ProjectHomeError('PROJECT_HOME_INVALID', 'Project Home marker/config must be regular files.');
+    throw new ProjectHomeError(
+      'PROJECT_HOME_INVALID',
+      'Project Home marker/config must be regular files.',
+    );
   }
 }
 
