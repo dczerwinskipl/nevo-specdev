@@ -42,3 +42,20 @@ export {
   type WorkspaceRegistry,
   type WorkspaceRegistryErrorCode,
 } from './project/workspace-registry';
+
+export {
+  PROJECT_CONTROL_LOCK_RELATIVE_PATH,
+  ProjectControlLockError,
+  inspectProjectControlLock,
+  projectControlLockPath,
+  withProjectControlLock,
+  type ProjectControlLockErrorCode,
+  type ProjectControlLockInspection,
+  type ProjectControlLockOptions,
+} from './project/control-lock';
+
+export {
+  initializeWorkspaceRegistry,
+  updateWorkspaceRegistry,
+  type RegistryUpdateOptions,
+} from './project/registry-store';
