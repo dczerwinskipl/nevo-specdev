@@ -9,3 +9,15 @@ export {
   resolveGitCheckoutLayout,
   type GitCheckoutLayout,
 } from './project/git-checkout';
+
+// A validated, read-only Project Home locator. Initialization/registry writes
+// intentionally remain behind the later coordination and composition gates.
+export {
+  PROJECT_HOME_MARKER_RELATIVE_PATH,
+  PROJECT_STATE_RELATIVE_PATH,
+  ProjectHomeError,
+  resolveProjectHome,
+  type ProjectHomeErrorCode,
+  type ResolveProjectHomeOptions,
+  type ResolvedProjectHome,
+} from './project/project-home';
