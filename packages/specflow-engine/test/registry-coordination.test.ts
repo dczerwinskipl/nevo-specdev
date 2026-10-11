@@ -391,7 +391,7 @@ describe('E1.T05 independent OS-process coordination', () => {
       code: 'REGISTRY_RECOVERY_REQUIRED',
     });
     await expect(readWorkspaceRegistry(context)).rejects.toMatchObject({
-      code: 'REGISTRY_NOT_FOUND',
+      code: 'REGISTRY_RECOVERY_REQUIRED',
     });
     const marker = JSON.parse(
       await readFile(join(root, PROJECT_HOME_MARKER_RELATIVE_PATH), 'utf8'),
