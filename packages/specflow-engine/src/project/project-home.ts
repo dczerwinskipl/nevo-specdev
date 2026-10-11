@@ -4,6 +4,7 @@ import { isAbsolute, join, resolve } from 'node:path';
 import {
   isGitIgnored,
   LOCAL_CONFIG_RELATIVE_PATH,
+  LOCAL_IGNORE_ENTRY,
   PROJECT_CONFIG_RELATIVE_PATH,
   resolveGitCheckoutLayout,
   runGit,
@@ -73,8 +74,9 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3
 /**
  * Resolve one existing designated Project Home without writing any state.
  * Git common-dir proves local repository membership; it does not select a home.
- * Exactly one valid local marker must select that home (unless a validated
- * operator override explicitly disambiguates).
+ * Exactly one valid local marker must select that home. An explicit
+ * override can identify the sole home, but cannot bypass competing designations:
+ * divergent state authorities must never admit independent workspace writers.
  */
 export async function resolveProjectHome(
   options: ResolveProjectHomeOptions,
@@ -88,13 +90,14 @@ export async function resolveProjectHome(
     );
   }
 
-  let home: GitCheckout;
-  let marker: HomeMarker;
+  // First validate a supplied locator, but NEVER let it bypass discovery of
+  // competing authorities. Repair tooling may inspect markers separately;
+  // this API returns a context potentially used for mutations.
+  let requested: string | undefined;
   if (options.projectRoot !== undefined) {
     if (!isAbsolute(options.projectRoot)) {
       throw new ProjectHomeError('PROJECT_HOME_INVALID', 'Project Home override must be absolute.');
     }
-    let requested: string;
     try {
       requested = await realpath(options.projectRoot);
     } catch (error) {
@@ -110,41 +113,34 @@ export async function resolveProjectHome(
         'Project Home override is not a worktree of the invoking Git repository.',
       );
     }
-    const selected = await readDesignatedHome(requested, caller.commonDir);
-    if (!selected) {
-      throw new ProjectHomeError(
-        'PROJECT_HOME_NOT_FOUND',
-        'The selected Project Home has no verified local designation.',
-      );
-    }
-    home = selected.checkout;
-    marker = selected.marker;
-  } else {
-    const designated: { checkout: GitCheckout; marker: HomeMarker }[] = [];
-    for (const root of roots) {
-      const selected = await readDesignatedHome(root, caller.commonDir);
-      if (selected) designated.push(selected);
-    }
-    if (designated.length === 0) {
-      throw new ProjectHomeError(
-        'PROJECT_HOME_NOT_FOUND',
-        'No designated Project Home exists for this local Git repository. Repair or initialize explicitly.',
-      );
-    }
-    if (designated.length > 1) {
-      throw new ProjectHomeError(
-        'PROJECT_HOME_AMBIGUOUS',
-        'Multiple Project Home designations exist. Select a verified home explicitly; do not merge state automatically.',
-      );
-    }
-    const selected = designated[0];
-    if (!selected) {
-      throw new ProjectHomeError('PROJECT_HOME_NOT_FOUND', 'Project Home not found.');
-    }
-    home = selected.checkout;
-    marker = selected.marker;
   }
 
+  const designated: { checkout: GitCheckout; marker: HomeMarker }[] = [];
+  for (const root of roots) {
+    const selected = await readDesignatedHome(root, caller.commonDir);
+    if (selected) designated.push(selected);
+  }
+  if (designated.length > 1) {
+    throw new ProjectHomeError(
+      'PROJECT_HOME_AMBIGUOUS',
+      'Multiple Project Home designations exist. Resolve the conflict before using this project; an override cannot grant write authority.',
+    );
+  }
+  const selected = designated[0];
+  if (!selected) {
+    throw new ProjectHomeError(
+      'PROJECT_HOME_NOT_FOUND',
+      'No designated Project Home exists for this local Git repository. Repair or initialize explicitly.',
+    );
+  }
+  if (requested !== undefined && requested !== selected.checkout.root) {
+    throw new ProjectHomeError(
+      'PROJECT_HOME_MISMATCH',
+      'Project Home override does not identify the sole designated home.',
+    );
+  }
+
+  const { checkout: home, marker } = selected;
   return {
     project: {
       projectId: marker.projectId,
@@ -240,11 +236,27 @@ async function readDesignatedHome(
       'Project Home designation does not match the current Git repository or physical checkout.',
     );
   }
-  if (!(await isGitIgnored(root, PROJECT_HOME_MARKER_RELATIVE_PATH))) {
-    throw new ProjectHomeError(
-      'PROJECT_HOME_INVALID',
-      'Project Home marker is not ignored by Git; local identity must never be committed.',
-    );
+  // The entire local namespace must be ignored, not merely the identity marker.
+  // An isolated marker rule could otherwise expose credentials, registry data,
+  // claims or provider transcripts. Checking actual paths also detects Git
+  // negation rules that selectively re-expose a sensitive descendant.
+  const localPaths = [
+    LOCAL_IGNORE_ENTRY,
+    LOCAL_CONFIG_RELATIVE_PATH,
+    PROJECT_STATE_RELATIVE_PATH + '/',
+    PROJECT_HOME_MARKER_RELATIVE_PATH,
+    PROJECT_STATE_RELATIVE_PATH + '/workspaces.json',
+    PROJECT_STATE_RELATIVE_PATH + '/engine/operations/probe.json',
+    PROJECT_STATE_RELATIVE_PATH + '/engine/claims/probe.json',
+    PROJECT_STATE_RELATIVE_PATH + '/runtime/sessions/probe.json',
+  ];
+  for (const path of localPaths) {
+    if (!(await isGitIgnored(root, path))) {
+      throw new ProjectHomeError(
+        'PROJECT_HOME_INVALID',
+        `Workstation-local SpecFlow path is not Git-ignored: ${path}.`,
+      );
+    }
   }
 
   return { checkout, marker: parsed };
