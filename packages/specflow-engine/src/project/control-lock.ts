@@ -160,11 +160,10 @@ export async function withProjectControlLock<T>(
           'Operation failed and its control lock could not be released safely.',
         );
       }
-      throw releaseFailure instanceof Error
-        ? releaseFailure
-        : new Error('Control lock release failed with a non-Error value.', {
-            cause: releaseFailure,
-          });
+      if (releaseFailure instanceof Error) throw releaseFailure;
+      throw new Error('Control lock release failed with a non-Error value.', {
+        cause: releaseFailure,
+      });
     }
     if (!outcome.success) throw outcome.error;
     return outcome.value;
