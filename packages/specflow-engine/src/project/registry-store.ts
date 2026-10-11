@@ -75,18 +75,25 @@ export async function initializeWorkspaceRegistry(
         marker.projectId !== context.project.projectId ||
         marker.homeRoot !== context.project.homeRoot ||
         marker.gitCommonDir !== context.project.gitCommonDir ||
-        marker.registryBootstrap !== 'fresh'
+        marker.registryBootstrap !== 'fresh' ||
+        marker.primaryWorkspaceId !== undefined
       ) {
         throw new WorkspaceRegistryError(
           'REGISTRY_RECOVERY_REQUIRED',
           'First initialization cannot be proven. Missing registry must use explicit recovery.',
         );
       }
-      await writeJsonAtomically(markerPath, { ...marker, registryBootstrap: 'claimed' });
       const initial = validateWorkspaceRegistry(
         registerInitialPrimary(initialWorkspaceRegistry(context), context),
         context,
       );
+      // Preserve the primary identity even if the registry publication crashes
+      // or the entire registry file disappears. Reconstruction remains explicit.
+      await writeJsonAtomically(markerPath, {
+        ...marker,
+        registryBootstrap: 'claimed',
+        primaryWorkspaceId: initial.primaryWorkspaceId,
+      });
       await writeJsonAtomically(path, initial);
       return initial;
     },
