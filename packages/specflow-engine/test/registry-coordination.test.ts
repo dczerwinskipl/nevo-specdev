@@ -24,6 +24,7 @@ import {
   initializeWorkspaceRegistry,
   inspectProjectControlLock,
   projectControlLockPath,
+  provisionLinkedWorkspaceIdentity,
   readWorkspaceRegistry,
   resolveProjectHome,
   updateWorkspaceRegistry,
@@ -65,6 +66,7 @@ async function fixture() {
       projectId: randomUUID(),
       homeRoot: root,
       gitCommonDir: await realpath(resolve(root, '.git')),
+      registryBootstrap: 'fresh',
     }),
   );
   const context = await resolveProjectHome({ cwd: root });
@@ -210,14 +212,8 @@ describe('E1.T05 independent OS-process coordination', () => {
     const { root, context } = await fixture();
     const linkedRoot = await linked(root);
     const linkedId = randomUUID();
-    await updateWorkspaceRegistry(context, (current) =>
-      addWorkspace(current, {
-        workspaceId: linkedId,
-        root: linkedRoot,
-        kind: 'linked',
-        managed: true,
-      }),
-    );
+    const registration = await provisionLinkedWorkspaceIdentity(context, linkedRoot, linkedId, true);
+    await updateWorkspaceRegistry(context, (current) => addWorkspace(current, registration));
     const specId = randomUUID();
     const workers = [
       startWorker(root, { mode: 'bind', target: specId }),
@@ -319,14 +315,8 @@ describe('E1.T05 independent OS-process coordination', () => {
     const { root, context } = await fixture();
     const linkedRoot = await linked(root);
     const linkedId = randomUUID();
-    await updateWorkspaceRegistry(context, (current) =>
-      addWorkspace(current, {
-        workspaceId: linkedId,
-        kind: 'linked',
-        root: linkedRoot,
-        managed: true,
-      }),
-    );
+    const registration = await provisionLinkedWorkspaceIdentity(context, linkedRoot, linkedId, true);
+    await updateWorkspaceRegistry(context, (current) => addWorkspace(current, registration));
     git(root, 'worktree', 'remove', '--force', linkedRoot);
 
     await expect(
