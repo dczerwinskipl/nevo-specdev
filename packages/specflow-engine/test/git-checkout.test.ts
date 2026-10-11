@@ -39,7 +39,7 @@ describe('Engine Git checkout bootstrap boundary', () => {
     expect(await readdir(root)).toEqual([]);
   });
 
-  it('ignores inherited Git repository and config overrides for checkout discovery and ignore checks', async () => {
+  it('isolates Git discovery and ignore checks from inherited Git variables', async () => {
     const requested = await tempRoot();
     const foreign = await tempRoot();
     const nonGit = await tempRoot();
@@ -67,9 +67,7 @@ describe('Engine Git checkout bootstrap boundary', () => {
         root: requested,
       });
       await expect(isGitIgnored(requested, '.nevo/local/config.yaml')).resolves.toBe(true);
-      await expect(resolveGitCheckoutLayout(nonGit)).rejects.toThrow(
-        /inside a Git repository/u,
-      );
+      await expect(resolveGitCheckoutLayout(nonGit)).rejects.toThrow(/inside a Git repository/u);
       expect(await readdir(nonGit)).toEqual([]);
     } finally {
       for (const [key, value] of Object.entries(original)) {
