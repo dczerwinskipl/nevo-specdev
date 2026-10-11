@@ -99,7 +99,10 @@ export async function resolveProjectHome(
       requested = await realpath(options.projectRoot);
     } catch (error) {
       if (!isMissing(error)) throw error;
-      throw new ProjectHomeError('PROJECT_HOME_NOT_FOUND', 'The requested Project Home is unavailable.');
+      throw new ProjectHomeError(
+        'PROJECT_HOME_NOT_FOUND',
+        'The requested Project Home is unavailable.',
+      );
     }
     if (!roots.includes(requested)) {
       throw new ProjectHomeError(
@@ -284,7 +287,10 @@ async function requirePlainFile(path: string): Promise<void> {
     stat = await lstat(path);
   } catch (error) {
     if (!isMissing(error)) throw error;
-    throw new ProjectHomeError('PROJECT_HOME_INVALID', 'Project Home marker/config file is missing.');
+    throw new ProjectHomeError(
+      'PROJECT_HOME_INVALID',
+      'Project Home marker/config file is missing.',
+    );
   }
   if (!stat.isFile() || stat.isSymbolicLink()) {
     throw new ProjectHomeError(
