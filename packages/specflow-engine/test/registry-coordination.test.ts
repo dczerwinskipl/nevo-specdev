@@ -104,7 +104,13 @@ function startWorker(root: string, options: WorkerOptions): Worker {
   );
   const child = spawn(
     process.execPath,
-    [vitestEntry, 'run', 'test/fixtures/registry-worker.test.ts', '--maxWorkers=1', '--testTimeout=30000'],
+    [
+      vitestEntry,
+      'run',
+      'test/fixtures/registry-worker.test.ts',
+      '--maxWorkers=1',
+      '--testTimeout=30000',
+    ],
     {
       cwd: packageRoot,
       windowsHide: true,
