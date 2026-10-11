@@ -309,6 +309,33 @@ describe('E1.T05 independent OS-process coordination', () => {
     expect(await readFile(path, 'utf8')).toBe('{incomplete');
   });
 
+  it('preserves absent linked bindings and refuses new bindings to missing roots', async () => {
+    const { root, context } = await fixture();
+    const linkedRoot = await linked(root);
+    const linkedId = randomUUID();
+    await updateWorkspaceRegistry(
+      context,
+      (current) =>
+        addWorkspace(current, {
+          workspaceId: linkedId,
+          kind: 'linked',
+          root: linkedRoot,
+          managed: true,
+        }),
+    );
+    git(root, 'worktree', 'remove', '--force', linkedRoot);
+
+    await expect(
+      updateWorkspaceRegistry(context, (current) =>
+        bindSpecToWorkspace(current, 'new-spec', linkedId),
+      ),
+    ).rejects.toMatchObject({ code: 'REGISTRY_WORKSPACE_UNAVAILABLE' });
+    const persisted = await readWorkspaceRegistry(context);
+    expect(persisted.revision).toBe(1);
+    expect(persisted.workspaces.some((w) => w.workspaceId === linkedId)).toBe(true);
+    expect(persisted.specBindings).toEqual([]);
+  });
+
   it('prevents lost updates with an explicit stale CAS revision', async () => {
     const { context } = await fixture();
     await updateWorkspaceRegistry(context, (current) =>
