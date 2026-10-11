@@ -2,6 +2,7 @@ import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import type { GitCheckoutLayout } from '@nevo/specflow-engine';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
@@ -9,7 +10,6 @@ import {
   type ConfigWriteOptions,
   initializeProject,
 } from '../src/init/initialize-project';
-import type { GitCheckoutLayout } from '@nevo/specflow-engine';
 
 const dirs: string[] = [];
 
