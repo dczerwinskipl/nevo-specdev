@@ -1,11 +1,11 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtemp, readdir, rm } from 'node:fs/promises';
+import { mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { resolveGitCheckoutLayout } from '../src/index';
+import { isGitIgnored, resolveGitCheckoutLayout } from '../src/index';
 
 const temporaryRoots: string[] = [];
 
@@ -37,6 +37,47 @@ describe('Engine Git checkout bootstrap boundary', () => {
     const root = await tempRoot();
     await expect(resolveGitCheckoutLayout(root)).rejects.toThrow(/inside a Git repository/u);
     expect(await readdir(root)).toEqual([]);
+  });
+
+
+  it('ignores inherited Git repository and config overrides for checkout discovery and ignore checks', async () => {
+    const requested = await tempRoot();
+    const foreign = await tempRoot();
+    const nonGit = await tempRoot();
+    execFileSync('git', ['init', '-q'], { cwd: requested });
+    execFileSync('git', ['init', '-q'], { cwd: foreign });
+    await writeFile(join(requested, '.gitignore'), '.nevo/local/\\n', 'utf8');
+    await writeFile(join(foreign, '.gitignore'), 'node_modules/\\n', 'utf8');
+
+    const overrides = {
+      GIT_DIR: join(foreign, '.git'),
+      GIT_WORK_TREE: foreign,
+      GIT_COMMON_DIR: join(foreign, '.git'),
+      GIT_CONFIG_COUNT: '1',
+      GIT_CONFIG_KEY_0: 'core.worktree',
+      GIT_CONFIG_VALUE_0: foreign,
+      GIT_PREFIX: 'nested/',
+    };
+    const original = Object.fromEntries(
+      Object.keys(overrides).map((key) => [key, process.env[key]]),
+    );
+
+    try {
+      Object.assign(process.env, overrides);
+      await expect(resolveGitCheckoutLayout(requested)).resolves.toMatchObject({
+        root: requested,
+      });
+      await expect(isGitIgnored(requested, '.nevo/local/config.yaml')).resolves.toBe(true);
+      await expect(resolveGitCheckoutLayout(nonGit)).rejects.toThrow(
+        /inside a Git repository/u,
+      );
+      expect(await readdir(nonGit)).toEqual([]);
+    } finally {
+      for (const [key, value] of Object.entries(original)) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
+    }
   });
 
   it('keeps linked worktree checkout paths distinct (not yet Project Home)', async () => {
