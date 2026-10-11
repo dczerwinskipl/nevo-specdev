@@ -82,7 +82,7 @@ function runGit(cwd: string, args: readonly string[]): Promise<GitResult> {
  * directory, even when invoked inside hooks, worktrees or another Git process.
  *
  * Preserve PATH/HOME and the rest of the process environment, but remove all
- * Git-specific overrides, including GIT_CONFIG_COUNT/KEY_*/VALUE_*.
+ * Git-specific overrides, including GIT_CONFIG_COUNT and its GIT_CONFIG_KEY_N / GIT_CONFIG_VALUE_N entries.
  * The filter is case-insensitive for Windows environment semantics.
  */
 function gitDiscoveryEnvironment(): NodeJS.ProcessEnv {
