@@ -38,7 +38,7 @@ async function fixture() {
   const commonDir = await realpath(resolve(root, '.git'));
   await writeFile(
     join(root, PROJECT_HOME_MARKER_RELATIVE_PATH),
-    JSON.stringify({ version: 1, projectId, homeRoot: root, gitCommonDir: commonDir }),
+    JSON.stringify({ version: 1, projectId, homeRoot: root, gitCommonDir: commonDir, registryBootstrap: 'fresh' }),
   );
   const context = await resolveProjectHome({ cwd: root });
   const registry = registerInitialPrimary(initialWorkspaceRegistry(context), context);
@@ -64,6 +64,7 @@ describe('Engine workspace registry model (E1.T04)', () => {
       kind: 'linked',
       root: resolve(secondary),
       managed: true,
+      instanceId: randomUUID(),
     });
     const specId = randomUUID();
     const bound = bindSpecToWorkspace(linked, specId, linked.workspaces[1]!.workspaceId);
@@ -123,6 +124,7 @@ describe('Engine workspace registry model (E1.T04)', () => {
       kind: 'linked',
       root: resolve(join(context.project.homeRoot, '..', 'deleted-worktree')),
       managed: true,
+      instanceId: randomUUID(),
     });
     const bound = bindSpecToWorkspace(linked, 'spec-1', workspaceId);
     expect(resolveSpecWorkspaceId(bound, 'spec-1')).toBe(workspaceId);
@@ -161,6 +163,7 @@ describe('Engine workspace registry model (E1.T04)', () => {
       kind: 'linked',
       root: join(registry.workspaces[0]!.root, 'another'),
       managed: true,
+      instanceId: randomUUID(),
     });
     assertError(
       () =>
