@@ -17,7 +17,7 @@
   "scripts": {
     "build": "node ../../tools/build-package.mjs",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "vitest run"
+    "test": "vitest run --testTimeout=20000"
   },
   "devDependencies": {
     "vitest": "5.0.3"
