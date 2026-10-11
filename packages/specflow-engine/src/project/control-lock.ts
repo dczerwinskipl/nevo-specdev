@@ -170,10 +170,7 @@ export async function withProjectControlLock<T>(
   }
 }
 
-async function ensureSafeLockDirectory(
-  context: ResolvedProjectHome,
-  dir: string,
-): Promise<void> {
+async function ensureSafeLockDirectory(context: ResolvedProjectHome, dir: string): Promise<void> {
   const state = await lstat(context.project.stateRoot);
   if (!state.isDirectory() || state.isSymbolicLink()) {
     throw new ProjectControlLockError(

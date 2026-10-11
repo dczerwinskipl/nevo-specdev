@@ -2,10 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { lstat, readFile, realpath } from 'node:fs/promises';
 import { isAbsolute, join, resolve } from 'node:path';
 
-import {
-  resolveProjectHome,
-  type ResolvedProjectHome,
-} from './project-home';
+import { resolveProjectHome, type ResolvedProjectHome } from './project-home';
 
 export const WORKSPACE_REGISTRY_RELATIVE_PATH = 'workspaces.json';
 export const WORKSPACE_REGISTRY_VERSION = 1;
@@ -115,10 +112,7 @@ export function validateWorkspaceRegistry(
       'Unsupported workspace registry version. Explicit migration is required.',
     );
   }
-  if (
-    typeof source.projectId !== 'string' ||
-    source.projectId !== context.project.projectId
-  ) {
+  if (typeof source.projectId !== 'string' || source.projectId !== context.project.projectId) {
     throw new WorkspaceRegistryError(
       'REGISTRY_PROJECT_MISMATCH',
       'Registry project identity differs from the verified Project Home.',
@@ -238,7 +232,10 @@ export async function verifyWorkspaceRoot(
   root: string,
 ): Promise<string> {
   if (!isAbsolute(root)) {
-    throw new WorkspaceRegistryError('REGISTRY_WORKSPACE_MISMATCH', 'Workspace root must be absolute.');
+    throw new WorkspaceRegistryError(
+      'REGISTRY_WORKSPACE_MISMATCH',
+      'Workspace root must be absolute.',
+    );
   }
   let canonical: string;
   try {
@@ -325,7 +322,10 @@ export function addWorkspace(
         pathKey(w.root) === pathKey(registration.root),
     )
   ) {
-    throw new WorkspaceRegistryError('REGISTRY_CONFLICT', 'Workspace identity/root already registered.');
+    throw new WorkspaceRegistryError(
+      'REGISTRY_CONFLICT',
+      'Workspace identity/root already registered.',
+    );
   }
   if (
     registration.kind !== 'linked' ||
@@ -344,7 +344,10 @@ export function bindSpecToWorkspace(
   workspaceId: string,
 ): WorkspaceRegistry {
   if (!isIdentifier(specId) || !registry.workspaces.some((w) => w.workspaceId === workspaceId)) {
-    throw new WorkspaceRegistryError('REGISTRY_CONFLICT', 'Invalid specId or unregistered workspace.');
+    throw new WorkspaceRegistryError(
+      'REGISTRY_CONFLICT',
+      'Invalid specId or unregistered workspace.',
+    );
   }
   const previous = registry.specBindings.find((item) => item.specId === specId);
   if (previous) {
@@ -364,8 +367,12 @@ export function bindSpecToWorkspace(
 }
 
 function isIdentifier(value: unknown): value is string {
-  return typeof value === 'string' && value.length > 0 && value.length <= 128 &&
-    /^[A-Za-z0-9][A-Za-z0-9._:-]*$/u.test(value);
+  return (
+    typeof value === 'string' &&
+    value.length > 0 &&
+    value.length <= 128 &&
+    /^[A-Za-z0-9][A-Za-z0-9._:-]*$/u.test(value)
+  );
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {

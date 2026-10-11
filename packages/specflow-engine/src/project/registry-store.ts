@@ -67,10 +67,7 @@ export async function updateWorkspaceRegistry(
     context,
     async () => {
       const current = await readWorkspaceRegistry(context);
-      if (
-        options.expectedRevision !== undefined &&
-        current.revision !== options.expectedRevision
-      ) {
+      if (options.expectedRevision !== undefined && current.revision !== options.expectedRevision) {
         throw new WorkspaceRegistryError(
           'REGISTRY_CONFLICT',
           'Registry CAS revision changed; re-read before retrying.',
@@ -105,10 +102,7 @@ export async function updateWorkspaceRegistry(
   );
 }
 
-function assertAppendOnlyTransition(
-  old: WorkspaceRegistry,
-  next: WorkspaceRegistry,
-): void {
+function assertAppendOnlyTransition(old: WorkspaceRegistry, next: WorkspaceRegistry): void {
   if (
     next.primaryWorkspaceId !== old.primaryWorkspaceId ||
     next.projectId !== old.projectId ||

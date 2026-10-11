@@ -67,10 +67,7 @@ describe('Engine workspace registry model (E1.T04)', () => {
     });
     const specId = randomUUID();
     const bound = bindSpecToWorkspace(linked, specId, linked.workspaces[1]!.workspaceId);
-    const next = validateWorkspaceRegistry(
-      { ...bound, revision: 1 },
-      context,
-    );
+    const next = validateWorkspaceRegistry({ ...bound, revision: 1 }, context);
     expect(next.specBindings[0]?.generation).toBe(1);
     expect(resolveSpecWorkspaceId(next, specId)).toBe(linked.workspaces[1]!.workspaceId);
     expect(resolveSpecWorkspaceId(next, randomUUID())).toBe(next.primaryWorkspaceId);
@@ -91,10 +88,14 @@ describe('Engine workspace registry model (E1.T04)', () => {
       'REGISTRY_UNSUPPORTED_VERSION',
     );
     assertError(
-      () => validateWorkspaceRegistry({
-        ...registry,
-        workspaces: [...registry.workspaces, registry.workspaces[0]],
-      }, context),
+      () =>
+        validateWorkspaceRegistry(
+          {
+            ...registry,
+            workspaces: [...registry.workspaces, registry.workspaces[0]],
+          },
+          context,
+        ),
       'REGISTRY_CORRUPT',
     );
     assertError(
@@ -102,10 +103,14 @@ describe('Engine workspace registry model (E1.T04)', () => {
       'REGISTRY_PROJECT_MISMATCH',
     );
     assertError(
-      () => validateWorkspaceRegistry({
-        ...registry,
-        specBindings: [{ specId: 'a', workspaceId: 'not-registered', generation: 0 }],
-      }, context),
+      () =>
+        validateWorkspaceRegistry(
+          {
+            ...registry,
+            specBindings: [{ specId: 'a', workspaceId: 'not-registered', generation: 0 }],
+          },
+          context,
+        ),
       'REGISTRY_CORRUPT',
     );
   });
@@ -125,7 +130,9 @@ describe('Engine workspace registry model (E1.T04)', () => {
       status: 'unavailable',
       workspace: { workspaceId },
     });
-    await expect(verifyWorkspaceRoot(context, join(context.project.homeRoot, 'other'))).rejects.toMatchObject({
+    await expect(
+      verifyWorkspaceRoot(context, join(context.project.homeRoot, 'other')),
+    ).rejects.toMatchObject({
       code: 'REGISTRY_WORKSPACE_UNAVAILABLE',
     });
   });
@@ -156,15 +163,19 @@ describe('Engine workspace registry model (E1.T04)', () => {
       managed: true,
     });
     assertError(
-      () => addWorkspace(second, {
-        workspaceId: randomUUID(),
-        kind: 'linked',
-        root: second.workspaces[1]!.root,
-        managed: false,
-      }),
+      () =>
+        addWorkspace(second, {
+          workspaceId: randomUUID(),
+          kind: 'linked',
+          root: second.workspaces[1]!.root,
+          managed: false,
+        }),
       'REGISTRY_CONFLICT',
     );
     const bound = bindSpecToWorkspace(second, 'spec-2', secondId);
-    assertError(() => bindSpecToWorkspace(bound, 'spec-2', registry.primaryWorkspaceId), 'REGISTRY_CONFLICT');
+    assertError(
+      () => bindSpecToWorkspace(bound, 'spec-2', registry.primaryWorkspaceId),
+      'REGISTRY_CONFLICT',
+    );
   });
 });

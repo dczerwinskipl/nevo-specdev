@@ -1,6 +1,15 @@
 import { randomUUID } from 'node:crypto';
 import { spawn, execFileSync } from 'node:child_process';
-import { access, mkdir, mkdtemp, readFile, readdir, realpath, rm, writeFile } from 'node:fs/promises';
+import {
+  access,
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  realpath,
+  rm,
+  writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
@@ -88,7 +97,11 @@ function startWorker(root: string, options: WorkerOptions): Worker {
   const ready = join(root, `worker-${id}.ready`);
   const start = join(root, `worker-${id}.go`);
   const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-  const vitestEntry = resolve(dirname(fileURLToPath(import.meta.resolve('vitest'))), '..', 'vitest.mjs');
+  const vitestEntry = resolve(
+    dirname(fileURLToPath(import.meta.resolve('vitest'))),
+    '..',
+    'vitest.mjs',
+  );
   const child = spawn(
     process.execPath,
     [vitestEntry, 'run', 'test/fixtures/registry-worker.test.ts', '--maxWorkers=1'],
@@ -112,8 +125,12 @@ function startWorker(root: string, options: WorkerOptions): Worker {
   let log = '';
   child.stdout.setEncoding('utf8');
   child.stderr.setEncoding('utf8');
-  child.stdout.on('data', (s: string) => { log += s; });
-  child.stderr.on('data', (s: string) => { log += s; });
+  child.stdout.on('data', (s: string) => {
+    log += s;
+  });
+  child.stderr.on('data', (s: string) => {
+    log += s;
+  });
   const outcome = new Promise<{ code: number | null; signal: NodeJS.Signals | null; log: string }>(
     (resolvePromise, reject) => {
       child.once('error', reject);
@@ -150,7 +167,10 @@ describe('E1.T05 independent OS-process coordination', () => {
     ];
     await launchTogether(workers);
     const outcomes = await Promise.all(workers.map((worker) => worker.outcome));
-    expect(outcomes.map((x) => x.code), JSON.stringify(outcomes)).toEqual([0, 0]);
+    expect(
+      outcomes.map((x) => x.code),
+      JSON.stringify(outcomes),
+    ).toEqual([0, 0]);
 
     const registry = await readWorkspaceRegistry(context);
     expect(registry.revision).toBe(2);
@@ -168,7 +188,10 @@ describe('E1.T05 independent OS-process coordination', () => {
     ];
     await launchTogether(workers);
     const outcomes = await Promise.all(workers.map((worker) => worker.outcome));
-    expect(outcomes.map((x) => x.code), JSON.stringify(outcomes)).toEqual([0, 0]);
+    expect(
+      outcomes.map((x) => x.code),
+      JSON.stringify(outcomes),
+    ).toEqual([0, 0]);
 
     const registry = await readWorkspaceRegistry(context);
     expect(registry.revision).toBe(2);
@@ -181,15 +204,13 @@ describe('E1.T05 independent OS-process coordination', () => {
     const { root, context } = await fixture();
     const linkedRoot = await linked(root);
     const linkedId = randomUUID();
-    await updateWorkspaceRegistry(
-      context,
-      (current) =>
-        addWorkspace(current, {
-          workspaceId: linkedId,
-          root: linkedRoot,
-          kind: 'linked',
-          managed: true,
-        }),
+    await updateWorkspaceRegistry(context, (current) =>
+      addWorkspace(current, {
+        workspaceId: linkedId,
+        root: linkedRoot,
+        kind: 'linked',
+        managed: true,
+      }),
     );
     const specId = randomUUID();
     const workers = [
@@ -219,17 +240,17 @@ describe('E1.T05 independent OS-process coordination', () => {
     expect(files.some((name) => name.endsWith('.tmp'))).toBe(true);
 
     await expect(
-      updateWorkspaceRegistry(context, (current) =>
-        bindSpecToWorkspace(current, randomUUID(), current.primaryWorkspaceId),
+      updateWorkspaceRegistry(
+        context,
+        (current) => bindSpecToWorkspace(current, randomUUID(), current.primaryWorkspaceId),
         { lock: { waitMs: 0 } },
       ),
     ).rejects.toMatchObject({ code: 'CONTROL_LOCK_BUSY' });
 
     // Explicit test-only operator recovery; production must not steal this lock.
     await rm(projectControlLockPath(context));
-    await updateWorkspaceRegistry(
-      context,
-      (current) => bindSpecToWorkspace(current, randomUUID(), current.primaryWorkspaceId),
+    await updateWorkspaceRegistry(context, (current) =>
+      bindSpecToWorkspace(current, randomUUID(), current.primaryWorkspaceId),
     );
     expect((await readWorkspaceRegistry(context)).revision).toBe(1);
   }, 75000);
@@ -247,9 +268,8 @@ describe('E1.T05 independent OS-process coordination', () => {
 
   it('prevents lost updates with an explicit stale CAS revision', async () => {
     const { context } = await fixture();
-    await updateWorkspaceRegistry(
-      context,
-      (current) => bindSpecToWorkspace(current, 'first', current.primaryWorkspaceId),
+    await updateWorkspaceRegistry(context, (current) =>
+      bindSpecToWorkspace(current, 'first', current.primaryWorkspaceId),
     );
     await expect(
       updateWorkspaceRegistry(

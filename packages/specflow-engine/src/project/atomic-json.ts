@@ -14,8 +14,11 @@ export async function writeJsonAtomically(
 ): Promise<void> {
   const parent = dirname(path);
   const parentStat = await lstat(parent);
-  if (!parentStat.isDirectory() || parentStat.isSymbolicLink() ||
-    (await realpath(parent)) !== parent) {
+  if (
+    !parentStat.isDirectory() ||
+    parentStat.isSymbolicLink() ||
+    (await realpath(parent)) !== parent
+  ) {
     throw new Error('Atomic record directory must be an existing physical directory.');
   }
 
@@ -63,9 +66,7 @@ async function syncDirectoryWhenSupported(path: string): Promise<void> {
   } catch (error) {
     if (
       process.platform !== 'win32' ||
-      !['EISDIR', 'EPERM', 'EACCES', 'EINVAL', 'EBADF'].some((code) =>
-        isNodeError(error, code),
-      )
+      !['EISDIR', 'EPERM', 'EACCES', 'EINVAL', 'EBADF'].some((code) => isNodeError(error, code))
     ) {
       throw error;
     }
