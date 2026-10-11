@@ -395,9 +395,9 @@ describe('E1.T05 independent OS-process coordination', () => {
     });
     const marker = JSON.parse(
       await readFile(join(root, PROJECT_HOME_MARKER_RELATIVE_PATH), 'utf8'),
-    ) as { registryBootstrap: string };
+    ) as { registryBootstrap: string; primaryWorkspaceId: string };
     expect(marker.registryBootstrap).toBe('claimed');
-    expect(old.primaryWorkspaceId).toBeTruthy();
+    expect(marker.primaryWorkspaceId).toBe(old.primaryWorkspaceId);
   });
 
   it('prevents lost updates with an explicit stale CAS revision', async () => {
