@@ -148,8 +148,14 @@ describe('Project Home discovery (real Git worktrees, read-only)', () => {
     await designateHome(primary);
     await designateHome(foreign);
 
-    await expectHomeError(resolveProjectHome({ cwd: linked, projectRoot: foreign }), 'PROJECT_HOME_MISMATCH');
-    await expectHomeError(resolveProjectHome({ cwd: linked, projectRoot: '.' }), 'PROJECT_HOME_INVALID');
+    await expectHomeError(
+      resolveProjectHome({ cwd: linked, projectRoot: foreign }),
+      'PROJECT_HOME_MISMATCH',
+    );
+    await expectHomeError(
+      resolveProjectHome({ cwd: linked, projectRoot: '.' }),
+      'PROJECT_HOME_INVALID',
+    );
   });
 
   it('does not adopt an independent local clone even with an identical remote URL', async () => {
@@ -160,7 +166,10 @@ describe('Project Home discovery (real Git worktrees, read-only)', () => {
     git(primary, 'clone', '-q', primary, clone);
     git(clone, 'remote', 'set-url', 'origin', 'https://example.invalid/our-team/repo.git');
     await expectHomeError(resolveProjectHome({ cwd: clone }), 'PROJECT_HOME_NOT_FOUND');
-    await expectHomeError(resolveProjectHome({ cwd: clone, projectRoot: primary }), 'PROJECT_HOME_MISMATCH');
+    await expectHomeError(
+      resolveProjectHome({ cwd: clone, projectRoot: primary }),
+      'PROJECT_HOME_MISMATCH',
+    );
   });
 
   it('rejects corrupt, substituted and unignored home markers', async () => {
