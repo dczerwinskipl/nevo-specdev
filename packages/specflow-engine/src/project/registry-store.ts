@@ -107,6 +107,16 @@ export async function updateWorkspaceRegistry(
         }
         await verifyWorkspaceRoot(context, registration.root);
       }
+      // An old unavailable binding stays recorded, but a NEW binding must not
+      // point at a disappeared, moved or substituted workspace.
+      for (const binding of next.specBindings) {
+        if (current.specBindings.some((item) => item.specId === binding.specId)) continue;
+        const target = next.workspaces.find((item) => item.workspaceId === binding.workspaceId);
+        if (!target) {
+          throw new WorkspaceRegistryError('REGISTRY_CORRUPT', 'Binding workspace is absent.');
+        }
+        await verifyWorkspaceRoot(context, target.root);
+      }
 
       await writeJsonAtomically(workspaceRegistryPath(context), next);
       return next;
