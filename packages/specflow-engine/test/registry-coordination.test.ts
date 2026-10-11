@@ -348,9 +348,26 @@ describe('E1.T05 independent OS-process coordination', () => {
 
     git(root, 'worktree', 'remove', '--force', target);
     git(root, 'worktree', 'add', '-b', 'replacement-branch', target);
-    expect((await inspectRegisteredWorkspace(context, before, workspaceId))).toMatchObject({
-      status: 'available',
+    await expect(inspectRegisteredWorkspace(context, before, workspaceId)).rejects.toMatchObject({
+      code: 'REGISTRY_WORKSPACE_MISMATCH',
     });
+    // New checkout must receive a different, explicit incarnation even if a
+    // caller asks to reuse the old workspaceId.
+    const fresh = await provisionLinkedWorkspaceIdentity(context, target, workspaceId, true);
+    expect(fresh.instanceId).not.toBe(old.instanceId);
+    expect(await readFile(join(target, WORKSPACE_IDENTITY_RELATIVE_PATH), 'utf8')).toContain(
+      fresh.instanceId!,
+    );
+    await expect(inspectRegisteredWorkspace(context, before, workspaceId)).rejects.toMatchObject({
+      code: 'REGISTRY_WORKSPACE_MISMATCH',
+    });
+    await expect(
+      updateWorkspaceRegistry(context, (current) =>
+        bindSpecToWorkspace(current, 'another-spec', workspaceId),
+      ),
+    ).rejects.toMatchObject({ code: 'REGISTRY_WORKSPACE_MISMATCH' });
+    const after = await readWorkspaceRegistry(context);
+    expect(after).toEqual(before);
   });
 
   it('requires recovery rather than recreating primary identity after registry loss', async () => {
