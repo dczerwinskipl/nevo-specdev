@@ -37,7 +37,12 @@ it.skipIf(!process.env.NEVO_REGISTRY_WORKER)(
     if (mode === 'bind') {
       await updateWorkspaceRegistry(
         context,
-        (current) => bindSpecToWorkspace(current, targetId, current.primaryWorkspaceId),
+        (current) =>
+          bindSpecToWorkspace(
+            current,
+            targetId,
+            process.env.NEVO_REGISTRY_WORKSPACE_ID ?? current.primaryWorkspaceId,
+          ),
         { lock: { waitMs: 25000 } },
       );
     } else if (mode === 'register') {
