@@ -59,3 +59,9 @@ export {
   updateWorkspaceRegistry,
   type RegistryUpdateOptions,
 } from './project/registry-store';
+
+export {
+  WORKSPACE_IDENTITY_RELATIVE_PATH,
+  provisionLinkedWorkspaceIdentity,
+  verifyLinkedWorkspaceIdentity,
+} from './project/workspace-identity';
