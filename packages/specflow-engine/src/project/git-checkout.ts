@@ -44,7 +44,8 @@ interface GitResult {
   readonly stderr: string;
 }
 
-function runGit(cwd: string, args: readonly string[]): Promise<GitResult> {
+/** Internal Git plumbing shared by checkout and Project Home discovery. */
+export function runGit(cwd: string, args: readonly string[]): Promise<GitResult> {
   return new Promise((resolvePromise, reject) => {
     const child = spawn('git', [...args], {
       cwd,
