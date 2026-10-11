@@ -147,10 +147,7 @@ function assertAppendOnlyTransition(old: WorkspaceRegistry, next: WorkspaceRegis
   const nextBindings = new Map(next.specBindings.map((b) => [b.specId, b]));
   for (const [specId, before] of oldBindings) {
     const after = nextBindings.get(specId);
-    if (
-      after?.workspaceId !== before.workspaceId ||
-      after?.generation !== before.generation
-    ) {
+    if (after?.workspaceId !== before.workspaceId || after?.generation !== before.generation) {
       throw new WorkspaceRegistryError(
         'REGISTRY_CONFLICT',
         'Specification rebind/removal is not permitted by this registration port.',
