@@ -21,7 +21,8 @@ afterEach(async () => {
 });
 
 async function tempRoot(): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), 'nevo-home-Ż project '));
+  const directory = await mkdtemp(join(tmpdir(), 'nevo-home-Ż project '));
+  const root = await realpath(directory);
   temporaryRoots.push(root);
   return root;
 }
