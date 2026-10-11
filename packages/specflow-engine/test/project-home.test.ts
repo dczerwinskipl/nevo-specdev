@@ -127,18 +127,40 @@ describe('Project Home discovery (real Git worktrees, read-only)', () => {
     await expectHomeError(resolveProjectHome({ cwd: primary }), 'PROJECT_HOME_NOT_FOUND');
   });
 
-  it('rejects two designated homes, but permits an explicit verified selection', async () => {
+  it('rejects competing home authorities even with explicit overrides', async () => {
     const primary = await repository();
     const linked = await linkedWorktree(primary);
-    const firstProjectId = await designateHome(primary);
+    await designateHome(primary);
     await designateHome(linked);
 
     await expectHomeError(resolveProjectHome({ cwd: linked }), 'PROJECT_HOME_AMBIGUOUS');
+    await expectHomeError(
+      resolveProjectHome({ cwd: linked, projectRoot: primary }),
+      'PROJECT_HOME_AMBIGUOUS',
+    );
+    await expectHomeError(
+      resolveProjectHome({ cwd: primary, projectRoot: linked }),
+      'PROJECT_HOME_AMBIGUOUS',
+    );
+    // Conflicting authorities must not create or change shared registry state.
+    expect(await readdir(join(primary, '.nevo/local/state'))).toEqual(['project-home.json']);
+    expect(await readdir(join(linked, '.nevo/local/state'))).toEqual(['project-home.json']);
+  });
+
+  it('accepts an explicit override only for the sole designated Project Home', async () => {
+    const primary = await repository();
+    const linked = await linkedWorktree(primary);
+    const projectId = await designateHome(primary);
 
     const chosen = await resolveProjectHome({ cwd: linked, projectRoot: primary });
-    expect(chosen.project.projectId).toBe(firstProjectId);
+    expect(chosen.project.projectId).toBe(projectId);
     expect(chosen.project.homeRoot).toBe(primary);
     expect(chosen.workspace.root).toBe(linked);
+
+    await expectHomeError(
+      resolveProjectHome({ cwd: primary, projectRoot: linked }),
+      'PROJECT_HOME_MISMATCH',
+    );
   });
 
   it('rejects absolute foreign and relative explicit home overrides', async () => {
@@ -188,6 +210,33 @@ describe('Project Home discovery (real Git worktrees, read-only)', () => {
 
     await writeFile(path, original);
     await writeFile(join(primary, '.gitignore'), '');
+    await expectHomeError(resolveProjectHome({ cwd: primary }), 'PROJECT_HOME_INVALID');
+  });
+
+  it('rejects a marker-only Git ignore rule that exposes secrets and registry data', async () => {
+    const primary = await repository();
+    await designateHome(primary);
+    await writeFile(join(primary, '.gitignore'), '.nevo/local/state/project-home.json\\n');
+
+    // The identity marker is ignored, but local credentials and registry are not.
+    expect(git(primary, 'check-ignore', '.nevo/local/state/project-home.json')).toContain(
+      'project-home.json',
+    );
+    await expectHomeError(resolveProjectHome({ cwd: primary }), 'PROJECT_HOME_INVALID');
+    expect(await readdir(join(primary, '.nevo/local/state'))).toEqual(['project-home.json']);
+  });
+
+  it('rejects Git ignore negations that expose part of the local namespace', async () => {
+    const primary = await repository();
+    await designateHome(primary);
+    await writeFile(
+      join(primary, '.gitignore'),
+      '.nevo/local/*\\n!.nevo/local/state/\\n.nevo/local/state/*\\n!.nevo/local/state/workspaces.json\\n',
+    );
+
+    expect(git(primary, 'check-ignore', '.nevo/local/state/project-home.json')).toContain(
+      'project-home.json',
+    );
     await expectHomeError(resolveProjectHome({ cwd: primary }), 'PROJECT_HOME_INVALID');
   });
 
