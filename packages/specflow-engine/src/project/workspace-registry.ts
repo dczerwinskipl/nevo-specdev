@@ -193,7 +193,7 @@ export function validateWorkspaceRegistry(
     version: WORKSPACE_REGISTRY_VERSION,
     projectId: source.projectId,
     revision: source.revision as number,
-    primaryWorkspaceId: source.primaryWorkspaceId as string,
+    primaryWorkspaceId: source.primaryWorkspaceId,
     workspaces,
     specBindings: bindings,
   };
