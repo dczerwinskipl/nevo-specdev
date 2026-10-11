@@ -7,6 +7,7 @@ import {
   addWorkspace,
   bindSpecToWorkspace,
   resolveProjectHome,
+  readWorkspaceRegistry,
   updateWorkspaceRegistry,
   withProjectControlLock,
   workspaceRegistryPath,
@@ -73,6 +74,16 @@ it.skipIf(!process.env.NEVO_REGISTRY_WORKER)('independent registry mutation proc
           },
         },
       );
+    });
+  } else if (mode === 'crash-after-rename') {
+    await withProjectControlLock(context, async () => {
+      const current = await readWorkspaceRegistry(context);
+      await writeJsonAtomically(workspaceRegistryPath(context), {
+        ...current,
+        revision: current.revision + 1,
+      });
+      process.kill(process.pid, 'SIGKILL');
+      await sleep(500);
     });
   } else {
     throw new Error('Unknown process test mode.');
