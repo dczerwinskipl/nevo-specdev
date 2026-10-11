@@ -48,6 +48,9 @@ function runGit(cwd: string, args: readonly string[]): Promise<GitResult> {
   return new Promise((resolvePromise, reject) => {
     const child = spawn('git', [...args], {
       cwd,
+      // Discover from the supplied directory, never an inherited Git context
+      // (GIT_DIR, GIT_WORK_TREE, GIT_COMMON_DIR or Git config injection).
+      env: gitDiscoveryEnvironment(),
       stdio: ['ignore', 'pipe', 'pipe'],
       windowsHide: true,
     });
@@ -71,4 +74,23 @@ function runGit(cwd: string, args: readonly string[]): Promise<GitResult> {
       });
     });
   });
+}
+
+/**
+ * Git's repository-discovery variables can point at a completely different
+ * checkout than `cwd`. These bootstrap reads must inspect the requested
+ * directory, even when invoked inside hooks, worktrees or another Git process.
+ *
+ * Preserve PATH/HOME and the rest of the process environment, but remove all
+ * Git-specific overrides, including GIT_CONFIG_COUNT/KEY_*/VALUE_*.
+ * The filter is case-insensitive for Windows environment semantics.
+ */
+function gitDiscoveryEnvironment(): NodeJS.ProcessEnv {
+  const env = { ...process.env };
+  for (const key of Object.keys(env)) {
+    if (key.toUpperCase().startsWith('GIT_')) {
+      delete env[key];
+    }
+  }
+  return env;
 }
