@@ -200,6 +200,17 @@ describe('Project Home discovery (real Git worktrees, read-only)', () => {
     expect(await readdir(join(linked, '.nevo'))).toEqual(['config.yaml']);
   });
 
+  it('reports missing home configuration and missing override with structured errors', async () => {
+    const primary = await repository();
+    await designateHome(primary);
+    await expectHomeError(
+      resolveProjectHome({ cwd: primary, projectRoot: join(primary, 'not-a-worktree') }),
+      'PROJECT_HOME_NOT_FOUND',
+    );
+    await rm(join(primary, '.nevo/config.yaml'));
+    await expectHomeError(resolveProjectHome({ cwd: primary }), 'PROJECT_HOME_INVALID');
+  });
+
   it('rejects bare repositories rather than treating Git metadata as a workspace', async () => {
     const root = await tempRoot();
     git(root, 'init', '-q', '--bare');
