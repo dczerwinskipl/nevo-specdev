@@ -255,7 +255,7 @@ describe('E1.T05 independent OS-process coordination', () => {
     expect((await readWorkspaceRegistry(context)).revision).toBe(1);
   }, 75000);
 
-  it('recovers deterministically from SIGKILL after publish without replaying a stale CAS', async () => {
+  it('retains committed CAS after post-publish SIGKILL', async () => {
     const { root, context } = await fixture();
     const worker = startWorker(root, { mode: 'crash-after-rename', target: 'unused' });
     await launchTogether([worker]);
