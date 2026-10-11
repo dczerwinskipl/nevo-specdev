@@ -1,0 +1,33 @@
+name: Engine filesystem integration
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
+    paths:
+      - 'packages/specflow-engine/**'
+      - '.github/workflows/engine-filesystem.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/specflow-engine/**'
+      - '.github/workflows/engine-filesystem.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  engine-filesystem:
+    name: engine filesystem (${{ matrix.os }})
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+      - name: Verify real-Git registry, cross-process locks and crash consistency
+        run: pnpm --filter @nevo/specflow-engine test
