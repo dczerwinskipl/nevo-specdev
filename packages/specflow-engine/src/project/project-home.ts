@@ -24,12 +24,12 @@ export type ProjectHomeErrorCode =
   | 'PROJECT_HOME_MISMATCH';
 
 export class ProjectHomeError extends Error {
-  constructor(
-    public readonly code: ProjectHomeErrorCode,
-    message: string,
-  ) {
+  readonly code: ProjectHomeErrorCode;
+
+  constructor(code: ProjectHomeErrorCode, message: string) {
     super(message);
     this.name = 'ProjectHomeError';
+    this.code = code;
   }
 }
 
