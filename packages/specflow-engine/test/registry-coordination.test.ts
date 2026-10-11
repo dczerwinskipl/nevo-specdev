@@ -304,7 +304,7 @@ describe('E1.T05 independent OS-process coordination', () => {
     await writeFile(path, '{incomplete', 'utf8');
     expect((await inspectProjectControlLock(context)).status).toBe('corrupt');
     await expect(
-      withProjectControlLock(context, async () => undefined, { waitMs: 0 }),
+      withProjectControlLock(context, () => Promise.resolve(undefined), { waitMs: 0 }),
     ).rejects.toMatchObject({ code: 'CONTROL_LOCK_CORRUPT' });
     expect(await readFile(path, 'utf8')).toBe('{incomplete');
   });
