@@ -52,11 +52,9 @@ it.skipIf(!process.env.NEVO_REGISTRY_WORKER)('independent registry mutation proc
       targetId,
       true,
     );
-    await updateWorkspaceRegistry(
-      context,
-      (current) => addWorkspace(current, registration),
-      { lock: { waitMs: 25000 } },
-    );
+    await updateWorkspaceRegistry(context, (current) => addWorkspace(current, registration), {
+      lock: { waitMs: 25000 },
+    });
   } else if (mode === 'crash-lock') {
     await withProjectControlLock(context, async () => {
       // Exiting without finally intentionally leaves an orphan control lock.

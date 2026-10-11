@@ -38,7 +38,13 @@ async function fixture() {
   const commonDir = await realpath(resolve(root, '.git'));
   await writeFile(
     join(root, PROJECT_HOME_MARKER_RELATIVE_PATH),
-    JSON.stringify({ version: 1, projectId, homeRoot: root, gitCommonDir: commonDir, registryBootstrap: 'fresh' }),
+    JSON.stringify({
+      version: 1,
+      projectId,
+      homeRoot: root,
+      gitCommonDir: commonDir,
+      registryBootstrap: 'fresh',
+    }),
   );
   const context = await resolveProjectHome({ cwd: root });
   const registry = registerInitialPrimary(initialWorkspaceRegistry(context), context);

@@ -104,7 +104,11 @@ export async function verifyLinkedWorkspaceIdentity(
     const directory = join(registration.root, relative);
     try {
       const stat = await lstat(directory);
-      if (!stat.isDirectory() || stat.isSymbolicLink() || (await realpath(directory)) !== directory) {
+      if (
+        !stat.isDirectory() ||
+        stat.isSymbolicLink() ||
+        (await realpath(directory)) !== directory
+      ) {
         throw new WorkspaceRegistryError(
           'REGISTRY_WORKSPACE_MISMATCH',
           'Registered linked workspace identity path was redirected.',
@@ -166,7 +170,10 @@ export async function verifyLinkedWorkspaceIdentity(
 }
 
 function isIdentity(value: unknown): value is string {
-  return typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(value);
+  return (
+    typeof value === 'string' &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(value)
+  );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

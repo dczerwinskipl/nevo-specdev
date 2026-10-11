@@ -214,7 +214,12 @@ describe('E1.T05 independent OS-process coordination', () => {
     const { root, context } = await fixture();
     const linkedRoot = await linked(root);
     const linkedId = randomUUID();
-    const registration = await provisionLinkedWorkspaceIdentity(context, linkedRoot, linkedId, true);
+    const registration = await provisionLinkedWorkspaceIdentity(
+      context,
+      linkedRoot,
+      linkedId,
+      true,
+    );
     await updateWorkspaceRegistry(context, (current) => addWorkspace(current, registration));
     const specId = randomUUID();
     const workers = [
@@ -317,7 +322,12 @@ describe('E1.T05 independent OS-process coordination', () => {
     const { root, context } = await fixture();
     const linkedRoot = await linked(root);
     const linkedId = randomUUID();
-    const registration = await provisionLinkedWorkspaceIdentity(context, linkedRoot, linkedId, true);
+    const registration = await provisionLinkedWorkspaceIdentity(
+      context,
+      linkedRoot,
+      linkedId,
+      true,
+    );
     await updateWorkspaceRegistry(context, (current) => addWorkspace(current, registration));
     git(root, 'worktree', 'remove', '--force', linkedRoot);
 
