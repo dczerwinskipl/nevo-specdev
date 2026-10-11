@@ -22,15 +22,24 @@ async function tempRoot(): Promise<string> {
   return root;
 }
 
+async function canonicalGitRoot(cwd: string): Promise<string> {
+  const gitRoot = execFileSync('git', ['rev-parse', '--show-toplevel'], {
+    cwd,
+    encoding: 'utf8',
+  }).trim();
+  return realpath(gitRoot);
+}
+
 describe('Engine Git checkout bootstrap boundary', () => {
   it('resolves a checkout root without requiring the Runtime', async () => {
     const root = await tempRoot();
     execFileSync('git', ['init', '-q'], { cwd: root });
+    const canonicalRoot = await canonicalGitRoot(root);
 
     await expect(resolveGitCheckoutLayout(root)).resolves.toEqual({
-      root,
-      projectConfigPath: join(root, '.nevo', 'config.yaml'),
-      localConfigPath: join(root, '.nevo', 'local', 'config.yaml'),
+      root: canonicalRoot,
+      projectConfigPath: join(canonicalRoot, '.nevo', 'config.yaml'),
+      localConfigPath: join(canonicalRoot, '.nevo', 'local', 'config.yaml'),
     });
   });
 
@@ -48,6 +57,7 @@ describe('Engine Git checkout bootstrap boundary', () => {
     execFileSync('git', ['init', '-q'], { cwd: foreign });
     await writeFile(join(requested, '.gitignore'), '.nevo/local/\n', 'utf8');
     await writeFile(join(foreign, '.gitignore'), 'node_modules/\n', 'utf8');
+    const canonicalRequested = await canonicalGitRoot(requested);
 
     const overrides = {
       GIT_DIR: join(foreign, '.git'),
@@ -65,7 +75,7 @@ describe('Engine Git checkout bootstrap boundary', () => {
     try {
       Object.assign(process.env, overrides);
       await expect(resolveGitCheckoutLayout(requested)).resolves.toMatchObject({
-        root: requested,
+        root: canonicalRequested,
       });
       await expect(isGitIgnored(requested, '.nevo/local/config.yaml')).resolves.toBe(true);
       await expect(resolveGitCheckoutLayout(nonGit)).rejects.toThrow(/inside a Git repository/u);
@@ -101,8 +111,8 @@ describe('Engine Git checkout bootstrap boundary', () => {
 
     const primary = await resolveGitCheckoutLayout(root);
     const secondary = await resolveGitCheckoutLayout(linked);
-    expect(primary.root).toBe(root);
-    expect(secondary.root).toBe(linked);
+    expect(primary.root).toBe(await canonicalGitRoot(root));
+    expect(secondary.root).toBe(await canonicalGitRoot(linked));
     expect(secondary.root).not.toBe(primary.root);
   });
 });
