@@ -2,7 +2,11 @@ import { randomUUID } from 'node:crypto';
 import { lstat, readFile, realpath } from 'node:fs/promises';
 import { isAbsolute, join, resolve } from 'node:path';
 
-import { resolveProjectHome, type ResolvedProjectHome } from './project-home';
+import {
+  PROJECT_HOME_MARKER_RELATIVE_PATH,
+  resolveProjectHome,
+  type ResolvedProjectHome,
+} from './project-home';
 import { verifyLinkedWorkspaceIdentity } from './workspace-identity';
 
 export const WORKSPACE_REGISTRY_RELATIVE_PATH = 'workspaces.json';
@@ -217,10 +221,7 @@ export async function readWorkspaceRegistry(
     source = await readFile(path, 'utf8');
   } catch (error) {
     if (isMissing(error)) {
-      throw new WorkspaceRegistryError(
-        'REGISTRY_NOT_FOUND',
-        'Workspace registry is absent. Initialize or recover explicitly.',
-      );
+      throw await missingRegistryDiagnostic(context);
     }
     throw error;
   }
@@ -376,6 +377,33 @@ export function bindSpecToWorkspace(
       { specId, workspaceId, generation: registry.revision + 1 },
     ],
   };
+}
+
+async function missingRegistryDiagnostic(
+  context: ResolvedProjectHome,
+): Promise<WorkspaceRegistryError> {
+  const homeMarker = join(context.project.homeRoot, PROJECT_HOME_MARKER_RELATIVE_PATH);
+  try {
+    const source = JSON.parse(await readFile(homeMarker, 'utf8')) as unknown;
+    if (
+      isObject(source) &&
+      source.projectId === context.project.projectId &&
+      source.homeRoot === context.project.homeRoot &&
+      source.gitCommonDir === context.project.gitCommonDir &&
+      source.registryBootstrap === 'fresh'
+    ) {
+      return new WorkspaceRegistryError(
+        'REGISTRY_NOT_FOUND',
+        'Verified new Project Home has not initialized its registry yet.',
+      );
+    }
+  } catch {
+    // Lost/invalid evidence cannot prove a fresh Project Home.
+  }
+  return new WorkspaceRegistryError(
+    'REGISTRY_RECOVERY_REQUIRED',
+    'A registry is missing from an initialized or unverified Project Home; explicit recovery is required.',
+  );
 }
 
 function isIdentifier(value: unknown): value is string {
