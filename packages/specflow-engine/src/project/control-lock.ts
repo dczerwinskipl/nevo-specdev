@@ -139,35 +139,58 @@ export async function withProjectControlLock<T>(
     await file.sync();
     await file.close();
 
-    try {
+    const outcome = await (async () => {
       await assertCurrentProjectHome(context);
-      return await action();
-    } finally {
-      // Do not unlink a path replaced by another actor. Same-OS-account
-      // interference remains outside the cooperative-process threat model.
-      let existing: unknown;
-      try {
-        existing = JSON.parse(await readFile(path, 'utf8')) as unknown;
-      } catch {
-        throw new ProjectControlLockError(
-          'CONTROL_LOCK_OWNERSHIP_LOST',
-          'Control lock is unreadable; refusing to release an unknown owner.',
-        );
-      }
-      if (!isLockRecord(existing) || existing.token !== token) {
-        throw new ProjectControlLockError(
-          'CONTROL_LOCK_OWNERSHIP_LOST',
-          'Control lock ownership changed; refusing to release another writer.',
-        );
-      }
-      await unlink(path);
+      return action();
+    })().then(
+      (value) => ({ success: true as const, value }),
+      (error: unknown) => ({ success: false as const, error }),
+    );
+
+    let releaseFailure: unknown;
+    try {
+      await releaseOwnedLock(path, token);
+    } catch (error) {
+      releaseFailure = error;
     }
+    if (releaseFailure !== undefined) {
+      if (!outcome.success) {
+        throw new AggregateError(
+          [outcome.error, releaseFailure],
+          'Operation failed and its control lock could not be released safely.',
+        );
+      }
+      throw releaseFailure;
+    }
+    if (!outcome.success) throw outcome.error;
+    return outcome.value;
   } catch (error) {
     // A failed metadata write leaves a visible recovery artifact. Do not
     // silently unlink a possibly-published lock after an uncertain failure.
     await file.close().catch(() => undefined);
     throw error;
   }
+}
+
+async function releaseOwnedLock(path: string, token: string): Promise<void> {
+  // Do not unlink a path replaced by another actor. Cooperative same-OS
+  // account processes do not modify one another's lock files.
+  let existing: unknown;
+  try {
+    existing = JSON.parse(await readFile(path, 'utf8')) as unknown;
+  } catch {
+    throw new ProjectControlLockError(
+      'CONTROL_LOCK_OWNERSHIP_LOST',
+      'Control lock is unreadable; refusing to release an unknown owner.',
+    );
+  }
+  if (!isLockRecord(existing) || existing.token !== token) {
+    throw new ProjectControlLockError(
+      'CONTROL_LOCK_OWNERSHIP_LOST',
+      'Control lock ownership changed; refusing to release another writer.',
+    );
+  }
+  await unlink(path);
 }
 
 async function ensureSafeLockDirectory(context: ResolvedProjectHome, dir: string): Promise<void> {
