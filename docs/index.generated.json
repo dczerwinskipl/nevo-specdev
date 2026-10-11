@@ -326,6 +326,40 @@
       ]
     },
     {
+      "id": "ideas.specflow-engine.execution-plans",
+      "type": "hub",
+      "title": "Temporary SpecFlow Engine implementation runbook",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/README.md",
+      "read_when": [
+        "planning staged implementation and safe agent batching",
+        "reviewing SpecFlow Engine implementation across all five plans"
+      ],
+      "summary": "Temporary cross-plan order, batch/parallel dispatch rules and removal gate for the Engine implementation branch.",
+      "related": [
+        "ideas.specflow-engine",
+        "ideas.specflow-engine.plan-01",
+        "ideas.specflow-engine.plan-02",
+        "ideas.specflow-engine.plan-03",
+        "ideas.specflow-engine.plan-04",
+        "ideas.specflow-engine.plan-05",
+        "ideas.specflow-engine.acceptance"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "runtime",
+        "cli",
+        "testing"
+      ],
+      "tags": [
+        "execution-plan",
+        "temporary",
+        "batching",
+        "implementation"
+      ]
+    },
+    {
       "id": "ideas.specflow-runtime.ai-adapters",
       "type": "hub",
       "title": "AI adapter hardening ideas",
@@ -2046,7 +2080,7 @@
       "type": "engineering",
       "title": "Temporary execution plan 01 — Engine and Project Foundation",
       "status": "draft",
-      "file": "docs/ideas/specflow-engine/execution-plans/01-engine-project-foundation.md",
+      "file": "docs/ideas/specflow-engine/execution-plans/01-engine-project-foundation/README.md",
       "read_when": [
         "executing the temporary Engine migration proof of concept",
         "reviewing implementation tasks, verification and dependency gates"
@@ -2073,11 +2107,214 @@
       ]
     },
     {
+      "id": "ideas.specflow-engine.plan-01.task-01",
+      "type": "engineering",
+      "title": "E1.T01 — Contract baseline",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/01-engine-project-foundation/tasks/T01-contract-baseline.md",
+      "read_when": [
+        "implementing E1.T01 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for contract baseline within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-01",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "cli",
+        "runtime",
+        "configuration",
+        "workflow"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-01.task-02",
+      "type": "engineering",
+      "title": "E1.T02 — Engine boundary",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/01-engine-project-foundation/tasks/T02-engine-boundary.md",
+      "read_when": [
+        "implementing E1.T02 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for engine boundary within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-01",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "cli",
+        "runtime",
+        "configuration",
+        "workflow"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-01.task-03",
+      "type": "engineering",
+      "title": "E1.T03 — Project Home resolver",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/01-engine-project-foundation/tasks/T03-project-home-resolver.md",
+      "read_when": [
+        "implementing E1.T03 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for project home resolver within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-01",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "cli",
+        "runtime",
+        "configuration",
+        "workflow"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-01.task-04",
+      "type": "engineering",
+      "title": "E1.T04 — Workspace registry",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/01-engine-project-foundation/tasks/T04-workspace-registry.md",
+      "read_when": [
+        "implementing E1.T04 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for workspace registry within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-01",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "cli",
+        "runtime",
+        "configuration",
+        "workflow"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-01.task-05",
+      "type": "engineering",
+      "title": "E1.T05 — Shared coordination primitives",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/01-engine-project-foundation/tasks/T05-shared-coordination-primitives.md",
+      "read_when": [
+        "implementing E1.T05 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for shared coordination primitives within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-01",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "cli",
+        "runtime",
+        "configuration",
+        "workflow"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-01.task-06",
+      "type": "engineering",
+      "title": "E1.T06 — CLI/Runtime composition",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/01-engine-project-foundation/tasks/T06-cli-runtime-composition.md",
+      "read_when": [
+        "implementing E1.T06 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for cli/runtime composition within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-01",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "cli",
+        "runtime",
+        "configuration",
+        "workflow"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-01.task-07",
+      "type": "engineering",
+      "title": "E1.T07 — Boundary and error tests",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/01-engine-project-foundation/tasks/T07-boundary-and-error-tests.md",
+      "read_when": [
+        "implementing E1.T07 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for boundary and error tests within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-01",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "cli",
+        "runtime",
+        "configuration",
+        "workflow"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
       "id": "ideas.specflow-engine.plan-02",
       "type": "engineering",
       "title": "Temporary execution plan 02 — Specifications and Git Workspaces",
       "status": "draft",
-      "file": "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces.md",
+      "file": "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/README.md",
       "read_when": [
         "executing the temporary Engine migration proof of concept",
         "reviewing implementation tasks, verification and dependency gates"
@@ -2105,11 +2342,272 @@
       ]
     },
     {
+      "id": "ideas.specflow-engine.plan-02.task-01",
+      "type": "engineering",
+      "title": "E2.T01 — Specs model and repository",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/tasks/T01-specs-model-and-repository.md",
+      "read_when": [
+        "implementing E2.T01 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for specs model and repository within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-02",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "runtime",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-02.task-02",
+      "type": "engineering",
+      "title": "E2.T02 — Git capability",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/tasks/T02-git-capability.md",
+      "read_when": [
+        "implementing E2.T02 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for git capability within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-02",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "runtime",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-02.task-03",
+      "type": "engineering",
+      "title": "E2.T03 — Binding and discovery",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/tasks/T03-binding-and-discovery.md",
+      "read_when": [
+        "implementing E2.T03 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for binding and discovery within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-02",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "runtime",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-02.task-04",
+      "type": "engineering",
+      "title": "E2.T04 — Durable create",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/tasks/T04-durable-create.md",
+      "read_when": [
+        "implementing E2.T04 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for durable create within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-02",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "runtime",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-02.task-05",
+      "type": "engineering",
+      "title": "E2.T05 — CLI and HTTP create",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/tasks/T05-cli-and-http-create.md",
+      "read_when": [
+        "implementing E2.T05 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for cli and http create within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-02",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "runtime",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-02.task-06",
+      "type": "engineering",
+      "title": "E2.T06 — Runtime read integration",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/tasks/T06-runtime-read-integration.md",
+      "read_when": [
+        "implementing E2.T06 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for runtime read integration within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-02",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "runtime",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-02.task-07",
+      "type": "engineering",
+      "title": "E2.T07 — Live refresh",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/tasks/T07-live-refresh.md",
+      "read_when": [
+        "implementing E2.T07 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for live refresh within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-02",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "runtime",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-02.task-08",
+      "type": "engineering",
+      "title": "E2.T08 — Safety and regression",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/tasks/T08-safety-and-regression.md",
+      "read_when": [
+        "implementing E2.T08 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for safety and regression within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-02",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "runtime",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-02.task-09",
+      "type": "engineering",
+      "title": "E2.T09 — Rebind and cleanup sub-slice (optional later gate)",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/tasks/T09-rebind-and-cleanup-sub-slice-optional-later-gate.md",
+      "read_when": [
+        "implementing E2.T09 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for rebind and cleanup sub-slice (optional later gate) within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-02",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "runtime",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
       "id": "ideas.specflow-engine.plan-03",
       "type": "engineering",
       "title": "Temporary execution plan 03 — Offline Workflow and Execution",
       "status": "draft",
-      "file": "docs/ideas/specflow-engine/execution-plans/03-offline-workflow-execution.md",
+      "file": "docs/ideas/specflow-engine/execution-plans/03-offline-workflow-execution/README.md",
       "read_when": [
         "executing the temporary Engine migration proof of concept",
         "reviewing implementation tasks, verification and dependency gates"
@@ -2137,11 +2635,301 @@
       ]
     },
     {
+      "id": "ideas.specflow-engine.plan-03.task-01",
+      "type": "engineering",
+      "title": "E3.T01 — Legacy fact check",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/03-offline-workflow-execution/tasks/T01-legacy-fact-check.md",
+      "read_when": [
+        "implementing E3.T01 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for legacy fact check within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-03",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-03.task-02",
+      "type": "engineering",
+      "title": "E3.T02 — Workflow definition/identity",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/03-offline-workflow-execution/tasks/T02-workflow-definition-identity.md",
+      "read_when": [
+        "implementing E3.T02 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for workflow definition/identity within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-03",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-03.task-03",
+      "type": "engineering",
+      "title": "E3.T03 — Readiness/step state",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/03-offline-workflow-execution/tasks/T03-readiness-step-state.md",
+      "read_when": [
+        "implementing E3.T03 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for readiness/step state within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-03",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-03.task-04",
+      "type": "engineering",
+      "title": "E3.T04 — Verification boundary",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/03-offline-workflow-execution/tasks/T04-verification-boundary.md",
+      "read_when": [
+        "implementing E3.T04 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for verification boundary within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-03",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-03.task-05",
+      "type": "engineering",
+      "title": "E3.T05 — Physical admission",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/03-offline-workflow-execution/tasks/T05-physical-admission.md",
+      "read_when": [
+        "implementing E3.T05 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for physical admission within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-03",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-03.task-06",
+      "type": "engineering",
+      "title": "E3.T06 — Owner/recovery protocol",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/03-offline-workflow-execution/tasks/T06-owner-recovery-protocol.md",
+      "read_when": [
+        "implementing E3.T06 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for owner/recovery protocol within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-03",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-03.task-07",
+      "type": "engineering",
+      "title": "E3.T07 — Actor and human gates",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/03-offline-workflow-execution/tasks/T07-actor-and-human-gates.md",
+      "read_when": [
+        "implementing E3.T07 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for actor and human gates within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-03",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-03.task-08",
+      "type": "engineering",
+      "title": "E3.T08 — CLI and external skill",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/03-offline-workflow-execution/tasks/T08-cli-and-external-skill.md",
+      "read_when": [
+        "implementing E3.T08 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for cli and external skill within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-03",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-03.task-09",
+      "type": "engineering",
+      "title": "E3.T09 — Runtime read projection",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/03-offline-workflow-execution/tasks/T09-runtime-read-projection.md",
+      "read_when": [
+        "implementing E3.T09 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for runtime read projection within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-03",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-03.task-10",
+      "type": "engineering",
+      "title": "E3.T10 — Process/restart tests",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/03-offline-workflow-execution/tasks/T10-process-restart-tests.md",
+      "read_when": [
+        "implementing E3.T10 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for process/restart tests within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-03",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
       "id": "ideas.specflow-engine.plan-04",
       "type": "engineering",
       "title": "Temporary execution plan 04 — Managed Sessions Foundation",
       "status": "draft",
-      "file": "docs/ideas/specflow-engine/execution-plans/04-managed-sessions-foundation.md",
+      "file": "docs/ideas/specflow-engine/execution-plans/04-managed-sessions-foundation/README.md",
       "read_when": [
         "executing the temporary Engine migration proof of concept",
         "reviewing implementation tasks, verification and dependency gates"
@@ -2169,11 +2957,243 @@
       ]
     },
     {
+      "id": "ideas.specflow-engine.plan-04.task-01",
+      "type": "engineering",
+      "title": "E4.T01 — Session contract reconnaissance",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/04-managed-sessions-foundation/tasks/T01-session-contract-reconnaissance.md",
+      "read_when": [
+        "implementing E4.T01 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for session contract reconnaissance within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-04",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "runtime",
+        "ai",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-04.task-02",
+      "type": "engineering",
+      "title": "E4.T02 — Canonical identities",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/04-managed-sessions-foundation/tasks/T02-canonical-identities.md",
+      "read_when": [
+        "implementing E4.T02 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for canonical identities within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-04",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "runtime",
+        "ai",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-04.task-03",
+      "type": "engineering",
+      "title": "E4.T03 — Durable Runtime state",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/04-managed-sessions-foundation/tasks/T03-durable-runtime-state.md",
+      "read_when": [
+        "implementing E4.T03 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for durable runtime state within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-04",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "runtime",
+        "ai",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-04.task-04",
+      "type": "engineering",
+      "title": "E4.T04 — Provider-neutral test driver",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/04-managed-sessions-foundation/tasks/T04-provider-neutral-test-driver.md",
+      "read_when": [
+        "implementing E4.T04 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for provider-neutral test driver within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-04",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "runtime",
+        "ai",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-04.task-05",
+      "type": "engineering",
+      "title": "E4.T05 — Turn coordinator",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/04-managed-sessions-foundation/tasks/T05-turn-coordinator.md",
+      "read_when": [
+        "implementing E4.T05 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for turn coordinator within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-04",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "runtime",
+        "ai",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-04.task-06",
+      "type": "engineering",
+      "title": "E4.T06 — HTTP/stream contracts",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/04-managed-sessions-foundation/tasks/T06-http-stream-contracts.md",
+      "read_when": [
+        "implementing E4.T06 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for http/stream contracts within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-04",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "runtime",
+        "ai",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-04.task-07",
+      "type": "engineering",
+      "title": "E4.T07 — UI integration slice",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/04-managed-sessions-foundation/tasks/T07-ui-integration-slice.md",
+      "read_when": [
+        "implementing E4.T07 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for ui integration slice within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-04",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "runtime",
+        "ai",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-04.task-08",
+      "type": "engineering",
+      "title": "E4.T08 — Lifecycle/security tests",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/04-managed-sessions-foundation/tasks/T08-lifecycle-security-tests.md",
+      "read_when": [
+        "implementing E4.T08 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for lifecycle/security tests within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-04",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "runtime",
+        "ai",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
       "id": "ideas.specflow-engine.plan-05",
       "type": "engineering",
       "title": "Temporary execution plan 05 — Managed Execution Integration",
       "status": "draft",
-      "file": "docs/ideas/specflow-engine/execution-plans/05-managed-execution-integration.md",
+      "file": "docs/ideas/specflow-engine/execution-plans/05-managed-execution-integration/README.md",
       "read_when": [
         "executing the temporary Engine migration proof of concept",
         "reviewing implementation tasks, verification and dependency gates"
@@ -2199,6 +3219,276 @@
         "managed-execution",
         "handover",
         "recovery"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-05.task-01",
+      "type": "engineering",
+      "title": "E5.T01 — Cross-owner contract",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/05-managed-execution-integration/tasks/T01-cross-owner-contract.md",
+      "read_when": [
+        "implementing E5.T01 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for cross-owner contract within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-05",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "runtime",
+        "ai",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-05.task-02",
+      "type": "engineering",
+      "title": "E5.T02 — Preparation and authorization",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/05-managed-execution-integration/tasks/T02-preparation-and-authorization.md",
+      "read_when": [
+        "implementing E5.T02 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for preparation and authorization within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-05",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "runtime",
+        "ai",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-05.task-03",
+      "type": "engineering",
+      "title": "E5.T03 — Atomic-enough intent protocol",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/05-managed-execution-integration/tasks/T03-atomic-enough-intent-protocol.md",
+      "read_when": [
+        "implementing E5.T03 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for atomic-enough intent protocol within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-05",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "runtime",
+        "ai",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-05.task-04",
+      "type": "engineering",
+      "title": "E5.T04 — Mock dispatch phases",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/05-managed-execution-integration/tasks/T04-mock-dispatch-phases.md",
+      "read_when": [
+        "implementing E5.T04 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for mock dispatch phases within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-05",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "runtime",
+        "ai",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-05.task-05",
+      "type": "engineering",
+      "title": "E5.T05 — Turn/claim settlement",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/05-managed-execution-integration/tasks/T05-turn-claim-settlement.md",
+      "read_when": [
+        "implementing E5.T05 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for turn/claim settlement within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-05",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "runtime",
+        "ai",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-05.task-06",
+      "type": "engineering",
+      "title": "E5.T06 — Explicit workflow interaction",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/05-managed-execution-integration/tasks/T06-explicit-workflow-interaction.md",
+      "read_when": [
+        "implementing E5.T06 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for explicit workflow interaction within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-05",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "runtime",
+        "ai",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-05.task-07",
+      "type": "engineering",
+      "title": "E5.T07 — Bounded batch and handover",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/05-managed-execution-integration/tasks/T07-bounded-batch-and-handover.md",
+      "read_when": [
+        "implementing E5.T07 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for bounded batch and handover within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-05",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "runtime",
+        "ai",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-05.task-08",
+      "type": "engineering",
+      "title": "E5.T08 — Restart and auth regressions",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/05-managed-execution-integration/tasks/T08-restart-and-auth-regressions.md",
+      "read_when": [
+        "implementing E5.T08 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for restart and auth regressions within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-05",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "runtime",
+        "ai",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-05.task-09",
+      "type": "engineering",
+      "title": "E5.T09 — Architecture audit + promotion backlog",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/05-managed-execution-integration/tasks/T09-architecture-audit-promotion-backlog.md",
+      "read_when": [
+        "implementing E5.T09 on the shared implementation branch",
+        "checking dependencies, batch safety and acceptance evidence"
+      ],
+      "summary": "Temporary task for architecture audit + promotion backlog within the SpecFlow Engine implementation.",
+      "related": [
+        "ideas.specflow-engine.plan-05",
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "runtime",
+        "ai",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "implementation"
       ]
     },
     {

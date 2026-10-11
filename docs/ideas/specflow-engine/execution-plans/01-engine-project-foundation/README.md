@@ -30,17 +30,32 @@ A separate CLI process launched in a primary or **registered** linked Git worktr
 
 Existing seams: `packages/specflow/src/program.ts` (composition), `packages/specflow/src/project/`, `packages/specflow-runtime/src/features/specs/`, `@nevo/specflow-contracts` and existing single-artifact bundling. The public CLI currently has `init`, `start` and `auth` but no `specs` or `workflow` command; do not describe proposed commands as existing.
 
-## Task sequence
+## Execution order, task files and review checkpoints
 
-| Task | Implement and prove | Depends on |
+Each task has its own Markdown file. **Batch** means sequential tasks in one agent session; **parallel** means independent workers writing disjoint owners; **solo** means separately executed and reviewed. The task-level dependency links are executable prerequisites, not only documentation. For cross-plan ordering see the [program runbook](../../README.md).
+
+### Recommended waves
+
+1. T01 solo (evidence)
+2. T02 solo (boundary)
+3. T03 solo (home)
+4. T04 → T05 sequential batch `1-state-core`
+5. T06 solo (composition)
+6. T07 solo (acceptance)
+
+### Tasks
+
+| Task | Depends on | Run mode |
 | --- | --- | --- |
-| E1.T01 — Contract baseline | Inspect latest main code, test fixtures, ADR 0012 and legacy Nevo candidates. Record feature owners, existing paths, reuse/replace decisions, and the decision list D01/D02/D06/D16/D17/D24/D25. Prefer extending existing capabilities over moving unrelated code. | — |
-| E1.T02 — Engine boundary | Introduce an independent application source boundary, provisionally `@nevo/specflow-engine` only if import/build evidence supports it; composition root bundles exactly one product CLI. Engine must not import Fastify, Commander, Runtime Sessions/providers, UI or CLI adapters. | T01 |
-| E1.T03 — Project Home resolver | Implement verified `cwd -> Git checkout -> common-dir -> designated home` with explicit validated override; distinguish local project identity, committed operational config at home, local ignored config, and active workspace root. Reject ambiguous, absent or substituted home. | T01–T02 |
-| E1.T04 — Workspace registry | Establish versioned local registry identity `workspaceId -> root`, optional `specId -> workspaceId`, membership verification, unavailable/corrupt states, and atomic local read/update ports. Different clone sharing a remote must not join the local registry. | T03 |
-| E1.T05 — Shared coordination primitives | Implement short cross-process control/registry lock and deterministic address; atomic record writes and explicit corruption handling. No long-running writer claims here (Plan 03). Prove races using independent OS processes, not only promises. | T04 |
-| E1.T06 — CLI/Runtime composition | Wire the same Engine instance/factory at both adapter boundaries, without requiring an HTTP listener for Engine calls. Runtime bootstrap obtains its Project Home config from the same provenance as CLI; linked branch may not override Auth/Git project policy. | T02–T05 |
-| E1.T07 — Boundary and error tests | Add real temporary Git repos, linked worktree, separate CLI processes, ambiguous/missing Project Home, invalid explicit locator, independent clone, corrupt state, path substitution, Windows/POSIX platform evidence and import-graph/packaging tests. | T03–T06 |
+| [E1.T01 — Contract baseline](tasks/T01-contract-baseline.md) | — | Solo |
+| [E1.T02 — Engine boundary](tasks/T02-engine-boundary.md) | E1.T01 | Solo |
+| [E1.T03 — Project Home resolver](tasks/T03-project-home-resolver.md) | E1.T01, E1.T02 | Solo |
+| [E1.T04 — Workspace registry](tasks/T04-workspace-registry.md) | E1.T03 | Sequential batch `1-state-core` |
+| [E1.T05 — Shared coordination primitives](tasks/T05-shared-coordination-primitives.md) | E1.T04 | Sequential batch `1-state-core` |
+| [E1.T06 — CLI/Runtime composition](tasks/T06-cli-runtime-composition.md) | E1.T02, E1.T03, E1.T04, E1.T05 | Solo |
+| [E1.T07 — Boundary and error tests](tasks/T07-boundary-and-error-tests.md) | E1.T03, E1.T04, E1.T05, E1.T06 | Solo |
+
+**Batch policy:** never auto-batch a high-risk solo gate with dependent tasks; re-evaluate shared file ownership at dispatch. In particular, lock/claim, security, HTTP scopes, durability/recovery and dispatch uncertainty need an explicit review checkpoint. If a task uncovers an architecture conflict, stop dependent tasks but continue unaffected, disjoint work.
 
 ## Design decisions this plan must resolve
 
@@ -62,7 +77,7 @@ Existing seams: `packages/specflow/src/program.ts` (composition), `packages/spec
 
 ## Sources and handoff
 
-- [Project Home discovery](../project-home-discovery.md), [project/workspace context](../project-and-workspace-context.md), [registry](../workspace-registry-and-discovery.md), [Engine boundaries](../engine-cli-runtime-boundaries.md), [local actors/auth](../local-actor-and-human-gates.md).
-- [ADR 0012](../../../architecture/decisions/0012-product-package-topology-and-dependency-direction.md), [Runtime configuration](../../../architecture/runtime/configuration.md), [CLI contract](../../../reference/cli/nevo-specflow-contract.md), [acceptance](../acceptance-criteria.md).
+- [Project Home discovery](../../project-home-discovery.md), [project/workspace context](../../project-and-workspace-context.md), [registry](../../workspace-registry-and-discovery.md), [Engine boundaries](../../engine-cli-runtime-boundaries.md), [local actors/auth](../../local-actor-and-human-gates.md).
+- [ADR 0012](../../../../architecture/decisions/0012-product-package-topology-and-dependency-direction.md), [Runtime configuration](../../../../architecture/runtime/configuration.md), [CLI contract](../../../../reference/cli/nevo-specflow-contract.md), [acceptance](../../acceptance-criteria.md).
 
 **Ready for Plan 02:** a single Engine boundary, deterministic project locator and local coordination primitive tested by independent processes. A remaining implementation choice is acceptable only if it does not change identities, actor trust or source authority.

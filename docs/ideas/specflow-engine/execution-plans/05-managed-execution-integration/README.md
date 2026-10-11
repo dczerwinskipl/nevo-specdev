@@ -28,19 +28,37 @@ In a **single verified, fixed execution checkout** (typically the primary worksp
 
 A path/workspace identity may be recorded for audit, but **do not launch/resume an actual provider in another worktree**, switch `cwd` for existing provider-native Sessions, or test session relocation via fake provider capability. Worktree-aware provider Session integration is a later adapter-gated plan.
 
-## Task sequence
+## Execution order, task files and review checkpoints
 
-| Task | Implement and prove | Depends on |
+Each task has its own Markdown file. **Batch** means sequential tasks in one agent session; **parallel** means independent workers writing disjoint owners; **solo** means separately executed and reviewed. The task-level dependency links are executable prerequisites, not only documentation. For cross-plan ordering see the [program runbook](../../README.md).
+
+### Recommended waves
+
+1. T01 solo (shared contract)
+2. T02 solo (auth/admission)
+3. T03 solo (durable intent)
+4. T04 solo (dispatch uncertainty)
+5. T05 solo (settlement)
+6. T06 solo (workflow finish)
+7. T07 solo (batch/handover)
+8. T08 solo (fault regression)
+9. T09 solo (architecture review)
+
+### Tasks
+
+| Task | Depends on | Run mode |
 | --- | --- | --- |
-| E5.T01 — Cross-owner contract | Inspect Engine admission/claim/attempt APIs from Plan 03 and Runtime Turn/Session persistence from Plan 04. Define explicit intent/receipt shapes and resource ownership. `sessionId`, `turnId`, `invocationId`, `executionId`, `workspaceId`, `workflowAttemptRef`, and `ProviderSessionRef` stay distinct. | Plans 03 & 04 |
-| E5.T02 — Preparation and authorization | Resolve canonical `specId` and actual target workspace under Engine, derive effect scope and requested Task attempts, authorize through Runtime (resource scope not client `workspaceId`), inspect workflow readiness and acquire writer claim only when effects require it. | T01 |
-| E5.T03 — Atomic-enough intent protocol | Design two durable authorities: Engine owns claim/operations, Runtime owns Turn/provider invocation. Persist correlatable intent before provider side effects, with idempotency/revision compare-and-set so crash after claim but before Turn intent is discoverable. Do not invent a cross-store ACID transaction. | T02 |
-| E5.T04 — Mock dispatch phases | Implement explicit `prepared` (proven not dispatched), `dispatching/unknown`, and `started` (correlated/evidenced) milestones. Inject failures **before spawn, after spawn before ID persisted, after correlation, during Work, and before settlement**. Unknown dispatch never automatically launches a replacement. | T03 |
-| E5.T05 — Turn/claim settlement | Runtime terminalizes its Turn only with its evidence; Engine independently reconciles/relinquishes exact owned claim with fencing/correlation proofs. A terminal Turn or release **never** auto-finishes Task or activates next step. Cancellation with ambiguous tool effects may keep writer blocked. | T04 |
-| E5.T06 — Explicit workflow interaction | Link one managed writable Turn to an actual Workflow attempt, then call explicit Engine `step finish` after passing declared gates; verify no hidden transition on Turn settlement. Also show a standalone truly read-only Turn with no workflow/claim. | T05 |
-| E5.T07 — Bounded batch and handover | Support minimal **explicit** ordered set of Task attempts and new successor Session intent/context, preserving per-Task state and current claim. Never infer a Task from historical Session associations; no automatic reviewer spawning or claim transfer without settlement. | T05–T06 |
-| E5.T08 — Restart and auth regressions | Cross-process and Runtime restart scenarios, duplicate request IDs, stale callbacks, uncertain provider outcome, wrong owner, per-Spec auth, unauthorized Session/Task reference redaction, manual recovery visibility. Test with real Git files where relevant and controlled mock provider. | T02–T07 |
-| E5.T09 — Architecture audit + promotion backlog | Review imports, state ownership, diagnostics, error taxonomy, live API wiring and batch boundaries; record all deferred native provider/worktree concerns as future contracts. Propose ADR changes **only after** full A/B and relevant Session integration gates pass. | T08 |
+| [E5.T01 — Cross-owner contract](tasks/T01-cross-owner-contract.md) | E3.T10, E4.T08 | Solo |
+| [E5.T02 — Preparation and authorization](tasks/T02-preparation-and-authorization.md) | E5.T01 | Solo |
+| [E5.T03 — Atomic-enough intent protocol](tasks/T03-atomic-enough-intent-protocol.md) | E5.T02 | Solo |
+| [E5.T04 — Mock dispatch phases](tasks/T04-mock-dispatch-phases.md) | E5.T03 | Solo |
+| [E5.T05 — Turn/claim settlement](tasks/T05-turn-claim-settlement.md) | E5.T04 | Solo |
+| [E5.T06 — Explicit workflow interaction](tasks/T06-explicit-workflow-interaction.md) | E5.T05 | Solo |
+| [E5.T07 — Bounded batch and handover](tasks/T07-bounded-batch-and-handover.md) | E5.T05, E5.T06 | Solo |
+| [E5.T08 — Restart and auth regressions](tasks/T08-restart-and-auth-regressions.md) | E5.T02, E5.T03, E5.T04, E5.T05, E5.T06, E5.T07 | Solo |
+| [E5.T09 — Architecture audit + promotion backlog](tasks/T09-architecture-audit-promotion-backlog.md) | E5.T08 | Solo |
+
+**Batch policy:** never auto-batch a high-risk solo gate with dependent tasks; re-evaluate shared file ownership at dispatch. In particular, lock/claim, security, HTTP scopes, durability/recovery and dispatch uncertainty need an explicit review checkpoint. If a task uncovers an architecture conflict, stop dependent tasks but continue unaffected, disjoint work.
 
 ## Hard invariants to review
 
@@ -76,7 +94,7 @@ No live provider sessions are required to execute any of these steps.
 
 ## Sources and end-of-program cleanup
 
-- [Managed handshake](../managed-session-integration.md), [execution scopes](../execution-scopes-and-recovery.md), [durable operations](../durable-operations-and-recovery.md), [local trust](../local-actor-and-human-gates.md), [test plan](../test-plan.md), [acceptance](../acceptance-criteria.md).
-- [Canonical Session model](../../../architecture/ai/canonical-session-turn-work.md), [deterministic workflow](../../../architecture/workflow/deterministic-workflow.md).
+- [Managed handshake](../../managed-session-integration.md), [execution scopes](../../execution-scopes-and-recovery.md), [durable operations](../../durable-operations-and-recovery.md), [local trust](../../local-actor-and-human-gates.md), [test plan](../../test-plan.md), [acceptance](../../acceptance-criteria.md).
+- [Canonical Session model](../../../../architecture/ai/canonical-session-turn-work.md), [deterministic workflow](../../../../architecture/workflow/deterministic-workflow.md).
 
 When the verified implementation and owner architectural review are accepted, record lasting invariants/contracts in authoritative architecture, reference or ADR files, then **delete these five temporary execution plan documents and regenerate docs indexes**. Keep tests, evidence, and any accepted ADRs. Do not promote untested mock assumptions as provider-native guarantees.
