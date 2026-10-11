@@ -21,3 +21,24 @@ export {
   type ResolveProjectHomeOptions,
   type ResolvedProjectHome,
 } from './project/project-home';
+
+export {
+  WORKSPACE_REGISTRY_RELATIVE_PATH,
+  WORKSPACE_REGISTRY_VERSION,
+  WorkspaceRegistryError,
+  addWorkspace,
+  bindSpecToWorkspace,
+  initialWorkspaceRegistry,
+  inspectRegisteredWorkspace,
+  readWorkspaceRegistry,
+  registerInitialPrimary,
+  resolveSpecWorkspaceId,
+  validateWorkspaceRegistry,
+  verifyWorkspaceRoot,
+  workspaceRegistryPath,
+  type RegisteredWorkspaceInspection,
+  type SpecWorkspaceBinding,
+  type WorkspaceRegistration,
+  type WorkspaceRegistry,
+  type WorkspaceRegistryErrorCode,
+} from './project/workspace-registry';
