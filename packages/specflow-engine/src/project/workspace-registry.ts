@@ -402,7 +402,7 @@ async function missingRegistryDiagnostic(
   }
   return new WorkspaceRegistryError(
     'REGISTRY_RECOVERY_REQUIRED',
-    'A registry is missing from an initialized or unverified Project Home; explicit recovery is required.',
+    'Registry is missing from an initialized or unverified Project Home; explicit recovery is required.',
   );
 }
 
