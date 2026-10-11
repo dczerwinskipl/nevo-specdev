@@ -89,7 +89,7 @@ export async function updateWorkspaceRegistry(
       // Prevent a callback from mutating our comparison snapshot in place.
       const proposed = mutate(freezeRegistry(current));
       if (JSON.stringify(proposed) === original) return current;
-      if (!proposed || proposed.revision !== current.revision) {
+      if (proposed?.revision !== current.revision) {
         throw new WorkspaceRegistryError(
           'REGISTRY_CONFLICT',
           'Registry revision is exclusively advanced by the coordinated store.',
@@ -138,8 +138,7 @@ function assertAppendOnlyTransition(old: WorkspaceRegistry, next: WorkspaceRegis
   for (const [specId, before] of oldBindings) {
     const after = nextBindings.get(specId);
     if (
-      !after ||
-      after.workspaceId !== before.workspaceId ||
+      after?.workspaceId !== before.workspaceId ||
       after.generation !== before.generation
     ) {
       throw new WorkspaceRegistryError(
