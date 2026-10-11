@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-02.task-07
 type: engineering
-title: "E2.T07 — Live refresh"
+title: 'E2.T07 — Live refresh'
 status: draft
 scope: specflow
 areas: [workflow, cli, runtime, testing]

@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-03.task-08
 type: engineering
-title: "E3.T08 — CLI and external skill"
+title: 'E3.T08 — CLI and external skill'
 status: draft
 scope: specflow
 areas: [workflow, cli, security, testing]
@@ -23,7 +23,7 @@ related:
 
 ## Required implementation / outcome
 
-Add capability-owned `workflow inspect/start/finish/reconcile` CLI operations with stable machine-readable errors, success stdout and diagnostic stderr. Update the owning agent workflow skill/instructions *only after CLI commands exist*; no Runtime dependency or fake Session creation.
+Add capability-owned `workflow inspect/start/finish/reconcile` CLI operations with stable machine-readable errors, success stdout and diagnostic stderr. Update the owning agent workflow skill/instructions _only after CLI commands exist_; no Runtime dependency or fake Session creation.
 
 ## Prerequisites
 

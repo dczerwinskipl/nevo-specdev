@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-03.task-05
 type: engineering
-title: "E3.T05 — Physical admission"
+title: 'E3.T05 — Physical admission'
 status: draft
 scope: specflow
 areas: [workflow, cli, security, testing]

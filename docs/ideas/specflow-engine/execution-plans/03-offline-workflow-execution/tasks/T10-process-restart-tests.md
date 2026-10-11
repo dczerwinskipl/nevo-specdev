@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-03.task-10
 type: engineering
-title: "E3.T10 — Process/restart tests"
+title: 'E3.T10 — Process/restart tests'
 status: draft
 scope: specflow
 areas: [workflow, cli, security, testing]

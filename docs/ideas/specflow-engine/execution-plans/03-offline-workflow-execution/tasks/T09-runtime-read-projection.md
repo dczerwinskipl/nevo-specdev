@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-03.task-09
 type: engineering
-title: "E3.T09 — Runtime read projection"
+title: 'E3.T09 — Runtime read projection'
 status: draft
 scope: specflow
 areas: [workflow, cli, security, testing]

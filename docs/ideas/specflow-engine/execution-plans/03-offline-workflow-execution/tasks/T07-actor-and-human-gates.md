@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-03.task-07
 type: engineering
-title: "E3.T07 — Actor and human gates"
+title: 'E3.T07 — Actor and human gates'
 status: draft
 scope: specflow
 areas: [workflow, cli, security, testing]

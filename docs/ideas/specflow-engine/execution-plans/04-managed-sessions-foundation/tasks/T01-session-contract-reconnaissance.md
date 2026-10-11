@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-04.task-01
 type: engineering
-title: "E4.T01 — Session contract reconnaissance"
+title: 'E4.T01 — Session contract reconnaissance'
 status: draft
 scope: specflow
 areas: [runtime, ai, security, testing]

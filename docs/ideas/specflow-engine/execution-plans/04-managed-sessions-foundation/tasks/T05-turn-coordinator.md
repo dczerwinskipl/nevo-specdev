@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-04.task-05
 type: engineering
-title: "E4.T05 — Turn coordinator"
+title: 'E4.T05 — Turn coordinator'
 status: draft
 scope: specflow
 areas: [runtime, ai, security, testing]

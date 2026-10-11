@@ -56,7 +56,10 @@ Possible Engine API (illustrative, not frozen):
 interface Engine {
   specs: { create(input: CreateSpecInput): Promise<CreatedSpec>; list(): Promise<SpecSummary[]> };
   workspaces: { resolveSpec(specId: string): Promise<ResolvedWorkspace> };
-  workflow?: { inspect(input: TaskRef): Promise<Readiness>; start(input: StartInput): Promise<StepContext> };
+  workflow?: {
+    inspect(input: TaskRef): Promise<Readiness>;
+    start(input: StartInput): Promise<StepContext>;
+  };
 }
 ```
 

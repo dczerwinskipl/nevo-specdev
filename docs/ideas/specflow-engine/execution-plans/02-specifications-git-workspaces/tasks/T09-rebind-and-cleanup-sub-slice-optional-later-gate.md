@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-02.task-09
 type: engineering
-title: "E2.T09 — Rebind and cleanup sub-slice (optional later gate)"
+title: 'E2.T09 — Rebind and cleanup sub-slice (optional later gate)'
 status: draft
 scope: specflow
 areas: [workflow, cli, runtime, testing]

@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-04.task-07
 type: engineering
-title: "E4.T07 — UI integration slice"
+title: 'E4.T07 — UI integration slice'
 status: draft
 scope: specflow
 areas: [runtime, ai, security, testing]

@@ -20,7 +20,7 @@ related:
 
 # Plan 04 — Managed Sessions Foundation
 
-**Lifecycle: temporary implementation plan.** Independently useful Runtime capability with a **controlled fake/mock provider**, *not* proof that any real provider can resume or switch worktrees. Work can begin alongside Plan 03 once Plan 01's identity boundaries are sufficiently decided.
+**Lifecycle: temporary implementation plan.** Independently useful Runtime capability with a **controlled fake/mock provider**, _not_ proof that any real provider can resume or switch worktrees. Work can begin alongside Plan 03 once Plan 01's identity boundaries are sufficiently decided.
 
 ## Verifiable result
 
@@ -43,16 +43,16 @@ Each task has its own Markdown file. **Batch** means sequential tasks in one age
 
 ### Tasks
 
-| Task | Depends on | Run mode |
-| --- | --- | --- |
-| [E4.T01 — Session contract reconnaissance](tasks/T01-session-contract-reconnaissance.md) | E1.T07 | Solo |
-| [E4.T02 — Canonical identities](tasks/T02-canonical-identities.md) | E4.T01 | Solo |
-| [E4.T03 — Durable Runtime state](tasks/T03-durable-runtime-state.md) | E4.T02 | Parallel `4-session-internals` |
-| [E4.T04 — Provider-neutral test driver](tasks/T04-provider-neutral-test-driver.md) | E4.T02 | Parallel `4-session-internals` |
-| [E4.T05 — Turn coordinator](tasks/T05-turn-coordinator.md) | E4.T03, E4.T04 | Solo |
-| [E4.T06 — HTTP/stream contracts](tasks/T06-http-stream-contracts.md) | E4.T05 | Sequential batch `4-runtime-surface` |
-| [E4.T07 — UI integration slice](tasks/T07-ui-integration-slice.md) | E4.T06 | Sequential batch `4-runtime-surface` |
-| [E4.T08 — Lifecycle/security tests](tasks/T08-lifecycle-security-tests.md) | E4.T02, E4.T03, E4.T04, E4.T05, E4.T06, E4.T07 | Solo |
+| Task                                                                                     | Depends on                                     | Run mode                             |
+| ---------------------------------------------------------------------------------------- | ---------------------------------------------- | ------------------------------------ |
+| [E4.T01 — Session contract reconnaissance](tasks/T01-session-contract-reconnaissance.md) | E1.T07                                         | Solo                                 |
+| [E4.T02 — Canonical identities](tasks/T02-canonical-identities.md)                       | E4.T01                                         | Solo                                 |
+| [E4.T03 — Durable Runtime state](tasks/T03-durable-runtime-state.md)                     | E4.T02                                         | Parallel `4-session-internals`       |
+| [E4.T04 — Provider-neutral test driver](tasks/T04-provider-neutral-test-driver.md)       | E4.T02                                         | Parallel `4-session-internals`       |
+| [E4.T05 — Turn coordinator](tasks/T05-turn-coordinator.md)                               | E4.T03, E4.T04                                 | Solo                                 |
+| [E4.T06 — HTTP/stream contracts](tasks/T06-http-stream-contracts.md)                     | E4.T05                                         | Sequential batch `4-runtime-surface` |
+| [E4.T07 — UI integration slice](tasks/T07-ui-integration-slice.md)                       | E4.T06                                         | Sequential batch `4-runtime-surface` |
+| [E4.T08 — Lifecycle/security tests](tasks/T08-lifecycle-security-tests.md)               | E4.T02, E4.T03, E4.T04, E4.T05, E4.T06, E4.T07 | Solo                                 |
 
 **Batch policy:** never auto-batch a high-risk solo gate with dependent tasks; re-evaluate shared file ownership at dispatch. In particular, lock/claim, security, HTTP scopes, durability/recovery and dispatch uncertainty need an explicit review checkpoint. If a task uncovers an architecture conflict, stop dependent tasks but continue unaffected, disjoint work.
 

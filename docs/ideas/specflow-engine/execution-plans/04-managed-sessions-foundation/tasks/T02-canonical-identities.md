@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-04.task-02
 type: engineering
-title: "E4.T02 — Canonical identities"
+title: 'E4.T02 — Canonical identities'
 status: draft
 scope: specflow
 areas: [runtime, ai, security, testing]

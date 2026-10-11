@@ -54,16 +54,16 @@ The operation must be **idempotent by evidence**. A record saying "stage complet
 
 ## Example crash outcomes
 
-| Crash | Next action |
-| --- | --- |
-| Before intent | No mutation happened; normal create can retry |
-| After reservation | Revalidate, continue or release reservation if unmodified |
-| After Git worktree creation, before manifest | Verify worktree membership and ownership then resume manifest |
-| After manifest write, before registry | Match specId and intent before binding; never silently create duplicate |
-| After registry write, before response | Return existing canonical result |
-| During locked JSON rewrite | Parse validated old/new state or fail with repair instruction |
-| After one workflow finish effect | Resume only uncompleted stages proven safe |
-| During worktree deletion | Keep cleanup intent; recheck existence/branch and do not accidentally remove a different path |
+| Crash                                        | Next action                                                                                   |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Before intent                                | No mutation happened; normal create can retry                                                 |
+| After reservation                            | Revalidate, continue or release reservation if unmodified                                     |
+| After Git worktree creation, before manifest | Verify worktree membership and ownership then resume manifest                                 |
+| After manifest write, before registry        | Match specId and intent before binding; never silently create duplicate                       |
+| After registry write, before response        | Return existing canonical result                                                              |
+| During locked JSON rewrite                   | Parse validated old/new state or fail with repair instruction                                 |
+| After one workflow finish effect             | Resume only uncompleted stages proven safe                                                    |
+| During worktree deletion                     | Keep cleanup intent; recheck existence/branch and do not accidentally remove a different path |
 
 Recovery should be driven by the next Engine operation/readiness reconciliation or explicit command; no permanent server is required. Runtime boot may trigger the same reconciliation but does not override the Engine.
 

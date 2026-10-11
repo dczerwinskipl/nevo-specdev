@@ -49,14 +49,14 @@ related:
 
 ## Legacy Nevo: useful mechanisms
 
-| Source | Evidence | Candidate treatment |
-| --- | --- | --- |
-| `tools/specs.mjs` | Commander entrypoint dispatches to `tools/specs/**` | Retain thin CLI interface, not implementation imports |
-| `tools/specs/workflow/**` | Step start/finish, gates, projections, durable operations | Migrate deterministic semantics after boundaries proven |
-| `tools/specs/workflow/workspace-writer.mjs` | Physical-worktree-scoped short control lock and longer claim | Preserve invariant, redesign independent owners/recovery |
-| `tools/specs/workflow/operation-record.mjs` | Durable attempt-specific records | Port semantics to Engine-owned store |
-| `tools/lib/git.mjs` | Git takes root arguments in many functions | Build a narrow Git capability; do not copy whole wrapper blindly |
-| `tools/dashboard/server/ai/**` | Managed providers, Sessions and Turns | Remain live Runtime-owned; do not make Engine depend on them |
+| Source                                      | Evidence                                                     | Candidate treatment                                              |
+| ------------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------- |
+| `tools/specs.mjs`                           | Commander entrypoint dispatches to `tools/specs/**`          | Retain thin CLI interface, not implementation imports            |
+| `tools/specs/workflow/**`                   | Step start/finish, gates, projections, durable operations    | Migrate deterministic semantics after boundaries proven          |
+| `tools/specs/workflow/workspace-writer.mjs` | Physical-worktree-scoped short control lock and longer claim | Preserve invariant, redesign independent owners/recovery         |
+| `tools/specs/workflow/operation-record.mjs` | Durable attempt-specific records                             | Port semantics to Engine-owned store                             |
+| `tools/lib/git.mjs`                         | Git takes root arguments in many functions                   | Build a narrow Git capability; do not copy whole wrapper blindly |
+| `tools/dashboard/server/ai/**`              | Managed providers, Sessions and Turns                        | Remain live Runtime-owned; do not make Engine depend on them     |
 
 ## Legacy Nevo: avoid copying
 
@@ -75,6 +75,6 @@ The preexisting provider Session/Turn model and provider worktree-resume compati
 
 ## Review follow-up: Session readiness and new contract seams
 
-On `main`, `packages/specflow-runtime/src/features/sessions/feature.ts` currently registers Session capabilities only; the authoritative `docs/architecture/ai/canonical-session-turn-work.md` permits a composite `ProviderSessionRef` as the interim Session locator until a product session ID exists. The new proposal must intentionally choose an application-owned stable `sessionId` *when Sessions migrate* rather than assert it already exists. Current workflow architecture's trusted executor/admission invariant still applies when CLI is offline: the new local actor contract must define a trustworthy application context, not accept agent-authored Session IDs.
+On `main`, `packages/specflow-runtime/src/features/sessions/feature.ts` currently registers Session capabilities only; the authoritative `docs/architecture/ai/canonical-session-turn-work.md` permits a composite `ProviderSessionRef` as the interim Session locator until a product session ID exists. The new proposal must intentionally choose an application-owned stable `sessionId` _when Sessions migrate_ rather than assert it already exists. Current workflow architecture's trusted executor/admission invariant still applies when CLI is offline: the new local actor contract must define a trustworthy application context, not accept agent-authored Session IDs.
 
 PR #45 HEAD is a **dated preview only** and may change independently. Re-evaluate its merged successor immediately before implementing Spec reads; never count a preview endpoint as working `main` capability.

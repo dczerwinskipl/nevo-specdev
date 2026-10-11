@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-05.task-03
 type: engineering
-title: "E5.T03 — Atomic-enough intent protocol"
+title: 'E5.T03 — Atomic-enough intent protocol'
 status: draft
 scope: specflow
 areas: [workflow, runtime, ai, security, testing]

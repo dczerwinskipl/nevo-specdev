@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-02.task-01
 type: engineering
-title: "E2.T01 — Specs model and repository"
+title: 'E2.T01 — Specs model and repository'
 status: draft
 scope: specflow
 areas: [workflow, cli, runtime, testing]

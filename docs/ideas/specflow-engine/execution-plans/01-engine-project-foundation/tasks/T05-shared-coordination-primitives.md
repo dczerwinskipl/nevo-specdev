@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-01.task-05
 type: engineering
-title: "E1.T05 — Shared coordination primitives"
+title: 'E1.T05 — Shared coordination primitives'
 status: draft
 scope: specflow
 areas: [cli, runtime, configuration, workflow]

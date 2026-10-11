@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-05.task-05
 type: engineering
-title: "E5.T05 — Turn/claim settlement"
+title: 'E5.T05 — Turn/claim settlement'
 status: draft
 scope: specflow
 areas: [workflow, runtime, ai, security, testing]

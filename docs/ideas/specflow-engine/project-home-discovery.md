@@ -51,7 +51,7 @@ It is permissible to start the experiment with the primary checkout as Project H
 
 Project Home is the **operational configuration authority** for one local project instance: validated committed `.nevo/config.yaml` from the designated home checkout, ignored `.nevo/local/config.yaml` from that home, and the central local registry/journal. This includes Runtime authentication/authorization and enabled Git capabilities, under the existing project-versus-local ownership rules. The same local project must not change those permissions because a CLI command started from a different linked checkout whose committed config happens to differ. Changes to operational policy need explicit validation/reload or a designated-home migration, not implicit last-checkout-wins.
 
-By contrast, committed workflow definitions (`.nevo/workflows/**`) and other **execution artifacts** should be selected from the *verified target execution workspace*, subject to the project-owned capability/policy boundary. A linked branch can legitimately contain a different workflow revision from the home checkout. **No Engine step may implicitly replace the definition of an active attempt with the definition at the Project Home's current HEAD**.
+By contrast, committed workflow definitions (`.nevo/workflows/**`) and other **execution artifacts** should be selected from the _verified target execution workspace_, subject to the project-owned capability/policy boundary. A linked branch can legitimately contain a different workflow revision from the home checkout. **No Engine step may implicitly replace the definition of an active attempt with the definition at the Project Home's current HEAD**.
 
 At attempt activation, resolve the intended workspace version and persist a stable provenance reference (workspace identity, definition ID and relative path, schema/version, content digest or Git blob identity, and any required immutable snapshot/retention evidence). Inspect/resume/finish must use or verify that pinned definition. If the original content is unavailable, modified or incompatible, report a structured recovery/migration blocker; adopting v2 is a separate explicit validated transition. A Git commit hash alone is not sufficient when an uncommitted definition is allowed; decide whether uncommitted definitions are rejected or snapshot immutably. Portability of this evidence across clones is also a decision, not an assumed feature.
 
@@ -59,17 +59,17 @@ The versioned definition may govern workflow behavior **but cannot alter Runtime
 
 ## Moves, deletion and ambiguity
 
-| Condition | Candidate behavior |
-| --- | --- |
-| Caller within primary worktree | Resolve same home and workspace as configured |
-| Caller within registered linked worktree | Resolve home first, then bound workspace |
-| Another linked worktree has `.nevo/config.yaml` in its branch | Do not assume this creates a second home |
-| Primary checkout path moved with Git metadata intact | Validate/rebind home only with positive identity evidence |
-| Primary checkout deleted while linked worktrees survive | Fail as home unavailable; offer explicit state-location repair/recovery, not empty registry initialization |
-| Two candidate home markers | Fail ambiguous; require owner choice |
-| Independent clone with same remote | New local scope; never share claims because remote URL matches |
-| Missing/corrupt local state | Diagnose distinctly from an empty project; retain recovery evidence |
-| Worktree outside configured parent | Membership verified through Git + registry, not path prefix alone |
+| Condition                                                     | Candidate behavior                                                                                         |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Caller within primary worktree                                | Resolve same home and workspace as configured                                                              |
+| Caller within registered linked worktree                      | Resolve home first, then bound workspace                                                                   |
+| Another linked worktree has `.nevo/config.yaml` in its branch | Do not assume this creates a second home                                                                   |
+| Primary checkout path moved with Git metadata intact          | Validate/rebind home only with positive identity evidence                                                  |
+| Primary checkout deleted while linked worktrees survive       | Fail as home unavailable; offer explicit state-location repair/recovery, not empty registry initialization |
+| Two candidate home markers                                    | Fail ambiguous; require owner choice                                                                       |
+| Independent clone with same remote                            | New local scope; never share claims because remote URL matches                                             |
+| Missing/corrupt local state                                   | Diagnose distinctly from an empty project; retain recovery evidence                                        |
+| Worktree outside configured parent                            | Membership verified through Git + registry, not path prefix alone                                          |
 
 ## Security and portability
 

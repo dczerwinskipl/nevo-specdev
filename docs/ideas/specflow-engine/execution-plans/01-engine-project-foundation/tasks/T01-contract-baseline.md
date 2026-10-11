@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-01.task-01
 type: engineering
-title: "E1.T01 — Contract baseline"
+title: 'E1.T01 — Contract baseline'
 status: draft
 scope: specflow
 areas: [cli, runtime, configuration, workflow]

@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-03.task-01
 type: engineering
-title: "E3.T01 — Legacy fact check"
+title: 'E3.T01 — Legacy fact check'
 status: draft
 scope: specflow
 areas: [workflow, cli, security, testing]

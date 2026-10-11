@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-01.task-02
 type: engineering
-title: "E1.T02 — Engine boundary"
+title: 'E1.T02 — Engine boundary'
 status: draft
 scope: specflow
 areas: [cli, runtime, configuration, workflow]

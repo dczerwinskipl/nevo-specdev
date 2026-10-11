@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-05.task-04
 type: engineering
-title: "E5.T04 — Mock dispatch phases"
+title: 'E5.T04 — Mock dispatch phases'
 status: draft
 scope: specflow
 areas: [workflow, runtime, ai, security, testing]

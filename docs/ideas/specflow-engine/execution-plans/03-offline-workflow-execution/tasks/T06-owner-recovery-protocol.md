@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-03.task-06
 type: engineering
-title: "E3.T06 — Owner/recovery protocol"
+title: 'E3.T06 — Owner/recovery protocol'
 status: draft
 scope: specflow
 areas: [workflow, cli, security, testing]

@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-05.task-01
 type: engineering
-title: "E5.T01 — Cross-owner contract"
+title: 'E5.T01 — Cross-owner contract'
 status: draft
 scope: specflow
 areas: [workflow, runtime, ai, security, testing]

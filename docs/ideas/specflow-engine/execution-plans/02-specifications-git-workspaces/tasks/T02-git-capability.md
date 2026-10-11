@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-02.task-02
 type: engineering
-title: "E2.T02 — Git capability"
+title: 'E2.T02 — Git capability'
 status: draft
 scope: specflow
 areas: [workflow, cli, runtime, testing]

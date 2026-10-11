@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-04.task-08
 type: engineering
-title: "E4.T08 — Lifecycle/security tests"
+title: 'E4.T08 — Lifecycle/security tests'
 status: draft
 scope: specflow
 areas: [runtime, ai, security, testing]

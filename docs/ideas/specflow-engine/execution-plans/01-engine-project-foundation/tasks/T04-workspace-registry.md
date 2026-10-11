@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-01.task-04
 type: engineering
-title: "E1.T04 — Workspace registry"
+title: 'E1.T04 — Workspace registry'
 status: draft
 scope: specflow
 areas: [cli, runtime, configuration, workflow]

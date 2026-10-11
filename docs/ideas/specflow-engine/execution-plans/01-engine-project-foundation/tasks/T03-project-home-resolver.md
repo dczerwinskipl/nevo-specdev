@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-01.task-03
 type: engineering
-title: "E1.T03 — Project Home resolver"
+title: 'E1.T03 — Project Home resolver'
 status: draft
 scope: specflow
 areas: [cli, runtime, configuration, workflow]

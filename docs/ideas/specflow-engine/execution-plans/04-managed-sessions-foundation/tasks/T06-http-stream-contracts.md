@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-04.task-06
 type: engineering
-title: "E4.T06 — HTTP/stream contracts"
+title: 'E4.T06 — HTTP/stream contracts'
 status: draft
 scope: specflow
 areas: [runtime, ai, security, testing]

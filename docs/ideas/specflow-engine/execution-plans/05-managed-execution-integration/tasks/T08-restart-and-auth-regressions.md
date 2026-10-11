@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-05.task-08
 type: engineering
-title: "E5.T08 — Restart and auth regressions"
+title: 'E5.T08 — Restart and auth regressions'
 status: draft
 scope: specflow
 areas: [workflow, runtime, ai, security, testing]

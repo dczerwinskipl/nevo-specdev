@@ -28,19 +28,19 @@ related:
 
 `Runtime Sessions` owns canonical Session/Turn/Work lifecycle, provider invocation, transport, interactions, streaming and cancellation. `Engine` owns Specs, workflow readiness/transitions, physical workspace admission/claims and durable mutation recovery. Neither layer delegates its authority to the other.
 
-Existing [Session/Turn/Work architecture](../../architecture/ai/canonical-session-turn-work.md) currently permits `ProviderSessionRef` as a **temporary** canonical locator until an application-owned Session ID exists. Migration should explicitly decide on a stable product `sessionId`, retaining the composite provider-native locator for adapter correlation. This is a *proposed normative change*, not already adopted.
+Existing [Session/Turn/Work architecture](../../architecture/ai/canonical-session-turn-work.md) currently permits `ProviderSessionRef` as a **temporary** canonical locator until an application-owned Session ID exists. Migration should explicitly decide on a stable product `sessionId`, retaining the composite provider-native locator for adapter correlation. This is a _proposed normative change_, not already adopted.
 
 ## Independent identities
 
-| Identity | Owner | Stability and meaning |
-| --- | --- | --- |
-| `sessionId` | Runtime Sessions | Durable product conversation identity, independent of native provider |
-| `turnId` | Runtime Sessions | One requested logical invocation; retries preserve idempotency |
-| `providerSessionRef` | Provider adapter/Runtime | `(provider, providerSessionId)`; may be replaced on safe native recovery |
-| `workspaceId` | Engine Workspace | Local workspace identity; never use stored `cwd` as identity |
-| `executionId` / claim reference | Engine admission | Optional ownership of physical mutations; **not** the Turn identity |
-| `workflowAttemptRef` | Engine Workflow | Optional `(change, task, step, attempt)`, never inferred from historical Session binding |
-| `invocationId` | Runtime dispatch | One provider dispatch attempt, used to fence late callbacks and unknown outcomes |
+| Identity                        | Owner                    | Stability and meaning                                                                    |
+| ------------------------------- | ------------------------ | ---------------------------------------------------------------------------------------- |
+| `sessionId`                     | Runtime Sessions         | Durable product conversation identity, independent of native provider                    |
+| `turnId`                        | Runtime Sessions         | One requested logical invocation; retries preserve idempotency                           |
+| `providerSessionRef`            | Provider adapter/Runtime | `(provider, providerSessionId)`; may be replaced on safe native recovery                 |
+| `workspaceId`                   | Engine Workspace         | Local workspace identity; never use stored `cwd` as identity                             |
+| `executionId` / claim reference | Engine admission         | Optional ownership of physical mutations; **not** the Turn identity                      |
+| `workflowAttemptRef`            | Engine Workflow          | Optional `(change, task, step, attempt)`, never inferred from historical Session binding |
+| `invocationId`                  | Runtime dispatch         | One provider dispatch attempt, used to fence late callbacks and unknown outcomes         |
 
 A Session can reference Specs/Tasks historically and may have different active scope per Turn. One Turn may be ad-hoc and have no task/claim; one workflow attempt may span more than one Turn. A Turn ending does not automatically advance/finish workflow.
 

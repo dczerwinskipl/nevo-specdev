@@ -45,15 +45,15 @@ Each task has its own Markdown file. **Batch** means sequential tasks in one age
 
 ### Tasks
 
-| Task | Depends on | Run mode |
-| --- | --- | --- |
-| [E1.T01 — Contract baseline](tasks/T01-contract-baseline.md) | — | Solo |
-| [E1.T02 — Engine boundary](tasks/T02-engine-boundary.md) | E1.T01 | Solo |
-| [E1.T03 — Project Home resolver](tasks/T03-project-home-resolver.md) | E1.T01, E1.T02 | Solo |
-| [E1.T04 — Workspace registry](tasks/T04-workspace-registry.md) | E1.T03 | Sequential batch `1-state-core` |
-| [E1.T05 — Shared coordination primitives](tasks/T05-shared-coordination-primitives.md) | E1.T04 | Sequential batch `1-state-core` |
-| [E1.T06 — CLI/Runtime composition](tasks/T06-cli-runtime-composition.md) | E1.T02, E1.T03, E1.T04, E1.T05 | Solo |
-| [E1.T07 — Boundary and error tests](tasks/T07-boundary-and-error-tests.md) | E1.T03, E1.T04, E1.T05, E1.T06 | Solo |
+| Task                                                                                   | Depends on                     | Run mode                        |
+| -------------------------------------------------------------------------------------- | ------------------------------ | ------------------------------- |
+| [E1.T01 — Contract baseline](tasks/T01-contract-baseline.md)                           | —                              | Solo                            |
+| [E1.T02 — Engine boundary](tasks/T02-engine-boundary.md)                               | E1.T01                         | Solo                            |
+| [E1.T03 — Project Home resolver](tasks/T03-project-home-resolver.md)                   | E1.T01, E1.T02                 | Solo                            |
+| [E1.T04 — Workspace registry](tasks/T04-workspace-registry.md)                         | E1.T03                         | Sequential batch `1-state-core` |
+| [E1.T05 — Shared coordination primitives](tasks/T05-shared-coordination-primitives.md) | E1.T04                         | Sequential batch `1-state-core` |
+| [E1.T06 — CLI/Runtime composition](tasks/T06-cli-runtime-composition.md)               | E1.T02, E1.T03, E1.T04, E1.T05 | Solo                            |
+| [E1.T07 — Boundary and error tests](tasks/T07-boundary-and-error-tests.md)             | E1.T03, E1.T04, E1.T05, E1.T06 | Solo                            |
 
 **Batch policy:** never auto-batch a high-risk solo gate with dependent tasks; re-evaluate shared file ownership at dispatch. In particular, lock/claim, security, HTTP scopes, durability/recovery and dispatch uncertainty need an explicit review checkpoint. If a task uncovers an architecture conflict, stop dependent tasks but continue unaffected, disjoint work.
 

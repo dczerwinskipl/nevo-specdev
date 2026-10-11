@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-05.task-06
 type: engineering
-title: "E5.T06 — Explicit workflow interaction"
+title: 'E5.T06 — Explicit workflow interaction'
 status: draft
 scope: specflow
 areas: [workflow, runtime, ai, security, testing]

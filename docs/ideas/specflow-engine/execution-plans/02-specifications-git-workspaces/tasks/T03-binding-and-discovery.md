@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-02.task-03
 type: engineering
-title: "E2.T03 — Binding and discovery"
+title: 'E2.T03 — Binding and discovery'
 status: draft
 scope: specflow
 areas: [workflow, cli, runtime, testing]

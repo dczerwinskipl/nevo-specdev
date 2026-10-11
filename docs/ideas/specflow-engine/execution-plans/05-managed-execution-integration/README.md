@@ -46,17 +46,17 @@ Each task has its own Markdown file. **Batch** means sequential tasks in one age
 
 ### Tasks
 
-| Task | Depends on | Run mode |
-| --- | --- | --- |
-| [E5.T01 — Cross-owner contract](tasks/T01-cross-owner-contract.md) | E3.T10, E4.T08 | Solo |
-| [E5.T02 — Preparation and authorization](tasks/T02-preparation-and-authorization.md) | E5.T01 | Solo |
-| [E5.T03 — Atomic-enough intent protocol](tasks/T03-atomic-enough-intent-protocol.md) | E5.T02 | Solo |
-| [E5.T04 — Mock dispatch phases](tasks/T04-mock-dispatch-phases.md) | E5.T03 | Solo |
-| [E5.T05 — Turn/claim settlement](tasks/T05-turn-claim-settlement.md) | E5.T04 | Solo |
-| [E5.T06 — Explicit workflow interaction](tasks/T06-explicit-workflow-interaction.md) | E5.T05 | Solo |
-| [E5.T07 — Bounded batch and handover](tasks/T07-bounded-batch-and-handover.md) | E5.T05, E5.T06 | Solo |
-| [E5.T08 — Restart and auth regressions](tasks/T08-restart-and-auth-regressions.md) | E5.T02, E5.T03, E5.T04, E5.T05, E5.T06, E5.T07 | Solo |
-| [E5.T09 — Architecture audit + promotion backlog](tasks/T09-architecture-audit-promotion-backlog.md) | E5.T08 | Solo |
+| Task                                                                                                 | Depends on                                     | Run mode |
+| ---------------------------------------------------------------------------------------------------- | ---------------------------------------------- | -------- |
+| [E5.T01 — Cross-owner contract](tasks/T01-cross-owner-contract.md)                                   | E3.T10, E4.T08                                 | Solo     |
+| [E5.T02 — Preparation and authorization](tasks/T02-preparation-and-authorization.md)                 | E5.T01                                         | Solo     |
+| [E5.T03 — Atomic-enough intent protocol](tasks/T03-atomic-enough-intent-protocol.md)                 | E5.T02                                         | Solo     |
+| [E5.T04 — Mock dispatch phases](tasks/T04-mock-dispatch-phases.md)                                   | E5.T03                                         | Solo     |
+| [E5.T05 — Turn/claim settlement](tasks/T05-turn-claim-settlement.md)                                 | E5.T04                                         | Solo     |
+| [E5.T06 — Explicit workflow interaction](tasks/T06-explicit-workflow-interaction.md)                 | E5.T05                                         | Solo     |
+| [E5.T07 — Bounded batch and handover](tasks/T07-bounded-batch-and-handover.md)                       | E5.T05, E5.T06                                 | Solo     |
+| [E5.T08 — Restart and auth regressions](tasks/T08-restart-and-auth-regressions.md)                   | E5.T02, E5.T03, E5.T04, E5.T05, E5.T06, E5.T07 | Solo     |
+| [E5.T09 — Architecture audit + promotion backlog](tasks/T09-architecture-audit-promotion-backlog.md) | E5.T08                                         | Solo     |
 
 **Batch policy:** never auto-batch a high-risk solo gate with dependent tasks; re-evaluate shared file ownership at dispatch. In particular, lock/claim, security, HTTP scopes, durability/recovery and dispatch uncertainty need an explicit review checkpoint. If a task uncovers an architecture conflict, stop dependent tasks but continue unaffected, disjoint work.
 

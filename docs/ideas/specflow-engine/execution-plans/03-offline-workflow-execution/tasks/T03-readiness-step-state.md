@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-03.task-03
 type: engineering
-title: "E3.T03 — Readiness/step state"
+title: 'E3.T03 — Readiness/step state'
 status: draft
 scope: specflow
 areas: [workflow, cli, security, testing]

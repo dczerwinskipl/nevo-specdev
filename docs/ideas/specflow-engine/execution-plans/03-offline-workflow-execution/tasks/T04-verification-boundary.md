@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-03.task-04
 type: engineering
-title: "E3.T04 — Verification boundary"
+title: 'E3.T04 — Verification boundary'
 status: draft
 scope: specflow
 areas: [workflow, cli, security, testing]

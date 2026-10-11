@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-04.task-03
 type: engineering
-title: "E4.T03 — Durable Runtime state"
+title: 'E4.T03 — Durable Runtime state'
 status: draft
 scope: specflow
 areas: [runtime, ai, security, testing]

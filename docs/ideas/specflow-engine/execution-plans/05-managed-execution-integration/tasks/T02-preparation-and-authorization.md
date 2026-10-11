@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-05.task-02
 type: engineering
-title: "E5.T02 — Preparation and authorization"
+title: 'E5.T02 — Preparation and authorization'
 status: draft
 scope: specflow
 areas: [workflow, runtime, ai, security, testing]

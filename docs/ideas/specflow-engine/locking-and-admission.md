@@ -63,16 +63,16 @@ Define consistent hierarchy (project registry reservation -> specific workspace 
 
 ## Failure matrix
 
-| Condition | Required behavior |
-| --- | --- |
-| Two concurrent `specs create` requests choose same slug/branch | One wins, one explicit conflict; no overwrite |
-| Runtime write collides with external CLI claim | Fail/queue according to contract, never silently execute |
-| Two independent worktrees are claimed | Both can proceed unless shared project operation conflicts |
-| CLI terminates after `step start` | Claim stays until proven settled or recovered |
-| Lock file corrupt/unreadable | Fail closed with diagnostic; no destructive reset |
-| Process crashes while writing an operation | Recovery journal decides replay, no blind duplicate |
-| Claim expiry without proof of end | State becomes uncertain, not automatically free |
-| Two claim-release attempts race | CAS/owner check means only real owner wins |
+| Condition                                                      | Required behavior                                          |
+| -------------------------------------------------------------- | ---------------------------------------------------------- |
+| Two concurrent `specs create` requests choose same slug/branch | One wins, one explicit conflict; no overwrite              |
+| Runtime write collides with external CLI claim                 | Fail/queue according to contract, never silently execute   |
+| Two independent worktrees are claimed                          | Both can proceed unless shared project operation conflicts |
+| CLI terminates after `step start`                              | Claim stays until proven settled or recovered              |
+| Lock file corrupt/unreadable                                   | Fail closed with diagnostic; no destructive reset          |
+| Process crashes while writing an operation                     | Recovery journal decides replay, no blind duplicate        |
+| Claim expiry without proof of end                              | State becomes uncertain, not automatically free            |
+| Two claim-release attempts race                                | CAS/owner check means only real owner wins                 |
 
 ## Admission versus authorization
 

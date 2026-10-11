@@ -51,17 +51,17 @@ Each task has its own Markdown file. **Batch** means sequential tasks in one age
 
 ### Tasks
 
-| Task | Depends on | Run mode |
-| --- | --- | --- |
-| [E2.T01 — Specs model and repository](tasks/T01-specs-model-and-repository.md) | E1.T07 | Solo |
-| [E2.T02 — Git capability](tasks/T02-git-capability.md) | E2.T01 | Solo |
-| [E2.T03 — Binding and discovery](tasks/T03-binding-and-discovery.md) | E2.T01, E2.T02 | Solo |
-| [E2.T04 — Durable create](tasks/T04-durable-create.md) | E2.T02, E2.T03 | Solo |
-| [E2.T05 — CLI and HTTP create](tasks/T05-cli-and-http-create.md) | E2.T04 | Solo |
-| [E2.T06 — Runtime read integration](tasks/T06-runtime-read-integration.md) | E2.T03, E2.T05 | Sequential batch `2-read-freshness` |
-| [E2.T07 — Live refresh](tasks/T07-live-refresh.md) | E2.T06 | Sequential batch `2-read-freshness` |
-| [E2.T08 — Safety and regression](tasks/T08-safety-and-regression.md) | E2.T04, E2.T05, E2.T06, E2.T07 | Solo |
-| [E2.T09 — Rebind and cleanup sub-slice (optional later gate)](tasks/T09-rebind-and-cleanup-sub-slice-optional-later-gate.md) | E2.T03, E2.T08, E3.T06 | Deferred / solo |
+| Task                                                                                                                         | Depends on                     | Run mode                            |
+| ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ----------------------------------- |
+| [E2.T01 — Specs model and repository](tasks/T01-specs-model-and-repository.md)                                               | E1.T07                         | Solo                                |
+| [E2.T02 — Git capability](tasks/T02-git-capability.md)                                                                       | E2.T01                         | Solo                                |
+| [E2.T03 — Binding and discovery](tasks/T03-binding-and-discovery.md)                                                         | E2.T01, E2.T02                 | Solo                                |
+| [E2.T04 — Durable create](tasks/T04-durable-create.md)                                                                       | E2.T02, E2.T03                 | Solo                                |
+| [E2.T05 — CLI and HTTP create](tasks/T05-cli-and-http-create.md)                                                             | E2.T04                         | Solo                                |
+| [E2.T06 — Runtime read integration](tasks/T06-runtime-read-integration.md)                                                   | E2.T03, E2.T05                 | Sequential batch `2-read-freshness` |
+| [E2.T07 — Live refresh](tasks/T07-live-refresh.md)                                                                           | E2.T06                         | Sequential batch `2-read-freshness` |
+| [E2.T08 — Safety and regression](tasks/T08-safety-and-regression.md)                                                         | E2.T04, E2.T05, E2.T06, E2.T07 | Solo                                |
+| [E2.T09 — Rebind and cleanup sub-slice (optional later gate)](tasks/T09-rebind-and-cleanup-sub-slice-optional-later-gate.md) | E2.T03, E2.T08, E3.T06         | Deferred / solo                     |
 
 **Batch policy:** never auto-batch a high-risk solo gate with dependent tasks; re-evaluate shared file ownership at dispatch. In particular, lock/claim, security, HTTP scopes, durability/recovery and dispatch uncertainty need an explicit review checkpoint. If a task uncovers an architecture conflict, stop dependent tasks but continue unaffected, disjoint work.
 

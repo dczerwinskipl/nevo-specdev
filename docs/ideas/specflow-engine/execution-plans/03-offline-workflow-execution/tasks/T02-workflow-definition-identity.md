@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-03.task-02
 type: engineering
-title: "E3.T02 — Workflow definition/identity"
+title: 'E3.T02 — Workflow definition/identity'
 status: draft
 scope: specflow
 areas: [workflow, cli, security, testing]

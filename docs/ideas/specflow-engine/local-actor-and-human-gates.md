@@ -26,7 +26,7 @@ related:
 
 1. **Authentication/authorization:** who is permitted to request this action? HTTP Runtime validates its configured user/capability policy. Offline CLI must specify an explicit local trust model.
 2. **Workspace admission:** can this execution safely mutate the physical resource right now? Engine inspects claims/journal and admits or blocks, irrespective of role.
-3. **Human decision evidence:** has a suitably authorized human confirmed *this exact* gate for *this exact* spec/task/step/attempt? Engine evaluates typed durable evidence; agent narration is never approval.
+3. **Human decision evidence:** has a suitably authorized human confirmed _this exact_ gate for _this exact_ spec/task/step/attempt? Engine evaluates typed durable evidence; agent narration is never approval.
 
 An execution owner token is **not** an identity, a human role, or proof of a human review. A valid workspace claim can authorize the claimed mutation protocol without granting the right to approve itself.
 
@@ -35,6 +35,7 @@ An execution owner token is **not** an identity, a human role, or proof of a hum
 If a malicious agent and CLI share the same unrestricted OS account and can write all the same files, neither a lock file nor an opaque token offers robust adversarial isolation. Describe these mechanisms as guardrails for **cooperating actors**, not security sandboxes. A secure human-only approval requires a separate trusted channel/credential/policy with an enforcement boundary that the agent cannot forge or modify.
 
 Possible stronger models, to evaluate rather than silently claim:
+
 - approve via authenticated Runtime HTTP using human identity and capability, with durable signed/verified receipt;
 - approve via a local operator CLI only when an independently authenticated human identity/confirmation is established and cannot be used by the agent's own filesystem authority;
 - restrict agents via OS-level user separation or sandboxed credentials; if not available, explicitly document that local human sign-off is not cryptographically trustworthy.
@@ -45,7 +46,7 @@ Do not treat `--confirm`, `--role owner`, environment variables, terminal TTY ch
 
 Human sign-off should carry canonical `specId`, scoped Task/Spec target, step, attempt, exact gate, decision, actor provenance/trust level, issue/revocation information and audit timestamp/revision. Engine must prevent evidence from one attempt/gate satisfying another. Decide carefully which evidence is committed, ignored-local, portable across clone/worktree and verifiable from historical source state.
 
-Current workflow architecture expressly distinguishes human gates from agent narration and scopes evidence by attempt. Legacy `human-verification-store.mjs` is a useful *warning*: its `confirm({role})` path stores a role/confirmation but does not itself establish cryptographic operator identity. Do not copy that into a strong authorization contract.
+Current workflow architecture expressly distinguishes human gates from agent narration and scopes evidence by attempt. Legacy `human-verification-store.mjs` is a useful _warning_: its `confirm({role})` path stores a role/confirmation but does not itself establish cryptographic operator identity. Do not copy that into a strong authorization contract.
 
 A review outcome may be stored as a committed domain fact **only when** backed by valid, verifiable provenance. Otherwise mark a local, lower-trust indication and do not claim remote/multi-machine enforcement.
 
@@ -58,8 +59,9 @@ For existing spec/task/session: resolve canonical Spec -> Workspace ownership th
 Current `runtime.authorization` role assignments are **Git-tracked project policy**; local Authorization overrides are rejected. `workspaceId` is a workstation-local registry handle, and another clone may assign a different one to equivalent content. Do **not** serialize a grant tied to such a local ID in versioned project policy and assume that it travels safely.
 
 A proposed product authorization contract differentiates:
+
 - **Portable grant target:** project-level privileges and stable domain identities such as canonical `specId` (and a suitable stable Task reference when needed). A **local** `projectId` should not be written into portable grants without an explicitly stable cross-clone definition.
-- **Runtime target resolution:** Engine looks up `specId -> workspaceId -> verified physical root` and the HTTP adapter derives the *authorized domain resource*, rather than trusting a caller-provided workspace/path or granting by matching an arbitrary local `workspaceId`.
+- **Runtime target resolution:** Engine looks up `specId -> workspaceId -> verified physical root` and the HTTP adapter derives the _authorized domain resource_, rather than trusting a caller-provided workspace/path or granting by matching an arbitrary local `workspaceId`.
 - **Local operational constraints:** project/workspace writer claims and Git worktree creation checks are execution admission, not automatically new permission scopes. If local worktree-specific authorization is ever needed, design a separately governed local policy layer without bypassing the current rule that local files cannot override project-owned `runtime.authorization`.
 
 The generic `@nevo/authorization` `Scope` is a string-keyed equality map; it does **not** decide which dimensions are portable. Define and validate allowed dimensions at the product resource/assignment boundary, with explicit rejection of unsupported local `workspaceId` grants in committed policy for this model. For creating a Spec/worktree before its ID exists, authorize at the canonical project capability scope first; bind the new resource only after successful admission and create. See H10 in the [test plan](test-plan.md). Exact scope names remain a design decision.

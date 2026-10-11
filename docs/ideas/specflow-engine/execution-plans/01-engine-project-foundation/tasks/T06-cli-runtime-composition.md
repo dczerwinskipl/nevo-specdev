@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-01.task-06
 type: engineering
-title: "E1.T06 — CLI/Runtime composition"
+title: 'E1.T06 — CLI/Runtime composition'
 status: draft
 scope: specflow
 areas: [cli, runtime, configuration, workflow]

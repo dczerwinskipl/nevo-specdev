@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-01.task-07
 type: engineering
-title: "E1.T07 — Boundary and error tests"
+title: 'E1.T07 — Boundary and error tests'
 status: draft
 scope: specflow
 areas: [cli, runtime, configuration, workflow]

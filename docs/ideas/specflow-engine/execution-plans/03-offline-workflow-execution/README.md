@@ -45,18 +45,18 @@ Each task has its own Markdown file. **Batch** means sequential tasks in one age
 
 ### Tasks
 
-| Task | Depends on | Run mode |
-| --- | --- | --- |
-| [E3.T01 — Legacy fact check](tasks/T01-legacy-fact-check.md) | E2.T08 | Solo |
-| [E3.T02 — Workflow definition/identity](tasks/T02-workflow-definition-identity.md) | E3.T01 | Solo |
-| [E3.T03 — Readiness/step state](tasks/T03-readiness-step-state.md) | E3.T02 | Sequential batch `3-workflow-readiness` |
-| [E3.T04 — Verification boundary](tasks/T04-verification-boundary.md) | E3.T03 | Sequential batch `3-workflow-readiness` |
-| [E3.T05 — Physical admission](tasks/T05-physical-admission.md) | E3.T03, E1.T05 | Solo |
-| [E3.T06 — Owner/recovery protocol](tasks/T06-owner-recovery-protocol.md) | E3.T05 | Solo |
-| [E3.T07 — Actor and human gates](tasks/T07-actor-and-human-gates.md) | E3.T03, E3.T06 | Solo |
-| [E3.T08 — CLI and external skill](tasks/T08-cli-and-external-skill.md) | E3.T03, E3.T04, E3.T05, E3.T06, E3.T07 | Sequential batch `3-adapters` |
-| [E3.T09 — Runtime read projection](tasks/T09-runtime-read-projection.md) | E3.T08 | Sequential batch `3-adapters` |
-| [E3.T10 — Process/restart tests](tasks/T10-process-restart-tests.md) | E3.T03, E3.T04, E3.T05, E3.T06, E3.T07, E3.T08, E3.T09 | Solo |
+| Task                                                                               | Depends on                                             | Run mode                                |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------ | --------------------------------------- |
+| [E3.T01 — Legacy fact check](tasks/T01-legacy-fact-check.md)                       | E2.T08                                                 | Solo                                    |
+| [E3.T02 — Workflow definition/identity](tasks/T02-workflow-definition-identity.md) | E3.T01                                                 | Solo                                    |
+| [E3.T03 — Readiness/step state](tasks/T03-readiness-step-state.md)                 | E3.T02                                                 | Sequential batch `3-workflow-readiness` |
+| [E3.T04 — Verification boundary](tasks/T04-verification-boundary.md)               | E3.T03                                                 | Sequential batch `3-workflow-readiness` |
+| [E3.T05 — Physical admission](tasks/T05-physical-admission.md)                     | E3.T03, E1.T05                                         | Solo                                    |
+| [E3.T06 — Owner/recovery protocol](tasks/T06-owner-recovery-protocol.md)           | E3.T05                                                 | Solo                                    |
+| [E3.T07 — Actor and human gates](tasks/T07-actor-and-human-gates.md)               | E3.T03, E3.T06                                         | Solo                                    |
+| [E3.T08 — CLI and external skill](tasks/T08-cli-and-external-skill.md)             | E3.T03, E3.T04, E3.T05, E3.T06, E3.T07                 | Sequential batch `3-adapters`           |
+| [E3.T09 — Runtime read projection](tasks/T09-runtime-read-projection.md)           | E3.T08                                                 | Sequential batch `3-adapters`           |
+| [E3.T10 — Process/restart tests](tasks/T10-process-restart-tests.md)               | E3.T03, E3.T04, E3.T05, E3.T06, E3.T07, E3.T08, E3.T09 | Solo                                    |
 
 **Batch policy:** never auto-batch a high-risk solo gate with dependent tasks; re-evaluate shared file ownership at dispatch. In particular, lock/claim, security, HTTP scopes, durability/recovery and dispatch uncertainty need an explicit review checkpoint. If a task uncovers an architecture conflict, stop dependent tasks but continue unaffected, disjoint work.
 
@@ -71,6 +71,7 @@ Each task has its own Markdown file. **Batch** means sequential tasks in one age
 ## Mandatory Foundation B gate
 
 Pass **FB01–FB09**: L03–L06, W01–W10, H07, SC01–SC02 and AG01–AG03, against actual local files and independent processes. Verify especially:
+
 - real deterministic start/finish; finish never starts another step implicitly (W01/W02);
 - Spec Writer writer claim before any Task and technically-enforced read-only without writer (W03/W04);
 - proven settle unblocks, ambiguous external writer produces actionable recovery and does not auto-steal (W07/W08);

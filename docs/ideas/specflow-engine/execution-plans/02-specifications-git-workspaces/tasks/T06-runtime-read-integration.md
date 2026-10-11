@@ -1,7 +1,7 @@
 ---
 id: ideas.specflow-engine.plan-02.task-06
 type: engineering
-title: "E2.T06 — Runtime read integration"
+title: 'E2.T06 — Runtime read integration'
 status: draft
 scope: specflow
 areas: [workflow, cli, runtime, testing]

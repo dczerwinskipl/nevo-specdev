@@ -29,13 +29,13 @@ related:
 
 ## Five plan boundaries
 
-| Plan | Entry point | Mandatory completion | Relative order |
-| --- | --- | --- | --- |
-| 01 | [Engine / Project Foundation](01-engine-project-foundation/README.md) | Verified Project Home, Engine import boundary and cross-process state | First |
-| 02 | [Specifications / Git Workspaces](02-specifications-git-workspaces/README.md) | Foundation A: FA01–FA12 including H03 | After 01 |
-| 03 | [Offline Workflow / Execution](03-offline-workflow-execution/README.md) | Foundation B: FB01–FB09 | After mandatory 02 |
-| 04 | [Managed Sessions Foundation](04-managed-sessions-foundation/README.md) | Durable Session/Turn/Work with genuinely read-only mock | Can run alongside 02/03 after Plan 01 identities stabilize |
-| 05 | [Managed Execution Integration](05-managed-execution-integration/README.md) | Real Engine coordinator + Runtime mock-provider dispatch/crash integration | Only after 03 and 04 pass |
+| Plan | Entry point                                                                   | Mandatory completion                                                       | Relative order                                             |
+| ---- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| 01   | [Engine / Project Foundation](01-engine-project-foundation/README.md)         | Verified Project Home, Engine import boundary and cross-process state      | First                                                      |
+| 02   | [Specifications / Git Workspaces](02-specifications-git-workspaces/README.md) | Foundation A: FA01–FA12 including H03                                      | After 01                                                   |
+| 03   | [Offline Workflow / Execution](03-offline-workflow-execution/README.md)       | Foundation B: FB01–FB09                                                    | After mandatory 02                                         |
+| 04   | [Managed Sessions Foundation](04-managed-sessions-foundation/README.md)       | Durable Session/Turn/Work with genuinely read-only mock                    | Can run alongside 02/03 after Plan 01 identities stabilize |
+| 05   | [Managed Execution Integration](05-managed-execution-integration/README.md)   | Real Engine coordinator + Runtime mock-provider dispatch/crash integration | Only after 03 and 04 pass                                  |
 
 Plan 02 task E2.T09 is a **deferred optional non-session binding/cleanup slice**, not mandatory for Foundation A or Plan 05. Do not mark it completed or implement worktree Session resume as part of this program.
 
