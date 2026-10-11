@@ -1,3 +1,4 @@
+import { realpath } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { join, resolve } from 'node:path';
 
@@ -21,7 +22,7 @@ export async function resolveGitCheckoutLayout(cwd: string): Promise<GitCheckout
     );
   }
 
-  const root = resolve(result.stdout.trim());
+  const root = await realpath(resolve(result.stdout.trim()));
   return {
     root,
     projectConfigPath: join(root, PROJECT_CONFIG_RELATIVE_PATH),
