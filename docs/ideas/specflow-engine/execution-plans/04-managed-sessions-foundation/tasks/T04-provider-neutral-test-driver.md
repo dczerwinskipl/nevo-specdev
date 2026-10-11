@@ -29,7 +29,7 @@ Introduce a controllable local mock provider/adapter that emits deterministic co
 
 - [E4.T02](T02-canonical-identities.md)
 
-Original planning dependency: T02–T03. The linked IDs above are the **executable** dependency graph; a separate spec-level gate still applies.
+Dependency decision: T03 (Runtime storage) and T04 (provider-neutral test driver) can run in parallel **only after** T02 freezes their shared identity and port contracts. The earlier draft's T03 prerequisite is intentionally superseded by this bounded parallel split; if implementation needs shared files, execute sequentially.
 
 ## Execution & batching
 
