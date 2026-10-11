@@ -29,6 +29,12 @@ export async function initializeWorkspaceRegistry(
   context: ResolvedProjectHome,
   options: Pick<RegistryUpdateOptions, 'lock'> = {},
 ): Promise<WorkspaceRegistry> {
+  if (context.workspace.root !== context.project.homeRoot) {
+    throw new WorkspaceRegistryError(
+      'REGISTRY_CONFLICT',
+      'Initial registry designation must be explicitly initiated from Project Home.',
+    );
+  }
   return withProjectControlLock(
     context,
     async () => {
@@ -67,6 +73,12 @@ export async function updateWorkspaceRegistry(
     context,
     async () => {
       const current = await readWorkspaceRegistry(context);
+      if (!current.workspaces.some((w) => w.root === context.workspace.root)) {
+        throw new WorkspaceRegistryError(
+          'REGISTRY_CONFLICT',
+          'An unregistered worktree cannot mutate the Project Home registry.',
+        );
+      }
       if (options.expectedRevision !== undefined && current.revision !== options.expectedRevision) {
         throw new WorkspaceRegistryError(
           'REGISTRY_CONFLICT',
@@ -74,7 +86,8 @@ export async function updateWorkspaceRegistry(
         );
       }
       const original = JSON.stringify(current);
-      const proposed = mutate(current);
+      // Prevent a callback from mutating our comparison snapshot in place.
+      const proposed = mutate(freezeRegistry(current));
       if (JSON.stringify(proposed) === original) return current;
       if (!proposed || proposed.revision !== current.revision) {
         throw new WorkspaceRegistryError(
@@ -165,4 +178,12 @@ function isMissing(error: unknown): boolean {
     'code' in error &&
     (error as { code?: unknown }).code === 'ENOENT'
   );
+}
+
+function freezeRegistry(registry: WorkspaceRegistry): WorkspaceRegistry {
+  for (const workspace of registry.workspaces) Object.freeze(workspace);
+  for (const binding of registry.specBindings) Object.freeze(binding);
+  Object.freeze(registry.workspaces);
+  Object.freeze(registry.specBindings);
+  return Object.freeze(registry);
 }
