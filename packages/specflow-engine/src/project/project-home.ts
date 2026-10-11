@@ -120,7 +120,7 @@ export async function resolveProjectHome(
     home = selected.checkout;
     marker = selected.marker;
   } else {
-    const designated: Array<{ checkout: GitCheckout; marker: HomeMarker }> = [];
+    const designated: { checkout: GitCheckout; marker: HomeMarker }[] = [];
     for (const root of roots) {
       const selected = await readDesignatedHome(root, caller.commonDir);
       if (selected) designated.push(selected);
