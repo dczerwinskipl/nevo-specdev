@@ -182,7 +182,7 @@ describe('Project Home discovery (real Git worktrees, read-only)', () => {
     await expectHomeError(resolveProjectHome({ cwd: primary }), 'PROJECT_HOME_INVALID');
   });
 
-  it('reports a removed home marker as unavailable without creating replacement state', async () => {
+  it('rejects a removed home marker without creating replacement state', async () => {
     const primary = await repository();
     const linked = await linkedWorktree(primary);
     await designateHome(primary);
