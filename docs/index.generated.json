@@ -2042,6 +2042,166 @@
       ]
     },
     {
+      "id": "ideas.specflow-engine.plan-01",
+      "type": "engineering",
+      "title": "Temporary execution plan 01 — Engine and Project Foundation",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/01-engine-project-foundation.md",
+      "read_when": [
+        "executing the temporary Engine migration proof of concept",
+        "reviewing implementation tasks, verification and dependency gates"
+      ],
+      "summary": "Disposable implementation plan for reusable offline Engine composition, canonical Project Home, workspace identity, and local state safety.",
+      "related": [
+        "ideas.specflow-engine",
+        "ideas.specflow-engine.acceptance",
+        "ideas.specflow-engine.test-plan",
+        "architecture.principles.enforceable-invariants"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "cli",
+        "runtime",
+        "configuration",
+        "workflow"
+      ],
+      "tags": [
+        "execution-plan",
+        "temporary",
+        "engine",
+        "project-home"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-02",
+      "type": "engineering",
+      "title": "Temporary execution plan 02 — Specifications and Git Workspaces",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces.md",
+      "read_when": [
+        "executing the temporary Engine migration proof of concept",
+        "reviewing implementation tasks, verification and dependency gates"
+      ],
+      "summary": "Disposable implementation plan for Specs create/read, optional local Git worktrees, durable retries, and real CLI Runtime parity.",
+      "related": [
+        "ideas.specflow-engine",
+        "ideas.specflow-engine.acceptance",
+        "ideas.specflow-engine.test-plan",
+        "architecture.principles.enforceable-invariants"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "runtime",
+        "testing"
+      ],
+      "tags": [
+        "execution-plan",
+        "temporary",
+        "specifications",
+        "git",
+        "worktree"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-03",
+      "type": "engineering",
+      "title": "Temporary execution plan 03 — Offline Workflow and Execution",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/03-offline-workflow-execution.md",
+      "read_when": [
+        "executing the temporary Engine migration proof of concept",
+        "reviewing implementation tasks, verification and dependency gates"
+      ],
+      "summary": "Disposable implementation plan for deterministic offline workflow, effect-scoped claims, trustworthy gates, and actionable recovery.",
+      "related": [
+        "ideas.specflow-engine",
+        "ideas.specflow-engine.acceptance",
+        "ideas.specflow-engine.test-plan",
+        "architecture.principles.enforceable-invariants"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-plan",
+        "temporary",
+        "offline",
+        "claims",
+        "workflow"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-04",
+      "type": "engineering",
+      "title": "Temporary execution plan 04 — Managed Sessions Foundation",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/04-managed-sessions-foundation.md",
+      "read_when": [
+        "executing the temporary Engine migration proof of concept",
+        "reviewing implementation tasks, verification and dependency gates"
+      ],
+      "summary": "Disposable implementation plan for canonical Runtime Session Turn Work persistence and a controllable mock provider, without worktree-native resume.",
+      "related": [
+        "ideas.specflow-engine",
+        "ideas.specflow-engine.acceptance",
+        "ideas.specflow-engine.test-plan",
+        "architecture.principles.enforceable-invariants"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "runtime",
+        "ai",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-plan",
+        "temporary",
+        "sessions",
+        "turns",
+        "mock-provider"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-05",
+      "type": "engineering",
+      "title": "Temporary execution plan 05 — Managed Execution Integration",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/05-managed-execution-integration.md",
+      "read_when": [
+        "executing the temporary Engine migration proof of concept",
+        "reviewing implementation tasks, verification and dependency gates"
+      ],
+      "summary": "Disposable implementation plan to integrate the real Engine coordinator and mock-provider Runtime Turns with crash-safe invocation and explicit workflow settlement.",
+      "related": [
+        "ideas.specflow-engine",
+        "ideas.specflow-engine.acceptance",
+        "ideas.specflow-engine.test-plan",
+        "architecture.principles.enforceable-invariants"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "runtime",
+        "ai",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "execution-plan",
+        "temporary",
+        "managed-execution",
+        "handover",
+        "recovery"
+      ]
+    },
+    {
       "id": "ideas.specflow-engine.test-plan",
       "type": "engineering",
       "title": "Engine workspace integration test plan",
