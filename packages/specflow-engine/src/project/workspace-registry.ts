@@ -3,6 +3,7 @@ import { lstat, readFile, realpath } from 'node:fs/promises';
 import { isAbsolute, join, resolve } from 'node:path';
 
 import { resolveProjectHome, type ResolvedProjectHome } from './project-home';
+import { verifyLinkedWorkspaceIdentity } from './workspace-identity';
 
 export const WORKSPACE_REGISTRY_RELATIVE_PATH = 'workspaces.json';
 export const WORKSPACE_REGISTRY_VERSION = 1;
@@ -31,6 +32,8 @@ export interface WorkspaceRegistration {
   readonly kind: 'primary' | 'linked';
   readonly root: string;
   readonly managed: boolean;
+  /** Physical checkout incarnation; required for linked workspaces. */
+  readonly instanceId?: string;
 }
 
 export interface SpecWorkspaceBinding {
@@ -139,7 +142,9 @@ export function validateWorkspaceRegistry(
       typeof value.root !== 'string' ||
       !isAbsolute(value.root) ||
       resolve(value.root) !== value.root ||
-      typeof value.managed !== 'boolean'
+      typeof value.managed !== 'boolean' ||
+      (value.kind === 'linked' && !isIdentifier(value.instanceId)) ||
+      (value.kind === 'primary' && value.instanceId !== undefined)
     ) {
       throw corrupt('Invalid workspace registration.');
     }
@@ -153,6 +158,7 @@ export function validateWorkspaceRegistry(
       kind: value.kind,
       root: value.root,
       managed: value.managed,
+      ...(value.kind === 'linked' ? { instanceId: value.instanceId as string } : {}),
     });
   }
 
@@ -230,6 +236,7 @@ export async function readWorkspaceRegistry(
 export async function verifyWorkspaceRoot(
   context: ResolvedProjectHome,
   root: string,
+  registration?: WorkspaceRegistration,
 ): Promise<string> {
   if (!isAbsolute(root)) {
     throw new WorkspaceRegistryError(
@@ -275,6 +282,9 @@ export async function verifyWorkspaceRoot(
       'Workspace Git/Project Home identity could not be verified.',
     );
   }
+  if (registration?.kind === 'linked') {
+    await verifyLinkedWorkspaceIdentity(context, registration);
+  }
   return canonical;
 }
 
@@ -291,7 +301,7 @@ export async function inspectRegisteredWorkspace(
     return {
       status: 'available',
       workspace,
-      root: await verifyWorkspaceRoot(context, workspace.root),
+      root: await verifyWorkspaceRoot(context, workspace.root, workspace),
     };
   } catch (error) {
     if (
@@ -330,6 +340,7 @@ export function addWorkspace(
   if (
     registration.kind !== 'linked' ||
     !isIdentifier(registration.workspaceId) ||
+    !isIdentifier(registration.instanceId) ||
     !isAbsolute(registration.root) ||
     resolve(registration.root) !== registration.root
   ) {
