@@ -39,15 +39,14 @@ describe('Engine Git checkout bootstrap boundary', () => {
     expect(await readdir(root)).toEqual([]);
   });
 
-
   it('ignores inherited Git repository and config overrides for checkout discovery and ignore checks', async () => {
     const requested = await tempRoot();
     const foreign = await tempRoot();
     const nonGit = await tempRoot();
     execFileSync('git', ['init', '-q'], { cwd: requested });
     execFileSync('git', ['init', '-q'], { cwd: foreign });
-    await writeFile(join(requested, '.gitignore'), '.nevo/local/\\n', 'utf8');
-    await writeFile(join(foreign, '.gitignore'), 'node_modules/\\n', 'utf8');
+    await writeFile(join(requested, '.gitignore'), '.nevo/local/\n', 'utf8');
+    await writeFile(join(foreign, '.gitignore'), 'node_modules/\n', 'utf8');
 
     const overrides = {
       GIT_DIR: join(foreign, '.git'),
