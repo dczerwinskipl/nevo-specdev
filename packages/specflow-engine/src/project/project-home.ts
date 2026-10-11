@@ -94,7 +94,13 @@ export async function resolveProjectHome(
     if (!isAbsolute(options.projectRoot)) {
       throw new ProjectHomeError('PROJECT_HOME_INVALID', 'Project Home override must be absolute.');
     }
-    const requested = await realpath(options.projectRoot);
+    let requested: string;
+    try {
+      requested = await realpath(options.projectRoot);
+    } catch (error) {
+      if (!isMissing(error)) throw error;
+      throw new ProjectHomeError('PROJECT_HOME_NOT_FOUND', 'The requested Project Home is unavailable.');
+    }
     if (!roots.includes(requested)) {
       throw new ProjectHomeError(
         'PROJECT_HOME_MISMATCH',
@@ -257,7 +263,13 @@ function isHomeMarker(value: unknown): value is HomeMarker {
 
 async function requireDirectory(root: string, relative: string): Promise<void> {
   const path = join(root, relative);
-  const stat = await lstat(path);
+  let stat;
+  try {
+    stat = await lstat(path);
+  } catch (error) {
+    if (!isMissing(error)) throw error;
+    throw new ProjectHomeError('PROJECT_HOME_INVALID', 'Project Home state directory is missing.');
+  }
   if (!stat.isDirectory() || stat.isSymbolicLink()) {
     throw new ProjectHomeError(
       'PROJECT_HOME_INVALID',
@@ -267,7 +279,13 @@ async function requireDirectory(root: string, relative: string): Promise<void> {
 }
 
 async function requirePlainFile(path: string): Promise<void> {
-  const stat = await lstat(path);
+  let stat;
+  try {
+    stat = await lstat(path);
+  } catch (error) {
+    if (!isMissing(error)) throw error;
+    throw new ProjectHomeError('PROJECT_HOME_INVALID', 'Project Home marker/config file is missing.');
+  }
   if (!stat.isFile() || stat.isSymbolicLink()) {
     throw new ProjectHomeError(
       'PROJECT_HOME_INVALID',
