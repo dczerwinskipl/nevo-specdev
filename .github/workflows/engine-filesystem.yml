@@ -4,13 +4,13 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
     paths:
-      - 'packages/specflow-engine/**'
-      - '.github/workflows/engine-filesystem.yml'
+      - "packages/specflow-engine/**"
+      - ".github/workflows/engine-filesystem.yml"
   push:
     branches: [main]
     paths:
-      - 'packages/specflow-engine/**'
-      - '.github/workflows/engine-filesystem.yml'
+      - "packages/specflow-engine/**"
+      - ".github/workflows/engine-filesystem.yml"
 
 permissions:
   contents: read
