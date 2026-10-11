@@ -1,8 +1,9 @@
-import { lstat } from 'node:fs/promises';
+import { lstat, readFile } from 'node:fs/promises';
 
 import { writeJsonAtomically } from './atomic-json';
 import { withProjectControlLock, type ProjectControlLockOptions } from './control-lock';
-import type { ResolvedProjectHome } from './project-home';
+import { PROJECT_HOME_MARKER_RELATIVE_PATH, type ResolvedProjectHome } from './project-home';
+import { join } from 'node:path';
 import {
   WorkspaceRegistryError,
   initialWorkspaceRegistry,
@@ -48,6 +49,40 @@ export async function initializeWorkspaceRegistry(
       } catch (error) {
         if (!isMissing(error)) throw error;
       }
+      // Claim virgin bootstrap in the Project Home authority *before* first
+      // registry publication. If registry is later removed, or init crashes
+      // after claiming, a second bootstrap is forbidden and requires recovery.
+      const markerPath = join(context.project.homeRoot, PROJECT_HOME_MARKER_RELATIVE_PATH);
+      const markerStat = await lstat(markerPath);
+      if (!markerStat.isFile() || markerStat.isSymbolicLink()) {
+        throw new WorkspaceRegistryError(
+          'REGISTRY_RECOVERY_REQUIRED',
+          'Project Home bootstrap evidence is not a regular file.',
+        );
+      }
+      let marker: unknown;
+      try {
+        marker = JSON.parse(await readFile(markerPath, 'utf8')) as unknown;
+      } catch {
+        throw new WorkspaceRegistryError(
+          'REGISTRY_RECOVERY_REQUIRED',
+          'Project Home bootstrap evidence cannot be read.',
+        );
+      }
+      if (
+        !isRecord(marker) ||
+        marker.version !== 1 ||
+        marker.projectId !== context.project.projectId ||
+        marker.homeRoot !== context.project.homeRoot ||
+        marker.gitCommonDir !== context.project.gitCommonDir ||
+        marker.registryBootstrap !== 'fresh'
+      ) {
+        throw new WorkspaceRegistryError(
+          'REGISTRY_RECOVERY_REQUIRED',
+          'First initialization cannot be proven. Missing registry must use explicit recovery.',
+        );
+      }
+      await writeJsonAtomically(markerPath, { ...marker, registryBootstrap: 'claimed' });
       const initial = validateWorkspaceRegistry(
         registerInitialPrimary(initialWorkspaceRegistry(context), context),
         context,
@@ -73,12 +108,14 @@ export async function updateWorkspaceRegistry(
     context,
     async () => {
       const current = await readWorkspaceRegistry(context);
-      if (!current.workspaces.some((w) => w.root === context.workspace.root)) {
+      const caller = current.workspaces.find((w) => w.root === context.workspace.root);
+      if (!caller) {
         throw new WorkspaceRegistryError(
           'REGISTRY_CONFLICT',
           'An unregistered worktree cannot mutate the Project Home registry.',
         );
       }
+      await verifyWorkspaceRoot(context, caller.root, caller);
       if (options.expectedRevision !== undefined && current.revision !== options.expectedRevision) {
         throw new WorkspaceRegistryError(
           'REGISTRY_CONFLICT',
@@ -105,7 +142,7 @@ export async function updateWorkspaceRegistry(
         if (current.workspaces.some((w) => w.workspaceId === registration.workspaceId)) {
           continue;
         }
-        await verifyWorkspaceRoot(context, registration.root);
+        await verifyWorkspaceRoot(context, registration.root, registration);
       }
       // An old unavailable binding stays recorded, but a NEW binding must not
       // point at a disappeared, moved or substituted workspace.
@@ -115,7 +152,7 @@ export async function updateWorkspaceRegistry(
         if (!target) {
           throw new WorkspaceRegistryError('REGISTRY_CORRUPT', 'Binding workspace is absent.');
         }
-        await verifyWorkspaceRoot(context, target.root);
+        await verifyWorkspaceRoot(context, target.root, target);
       }
 
       await writeJsonAtomically(workspaceRegistryPath(context), next);
@@ -173,7 +210,8 @@ function sameRegistration(
     before.workspaceId === after.workspaceId &&
     before.kind === after.kind &&
     before.root === after.root &&
-    before.managed === after.managed
+    before.managed === after.managed &&
+    before.instanceId === after.instanceId
   );
 }
 
@@ -192,4 +230,8 @@ function freezeRegistry(registry: WorkspaceRegistry): WorkspaceRegistry {
   Object.freeze(registry.workspaces);
   Object.freeze(registry.specBindings);
   return Object.freeze(registry);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
