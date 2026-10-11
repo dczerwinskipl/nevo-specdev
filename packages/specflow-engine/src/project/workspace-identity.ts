@@ -100,6 +100,24 @@ export async function verifyLinkedWorkspaceIdentity(
 ): Promise<void> {
   if (registration.kind === 'primary') return;
   const markerPath = join(registration.root, WORKSPACE_IDENTITY_RELATIVE_PATH);
+  for (const relative of ['.nevo', '.nevo/local', '.nevo/local/state']) {
+    const directory = join(registration.root, relative);
+    try {
+      const stat = await lstat(directory);
+      if (!stat.isDirectory() || stat.isSymbolicLink() || (await realpath(directory)) !== directory) {
+        throw new WorkspaceRegistryError(
+          'REGISTRY_WORKSPACE_MISMATCH',
+          'Registered linked workspace identity path was redirected.',
+        );
+      }
+    } catch (error) {
+      if (!isNodeError(error, 'ENOENT')) throw error;
+      throw new WorkspaceRegistryError(
+        'REGISTRY_WORKSPACE_MISMATCH',
+        'Registered linked workspace identity directory is missing.',
+      );
+    }
+  }
   let content: string;
   try {
     const stat = await lstat(markerPath);
@@ -127,6 +145,12 @@ export async function verifyLinkedWorkspaceIdentity(
       'Linked workspace incarnation marker is corrupt.',
     );
   }
+  if (!(await isGitIgnored(registration.root, WORKSPACE_IDENTITY_RELATIVE_PATH))) {
+    throw new WorkspaceRegistryError(
+      'REGISTRY_WORKSPACE_MISMATCH',
+      'Linked identity marker is no longer protected by Git ignore rules.',
+    );
+  }
   if (
     !isRecord(parsed) ||
     parsed.version !== 1 ||
@@ -142,7 +166,7 @@ export async function verifyLinkedWorkspaceIdentity(
 }
 
 function isIdentity(value: unknown): value is string {
-  return typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f-]{27}$/iu.test(value);
+  return typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(value);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
