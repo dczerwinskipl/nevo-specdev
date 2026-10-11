@@ -7,6 +7,7 @@ import {
   addWorkspace,
   bindSpecToWorkspace,
   resolveProjectHome,
+  provisionLinkedWorkspaceIdentity,
   readWorkspaceRegistry,
   updateWorkspaceRegistry,
   withProjectControlLock,
@@ -45,15 +46,15 @@ it.skipIf(!process.env.NEVO_REGISTRY_WORKER)('independent registry mutation proc
       { lock: { waitMs: 25000 } },
     );
   } else if (mode === 'register') {
+    const registration = await provisionLinkedWorkspaceIdentity(
+      context,
+      process.env.NEVO_REGISTRY_LINKED!,
+      targetId,
+      true,
+    );
     await updateWorkspaceRegistry(
       context,
-      (current) =>
-        addWorkspace(current, {
-          workspaceId: targetId,
-          kind: 'linked',
-          root: process.env.NEVO_REGISTRY_LINKED!,
-          managed: true,
-        }),
+      (current) => addWorkspace(current, registration),
       { lock: { waitMs: 25000 } },
     );
   } else if (mode === 'crash-lock') {
