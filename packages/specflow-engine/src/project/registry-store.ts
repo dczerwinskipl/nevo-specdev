@@ -139,7 +139,7 @@ function assertAppendOnlyTransition(old: WorkspaceRegistry, next: WorkspaceRegis
     const after = nextBindings.get(specId);
     if (
       after?.workspaceId !== before.workspaceId ||
-      after.generation !== before.generation
+      after?.generation !== before.generation
     ) {
       throw new WorkspaceRegistryError(
         'REGISTRY_CONFLICT',
