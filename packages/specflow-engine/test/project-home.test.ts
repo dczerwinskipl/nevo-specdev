@@ -61,7 +61,8 @@ async function designateHome(root: string, commonDir?: string): Promise<string> 
   const projectId = randomUUID();
   const stateDir = join(root, '.nevo/local/state');
   await mkdir(stateDir, { recursive: true });
-  const gitCommonDir = commonDir ?? (await realpath(resolve(root, git(root, 'rev-parse', '--git-common-dir'))));
+  const gitCommonDir =
+    commonDir ?? (await realpath(resolve(root, git(root, 'rev-parse', '--git-common-dir'))));
   await writeFile(
     join(root, PROJECT_HOME_MARKER_RELATIVE_PATH),
     JSON.stringify(
@@ -121,15 +122,9 @@ describe('Project Home discovery (real Git worktrees, read-only)', () => {
     const primary = await repository();
     const linked = await linkedWorktree(primary);
     const before = await readdir(join(primary, '.nevo'));
-    await expectHomeError(
-      resolveProjectHome({ cwd: linked }),
-      'PROJECT_HOME_NOT_FOUND',
-    );
+    await expectHomeError(resolveProjectHome({ cwd: linked }), 'PROJECT_HOME_NOT_FOUND');
     expect(await readdir(join(primary, '.nevo'))).toEqual(before);
-    await expectHomeError(
-      resolveProjectHome({ cwd: primary }),
-      'PROJECT_HOME_NOT_FOUND',
-    );
+    await expectHomeError(resolveProjectHome({ cwd: primary }), 'PROJECT_HOME_NOT_FOUND');
   });
 
   it('rejects two designated homes, but permits an explicit verified selection', async () => {
@@ -138,10 +133,7 @@ describe('Project Home discovery (real Git worktrees, read-only)', () => {
     const firstProjectId = await designateHome(primary);
     await designateHome(linked);
 
-    await expectHomeError(
-      resolveProjectHome({ cwd: linked }),
-      'PROJECT_HOME_AMBIGUOUS',
-    );
+    await expectHomeError(resolveProjectHome({ cwd: linked }), 'PROJECT_HOME_AMBIGUOUS');
 
     const chosen = await resolveProjectHome({ cwd: linked, projectRoot: primary });
     expect(chosen.project.projectId).toBe(firstProjectId);
@@ -156,14 +148,8 @@ describe('Project Home discovery (real Git worktrees, read-only)', () => {
     await designateHome(primary);
     await designateHome(foreign);
 
-    await expectHomeError(
-      resolveProjectHome({ cwd: linked, projectRoot: foreign }),
-      'PROJECT_HOME_MISMATCH',
-    );
-    await expectHomeError(
-      resolveProjectHome({ cwd: linked, projectRoot: '.' }),
-      'PROJECT_HOME_INVALID',
-    );
+    await expectHomeError(resolveProjectHome({ cwd: linked, projectRoot: foreign }), 'PROJECT_HOME_MISMATCH');
+    await expectHomeError(resolveProjectHome({ cwd: linked, projectRoot: '.' }), 'PROJECT_HOME_INVALID');
   });
 
   it('does not adopt an independent local clone even with an identical remote URL', async () => {
@@ -173,14 +159,8 @@ describe('Project Home discovery (real Git worktrees, read-only)', () => {
     git(primary, 'remote', 'add', 'origin', 'https://example.invalid/our-team/repo.git');
     git(primary, 'clone', '-q', primary, clone);
     git(clone, 'remote', 'set-url', 'origin', 'https://example.invalid/our-team/repo.git');
-    await expectHomeError(
-      resolveProjectHome({ cwd: clone }),
-      'PROJECT_HOME_NOT_FOUND',
-    );
-    await expectHomeError(
-      resolveProjectHome({ cwd: clone, projectRoot: primary }),
-      'PROJECT_HOME_MISMATCH',
-    );
+    await expectHomeError(resolveProjectHome({ cwd: clone }), 'PROJECT_HOME_NOT_FOUND');
+    await expectHomeError(resolveProjectHome({ cwd: clone, projectRoot: primary }), 'PROJECT_HOME_MISMATCH');
   });
 
   it('rejects corrupt, substituted and unignored home markers', async () => {
