@@ -147,8 +147,18 @@ export default tseslint.config(
     files: ['packages/specflow-contracts/**/*.{ts,tsx,mts,cts}'],
     rules: {
       'no-restricted-imports': productImportRestrictions({
-        regex: '^@nevo/(?:specflow|specflow-runtime|specflow-ui)(?:/|$)',
+        regex: '^@nevo/(?:specflow|specflow-engine|specflow-runtime|specflow-ui)(?:/|$)',
         message: 'Shared SpecFlow contracts must not depend on the product shell, Runtime, or UI.',
+      }),
+    },
+  },
+  {
+    files: ['packages/specflow-engine/**/*.{ts,tsx,mts,cts}'],
+    rules: {
+      'no-restricted-imports': productImportRestrictions({
+        regex:
+          '^(?:@nevo/specflow(?!-contracts(?:/|$))(?:-|/|$)|@fastify(?:/|$)|fastify(?:/|$)|commander(?:/|$)|react(?:-dom)?(?:/|$)|openid-client(?:/|$))',
+        message: 'Engine is independent of CLI, Runtime, providers, HTTP, and UI adapters.',
       }),
     },
   },
@@ -165,7 +175,7 @@ export default tseslint.config(
     files: ['packages/specflow-ui/**/*.{ts,tsx,mts,cts}'],
     rules: {
       'no-restricted-imports': productImportRestrictions({
-        regex: '^@nevo/(?:authorization|specflow|specflow-runtime)(?:/|$)',
+        regex: '^@nevo/(?:authorization|specflow|specflow-engine|specflow-runtime)(?:/|$)',
         message:
           'SpecFlow UI consumes shared contracts and client boundaries; it must not depend on Runtime, the product shell, or authorization policy implementation.',
       }),
@@ -223,6 +233,7 @@ export default tseslint.config(
       'tools/**/*.{ts,mts,cts,tsx,js,mjs,cjs}',
       'packages/specflow/**/*.{ts,mts,cts,tsx,js,mjs,cjs}',
       'packages/specflow-runtime/**/*.{ts,mts,cts,tsx,js,mjs,cjs}',
+      'packages/specflow-engine/**/*.{ts,mts,cts,tsx,js,mjs,cjs}',
       '*.{js,mjs,cjs,ts,mts,cts}',
       '*.config.{js,mjs,cjs,ts,mts,cts}',
     ],

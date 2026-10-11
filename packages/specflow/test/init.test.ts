@@ -9,7 +9,7 @@ import {
   type ConfigWriteOptions,
   initializeProject,
 } from '../src/init/initialize-project';
-import type { ProjectLayout } from '../src/project/layout';
+import type { GitCheckoutLayout } from '@nevo/specflow-engine';
 
 const dirs: string[] = [];
 
@@ -25,7 +25,7 @@ async function repository(): Promise<string> {
   return root;
 }
 
-function layout(root: string): ProjectLayout {
+function layout(root: string): GitCheckoutLayout {
   return {
     root,
     projectConfigPath: join(root, '.nevo', 'config.yaml'),

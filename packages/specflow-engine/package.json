@@ -1,0 +1,28 @@
+{
+  "name": "@nevo/specflow-engine",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Offline-capable SpecFlow application boundary; no CLI, HTTP, provider or UI dependencies.",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "node ../../tools/build-package.mjs",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "5.0.3"
+  },
+  "engines": {
+    "node": ">=24.20.0 <25"
+  }
+}

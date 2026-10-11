@@ -9,8 +9,8 @@ import {
   isGitIgnored,
   LOCAL_CONFIG_RELATIVE_PATH,
   LOCAL_IGNORE_ENTRY,
-  type ProjectLayout,
-} from '../project/layout';
+  type GitCheckoutLayout,
+} from '@nevo/specflow-engine';
 
 export interface ProjectConfigContribution {
   readonly projectConfig: Record<string, unknown>;
@@ -22,7 +22,7 @@ export interface ConfigWriteOptions {
 }
 
 export interface InitializeProjectOptions {
-  readonly layout: ProjectLayout;
+  readonly layout: GitCheckoutLayout;
   readonly contribution: ProjectConfigContribution;
   readonly isIgnored?: (root: string, relativePath: string) => Promise<boolean>;
   readonly writeConfigFile?: (
@@ -45,7 +45,7 @@ interface GitignoreSnapshot {
   readonly changed: boolean;
 }
 
-export async function assertProjectCanInitialize(layout: ProjectLayout): Promise<void> {
+export async function assertProjectCanInitialize(layout: GitCheckoutLayout): Promise<void> {
   if (await fileExists(layout.projectConfigPath)) {
     throw new Error(`Nevo SpecFlow is already initialized: ${layout.projectConfigPath}`);
   }

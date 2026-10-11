@@ -1,17 +1,19 @@
 import { spawn } from 'node:child_process';
 import { join, resolve } from 'node:path';
 
+// This is a checkout-local bootstrap layout, NOT the canonical Project Home.
+// Linked Git worktrees intentionally return different roots until the T03 resolver lands.
 export const PROJECT_CONFIG_RELATIVE_PATH = '.nevo/config.yaml';
 export const LOCAL_CONFIG_RELATIVE_PATH = '.nevo/local/config.yaml';
 export const LOCAL_IGNORE_ENTRY = '.nevo/local/';
 
-export interface ProjectLayout {
+export interface GitCheckoutLayout {
   readonly root: string;
   readonly projectConfigPath: string;
   readonly localConfigPath: string;
 }
 
-export async function resolveProjectLayout(cwd: string): Promise<ProjectLayout> {
+export async function resolveGitCheckoutLayout(cwd: string): Promise<GitCheckoutLayout> {
   const result = await runGit(cwd, ['rev-parse', '--show-toplevel']);
   if (result.code !== 0) {
     throw new Error(

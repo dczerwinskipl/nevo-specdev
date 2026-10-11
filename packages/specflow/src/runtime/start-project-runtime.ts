@@ -1,3 +1,4 @@
+import { resolveGitCheckoutLayout, type GitCheckoutLayout } from '@nevo/specflow-engine';
 import {
   startRuntime,
   type RuntimeHandle,
@@ -5,11 +6,10 @@ import {
   type RuntimeWebApp,
 } from '@nevo/specflow-runtime';
 
-import { resolveProjectLayout, type ProjectLayout } from '../project/layout';
 import { loadProductWebApp } from './web-app';
 
 export interface StartProjectRuntimeDependencies {
-  readonly resolveLayout?: (cwd: string) => Promise<ProjectLayout>;
+  readonly resolveLayout?: (cwd: string) => Promise<GitCheckoutLayout>;
   readonly start?: (options: RuntimeStartOptions) => Promise<RuntimeHandle>;
   readonly loadWebApp?: () => Promise<RuntimeWebApp>;
 }
@@ -18,7 +18,7 @@ export async function startProjectRuntime(
   cwd: string,
   dependencies: StartProjectRuntimeDependencies = {},
 ): Promise<RuntimeHandle> {
-  const layout = await (dependencies.resolveLayout ?? resolveProjectLayout)(cwd);
+  const layout = await (dependencies.resolveLayout ?? resolveGitCheckoutLayout)(cwd);
   const webApp = await (dependencies.loadWebApp ?? loadProductWebApp)();
   return (dependencies.start ?? startRuntime)({
     projectRoot: layout.root,
