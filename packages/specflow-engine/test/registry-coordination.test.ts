@@ -255,6 +255,49 @@ describe('E1.T05 independent OS-process coordination', () => {
     expect((await readWorkspaceRegistry(context)).revision).toBe(1);
   }, 75000);
 
+  it('recovers deterministically from SIGKILL after publish without replaying a stale CAS', async () => {
+    const { root, context } = await fixture();
+    const worker = startWorker(root, { mode: 'crash-after-rename', target: 'unused' });
+    await launchTogether([worker]);
+    const outcome = await worker.outcome;
+    expect(outcome.code).not.toBe(0);
+
+    const published = await readWorkspaceRegistry(context);
+    expect(published.revision).toBe(1);
+    expect((await inspectProjectControlLock(context)).status).toBe('held');
+    // Recovery must not infer "free" merely from a dead PID.
+    await expect(
+      updateWorkspaceRegistry(context, (current) => current, { lock: { waitMs: 0 } }),
+    ).rejects.toMatchObject({ code: 'CONTROL_LOCK_BUSY' });
+
+    // After explicit operator recovery, a request with old CAS cannot replay.
+    await rm(projectControlLockPath(context));
+    await expect(
+      updateWorkspaceRegistry(context, (current) => current, { expectedRevision: 0 }),
+    ).rejects.toMatchObject({ code: 'REGISTRY_CONFLICT' });
+    expect((await readWorkspaceRegistry(context)).revision).toBe(1);
+  }, 75000);
+
+  it('rejects an unregistered linked caller even when the Git common-dir matches', async () => {
+    const { root } = await fixture();
+    const linkedRoot = await linked(root);
+    const linkedContext = await resolveProjectHome({ cwd: linkedRoot });
+    await expect(
+      updateWorkspaceRegistry(linkedContext, (current) => current),
+    ).rejects.toMatchObject({ code: 'REGISTRY_CONFLICT' });
+  });
+
+  it('does not allow in-place modification to bypass registry transition checks', async () => {
+    const { context } = await fixture();
+    await expect(
+      updateWorkspaceRegistry(context, (current) => {
+        (current.workspaces as unknown as { managed: boolean }[])[0]!.managed = true;
+        return current;
+      }),
+    ).rejects.toThrow();
+    expect((await readWorkspaceRegistry(context)).workspaces[0]?.managed).toBe(false);
+  });
+
   it('fails closed on a corrupt control lock instead of overwriting it', async () => {
     const { context } = await fixture();
     const path = projectControlLockPath(context);
