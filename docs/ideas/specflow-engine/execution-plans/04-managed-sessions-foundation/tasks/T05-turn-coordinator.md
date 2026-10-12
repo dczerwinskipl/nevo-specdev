@@ -25,6 +25,8 @@ related:
 
 Implement Runtime-owned start/observe/interact/cancel/reconcile lifecycle; an interrupted live operation becomes a truthful interrupted/unavailable/recoverable state according to evidence. Normalize provider-specific data into canonical Work, not raw events in UI.
 
+**Future compatibility only:** The one-active-Turn rule applies to a **Session**, not to a future group of distinct Sessions reviewing one Task step. Do not start multi-instance scheduling here; see [future plan](../../../multi-instance-plan/README.md).
+
 ## Prerequisites
 
 - [E4.T03](T03-durable-runtime-state.md)

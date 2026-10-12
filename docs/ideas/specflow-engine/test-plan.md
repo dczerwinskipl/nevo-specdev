@@ -166,6 +166,25 @@ For each case capture: setup, command/API, machine-readable result, files/refs/r
 | F04 | Main branch checked out in primary                   | Finalize does not checkout same branch in linked worktree |
 | F05 | Only archived spec copy remains in linked worktree   | Cleanup refused until destination integration proven      |
 
+## Deferred multi-instance deterministic review matrix (future follow-up only)
+
+These **MI** IDs do not modify Foundation A/B or current managed Session acceptance. Execute only after adoption of the [multi-instance design](multi-instance-execution.md) and [future plan](multi-instance-plan/README.md). Use real independent CLI processes, actual Git changes and controlled mock Runtime provider failures before asserting native-provider behavior.
+
+| ID | Scenario | Required evidence |
+| --- | --- | --- |
+| MI01 | One-instance review through existing `start/finish` | No behavior/transition regression; current skill remains supported or explicitly adapted |
+| MI02 | Three instances of one Task/step, sequential vs concurrent | Same required contributions and final result, different scheduling only; one workflow attempt |
+| MI03 | Two OS processes race to start/finish same slot | One accepted current run/result; no fourth vote; trusted identity validated |
+| MI04 | Reviewer timeout/quota, two other results accepted | Preserve 2/3, independently retry failing slot; remain incomplete until valid result/authorized waiver |
+| MI05 | Late result from superseded provider run | Rejected or idempotently identified; never overwrites current contribution |
+| MI06 | Crash after persisting result before response | Idempotent retry reports same accepted result; no duplicate contribution |
+| MI07 | Two readers of one worktree and attempted writer | Enforced read-only, short state locks; block writer or invalidate group per approved policy |
+| MI08 | Same HEAD but changed staged/unstaged/untracked material | Snapshot mismatch detected; no combined pass from different material |
+| MI09 | 2 pass plus blocking P1; mixed nominal enums/findings | No majority-vote override; typed deterministic resolution or explicit triage; all provenance retained |
+| MI10 | 1/3 valid after bounded retries and operator waiver | Cannot silently pass; audited authorization, original N, reason and new policy/decision evidence |
+| MI11 | Competing aggregate finalizers, crash between report and transition | Exactly one canonical finish/transition/report effect; resumable frozen operation |
+| MI12 | Workspace rebind/delete, provider unknown-dispatch, Runtime off CLI | Evidence remains inspectable; stale source rejected; no unsafe replay, offline submission still works |
+
 ## Running and reporting
 
 No concrete command names are prescribed until tests exist. Proposed categories: `engine:unit`, `engine:git-integration`, `engine:process-integration`, `runtime:integration` or equivalent using Turborepo/package scripts. CI should keep required checks stable and run affected packages. Mark tests explicitly skipped when Git executable/platform is unavailable rather than passing a fake.

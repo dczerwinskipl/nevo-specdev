@@ -25,6 +25,8 @@ related:
 
 Derive execution effect scope (read-only enforced vs workspace writer vs Git refs). Implement short mutation guard and separate durable long-running physical workspace claim; support non-Task Spec Writer claim. A workflow attempt is **not** the claim.
 
+**Future compatibility only:** Preserve effect-scoped admission: proven read-only execution does not monopolize a physical writer claim merely because it is agent-originated. Do not implement review-group snapshot locks or a reader/writer lease system in this task; see [deferred multi-instance design](../../../multi-instance-execution.md).
+
 ## Prerequisites
 
 - [E3.T03](T03-readiness-step-state.md)

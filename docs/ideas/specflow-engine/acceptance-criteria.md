@@ -79,6 +79,10 @@ Sessions Foundation can be developed against the contract independently of full 
 | SI07 | Scoped Session and Spec/Workspace reads don't leak records through cross-feature projections                                           | S08                    |
 | SI08 | Writer claims can be reconciled independently of provider Session/Turn lifecycle; external work is not fabricated as a managed Session | S02, S06, W08          |
 
+## Deferred follow-up gate — multi-instance execution
+
+The [multi-instance idea](multi-instance-execution.md) and its [future implementation plan](multi-instance-plan/README.md) are **not** part of FA01–FA12, FB01–FB09 or SI01–SI08. Those foundations must not assume `one workflow attempt = one Session/Turn`, but need implement only the documented single-instance contract now. Future readiness requires MI01–MI12 in the [test matrix](test-plan.md), owner-approved instance submission semantics, enforced read-only capability, frozen reviewed input, independently recoverable results and exactly one aggregate transition. Existing task-batch execution does not count as this acceptance.
+
 ## Deferred rather than falsely accepted
 
 Full provider migration, richer prompts/composer, complete deterministic gate set, Task batch orchestration, automatic Session handover, GitHub/GitLab integration, full finalize, worktree removal UI, multi-machine/network filesystems and strong security against unrestricted same-OS-account adversaries are **not** required by Foundation A/B. Every deferral must identify the future owner and safety boundary; no exposed feature may claim deferred behavior works.
