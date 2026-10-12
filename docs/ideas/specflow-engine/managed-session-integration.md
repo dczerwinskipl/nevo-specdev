@@ -88,6 +88,12 @@ Every new Turn/start/resume resolves the current `workspaceId -> verified root` 
 - **Retry:** durable invocation intent and idempotency keys fence concurrent starts; provider-native resume policy is separate from workflow retry policy.
 - **Cancellation:** cancelling a Runtime-managed Turn is not sufficient proof that every external tool side effect stopped. Engine admission remains blocked if actual write outcome is ambiguous.
 
+## Deferred same-step multi-instance execution
+
+The current Batch/Handover candidates do not schedule several reviewers for the **same** step/attempt. Preserve the future one-to-many association `workflowAttempt -> instance slots -> provider execution runs -> optional Runtime Session/Turn`, without making Sessions canonical workflow owners. Each slot keeps a stable ID across retries; each invocation has a distinct identity and recovery/fencing evidence. One terminal Turn must not close the group's workflow step or trigger the next Session automatically.
+
+When configured, the group requires per-instance verified read-only capabilities and a frozen common review snapshot. Runtime may dispatch multiple concurrent provider Turns subject to capacity, but Engine must accept results through one offline-safe contribution/admission contract and perform the only aggregate workflow transition. External CLI reviewers need not appear as managed Runtime Sessions. This is a [future separate plan](multi-instance-plan/README.md), not SI01–SI08 scope.
+
 ## Authorization and observation
 
 Runtime authorizes Session access and requested Specs/Tasks after Engine resolves their canonical binding. HTTP-supplied `workspaceId`, `sessionId` and `taskId` are selectors, not access grants. Do not leak unauthorized Session history into an allowed Specs aggregation. External manually launched provider runs are **not** Runtime Sessions.

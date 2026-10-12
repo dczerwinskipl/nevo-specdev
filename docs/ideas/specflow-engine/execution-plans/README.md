@@ -39,6 +39,8 @@ related:
 
 Plan 02 task E2.T09 is a **deferred optional non-session binding/cleanup slice**, not mandatory for Foundation A or Plan 05. Do not mark it completed or implement worktree Session resume as part of this program.
 
+**Deferred beyond these five plans:** [Multi-instance execution](../multi-instance-execution.md) and its [future task plan](../multi-instance-plan/README.md) are not an E1–E5 acceptance gate. Preserve the distinction between a workflow attempt, one provider Turn and a physical writer claim; do not implement multi-review scheduling in E5.T07. This follow-up plan lives **outside** this disposable tree and must not be removed during E1–E5 cleanup.
+
 ## Dispatch semantics
 
 - **Solo / review gate:** run task separately; verify its output and contract before starting dependent task. This is the default for Project Home, authorization, workflow definition changes, durable operations, recovery, Engine↔Runtime handshake and crash-sensitive settlement.

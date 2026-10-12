@@ -69,6 +69,15 @@ These are intent/constraints, not approvals of every candidate code shape in thi
 | D26 | How is Runtime read cache refreshed after an offline CLI mutation while the server stays up?                         | Required H03/FA02: cached read -> CLI mutation -> supported refresh/re-read; no SSE mandate                                                  |
 | D27 | Must Foundation A repair physically moved Project Home or only detect it safely?                                     | A must detect and not initialize new state (P02); defer successful home relocation/repair to a separately approved lifecycle gate            |
 
+| D28 | Does multi-instance keep agent-facing `step finish` with contribution semantics, or introduce explicit per-instance submission? | Legacy skill/CLI compatibility, distinguish `contribution-recorded` from `step-completed`; offline CLI and managed Session parity |
+| D29 | How many independent instances are required by default, and is it exact N or minimum/quorum? | Freeze requested slots and policy with attempt; test N=1 backwards compatibility and sequential N=3 |
+| D30 | How are stable instance ID, execution run ID, provider Session/Turn and workflow attempt correlated? | Duplicate start/finish, retry identity, stale run fencing, operator reassignment and restart evidence |
+| D31 | How is a common immutable code/spec/workflow snapshot guaranteed across reviews? | Git SHA plus staged/unstaged/untracked fingerprint or proven immutable snapshot; writer/rebind/cleanup races |
+| D32 | What counts as enforced read-only, including CLI/MCP result writes without source mutation? | Provider tool capabilities, filesystem side effects, local trust scope and short control-lock races |
+| D33 | Which typed verdict/findings, blocking severity and disagreement aggregation are supported? | Separate completion from resolution; ensure one P1 cannot be outvoted by two passes; retain provenance |
+| D34 | When a reviewer times out/has no valid result, may Nevo retry, reassign or accept fewer reviews? | Independent bounded retries, uncertain dispatch, durable authorized waiver separate from human code approval |
+| D35 | Which storage/finalize contract ensures one transition and no duplicate report/continuation after crashes? | Durable per-instance submissions plus a separately idempotent aggregate finalization; multiple processes |
+
 **Do not silently decide D02, D07, D08, D09, D17, D21, D24 or D25 while implementing a happy-path create endpoint.** They determine actual correctness. The PoC may narrow its supported cases explicitly while demonstrating chosen behavior.
 
 ## Alternatives and why they are not the first approach

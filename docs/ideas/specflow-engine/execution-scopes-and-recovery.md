@@ -86,6 +86,12 @@ Do not make every dirty checkout categorically fatal. Resolve admission at the _
 
 Batch scope is explicit, ordered, per-Task, never inferred from historical Session bindings. Releasing a Turn claim does not finish all Task attempts. Handover creates a new possible owner/Session after previous writer is safely released or fenced. It cannot silently transfer an opaque claim or auto-activate the next workflow transition.
 
+## Multi-instance scope (future; distinct from task batch)
+
+A `task-batch` means **one executor covering multiple Task attempts**. A proposed multi-instance step instead has **one** workflow attempt and several Engine-assigned independent contribution slots; either a slot may use several provider execution runs after technical retries. Do not infer the required slot count from Session history, the number of active Turns or `maxConcurrency`, and do not automatically allocate a new workflow attempt when one reviewer fails. Preserve accepted contributions when independently retrying another slot.
+
+Read-only instances skip a writer claim only when enforcement is real, while `start`/submit/finalize still transact under short Engine state locks. A terminal Turn without a valid result is not a review failure/pass. Partial/unknown results, stale run identities and ambiguous dispatch must not release an unsafe writer or cause aggregate `finish`. See [multi-instance design](multi-instance-execution.md); no multi-instance support is required by Foundation B.
+
 ## Acceptance and stage ownership
 
 Foundation A proves project/worktree resource serialization for Spec creation; it does **not** need a fake `workflow step start`. Foundation B implements one real minimal workflow transition/claim plus inspect/reconcile/release for CLI without Runtime and tests collision/abandonment. Sessions integration later exercises Runtime managed owner against this same coordinator.

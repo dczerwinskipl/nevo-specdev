@@ -74,6 +74,10 @@ workflow complete (domain) -> integration proven (Git)
 
 These are not one automatic "finish" side effect. Deleting a worktree that remains canonical would create a self-inflicted unavailable spec.
 
+## Deferred review-group implications
+
+A future multi-instance read-only review may not hold an exclusive writer claim yet still depends on a **specific frozen source**. Before rebind, relocation or cleanup, consider active review group/snapshot reservations as well as current writer claims and active managed Turns. Preserve historical per-instance evidence after relocation; never silently accept a review whose materialization no longer matches the originally frozen snapshot. Decide the source barrier/snapshot policy in [multi-instance design](multi-instance-execution.md), not during Foundation A.
+
 ## Authorization scope after binding
 
 HTTP receives selectors and resolves the authoritative spec/workspace through Engine before authorizing a resource-specific read/mutation. Never trust caller-provided `workspaceId` to widen authorization or allow an alternate path. For `create new-worktree` (before workspaceId exists), use project-level capability plus Git/worktree-specific permission if policy requires it; then bind the created resource to resolved project scope. Where a resource may not be disclosed to unauthorized users, resolve only minimal trusted scope before returning any details.

@@ -74,6 +74,12 @@ Define consistent hierarchy (project registry reservation -> specific workspace 
 | Claim expiry without proof of end                              | State becomes uncertain, not automatically free            |
 | Two claim-release attempts race                                | CAS/owner check means only real owner wins                 |
 
+## Deferred read-only multi-instance admission
+
+A future one-step/many-reviewer design requires **no long-lived writer claim** for proven read-only work, even when several Session/Turns share one worktree. This does **not** remove the need for short cross-process control locks on instance allocation, result submission, aggregate finalization and owner intervention: those actions mutate durable Engine state and must use trusted identity, CAS and idempotency. Treat workflow attempt, instance and run identities separately. An unsupported writable provider cannot be made safe by merely giving it a `readOnly` label.
+
+Read-only reviewer concurrency also requires a stable reviewed snapshot: concurrent source writers, external modifications, worktree rebind or cleanup may invalidate the group despite no reviewer holding a writer claim. Choose a compatible snapshot or writer-barrier policy before permitting concurrent reviews; only assert isolation guaranteed by the actual OS/provider capabilities. This is **deferred**, not a change to the current one-writer physical-workspace admission contract. See [multi-instance execution](multi-instance-execution.md).
+
 ## Admission versus authorization
 
 HTTP authorization answers **may this user request an operation**. Engine admission answers **is the requested mutation safe in the current state**. They must both run for HTTP requests. Offline CLI uses a separately defined local trust boundary then the same admission; do not conflate a role grant with owning the workspace.
