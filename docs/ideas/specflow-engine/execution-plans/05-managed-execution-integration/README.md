@@ -69,6 +69,8 @@ Each task has its own Markdown file. **Batch** means sequential tasks in one age
 5. All code-changing managed execution uses a verified Engine admission; a read-only Turn can skip claim only with enforced non-writing capabilities.
 6. External CLI agents remain unregistered as managed Runtime Sessions unless a later explicit feature does so.
 
+**Orthogonal future capability:** Multi-instance review means several independent results for **one Task step**, unlike this plan's explicit multi-Task batch. Keep E5.T07 bounded; do not add slot scheduling, per-reviewer retries, quorum/waivers or result aggregation. These belong to the [separate deferred plan](../../multi-instance-plan/README.md).
+
 ## Integration acceptance — what is demonstrable now
 
 Use real Engine + Runtime + controlled mock provider to prove **SI01–SI05, SI07 and SI08** and appropriate S01–S06/S08, R06 and H09 cases; in particular test S06 at every intent/spawn/correlation crash cut. Validate basic S04 sequential batch and S05 explicit handover without broad production orchestration.

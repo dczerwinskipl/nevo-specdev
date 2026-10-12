@@ -68,6 +68,8 @@ Each task has its own Markdown file. **Batch** means sequential tasks in one age
 - `terminal Turn != terminal Task`; this plan has no managed Turn, so a claim release does not infer workflow completion.
 - Workflow CLI is offline and tests run with **Runtime absent**. It is not a client for the Runtime server.
 
+**Future compatibility only:** Foundation B must not bake `workflow attempt == agent Session/Turn` or require an exclusive writer claim for enforced read-only work. Multi-instance step instances and aggregation are not implemented here; see [deferred idea](../../multi-instance-execution.md).
+
 ## Mandatory Foundation B gate
 
 Pass **FB01–FB09**: L03–L06, W01–W10, H07, SC01–SC02 and AG01–AG03, against actual local files and independent processes. Verify especially:

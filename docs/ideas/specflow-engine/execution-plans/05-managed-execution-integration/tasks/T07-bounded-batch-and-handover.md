@@ -25,6 +25,8 @@ related:
 
 Support minimal **explicit** ordered set of Task attempts and new successor Session intent/context, preserving per-Task state and current claim. Never infer a Task from historical Session associations; no automatic reviewer spawning or claim transfer without settlement.
 
+**Scope guard:** This batch covers several **different Task attempts** from one execution scope. It is not multiple independent reviewer contributions for the **same** task/step, and must not allocate review instances, accept quorum waivers or aggregate verdicts. Preserve correlation boundaries for the [future multi-instance plan](../../../multi-instance-plan/README.md).
+
 ## Prerequisites
 
 - [E5.T05](T05-turn-claim-settlement.md)
