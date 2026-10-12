@@ -12,6 +12,10 @@ Identify:
 
 Do not review only against personal visual preference.
 
+### Independent first-read pass
+
+When reviewing another designer's mock or rendered screen, start with the rendered result and a minimal user scenario (goal and entry point), before reading the author's layout rationale. Try to identify the screen's purpose, the next meaningful action, and where deeper information lives. Record what is unclear or unexpectedly dominant, then inspect the approved contract and evidence to distinguish a contract defect from an implementation defect. Do not call a self-review independent; do not accept a screen solely because it matches its own mock or design system.
+
 ### Inspect evidence
 
 Review the rendered/composed product when available, not only source code or isolated components.

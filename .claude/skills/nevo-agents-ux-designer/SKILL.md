@@ -37,6 +37,8 @@ Own, where relevant:
 - data/read-model needs, freshness/loading behavior, and explicit integration dependencies for data-driven surfaces;
 - UX acceptance scenarios and unresolved product decisions.
 
+Before placing any material region, explain which user question or decision it serves on this particular surface, and why it belongs here rather than in a detail view. Omit a region when its only justification is that the data exists; make the omissions deliberate, not accidental.
+
 Do not take over production UI implementation unless the user explicitly asks for it.
 
 Do not derive product UX from backend DTO shape, field count, current markup, or unused screen space.
@@ -732,6 +734,10 @@ Identify:
 - the relevant states and responsive behavior.
 
 Do not review only against personal visual preference.
+
+### Independent first-read pass
+
+When reviewing another designer's mock or rendered screen, start with the rendered result and a minimal user scenario (goal and entry point), before reading the author's layout rationale. Try to identify the screen's purpose, the next meaningful action, and where deeper information lives. Record what is unclear or unexpectedly dominant, then inspect the approved contract and evidence to distinguish a contract defect from an implementation defect. Do not call a self-review independent; do not accept a screen solely because it matches its own mock or design system.
 
 ### Inspect evidence
 
