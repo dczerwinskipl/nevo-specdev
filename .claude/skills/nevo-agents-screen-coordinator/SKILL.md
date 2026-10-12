@@ -32,16 +32,14 @@ Own the delivery of one requested product screen from problem framing to the req
 
 ### Route the work
 
-| Stage | Owner | Evidence needed before advancing |
-| --- | --- | --- |
-| Discovery | Coordinator with Spec Writer for facts/constraints | Goal, established UX, normal entry, authoritative data and integrations, known/unknown prerequisites |
-| Use cases | UX Designer | Read-only and main action scenarios: entry/context, first view, action/result, interruption/failure/recovery and return |
-| Information/interaction design | Same UX Designer | Ordered user questions, region purpose, information deliberately omitted from the host surface, disclosure, wide/narrow, copy source and design-system ownership |
-| Mock and UX validation | Same UX Designer, then independent Reviewer | Realistic interactive path using coherent identities, long/edge content, wide/narrow, discovery of detail and Back/context restoration |
-| Product decision | Owner where material | Concrete mock/proposal and consequential unresolved choices accepted or recorded as blocked/deferred |
-| Specification and task planning | Spec Writer; Task Planner when useful | Approved UX preserved as observable acceptance, actual API/read-model references, missing contracts explicitly owned; implementer need not reconstruct decisions |
-| Implementation (only in scope) | UI Implementer and owning backend/integration role | Production route uses authoritative behavior; fixtures confined to demos/tests; verify code, tests, render and data/action path |
-| Acceptance (only in scope) | Independent Reviewer, UX Designer for UX acceptance, Coordinator | Code/diff review, composed render and the complete normal entry → correct destination → action/feedback → Back path |
+- **Discovery — Coordinator + Spec Writer for facts:** establish the goal, existing UX, normal entry, authoritative data and integration dependencies, and factual uncertainties.
+- **Use cases — UX Designer:** model read-only and main action scenarios, including entry/context, first view, results, failure/recovery and return.
+- **Information and interaction — same UX Designer:** decide the ordered user questions, region purpose, deliberate omissions, disclosure, wide/narrow behavior, copy sources and design-system ownership.
+- **Mock and UX validation — same UX Designer, then independent Reviewer:** walk a realistic interactive path with coherent identities, long content, wide/narrow, detail discovery and Back/context preservation.
+- **Product decisions — owner where material:** evaluate the concrete proposal and accept significant choices or record them as blocked/deferred.
+- **Specification and planning — Spec Writer, Task Planner if needed:** preserve accepted UX as observable acceptance; link real API contracts and assign missing prerequisites.
+- **Implementation, only when requested — UI Implementer and owning backend/integration role:** integrate real production routes and actions, restrict fixtures to demos/tests, and verify code, tests, render and data path.
+- **Acceptance, only when implementation is in scope — independent Reviewer + UX Designer + Coordinator:** verify code/diff, composed render and normal entry → correct destination → action/feedback → Back.
 
 ### Make the UX gate meaningful
 
