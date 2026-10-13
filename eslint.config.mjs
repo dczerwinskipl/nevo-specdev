@@ -30,6 +30,7 @@ export default tseslint.config(
       '**/*.generated.*',
       'docs/**/*.generated.*',
       '.local/**',
+      '.artifacts/**',
     ],
   },
 

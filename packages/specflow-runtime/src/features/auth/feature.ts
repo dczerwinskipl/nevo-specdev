@@ -6,7 +6,6 @@ import {
   type RuntimeAuthenticationConfig,
 } from './authentication/configuration/model';
 import { authCookieNames, authCookieOptions } from './authentication/http/cookies';
-import { registerAuthenticationRateLimit } from './authentication/http/rate-limit';
 import { createOidcClient, type OidcClient } from './authentication/oidc-login/client';
 import { oidcLoginEndpoint } from './authentication/oidc-login/endpoint';
 import {
@@ -43,7 +42,7 @@ export interface CreateAuthFeatureOptions {
 }
 
 export interface AuthFeature {
-  register<RawServer extends RawServerBase>(app: FastifyInstance<RawServer>): Promise<void>;
+  register<RawServer extends RawServerBase>(app: FastifyInstance<RawServer>): void | Promise<void>;
 }
 
 export function createAuthFeature(options: CreateAuthFeatureOptions): AuthFeature {
@@ -68,15 +67,13 @@ export function createAuthFeature(options: CreateAuthFeatureOptions): AuthFeatur
     dependencies?.passwordAccountThrottle ?? new InMemoryPasswordAccountThrottle();
 
   return {
-    async register(app) {
+    register(app) {
       registerAuthorizationRequestContext(app, {
         authentication: options.authentication,
         authorization,
         store,
         cookieNames,
       });
-
-      await registerAuthenticationRateLimit(app);
 
       app.register(sessionEndpoint, {
         authentication: options.authentication,

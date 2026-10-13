@@ -1,4 +1,7 @@
 import { Type, type Static } from 'typebox';
+import { WorkspaceTaskSchema } from '../../tasks';
+export * from '../../tasks';
+export * from '../../documents';
 
 const IdSchema = Type.String({
   minLength: 1,
@@ -9,15 +12,6 @@ export const SpecificationWorkspaceParamsSchema = Type.Object(
   { specId: IdSchema },
   { additionalProperties: false },
 );
-export const SpecificationDocumentParamsSchema = Type.Object(
-  { specId: IdSchema, documentId: IdSchema },
-  { additionalProperties: false },
-);
-export const SpecificationTaskParamsSchema = Type.Object(
-  { specId: IdSchema, taskId: IdSchema },
-  { additionalProperties: false },
-);
-
 export const ReadSectionSchema = <T extends ReturnType<typeof Type.Object>>(data: T) =>
   Type.Union([
     Type.Object({ state: Type.Literal('available'), data }),
@@ -28,21 +22,6 @@ export const ReadSectionSchema = <T extends ReturnType<typeof Type.Object>>(data
     Type.Object({ state: Type.Literal('forbidden') }),
   ]);
 
-const TaskStatusSchema = Type.Object({
-  id: Type.String(),
-  label: Type.String(),
-  lifecycle: Type.Union([
-    Type.Literal('pending'),
-    Type.Literal('in_progress'),
-    Type.Literal('completed'),
-    Type.Literal('blocked'),
-  ]),
-});
-export const WorkspaceTaskSchema = Type.Object({
-  id: IdSchema,
-  title: Type.String(),
-  status: TaskStatusSchema,
-});
 export const WorkspaceTaskGroupSchema = Type.Object({
   id: IdSchema,
   name: Type.String(),
@@ -150,18 +129,6 @@ export const SpecificationWorkspaceResponseSchema = Type.Object({
     startSession: ActionSchema,
   }),
 });
-export const SpecificationDocumentResponseSchema = Type.Object({
-  id: IdSchema,
-  title: Type.String(),
-  content: Type.String(),
-  revision: Type.String(),
-});
-export const SpecificationTaskResponseSchema = Type.Object({
-  task: WorkspaceTaskSchema,
-  purpose: Type.Optional(Type.String()),
-  acceptanceCriteria: Type.Array(Type.String()),
-  workflow: Type.Optional(Type.String()),
-});
 export const SpecificationReadErrorSchema = Type.Object({
   error: Type.Union([
     Type.Literal('specification_not_found'),
@@ -171,9 +138,6 @@ export const SpecificationReadErrorSchema = Type.Object({
   ]),
 });
 export type SpecificationWorkspaceResponse = Static<typeof SpecificationWorkspaceResponseSchema>;
-export type SpecificationDocumentResponse = Static<typeof SpecificationDocumentResponseSchema>;
-export type SpecificationTaskResponse = Static<typeof SpecificationTaskResponseSchema>;
-export type WorkspaceTask = Static<typeof WorkspaceTaskSchema>;
 export type WorkspaceTaskGroup = Static<typeof WorkspaceTaskGroupSchema>;
 export type WorkspaceDocument = Static<typeof WorkspaceDocumentSchema>;
 export type WorkspaceSession = Static<typeof WorkspaceSessionSchema>;

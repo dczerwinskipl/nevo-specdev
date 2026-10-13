@@ -130,6 +130,11 @@ user-facing reason. Implementation file paths are not durable pattern references
 
 ## Progressive disclosure
 
+The authoritative contract for reading continuity, first-scan mapping, reachable complete values,
+and acceptance evidence is
+[Reading continuity and reachable detail](information-hierarchy.md#reading-continuity-and-reachable-detail).
+Apply it to the composed screen and its expanded states, not only individual rows.
+
 Deeper levels increase **specificity**, not just volume. Give each level an information
 budget and keep to it. Hidden detail must be **discoverable** — an obvious affordance to
 go deeper. Do not promote inspection-only data (raw payloads, internal ids) to a
@@ -193,6 +198,10 @@ Before marking any UI task done:
    regions, or Primary/Secondary behavior.
 6. When exact colours, spacing, dimensions, overflow, or animation matter, inspect **computed
    styles** and rendered element dimensions. Do not claim visual correctness from class names alone.
+7. Record the intended first scan and exercise the explicit detail paths. Inspect collapsed and
+   expanded content together: the object remains identifiable, added detail does not restart its
+   identity, and long technical references do not displace the primary answer. Include widths
+   around content wrap/truncation thresholds, not only the smallest and largest viewport.
 
 During each rendered pass actively check:
 

@@ -554,7 +554,36 @@
       "related": [
         "docs.architecture-runtime-readme",
         "architecture.runtime.ownership-and-lifecycle",
-        "reference.cli.nevo-specflow-contract"
+        "reference.cli.nevo-specflow-contract",
+        "architecture.runtime.endpoint-policy"
+      ]
+    },
+    {
+      "id": "architecture.runtime.endpoint-policy",
+      "type": "architecture",
+      "title": "Runtime endpoint policy",
+      "status": "current",
+      "file": "docs/architecture/runtime/endpoint-policy.md",
+      "read_when": [
+        "adding Runtime HTTP endpoints or expensive operations",
+        "configuring shared request limits and Auth exceptions"
+      ],
+      "summary": "Server-owned default source request budget, feature-owned stricter Auth limits, project configuration ownership and truthful HTTP 429 responses.",
+      "related": [
+        "architecture.runtime.configuration",
+        "architecture.runtime.authorization",
+        "reference.api.task-reads"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "runtime",
+        "server",
+        "security"
+      ],
+      "tags": [
+        "http",
+        "rate-limit",
+        "endpoint-policy"
       ]
     },
     {
@@ -577,6 +606,41 @@
         "engineering.shared.async-and-lifecycle",
         "engineering.shared.effects-and-io",
         "architecture.principles.normative-language"
+      ]
+    },
+    {
+      "id": "architecture.runtime.task-read-composition",
+      "type": "architecture",
+      "title": "Task read composition and domain ownership",
+      "status": "current",
+      "file": "docs/architecture/runtime/task-read-composition.md",
+      "read_when": [
+        "separating Task and Document reads from Specification Workspace",
+        "integrating Engine reads with Task HTTP projections",
+        "reviewing authority, coherence or pagination of Task detail"
+      ],
+      "summary": "Feature-owned Task and Document application reads, Engine-owned execution facts, bounded authorized paging, and explicit production readiness.",
+      "related": [
+        "architecture.workflow.deterministic-workflow",
+        "architecture.runtime.ownership-and-lifecycle",
+        "architecture.runtime.authorization",
+        "engineering.shared.code-organization",
+        "product.specflow.ui.data-loading-and-integration",
+        "reference.api.task-reads"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "runtime",
+        "workflow",
+        "server",
+        "security"
+      ],
+      "tags": [
+        "tasks",
+        "projections",
+        "engine",
+        "pagination",
+        "ownership"
       ]
     },
     {
@@ -2838,8 +2902,9 @@
         "implementing or consuming the Specification Workspace API",
         "validating Workspace authentication and feature availability"
       ],
-      "summary": "Typed Specification Workspace, document and Task read endpoints with explicit Runtime data source, authorization and independent detail loading.",
+      "summary": "Typed Specification Workspace composition with explicit Runtime data source, authorization and independent detail loading.",
       "related": [
+        "reference.api.task-reads",
         "reference.api.specs-overview",
         "architecture.runtime.authorization",
         "product.specflow.ui.data-loading-and-integration"
@@ -2859,6 +2924,37 @@
       "related": [
         "architecture.runtime.authorization",
         "product.specflow.ui.application-architecture"
+      ]
+    },
+    {
+      "id": "reference.api.task-reads",
+      "type": "reference",
+      "title": "Task and document read API",
+      "status": "current",
+      "file": "docs/reference/api/task-reads.md",
+      "read_when": [
+        "implementing the Task read ownership refactor",
+        "migrating Task schemas out of Specification Workspace",
+        "implementing scoped Task page tokens and continuation"
+      ],
+      "summary": "Compatible Task and Document HTTP ownership, application outcomes, page lease semantics and migration constraints; production Engine adapters remain dependent.",
+      "related": [
+        "architecture.runtime.task-read-composition",
+        "reference.api.specification-workspace",
+        "reference.api.authorization"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "server",
+        "runtime",
+        "workflow",
+        "security"
+      ],
+      "tags": [
+        "tasks",
+        "documents",
+        "pagination",
+        "compatibility"
       ]
     },
     {

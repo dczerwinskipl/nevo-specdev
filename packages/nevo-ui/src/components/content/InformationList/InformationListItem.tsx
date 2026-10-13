@@ -16,7 +16,7 @@ export const InformationListItem = forwardRef<HTMLLIElement, InformationListItem
       <li
         ref={ref}
         className={cn(
-          '@container/info-row group relative flex min-h-14 min-w-0 items-center rounded-control px-2 py-2',
+          '@container/info-row group relative flex min-h-control-height-default min-w-0 items-center rounded-control px-2 py-2',
           fastColorTransitionClassName,
           interactive && 'hover:bg-surface-hover',
           selected && 'bg-surface-selected/40',

@@ -56,7 +56,7 @@ function RegisteredWorkSection({
 
   const Section = contribution.Component;
   return (
-    <div className="py-6">
+    <div className="border-t border-border-default py-4 @min-[40rem]/work:py-5">
       <Section {...context} />
     </div>
   );

@@ -46,6 +46,7 @@ import { designSpec as popoverDesignSpec } from '../components/overlays/Popover/
 import { designSpec as tooltipDesignSpec } from '../components/overlays/Tooltip/Tooltip.figma';
 import { designSpec as messageComposerDesignSpec } from '../components/patterns/MessageComposer/MessageComposer.figma';
 import { designSpec as cardDesignSpec } from '../components/surfaces/Card/Card.figma';
+import { designSpec as accentBlockDesignSpec } from '../components/surfaces/AccentBlock/AccentBlock.figma';
 import { designSpec as surfaceDesignSpec } from '../components/surfaces/Surface/Surface.figma';
 
 import { designSpec as statusIndicatorDesignSpec } from '../components/feedback/StatusIndicator/StatusIndicator.figma';
@@ -77,6 +78,7 @@ export const nevoUiDesignSystem = defineDesignSystem([
   ...tabsDesignSpecs,
   ...segmentedControlDesignSpecs,
   surfaceDesignSpec,
+  accentBlockDesignSpec,
   cardDesignSpec,
   messageComposerDesignSpec,
   dataTableDesignSpec,

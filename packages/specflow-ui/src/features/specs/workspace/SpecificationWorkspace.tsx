@@ -9,6 +9,7 @@ import {
   Icon,
   Link,
   useSecondaryNavigation,
+  useWorkspaceCapabilities,
   WorkspaceHeader,
 } from '@nevo/ui';
 import { useTranslation } from 'react-i18next';
@@ -26,6 +27,7 @@ import {
   type SpecificationSecondaryContextValue,
 } from './specificationSecondaryStack';
 import { useSpecificationDialogs } from './useSpecificationDialogs';
+import { TaskViewStateProvider } from '../../tasks/detail/TaskViewState';
 
 function fullTaskHref(specId: string, taskId: string, collection: 'current' | 'archive'): string {
   const search = collection === 'archive' ? '?collection=archive' : '';
@@ -55,7 +57,9 @@ export interface SpecificationWorkspaceProps {
 export function SpecificationWorkspace(props: SpecificationWorkspaceProps) {
   return (
     <AppWorkspaceProvider scopeKey={props.specId}>
-      <SpecificationWorkspaceInner {...props} />
+      <TaskViewStateProvider key={props.specId}>
+        <SpecificationWorkspaceInner {...props} />
+      </TaskViewStateProvider>
     </AppWorkspaceProvider>
   );
 }
@@ -80,6 +84,7 @@ function SpecificationWorkspaceInner({
 }: SpecificationWorkspaceProps) {
   const { t } = useTranslation();
   const secondaryNavigation = useSecondaryNavigation();
+  const { supportsSplit } = useWorkspaceCapabilities();
 
   const {
     executeDialogOpen,
@@ -206,20 +211,31 @@ function SpecificationWorkspaceInner({
             header={
               <WorkspaceHeader
                 title={t('specification.title')}
-                actions={
-                  onRefresh
+                icon="file"
+                actions={[
+                  ...(!supportsSplit
+                    ? [
+                        {
+                          id: 'history',
+                          icon: 'clock' as const,
+                          label: t('specification.activityHistory'),
+                          onPress: handleOpenHistory,
+                        },
+                      ]
+                    : []),
+                  ...(onRefresh
                     ? [
                         {
                           id: 'refresh',
-                          icon: 'refresh',
+                          icon: 'refresh' as const,
                           label: t('specifications.refresh'),
                           onPress: () => {
                             void onRefresh();
                           },
                         },
                       ]
-                    : []
-                }
+                    : []),
+                ]}
               />
             }
           >

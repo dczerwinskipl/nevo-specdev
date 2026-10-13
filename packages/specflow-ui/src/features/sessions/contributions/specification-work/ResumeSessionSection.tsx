@@ -1,4 +1,4 @@
-import { InformationList, MenuItem, OverflowMenu } from '@nevo/ui';
+import { Button, InformationList, MenuItem, OverflowMenu } from '@nevo/ui';
 import { useTranslation } from 'react-i18next';
 import { OperationalRow } from '../../../specs/shared/OperationalList';
 import type { CompactFacts } from '../../../specs/shared/OperationalList/OperationalRow.types';
@@ -78,9 +78,9 @@ export function ResumeSessionSection({
       </InformationList>
 
       <WorkspaceSection.Footer>
-        <WorkspaceSection.Continuation onClick={onOpenSessionsView}>
+        <Button variant="secondary" size="sm" onClick={onOpenSessionsView}>
           {t('specification.allSessionsLink')}
-        </WorkspaceSection.Continuation>
+        </Button>
       </WorkspaceSection.Footer>
     </WorkspaceSection>
   );
