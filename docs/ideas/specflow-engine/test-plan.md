@@ -166,24 +166,24 @@ For each case capture: setup, command/API, machine-readable result, files/refs/r
 | F04 | Main branch checked out in primary                   | Finalize does not checkout same branch in linked worktree |
 | F05 | Only archived spec copy remains in linked worktree   | Cleanup refused until destination integration proven      |
 
-## Deferred multi-instance deterministic review matrix (future follow-up only)
+## Deferred multi-instance user-defined step matrix (future follow-up only)
 
-These **MI** IDs do not modify Foundation A/B or current managed Session acceptance. Execute only after adoption of the [multi-instance design](multi-instance-execution.md) and [future plan](multi-instance-plan/README.md). Use real independent CLI processes, actual Git changes and controlled mock Runtime provider failures before asserting native-provider behavior.
+These **MI** IDs do not alter Foundation A/B or current managed Session acceptance. The Engine does not know a special `review` step: each scenario uses step-defined instructions, effects, typed result schema and aggregation policy. Prove offline Engine aggregation **before** managed provider scheduling; use real independent CLI processes and Git worktrees where applicable.
 
-| ID | Scenario | Required evidence |
-| --- | --- | --- |
-| MI01 | One-instance review through existing `start/finish` | No behavior/transition regression; current skill remains supported or explicitly adapted |
-| MI02 | Three instances of one Task/step, sequential vs concurrent | Same required contributions and final result, different scheduling only; one workflow attempt |
-| MI03 | Two OS processes race to start/finish same slot | One accepted current run/result; no fourth vote; trusted identity validated |
-| MI04 | Reviewer timeout/quota, two other results accepted | Preserve 2/3, independently retry failing slot; remain incomplete until valid result/authorized waiver |
-| MI05 | Late result from superseded provider run | Rejected or idempotently identified; never overwrites current contribution |
-| MI06 | Crash after persisting result before response | Idempotent retry reports same accepted result; no duplicate contribution |
-| MI07 | Two readers of one worktree and attempted writer | Enforced read-only, short state locks; block writer or invalidate group per approved policy |
-| MI08 | Same HEAD but changed staged/unstaged/untracked material | Snapshot mismatch detected; no combined pass from different material |
-| MI09 | 2 pass plus blocking P1; mixed nominal enums/findings | No majority-vote override; typed deterministic resolution or explicit triage; all provenance retained |
-| MI10 | 1/3 valid after bounded retries and operator waiver | Cannot silently pass; audited authorization, original N, reason and new policy/decision evidence |
-| MI11 | Competing aggregate finalizers, crash between report and transition | Exactly one canonical finish/transition/report effect; resumable frozen operation |
-| MI12 | Workspace rebind/delete, provider unknown-dispatch, Runtime off CLI | Evidence remains inspectable; stale source rejected; no unsafe replay, offline submission still works |
+| ID   | Scenario                                                           | Required evidence                                                                                                     |
+| ---- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| MI01 | Single-instance step with current CLI start/finish                 | Legacy behavior retained for a user-defined step, no additional workflow transition                                   |
+| MI02 | User-defined N=3, sequential vs concurrent runs                    | Same typed output/declared reducer; one canonical attempt; maxConcurrency only affects scheduling                     |
+| MI03 | Racing starts/finishes for one instance                            | Exactly one accepted slot/run and trusted identity; no duplicate contribution                                         |
+| MI04 | Provider timeout/quota with 2/3 valid results                      | Keep contributions; independent bounded retry; incomplete if configured minimum not met                               |
+| MI05 | Superseded run sends late result                                   | Fence and reject or idempotently recover accepted same-run result                                                     |
+| MI06 | Crash after durable contribution before response                   | Idempotent replay; no duplicate count, action or transition                                                           |
+| MI07 | Effect-based admission with readers and potential writers          | Readers may coexist only when enforced; writer/side-effectful step isolated or serialized                             |
+| MI08 | Step activation changes metadata; dirty Git material changes later | Snapshot captured after activation; same-input policy detects different staged/unstaged/untracked content             |
+| MI09 | Two user-defined step output schemas and reducers                  | All/any boolean and explicitly ordered/nominal enum policies resolve exactly as declared; no built-in review severity |
+| MI10 | Partial results and configured exception/waiver                    | Audited actor and effective policy; no fabricated missing result or implicit human approval                           |
+| MI11 | Two aggregate finalizers, crashing gate/commit transition          | One durable finalization and canonical state change; verify side effects exactly once                                 |
+| MI12 | Input independence, provider provenance, rebind and offline CLI    | Declared semantic independence assessed honestly; stale source and unknown effects safe; Engine works without Runtime |
 
 ## Running and reporting
 

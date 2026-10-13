@@ -81,7 +81,7 @@ Sessions Foundation can be developed against the contract independently of full 
 
 ## Deferred follow-up gate — multi-instance execution
 
-The [multi-instance idea](multi-instance-execution.md) and its [future implementation plan](multi-instance-plan/README.md) are **not** part of FA01–FA12, FB01–FB09 or SI01–SI08. Those foundations must not assume `one workflow attempt = one Session/Turn`, but need implement only the documented single-instance contract now. Future readiness requires MI01–MI12 in the [test matrix](test-plan.md), owner-approved instance submission semantics, enforced read-only capability, frozen reviewed input, independently recoverable results and exactly one aggregate transition. Existing task-batch execution does not count as this acceptance.
+The [multi-instance idea](multi-instance-execution.md) and its [future implementation plan](multi-instance-plan/README.md) are **not** part of FA01–FA12, FB01–FB09 or SI01–SI08. Foundations must preserve `one workflow attempt != one Session/Turn` without implementing instance orchestration. MI01–MI12 in the [test matrix](test-plan.md) should eventually prove user-defined steps/instructions/result reducers, effect-scoped admission, post-activation input consistency where required, independently recoverable contributions and one aggregate finish. Read-only review is a test case, **not** an Engine step type; task batches do not count as multi-instance proof.
 
 ## Deferred rather than falsely accepted
 
