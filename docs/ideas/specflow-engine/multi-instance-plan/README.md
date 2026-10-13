@@ -32,14 +32,12 @@ The initial concurrency proof may restrict instances to enforced read-only effec
 
 ## Execution order and task granularity
 
-| Task                                                                             | Dependencies                                 | Suggested mode | Proof focus                                                                  |
-| -------------------------------------------------------------------------------- | -------------------------------------------- | -------------- | ---------------------------------------------------------------------------- |
-| [M1 — Definition and identities](tasks/T01-execution-contracts.md)               | Accepted E3 kernel and user policy decisions | Solo           | Generic step policy, pinned output schema, stable instance/run IDs           |
-| [M2 — Effects and input capture](tasks/T02-input-and-effect-admission.md)     | M1, Engine admission/workspaces              | Solo           | Post-activation snapshot, gate effects, admission enforcement                |
-| [M3 — Contribution persistence and offline CLI](tasks/T03-result-submission.md)  | M1–M2                                        | Solo           | Trusted durable per-instance results, retry and fencing                      |
-| [M5 — Engine aggregation and finalization](tasks/T05-aggregation-and-waivers.md) | M3                                           | Solo           | Typed declared reducer, incomplete states, one finish without Runtime        |
-| [M4 — Managed instance orchestration](tasks/T04-managed-orchestration.md)        | M3, M5, accepted E4/E5                       | Solo           | Bounded scheduling, provenance, independent provider retries                 |
-| [M6 — Integrated acceptance](tasks/T06-end-to-end-proof.md)                      | M1–M5                                        | Solo           | Sequential/concurrent parity, real-process recovery, backwards compatibility |
+- [M1 — Definition and identities](tasks/T01-execution-contracts.md) — depends on: Accepted E3 kernel and user policy decisions; execution mode: Solo; proof: Generic step policy, pinned output schema, stable instance/run IDs.
+- [M2 — Effects and input capture](tasks/T02-input-and-effect-admission.md) — depends on: M1, Engine admission/workspaces; execution mode: Solo; proof: Post-activation snapshot, gate effects, admission enforcement.
+- [M3 — Contribution persistence and offline CLI](tasks/T03-result-submission.md) — depends on: M1–M2; execution mode: Solo; proof: Trusted durable per-instance results, retry and fencing.
+- [M5 — Engine aggregation and finalization](tasks/T05-aggregation-and-waivers.md) — depends on: M3; execution mode: Solo; proof: Typed declared reducer, incomplete states, one finish without Runtime.
+- [M4 — Managed instance orchestration](tasks/T04-managed-orchestration.md) — depends on: M3, M5, accepted E4/E5; execution mode: Solo; proof: Bounded scheduling, provenance, independent provider retries.
+- [M6 — Integrated acceptance](tasks/T06-end-to-end-proof.md) — depends on: M1–M5; execution mode: Solo; proof: Sequential/concurrent parity, real-process recovery, backwards compatibility.
 
 **Implement M5 before M4.** Engine's offline deterministic result collector must be independently testable using manually submitted contributions; Runtime Sessions must not become a hidden prerequisite of aggregation. Tasks are individually reviewed; `parallel` in the product's run policy does not authorize concurrent implementation edits in the shared repo.
 

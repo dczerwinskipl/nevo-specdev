@@ -34,15 +34,13 @@ Legacy Nevo already exposes agent-facing `workflow step start` and `workflow ste
 
 ## Identity and cardinality are independent of concurrency
 
-| Concept            | Meaning                                                                                |
-| ------------------ | -------------------------------------------------------------------------------------- |
-| Workflow attempt   | One canonical (spec, task, step, attempt) and at most one transition                   |
-| Instance           | One stable, Engine-allocated contribution slot for that attempt                        |
-| Run / invocation   | One execution of a slot; retry or replacement gets a new run identity                  |
-| Session / Turn     | Runtime/provider-owned conversation units; optional correlation, not workflow identity |
-| Required instances | Completion requirement frozen from the step definition/configuration                   |
-| Max concurrency    | Scheduling limit; executing three slots sequentially is still multi-instance           |
-| Task batch         | Several different task attempts within a wider execution scope                         |
+- **Workflow attempt** — One canonical (spec, task, step, attempt) and at most one transition
+- **Instance** — One stable, Engine-allocated contribution slot for that attempt
+- **Run / invocation** — One execution of a slot; retry or replacement gets a new run identity
+- **Session / Turn** — Runtime/provider-owned conversation units; optional correlation, not workflow identity
+- **Required instances** — Completion requirement frozen from the step definition/configuration
+- **Max concurrency** — Scheduling limit; executing three slots sequentially is still multi-instance
+- **Task batch** — Several different task attempts within a wider execution scope
 
 Do not name this feature `parallel step`: parallel task execution and multiple contributors to one step solve different problems. Define defaults conservatively (one instance remains the backward-compatible behavior). Instance uniqueness does **not** guarantee semantic independence: two separate Sessions of the same model may produce correlated judgments.
 
@@ -82,15 +80,13 @@ Neither design trusts a user-supplied bare `instanceId` or Session ID as admissi
 
 Completion policy asks *how many valid contributions are needed*; result aggregation asks *how to derive the declared step output from them*. Both are part of the user-defined versioned policy. There is **no generic implicit reduction** of arbitrary booleans, enums, arrays or strings.
 
-| Field / policy  | Candidate declared behavior                                      | Failure if undeclared                          |
-| --------------- | ---------------------------------------------------------------- | ---------------------------------------------- |
-| Boolean         | all / any with explicit predicate semantics                      | AND for every boolean is not meaningful        |
-| Ordered enum    | Declared order and min/max/worst/best reducer                    | No inferred severity order                     |
-| Nominal enum    | Unanimity, declared priority, conflict or other explicit reducer | No arbitrary highest-severity guess            |
-| Numeric         | min, max, sum, average with explicit units                       | No automatic aggregation                       |
-| List / findings | Concatenate and optionally derive a deduplicated view            | Do not discard original results                |
-| Free text       | Preserve individually or user-defined deterministic formatter    | Do not infer a structured verdict from prose   |
-| Completion      | Exact N or approved quorum/waiver policy                         | Cannot treat missing data as a positive result |
+- **Boolean:** all / any with explicit predicate semantics. Without a declared policy: AND for every boolean is not meaningful.
+- **Ordered enum:** Declared order and min/max/worst/best reducer. Without a declared policy: No inferred severity order.
+- **Nominal enum:** Unanimity, declared priority, conflict or other explicit reducer. Without a declared policy: No arbitrary highest-severity guess.
+- **Numeric:** min, max, sum, average with explicit units. Without a declared policy: No automatic aggregation.
+- **List / findings:** Concatenate and optionally derive a deduplicated view. Without a declared policy: Do not discard original results.
+- **Free text:** Preserve individually or user-defined deterministic formatter. Without a declared policy: Do not infer a structured verdict from prose.
+- **Completion:** Exact N or approved quorum/waiver policy. Without a declared policy: Cannot treat missing data as a positive result.
 
 Example **only**: a user-defined review step may choose `all-approved`, `any-blocking-finding`, or explicit triage if two passes conflict with one P1. Another user-defined step can legitimately choose `any`, `majority` or a different type-safe rule. Engine must validate the reducer, output schema and transition mapping; if no declared policy resolves the inputs, fail closed rather than choosing a branch. Every original contribution remains attributable even if a derived summary is computed.
 
@@ -102,17 +98,15 @@ Record *requested independence policy* and *observed provenance* where available
 
 ## Failure, recovery and operator action
 
-| Scenario                                 | Expected generic behavior                                                          |
-| ---------------------------------------- | ---------------------------------------------------------------------------------- |
-| One of N agents times out                | Keep accepted other results; retry only that slot when effects are proven safe     |
-| Provider has quota/error                 | Technical run failure, never an invented step result                               |
-| Late result after slot retry             | Fence superseded run; preserve idempotent accepted replay                          |
-| Crash after storing contribution         | Resume from its immutable record, no extra result/transition                       |
-| Same-input snapshot changes              | Reject/invalidate stale contributions if that step requires snapshot consistency   |
-| Different effectful executions race      | Admit only with proven isolation or serialize; no hidden extra writer              |
-| Fewer valid results than policy requires | Incomplete, with configured retry/reassignment or authorized exception             |
-| Operator waives missing result           | Record actor, reason and changed effective requirement; do not invent missing data |
-| Two finalizers race                      | One durable finalization and single workflow transition                            |
+- **One of N agents times out** — Keep accepted other results; retry only that slot when effects are proven safe
+- **Provider has quota/error** — Technical run failure, never an invented step result
+- **Late result after slot retry** — Fence superseded run; preserve idempotent accepted replay
+- **Crash after storing contribution** — Resume from its immutable record, no extra result/transition
+- **Same-input snapshot changes** — Reject/invalidate stale contributions if that step requires snapshot consistency
+- **Different effectful executions race** — Admit only with proven isolation or serialize; no hidden extra writer
+- **Fewer valid results than policy requires** — Incomplete, with configured retry/reassignment or authorized exception
+- **Operator waives missing result** — Record actor, reason and changed effective requirement; do not invent missing data
+- **Two finalizers race** — One durable finalization and single workflow transition
 
 Human authorization for a waiver is **not** necessarily a human approval step. Such a gate exists only when the user-defined workflow declares it.
 
