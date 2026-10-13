@@ -68,3 +68,38 @@ export const InteractionContract: Story = {
     // Button is clicked without error
   },
 };
+
+export const CompactTextRows: Story = {
+  render: () => (
+    <div className="w-72">
+      <InformationList>
+        <InformationList.Item interactive data-testid="plain-row">
+          <InformationList.Content>
+            <Typography variant="title-sm">
+              <button type="button">Short requirement</button>
+            </Typography>
+          </InformationList.Content>
+        </InformationList.Item>
+      </InformationList>
+      <InformationList selectable>
+        <InformationList.Item data-testid="control-row">
+          <InformationList.Leading>
+            <Checkbox aria-label="Select compact item" />
+          </InformationList.Leading>
+          <InformationList.Content>Selectable item</InformationList.Content>
+        </InformationList.Item>
+      </InformationList>
+    </div>
+  ),
+  play: async ({ canvas }) => {
+    const plain = canvas.getByTestId('plain-row').getBoundingClientRect();
+    const controlled = canvas.getByTestId('control-row').getBoundingClientRect();
+    const title = canvas.getByRole('button', { name: 'Short requirement' }).getBoundingClientRect();
+    assert(
+      plain.height >= 36 && plain.height <= 40,
+      'A simple row keeps a compact, accessible activation area',
+    );
+    assert(controlled.height >= 52, 'A real control retains its own height and padding');
+    assert(title.left - plain.left <= 9, 'Text-only rows must not reserve an empty leading rail');
+  },
+};

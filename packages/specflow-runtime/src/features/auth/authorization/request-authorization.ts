@@ -49,6 +49,8 @@ export type WithCapabilities<T, Targets extends AuthorizationTargets> = Contract
 >;
 
 export interface RequestAuthorization {
+  /** Trusted identity and immutable policy instance for disposable, non-authoritative reads. */
+  readContext(): { readonly subject: string; readonly policy: object };
   requireAccess(): void;
 
   can<R extends ResourceDefinition>(input: AuthorizationCapabilityCheck<R>): boolean;
@@ -130,6 +132,13 @@ export function createRequestAuthorization(
   };
 
   const api: RequestAuthorization = {
+    readContext: () => {
+      requireAccess();
+      return {
+        subject: access.mode === 'subject' ? JSON.stringify(access.subject) : 'trusted-local',
+        policy: authorization,
+      };
+    },
     requireAccess,
 
     can(input) {

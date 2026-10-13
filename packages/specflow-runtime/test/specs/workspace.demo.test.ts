@@ -6,7 +6,11 @@ describe('Demo Workspace lifecycle', () => {
     const repositories = createDemoSpecsRepositories();
     const overview = await repositories.overviewRepository.readCurrent();
     for (const item of overview.items) {
-      const workspace = await repositories.workspaceRepository.readWorkspace(item.id);
+      const workspace = await readWorkspace(
+        repositories.workspaceRepository,
+        repositories.contributions,
+        item.id,
+      );
       expect(workspace).not.toBeNull();
       if (!workspace) continue;
       const tasks = workspace.sections.tasks;
@@ -25,3 +29,4 @@ describe('Demo Workspace lifecycle', () => {
     }
   });
 });
+import { readWorkspace } from '../../src/features/specs/workspace/read-workspace';

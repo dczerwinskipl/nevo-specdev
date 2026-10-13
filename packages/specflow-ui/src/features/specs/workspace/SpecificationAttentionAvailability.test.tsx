@@ -4,7 +4,7 @@ import type { SpecificationWorkspaceResponse } from '@nevo/specflow-contracts/sp
 import { createWorkspaceIntegrationApi } from '../../../../test-support/specs/workspace/api';
 import { UiModulesProvider } from '../../../app/ui-modules/UiModulesProvider';
 import { builtInUiModuleRegistry } from '../../../app/ui-modules/builtInUiModules';
-import { LocalizationProvider } from '../../../i18n';
+import { LocalizationProvider, createSpecFlowI18n } from '../../../i18n';
 import { mapWorkspaceResponse } from './mapWorkspaceResponse';
 import { SpecificationAttentionOutlet } from './SpecificationAttentionOutlet';
 import { createFakeWorkspaceRuntime, WorkspaceProvider } from './WorkspaceContext';
@@ -15,7 +15,7 @@ function renderAttention(dto: SpecificationWorkspaceResponse) {
     data,
     markup: renderToStaticMarkup(
       <UiModulesProvider modules={builtInUiModuleRegistry}>
-        <LocalizationProvider>
+        <LocalizationProvider instance={createSpecFlowI18n('en')}>
           <WorkspaceProvider runtime={createFakeWorkspaceRuntime()}>
             <SpecificationAttentionOutlet specId={dto.specification.id} data={data} />
           </WorkspaceProvider>

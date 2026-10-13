@@ -5,6 +5,7 @@ import {
 } from '../features/auth';
 import { RuntimeConfigError } from './parsing/runtime-config-error';
 import type { RuntimeConfig } from './types';
+import { parseEndpointRateLimit } from '../server/endpoint-policy-config';
 import {
   boolean,
   integer,
@@ -15,7 +16,7 @@ import {
 } from './parsing/value-parsers';
 
 const ROOT_KEYS = new Set(['server', 'authentication', 'authorization']);
-const SERVER_KEYS = new Set(['host', 'port', 'publicOrigin', 'tls']);
+const SERVER_KEYS = new Set(['host', 'port', 'publicOrigin', 'tls', 'rateLimit']);
 const TLS_KEYS = new Set(['enabled', 'certFile', 'keyFile']);
 
 export function parseRuntimeConfig(value: unknown): RuntimeConfig {
@@ -85,6 +86,9 @@ export function parseRuntimeConfig(value: unknown): RuntimeConfig {
     server: {
       host,
       port,
+      ...(server.rateLimit === undefined
+        ? {}
+        : { rateLimit: parseEndpointRateLimit(server.rateLimit) }),
       ...(publicOrigin ? { publicOrigin } : {}),
       tls: {
         enabled: tlsEnabled,

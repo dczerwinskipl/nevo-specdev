@@ -14,6 +14,7 @@ related:
   - docs.architecture-runtime-readme
   - architecture.runtime.ownership-and-lifecycle
   - reference.cli.nevo-specflow-contract
+  - architecture.runtime.endpoint-policy
 ---
 
 # Project configuration and local state
@@ -49,7 +50,7 @@ Current shape:
 
 ```yaml
 runtime:
-  server: ...
+  server: ... # optional rateLimit is project-owned server policy
   authentication: ...
   authorization: ...
 
@@ -91,7 +92,8 @@ The product initializer calls `initRuntime`, wraps its contribution under `runti
 the aggregate documents without reconstructing Runtime settings.
 
 Server provenance is explicit too: `host`, `port`, `publicOrigin`, and `tls.enabled` are
-project-owned policy. Workstation-local Runtime config may supply only TLS certificate/key paths.
+project-owned policy, as is the optional shared endpoint `rateLimit` budget described in
+[Runtime endpoint policy](endpoint-policy.md). Workstation-local Runtime config may supply only TLS certificate/key paths.
 The merged Runtime config is validated after composition, so local credentials cannot weaken
 project-owned authentication or server policy.
 

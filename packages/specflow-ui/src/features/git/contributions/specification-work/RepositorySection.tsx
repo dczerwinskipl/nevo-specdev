@@ -92,9 +92,9 @@ export function RepositorySection({
       </div>
 
       <WorkspaceSection.Footer>
-        <WorkspaceSection.Continuation onClick={() => onOpenChanges('base')}>
+        <Button variant="secondary" size="sm" onClick={() => onOpenChanges('base')}>
           {t('specification.viewChanges')}
-        </WorkspaceSection.Continuation>
+        </Button>
       </WorkspaceSection.Footer>
     </WorkspaceSection>
   );

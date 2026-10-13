@@ -1,3 +1,4 @@
+import { appI18n } from '../../../i18n';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
@@ -59,7 +60,7 @@ describe('Task Preview HTTP failure states', () => {
     const state = taskPreviewFailure(401, false, taskId, retry);
     expect(state.status).toBe('error');
     if (state.status !== 'error') throw new Error('Expected retryable error');
-    expect(state.message).toContain('session');
+    expect(state.message).toBe(appI18n.t('specification.taskPreviewSessionExpired'));
     state.retry?.();
     expect(retry).toHaveBeenCalledOnce();
   });

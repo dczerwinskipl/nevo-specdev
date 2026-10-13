@@ -77,6 +77,11 @@ even when the three modules use independent data subscriptions.
 `close` clears the runtime flow. Asynchronous callbacks from disposed screens cannot operate
 on a newer flow.
 
+`AppWorkspace secondaryCloseBehavior="page"` makes the host's Close control return from the active
+page to its parent, or close the flow when already at its root. Use it for workspace readers whose
+Close means returning to the source surface. The default `"flow"` retains whole-flow Close.
+This changes only the host control; explicit `useSecondaryStack().close()` still clears the flow.
+
 A screen may declare an optional `header` component in its definition. The screen
 catalogue also declares `actions: ({ data, params }) => WorkspaceHeaderAction[]` and optionally
 `actionLabels`. The action declaration is **pure** (no hooks, no side effects) and uses
@@ -195,3 +200,19 @@ new feature contexts simply to navigate between these modules.
 The public generic `useSecondaryStack<Pages>()` currently relies on the caller's
 asserted page type, as noted above. Keep the runtime unknown-page check; complete
 static catalogue coupling is a separate follow-up, not a prerequisite for this flow.
+
+### Measured split capability
+
+Products can call the public `useWorkspaceCapabilities()` inside the shell to read
+`supportsSplit`. It uses the same measured available workspace width and threshold
+as `AppWorkspace`, including a narrow workspace in a wide browser window. Use it to
+expose an overflow entry for a default Secondary surface on stacked layouts. Do not
+import shell internals or derive this decision from browser width.
+
+Secondary content that establishes an inline-size container must declare its supported
+content width (for example `w-content-standard max-w-full`) and use `AppWorkspaceBody`
+for scrolling. An intrinsic-width surface cannot measure content through size containment.
+
+Use `AppWorkspaceBody scroll="area"` for the shared `ScrollArea` edge indicators and
+viewport on a desktop surface. On stacked layouts the host already owns `ScrollArea`;
+the body then contributes content and padding without nesting another scroll viewport.

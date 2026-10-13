@@ -54,7 +54,7 @@ export function OperationalGroupHeader({
           aria-expanded={expanded}
           aria-disabled={ariaDisabled ? 'true' : undefined}
           aria-controls={controlsId}
-          aria-label={ariaLabel}
+          aria-label={ariaLabel ?? label}
           onClick={() => {
             if (!ariaDisabled) onToggle();
           }}

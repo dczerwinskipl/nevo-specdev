@@ -16,10 +16,11 @@ export interface WorkViewProps {
 export function WorkView({ specId, data }: WorkViewProps) {
   const modules = useUiModules();
   return (
-    <div className="divide-y divide-border-subtle max-w-content-standard">
-      <div className="pb-6">
+    <div className="@container/work min-w-0 max-w-content-standard">
+      <div className="pb-3">
         <SpecificationSummarySection
           title={data.title}
+          specId={specId ?? data.id}
           intro={data.intro}
           isEmpty={data.isEmpty}
           mainDocumentId={data.mainDocumentId}
@@ -36,7 +37,7 @@ export function WorkView({ specId, data }: WorkViewProps) {
       />
 
       {data.isEmpty ? (
-        <div className="py-6">
+        <div className="border-t border-border-default py-4 @min-[40rem]/work:py-5">
           <PreparationSection />
         </div>
       ) : null}

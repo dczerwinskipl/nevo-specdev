@@ -71,7 +71,7 @@ describe('SpecificationWorkspace', () => {
 
     // h2 concrete specification title with text-title-lg
     expect(markup).toContain(
-      '<h2 class="font-sans text-title-lg font-semibold text-content-primary">Odświeżanie sesji i zachowanie kontekstu użytkownika</h2>',
+      '<h2 class="font-sans text-title-lg font-semibold text-content-primary [overflow-wrap:anywhere]">Odświeżanie sesji i zachowanie kontekstu użytkownika</h2>',
     );
 
     // h3 major workspace sections
@@ -168,11 +168,12 @@ describe('SpecificationWorkspace', () => {
       'Critical Git attention',
       'High priority session attention',
       'Normal specification attention',
-      'Normal task attention',
     ];
     const positions = names.map((title) => markup.indexOf(title));
     expect(positions.every((position) => position > 0)).toBe(true);
     expect(positions).toEqual([...positions].sort((a, b) => a - b));
+    expect(markup).not.toContain('Normal task attention');
+    expect(markup).toContain('aria-expanded="false"');
   });
 
   it('renders git-conflict scenario with conflict attention item', () => {
