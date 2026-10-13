@@ -24,6 +24,17 @@ const pinnedPnpm = (
   JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8')) as { packageManager: string }
 ).packageManager.replace(/^pnpm@/, '');
 
+function pinnedDependencyVersion(packageName: string, dependencyName: string): string {
+  const manifest = JSON.parse(
+    readFileSync(join(repoRoot, 'packages', packageName, 'package.json'), 'utf8'),
+  ) as { dependencies?: Record<string, string> };
+  const version = manifest.dependencies?.[dependencyName];
+  if (!version || !/^\\d+\\.\\d+\\.\\d+$/u.test(version)) {
+    throw new Error(`Expected a pinned version for ${dependencyName} in ${packageName}/package.json.`);
+  }
+  return version;
+}
+
 let tarball = '';
 let version = '';
 let prefix = '';
@@ -205,12 +216,16 @@ describe('packaged @nevo/specflow — isolated tarball install', () => {
     expect(notices).toMatch(/Copyright Eemeli Aro <eemeli@gmail\.com>/);
     expect(notices).toMatch(/fastify 5\.12\.5/);
     expect(notices).toMatch(/openid-client 6\.8\.8/);
-    expect(notices).toMatch(/@fastify\/rate-limit 11\.2\.0/);
+    expect(notices).toContain(
+      `@fastify/rate-limit ${pinnedDependencyVersion('specflow-runtime', '@fastify/rate-limit')}`,
+    );
     expect(notices).toMatch(/@clack\/prompts 1\.8\.1/);
     expect(notices).toMatch(/@clack\/core 1\.5\.1/);
     expect(notices).toMatch(/react 19\.3\.0/);
     expect(notices).toMatch(/react-dom 19\.3\.0/);
-    expect(notices).toMatch(/@tanstack\/react-router 1\.170\.41/);
+    expect(notices).toContain(
+      `@tanstack/react-router ${pinnedDependencyVersion('specflow-ui', '@tanstack/react-router')}`,
+    );
     // esbuild is build-only — its code is not in the bundle, so it is not listed.
     expect(notices).not.toMatch(/esbuild/i);
   });
