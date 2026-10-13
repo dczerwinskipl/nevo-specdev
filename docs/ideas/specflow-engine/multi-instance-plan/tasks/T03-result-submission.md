@@ -1,40 +1,41 @@
 ---
 id: ideas.specflow-engine.multi-instance-plan.task-03
 type: engineering
-title: 'M3 — Persist instance contributions through one Engine contract'
+title: 'M3 — Persist typed instance contributions via offline Engine'
 status: draft
 scope: specflow
 areas: [workflow, runtime, ai, cli, testing]
-tags: [future-task, multi-instance, review, deferred]
+tags: [future-task, multi-instance, deferred]
 read_when:
   - implementing the deferred deterministic multi-instance execution plan
-  - reviewing evidence for one stage of multi-review orchestration
+  - reviewing independently verifiable Engine and Runtime execution stages
 summary: >
-  Deferred implementation task for persist instance contributions through one engine contract.
+  Deferred task for the generic user-defined step execution contract and its
+  separately testable instance coordination and result lifecycle.
 related:
   - ideas.specflow-engine.multi-instance-plan
   - ideas.specflow-engine.multi-instance
   - ideas.specflow-engine.test-plan
 ---
 
-# M3 — Persist instance contributions through one Engine contract
+# M3 — Persist typed instance contributions via offline Engine
 
-**Status: idea-stage, not authorized for implementation in E1–E5.** This file is an independent future implementation task, not a formal Specification. Reconcile with actual source and approved decisions before executing.
+**Idea-stage only.** Not authorized within E1–E5 and not a formal specification. The Engine must not treat `review` or `P1` as built-in workflow primitives.
 
 ## Prerequisites
 
-M1–M2, selected agent-facing submit API and local trust model.
+M1/M2, accepted local trust model and chosen agent-facing submit/finish semantics.
 
-## Required outcome
+## Required implementation / outcome
 
-Store one immutable accepted contribution per slot/run with typed verdict, structured findings, feedback, artifacts, provenance and reviewed snapshot. Offline CLI/MCP and Runtime call the same Engine operation; idempotent retries return previously accepted evidence and stale run tokens cannot overwrite.
+Accept arbitrary step-declared typed outputs (not fixed review verdict/findings) and optional feedback/artifacts with stable instance/run identity, effective definition/instructions revision, source correlation and observed provenance. Use one Engine operation from offline CLI, MCP and managed Runtime; preserve originals and fence stale runs. Keep provider error separate from schema-valid contribution.
 
 ## Verification and negative cases
 
-Concurrent CLI submissions, two starts of same instance, crash after persisted result but before response, forged Session/instance ID, late superseded run. No workflow transition or tracked report commit from partial submit.
+Two instances submit concurrently, duplicate replay after crash, forged instance/session/run identities, late retry response, invalid output schema, results with different user-defined shapes. No partial submission directly transitions the step.
 
 ## Review / handoff
 
-Run as a **solo review gate**. Record concrete source revision, test evidence, cases intentionally unsupported, owner decisions and consequences for downstream tasks. Do not infer successful execution from a mock-only or skipped provider test. Stop rather than silently redefining workflow attempt semantics.
+Solo independent architecture/code review gate for **this implementation task** (not a product workflow step type). Record actual test commands and PASS/FAIL/SKIP, source SHA, unresolved capabilities and downstream contract impact. Do not substitute a mock or agent narration for a required physical test.
 
-References: [future plan](../README.md), [multi-instance idea](../../multi-instance-execution.md), [candidate test matrix](../../test-plan.md).
+References: [plan](../README.md), [multi-instance idea](../../multi-instance-execution.md), [test plan](../../test-plan.md).

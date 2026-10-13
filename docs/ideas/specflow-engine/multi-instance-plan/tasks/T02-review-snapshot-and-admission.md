@@ -1,40 +1,41 @@
 ---
 id: ideas.specflow-engine.multi-instance-plan.task-02
 type: engineering
-title: 'M2 — Freeze reviewed material and enforce read-only execution'
+title: 'M2 — Capture input and enforce effect-scoped admission'
 status: draft
 scope: specflow
 areas: [workflow, runtime, ai, cli, testing]
-tags: [future-task, multi-instance, review, deferred]
+tags: [future-task, multi-instance, deferred]
 read_when:
   - implementing the deferred deterministic multi-instance execution plan
-  - reviewing evidence for one stage of multi-review orchestration
+  - reviewing independently verifiable Engine and Runtime execution stages
 summary: >
-  Deferred implementation task for freeze reviewed material and enforce read-only execution.
+  Deferred task for the generic user-defined step execution contract and its
+  separately testable instance coordination and result lifecycle.
 related:
   - ideas.specflow-engine.multi-instance-plan
   - ideas.specflow-engine.multi-instance
   - ideas.specflow-engine.test-plan
 ---
 
-# M2 — Freeze reviewed material and enforce read-only execution
+# M2 — Capture input and enforce effect-scoped admission
 
-**Status: idea-stage, not authorized for implementation in E1–E5.** This file is an independent future implementation task, not a formal Specification. Reconcile with actual source and approved decisions before executing.
+**Idea-stage only.** Not authorized within E1–E5 and not a formal specification. The Engine must not treat `review` or `P1` as built-in workflow primitives.
 
 ## Prerequisites
 
-M1 contracts and E3 physical admission/Workspace resolution.
+M1 and accepted Engine effect-scoped workspace admission.
 
-## Required outcome
+## Required implementation / outcome
 
-Specify one verifiable code/spec/definition snapshot for the whole group; choose a strategy covering dirty worktrees and Git HEAD drift. Prove control-plane writes are permitted without granting reviewer filesystem write capabilities. Prevent conflicting writers/rebind/cleanup from making review evidence stale.
+Define post-activation input capture for same-input steps, plus optional independent-input semantics. Validate read-only capability rather than label; separate short control-plane locks, long workspace writer claims and repository/external effects. Decide scheduling/isolation for write-producing steps. Specify when inspect/verify/finalize gates may write and whether execution is preflight, per-instance in isolation or once during finalization.
 
 ## Verification and negative cases
 
-Real Git worktrees and OS processes: three readers admitted; writer denied or invalidates group according to adopted policy; same SHA with changed uncommitted file rejected; native provider without enforced read-only is not misclassified.
+Demonstrate activation modifies metadata before snapshot; SHA unchanged with dirty source change is detected when snapshot policy applies; three real read-only CLI processes can coexist; unsupported writable provider is rejected or safely serialized; a test gate generating artifacts never silently violates enforced read-only policy.
 
 ## Review / handoff
 
-Run as a **solo review gate**. Record concrete source revision, test evidence, cases intentionally unsupported, owner decisions and consequences for downstream tasks. Do not infer successful execution from a mock-only or skipped provider test. Stop rather than silently redefining workflow attempt semantics.
+Solo independent architecture/code review gate for **this implementation task** (not a product workflow step type). Record actual test commands and PASS/FAIL/SKIP, source SHA, unresolved capabilities and downstream contract impact. Do not substitute a mock or agent narration for a required physical test.
 
-References: [future plan](../README.md), [multi-instance idea](../../multi-instance-execution.md), [candidate test matrix](../../test-plan.md).
+References: [plan](../README.md), [multi-instance idea](../../multi-instance-execution.md), [test plan](../../test-plan.md).

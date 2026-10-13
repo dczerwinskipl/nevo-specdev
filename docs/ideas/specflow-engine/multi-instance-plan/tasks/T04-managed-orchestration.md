@@ -1,40 +1,41 @@
 ---
 id: ideas.specflow-engine.multi-instance-plan.task-04
 type: engineering
-title: 'M4 — Schedule independent reviewers and recover each run'
+title: 'M4 — Dispatch user-defined instances and recover individual runs'
 status: draft
 scope: specflow
 areas: [workflow, runtime, ai, cli, testing]
-tags: [future-task, multi-instance, review, deferred]
+tags: [future-task, multi-instance, deferred]
 read_when:
   - implementing the deferred deterministic multi-instance execution plan
-  - reviewing evidence for one stage of multi-review orchestration
+  - reviewing independently verifiable Engine and Runtime execution stages
 summary: >
-  Deferred implementation task for schedule independent reviewers and recover each run.
+  Deferred task for the generic user-defined step execution contract and its
+  separately testable instance coordination and result lifecycle.
 related:
   - ideas.specflow-engine.multi-instance-plan
   - ideas.specflow-engine.multi-instance
   - ideas.specflow-engine.test-plan
 ---
 
-# M4 — Schedule independent reviewers and recover each run
+# M4 — Dispatch user-defined instances and recover individual runs
 
-**Status: idea-stage, not authorized for implementation in E1–E5.** This file is an independent future implementation task, not a formal Specification. Reconcile with actual source and approved decisions before executing.
+**Idea-stage only.** Not authorized within E1–E5 and not a formal specification. The Engine must not treat `review` or `P1` as built-in workflow primitives.
 
 ## Prerequisites
 
-M2–M3, accepted E4 Session/Turn foundation and E5 dispatch handshake.
+M3 and **M5** Engine-side offline aggregation/finalization complete; accepted E4 Sessions and E5 handshake.
 
-## Required outcome
+## Required implementation / outcome
 
-Introduce provider-neutral dispatch/read projection for N independent reviewer slots, bounded concurrency, per-run timeout/retry, idempotent invocation intent, and explicit unknown-outcome recovery. A Session/Turn can fail without consuming a slot; successful slots survive restart and retry of another slot.
+Use Runtime only for provider-neutral scheduling, Session/Turn lifecycle, per-run timeout/retry and accurate provenance. Respect declared instructions and independence policy, bounded concurrency, effect admission and unknown-outcome fencing. Submit to the existing Engine M3 contract and observe M5 finalization, never implement a second reducer in Runtime.
 
 ## Verification and negative cases
 
-Three mock providers, one quota error, one timeout, one successful result; retry only affected slot; unknown dispatch cannot be blindly replayed; no fourth result; terminal Turn alone is not completion.
+Three mock invocations with one quota failure and one timeout, later independent retry, same-model separate Sessions not mislabeled semantically independent, provider unavailable/unknown and late callback. Runtime absent still allows Engine completion via CLI.
 
 ## Review / handoff
 
-Run as a **solo review gate**. Record concrete source revision, test evidence, cases intentionally unsupported, owner decisions and consequences for downstream tasks. Do not infer successful execution from a mock-only or skipped provider test. Stop rather than silently redefining workflow attempt semantics.
+Solo independent architecture/code review gate for **this implementation task** (not a product workflow step type). Record actual test commands and PASS/FAIL/SKIP, source SHA, unresolved capabilities and downstream contract impact. Do not substitute a mock or agent narration for a required physical test.
 
-References: [future plan](../README.md), [multi-instance idea](../../multi-instance-execution.md), [candidate test matrix](../../test-plan.md).
+References: [plan](../README.md), [multi-instance idea](../../multi-instance-execution.md), [test plan](../../test-plan.md).

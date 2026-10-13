@@ -1,40 +1,41 @@
 ---
 id: ideas.specflow-engine.multi-instance-plan.task-01
 type: engineering
-title: 'M1 — Freeze step-instance identities and completion semantics'
+title: 'M1 — Freeze user-defined step policy and execution identities'
 status: draft
 scope: specflow
 areas: [workflow, runtime, ai, cli, testing]
-tags: [future-task, multi-instance, review, deferred]
+tags: [future-task, multi-instance, deferred]
 read_when:
   - implementing the deferred deterministic multi-instance execution plan
-  - reviewing evidence for one stage of multi-review orchestration
+  - reviewing independently verifiable Engine and Runtime execution stages
 summary: >
-  Deferred implementation task for freeze step-instance identities and completion semantics.
+  Deferred task for the generic user-defined step execution contract and its
+  separately testable instance coordination and result lifecycle.
 related:
   - ideas.specflow-engine.multi-instance-plan
   - ideas.specflow-engine.multi-instance
   - ideas.specflow-engine.test-plan
 ---
 
-# M1 — Freeze step-instance identities and completion semantics
+# M1 — Freeze user-defined step policy and execution identities
 
-**Status: idea-stage, not authorized for implementation in E1–E5.** This file is an independent future implementation task, not a formal Specification. Reconcile with actual source and approved decisions before executing.
+**Idea-stage only.** Not authorized within E1–E5 and not a formal specification. The Engine must not treat `review` or `P1` as built-in workflow primitives.
 
 ## Prerequisites
 
-Accepted E3 Workflow Kernel and an owner decision about contextual `finish` versus a separate instance submit.
+Accepted E3 Workflow Kernel; owner decision about instance submission API and typed, versioned step definition.
 
-## Required outcome
+## Required implementation / outcome
 
-Define one `(spec, task, step, attempt)` with N stable instances, separate run/Turn/Session identities, pinned definition and completion policy, and precise single-instance compatibility. Do not infer cardinality from scheduler concurrency or Session count.
+Prove that arbitrary user-defined steps supply instructions, gates, result schema, effect policy, instance cardinality, independence requirements and deterministic resolution rules. Keep one workflow attempt with N Engine-assigned instance IDs and separate run/Session/Turn references. Define default single-instance compatibility; no special review status vocabulary.
 
 ## Verification and negative cases
 
-Unit tests for default single-instance, N=3 sequential versus concurrent, duplicate start, stale policy revision and zero extra workflow attempts. Invalid identity must fail closed.
+At least two differently named step definitions (one review-like, one not); single-instance regression; N=3 with sequential vs concurrent admission; invalid reducer/output mappings fail closed; reconfiguring instructions after activation cannot re-interpret the active attempt.
 
 ## Review / handoff
 
-Run as a **solo review gate**. Record concrete source revision, test evidence, cases intentionally unsupported, owner decisions and consequences for downstream tasks. Do not infer successful execution from a mock-only or skipped provider test. Stop rather than silently redefining workflow attempt semantics.
+Solo independent architecture/code review gate for **this implementation task** (not a product workflow step type). Record actual test commands and PASS/FAIL/SKIP, source SHA, unresolved capabilities and downstream contract impact. Do not substitute a mock or agent narration for a required physical test.
 
-References: [future plan](../README.md), [multi-instance idea](../../multi-instance-execution.md), [candidate test matrix](../../test-plan.md).
+References: [plan](../README.md), [multi-instance idea](../../multi-instance-execution.md), [test plan](../../test-plan.md).

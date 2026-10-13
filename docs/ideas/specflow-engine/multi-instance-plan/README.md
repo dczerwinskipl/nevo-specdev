@@ -5,13 +5,14 @@ title: Deferred multi-instance execution implementation plan
 status: draft
 scope: specflow
 areas: [workflow, runtime, ai, cli, testing]
-tags: [future-plan, multi-instance, deterministic, deferred, review]
+tags: [future-plan, multi-instance, deterministic, deferred]
 read_when:
-  - planning follow-up work after Engine and managed execution integration
-  - reviewing task dependencies and proof required for multi-agent review
+  - planning user-defined step fan-out and deterministic fan-in after Engine foundation
+  - reviewing dependencies for offline aggregation before managed orchestration
 summary: >
-  Future implementation plan with independent tasks to add evidence-producing instances
-  under a single deterministic workflow step, without expanding the E1-E5 foundation.
+  Future implementation sequence for user-defined multi-instance workflow steps: Engine
+  identities, effects and contributions, offline deterministic aggregation, then managed
+  provider scheduling and end-to-end recovery.
 related:
   - ideas.specflow-engine
   - ideas.specflow-engine.multi-instance
@@ -19,44 +20,46 @@ related:
   - ideas.specflow-engine.test-plan
 ---
 
-# Future plan — deterministic multi-instance execution
+# Future plan — generic multi-instance execution
 
-**Deferred proposal, not an active E6 implementation commitment.** Start only after relevant Foundation B, Sessions Foundation and Managed Execution gates are accepted. The implementation branch may be separate; do not add this plan to the current 49 disposable E1–E5 execution files, and do not delete it with their `execution-plans/` directory. The number **06** is a sequencing suggestion, not a frozen identifier.
+**Deferred proposal, not an active E6 implementation commitment.** Do not expand E1–E5, and do not place these tasks inside the disposable `execution-plans/` tree. Multi-instance is applicable to **any configured step**; a multi-agent read-only review is a useful first test case, not a special Engine workflow.
 
 ## Outcome and boundaries
 
-Demonstrate three independent read-only reviewers evaluating **the same Task step/attempt and frozen source**, with stable instance IDs, bounded independent retries, separately persisted evidence, one deterministic resolution and at most one workflow transition. Both an offline CLI and a Runtime-managed provider flow must use one Engine decision path; Runtime manages provider dispatch only. Single-instance workflow and existing task batch remain behaviorally compatible.
+Demonstrate N independent results of the *same user-defined step* with stable instance/run identity, declared effect scope, pinned instructions and input policy, offline contribution submission, deterministically configured aggregation and exactly one canonical finish. Only then connect Runtime-managed providers and concurrency limits. Keep existing one-instance workflow and multi-task batches compatible.
 
-Do not implement general parallel-write workflows, provider fleet scheduling, prompt-driven majority vote, automatic semantic deduplication or changing Worktree Registry to create a checkout per reviewer.
+The initial concurrency proof may restrict instances to enforced read-only effects on a shared snapshot. This is a **supported-mode restriction**, not a built-in `review` type or a promise that arbitrary write-producing steps can safely run simultaneously.
 
 ## Execution order and task granularity
 
-| Task | Dependencies | Suggested mode | Proof focus |
-| --- | --- | --- | --- |
-| [M1 — Identity and completion semantics](tasks/T01-execution-contracts.md) | Accepted E3 workflow kernel, owner decision A/B | Solo | One step attempt / N instances / unique runs and policy revision |
-| [M2 — Frozen review input and read-only admission](tasks/T02-review-snapshot-and-admission.md) | M1, E3 coordination/workspaces | Solo | Same material, no source writes, no writer-claim starvation |
-| [M3 — Durable contribution store and offline CLI](tasks/T03-result-submission.md) | M1, M2 | Solo | Trusted per-instance result, idempotency, late-run fencing, offline restart |
-| [M4 — Managed dispatch, retry and recovery](tasks/T04-managed-orchestration.md) | M2, M3, accepted E4/E5 | Solo | Three managed Sessions/Turns, independent retry and unknown dispatch |
-| [M5 — Aggregate/finalize and owner intervention](tasks/T05-aggregation-and-waivers.md) | M3, M4 | Solo | Deterministic typed resolution, durable single transition, audited waiver |
-| [M6 — Cross-process/provider-parity acceptance](tasks/T06-end-to-end-proof.md) | M1–M5 | Solo | Mixed failures, frozen evidence, single-instance regression, restart |
+| Task                                                                             | Dependencies                                 | Suggested mode | Proof focus                                                                  |
+| -------------------------------------------------------------------------------- | -------------------------------------------- | -------------- | ---------------------------------------------------------------------------- |
+| [M1 — Definition and identities](tasks/T01-execution-contracts.md)               | Accepted E3 kernel and user policy decisions | Solo           | Generic step policy, pinned output schema, stable instance/run IDs           |
+| [M2 — Effects and input capture](tasks/T02-review-snapshot-and-admission.md)     | M1, Engine admission/workspaces              | Solo           | Post-activation snapshot, gate effects, admission enforcement                |
+| [M3 — Contribution persistence and offline CLI](tasks/T03-result-submission.md)  | M1–M2                                        | Solo           | Trusted durable per-instance results, retry and fencing                      |
+| [M5 — Engine aggregation and finalization](tasks/T05-aggregation-and-waivers.md) | M3                                           | Solo           | Typed declared reducer, incomplete states, one finish without Runtime        |
+| [M4 — Managed instance orchestration](tasks/T04-managed-orchestration.md)        | M3, M5, accepted E4/E5                       | Solo           | Bounded scheduling, provenance, independent provider retries                 |
+| [M6 — Integrated acceptance](tasks/T06-end-to-end-proof.md)                      | M1–M5                                        | Solo           | Sequential/concurrent parity, real-process recovery, backwards compatibility |
 
-Review every task independently because this is canonical state/lock/authorization work. **No implicit parallel implementation** on shared workflow, registry, journal, provider scheduler or Git refs. Multiple reviewers exercising the implemented product may run concurrently in tests; that is different from dispatching implementation tasks concurrently.
+**Implement M5 before M4.** Engine's offline deterministic result collector must be independently testable using manually submitted contributions; Runtime Sessions must not become a hidden prerequisite of aggregation. Tasks are individually reviewed; `parallel` in the product's run policy does not authorize concurrent implementation edits in the shared repo.
 
-## Proposed acceptance checkpoints (not Foundation gates)
+## Proposed acceptance
 
-- Instance cardinality is distinct from scheduler concurrency; a sequential run of three instances is equivalent to a concurrent one for completion.
-- Agent-visible context and skill can submit a per-instance result without consuming the entire workflow step; only one aggregate finalization changes canonical task state.
-- Three validated results from one identical input snapshot yield the configured result; one unresponsive provider remains incomplete without losing other evidence.
-- Retry retains the logical slot but generates a new execution/run identity; stale submissions cannot create an extra vote.
-- Truly read-only workers do not take long-lived writer claims; control-plane submissions remain transactionally serialized; external source modification or rebind does not silently pass.
-- Recovery after each durable submission/finalization stage neither duplicates provider effects nor causes two transitions.
-- Operator waiver/reassignment is authorized and auditable; a quorum waiver is not a separate human code-approval gate.
-- Legacy one-reviewer `start/finish`, batch-of-tasks semantics and offline CLI do not regress.
+- User-defined instructions, declared typed outputs and declared completion/aggregation rules control behavior, not the literal name `review`.
+- `instances`, required valid results, semantic independence policy and `maxConcurrency` are separate validated configuration concerns.
+- `step start` activates at most one step attempt; instances have stable identities and can submit separately. Only final aggregate finish changes canonical state.
+- M5 reduces three offline CLI results with no Runtime and no managed Sessions; unresolved or missing data cannot silently pass.
+- Effectful work is admitted according to actual capabilities. Read-only readers can coexist and emit control-plane results; sharing a worktree among independent writers is not assumed safe.
+- If an identical-input policy is configured, capture input **after** step activation and verify it at each admission/submission. Verified gates that produce side effects cannot silently run concurrently.
+- Retry creates a new run for the same slot; provenance distinguishes separate executions from independent judgments and prevents duplicate votes.
+- After M5, M4 integrates Session/Turn dispatch, bounded concurrency and recovery without owning Engine aggregation or finish.
+- A waiver changes effective completion evidence only as explicitly authorized. It never invents a result, a code approval or an undeclared workflow transition.
+- Existing single-instance start/finish and legacy multiple-task batch remain unaffected.
 
-## Owner decisions required before implementation
+## Open owner choices
 
-Select the agent-facing submit/finish boundary, supported instance-count policy, default aggregation semantics and findings schema, source snapshot method, enforced read-only support per adapter, provider retry/fencing policy, and operator waiver authorization. See [idea decision list](../multi-instance-execution.md) and [decision register](../decisions-and-promotion.md).
+Select A/B submission API (B preferred but undecided), supported effects and snapshot method, independence policy and observed evidence, typed reducer registry, timeout/retry rules, waiver authorization, and provider transport guarantees. Refer to the [idea](../multi-instance-execution.md) and [decision register](../decisions-and-promotion.md).
 
-## Plan retention
+## Retention
 
-This is a durable **ideas-stage follow-up plan**. When promoted into an implementation-ready specification, migrate its tasks and mark this plan superseded; do not treat temporary E1–E5 tasks as reusable normative specs.
+Retain this ideas-stage plan outside E1–E5 cleanup. On formal acceptance, move tasks into an approved specification and mark this draft superseded rather than promoting temporary tasks by implication.

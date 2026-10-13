@@ -5,15 +5,15 @@ title: Deferred multi-instance deterministic workflow steps
 status: draft
 scope: specflow
 areas: [workflow, runtime, ai, cli, security, testing]
-tags: [multi-instance, review, deterministic, aggregation, recovery, read-only]
+tags: [multi-instance, deterministic, aggregation, recovery, admission]
 read_when:
-  - evaluating several independent AI reviewers of one task and one workflow step
-  - designing independent start, result submission, retry and final step settlement
-  - distinguishing multi-instance execution from parallel tasks and task batches
+  - configuring multiple independent executions of one user-defined workflow step
+  - designing instance start, result submission, retry and deterministic final settlement
+  - distinguishing step instances from task batches and scheduler concurrency
 summary: >
-  Deferred exploration of multiple independently identified executions of one deterministic
-  step, read-only review provenance, fault handling and deterministic aggregation without
-  replacing the single canonical workflow attempt and transition.
+  Deferred, step-agnostic exploration of multiple independently identified executions of
+  one user-defined deterministic step with policy-driven effects, result collection,
+  aggregation and a single canonical workflow transition.
 related:
   - ideas.specflow-engine
   - ideas.specflow-engine.execution-scopes
@@ -24,89 +24,108 @@ related:
   - architecture.workflow.deterministic-workflow
 ---
 
-# Multi-instance execution of one deterministic step (deferred idea)
+# Multi-instance execution of one user-defined step (deferred idea)
 
-## Motivation and baseline evidence
+## Scope: workflow Engine does not know what "review" means
 
-Legacy Nevo has a real agent-facing `workflow step start` / `workflow step finish` protocol; an agent receives `StepContext.finishContract` and can submit `result`, `feedback` and artifact references. Its `standard-v1` review step currently makes one semantic decision, with `pass -> human-verification` and `fail -> implementation`; a successful `finish` advances the task exactly once. The legacy `workflow batch finish` operation is **one reviewer session evaluating multiple tasks**, not **several independent reviewers evaluating one task**. Review in the legacy standard workflow can modify source and commit/push; that is unsuitable for simultaneous same-workspace reviews.
+**The user defines the workflow steps, step instructions, result schema, gates, transitions and execution policy.** Review is one possible configured step, not a built-in step kind, verdict vocabulary or fixed Engine workflow. Engine coordinates instances and deterministic resolution of **declared** results; it must not infer reviewer semantics, invent P1/P2 thresholds or require a human approval for arbitrary step outcomes. A default legacy workflow may contain a step named `review`, but the name has no authority.
 
-Reference implementation: `dczerwinskipl/nevo` `tools/specs/workflow/cli.mjs`, `step-context.mjs`, `finish-operation.mjs`, `workspace-writer.mjs`, `.nevo-ai/workflows/standard-v1.yaml`, `.claude/skills/multi-task-review/SKILL.md`. Reinspect current code/provider capabilities before promotion. The Engine foundation in the stacked implementation PR provides Project Home, workspace registry and short control locks, **not** multi-instance scheduling or aggregation.
+Legacy Nevo already exposes agent-facing `workflow step start` and `workflow step finish` via `StepContext.finishContract`. Its standard example uses `pass/fail` and can modify files and commit. Legacy `workflow batch finish` handles multiple **tasks** in one Session; it is not multiple executions of the **same** step. Preserve that distinction and the existing single-instance finish behavior. Sources for later migration: `dczerwinskipl/nevo` `tools/specs/workflow/{cli,step-context,finish-operation,workspace-writer}.mjs`, `.nevo-ai/workflows/standard-v1.yaml`. The current Engine Foundation does not implement multi-instance scheduling.
 
-## Terminology: cardinality is not concurrency
+## Identity and cardinality are independent of concurrency
 
-| Term | Meaning |
-| --- | --- |
-| **Workflow step/attempt** | One `(spec, task, step, attempt)` controlling the canonical transition. |
-| **Step instance / review slot** | One independently required evaluation of that step, with a stable Engine-assigned instance ID. |
-| **Execution run** | A concrete attempt to fulfil one instance; retries have new run/invocation identities. |
-| **Session / Turn** | Runtime-owned provider conversation/invocation; may be linked to a run but never identifies the step or instance. |
-| **Required instances** | Number of valid independent contributions required by the frozen step execution plan. |
-| **Concurrency limit** | Scheduler capacity, independent of the required instance count; sequential runs can still satisfy a multi-instance step. |
-| **Task batch** | One execution covering multiple task attempts. Orthogonal to multiple reviewers for one task. |
+| Concept            | Meaning                                                                                |
+| ------------------ | -------------------------------------------------------------------------------------- |
+| Workflow attempt   | One canonical (spec, task, step, attempt) and at most one transition                   |
+| Instance           | One stable, Engine-allocated contribution slot for that attempt                        |
+| Run / invocation   | One execution of a slot; retry or replacement gets a new run identity                  |
+| Session / Turn     | Runtime/provider-owned conversation units; optional correlation, not workflow identity |
+| Required instances | Completion requirement frozen from the step definition/configuration                   |
+| Max concurrency    | Scheduling limit; executing three slots sequentially is still multi-instance           |
+| Task batch         | Several different task attempts within a wider execution scope                         |
 
-Do not call the feature `parallel step`: multiple instances need not run concurrently, while unrelated tasks may execute in parallel without multi-instance steps. A name such as `multi-instance` or `fan-out/fan-in` is a candidate, not a frozen product term.
+Do not name this feature `parallel step`: parallel task execution and multiple contributors to one step solve different problems. Define defaults conservatively (one instance remains the backward-compatible behavior). Instance uniqueness does **not** guarantee semantic independence: two separate Sessions of the same model may produce correlated judgments.
 
-## Candidate invariants
+## Candidate lifecycle and responsibility boundaries
 
-1. **One canonical transition.** Several instances produce evidence; no individual instance may finish the shared workflow attempt or trigger continuation. Aggregate/finalize exactly once with durable idempotency and declared gates. The existing single-instance protocol remains compatible.
-2. **Frozen participation.** Resolve the declared number of required independent instances, identity/role/provider constraints, execution definition revision, reviewed material and completion policy when the step attempt starts. No late scheduler configuration or Session history may silently change the quorum.
-3. **Stable identity, independent retries.** A stable `instanceId` survives technical retries; every provider dispatch gets a distinct `runId`/`invocationId`. Accept an outcome only for an authorized current run, or an idempotent replay of its accepted result. Fence late callbacks and stale CLI submissions after supersession.
-4. **Result != run status.** `pass`, `changes-required` and `inconclusive` are review semantics. Timeout, quota, provider crash, cancellation, unknown dispatch and incomplete report mean **no accepted review verdict**. Never turn transport failure into review `fail` or into positive approval.
-5. **Independent results.** Keep immutable per-instance feedback/findings, reviewer provenance, timestamps and reviewed revision; aggregate without overwriting source evidence. Do not leak prior reviewers' judgments into independent reviewers' initial prompts by default.
-6. **Read-only review.** The initial multi-instance capability is review/inspection only. No independent reviewer edits source, commits, pushes, generates tracked report files or mutates workflow manifests. Provider write capability must be technically restricted or execution conservatively rejected/serialized; a read-only prompt is not enforcement.
-7. **Control-plane writes are permitted.** `start`, result submission and recovery may persist Engine-owned ignored state under short transactional coordination. This is distinct from a long-lived workspace **writer claim** for code mutation. External offline CLI and MCP adapters should call the same Engine rules; Runtime-only orchestration must not make offline workflow invalid.
-8. **Same material, not merely same worktree.** All results in one aggregation refer to the same verified code/spec/definition snapshot. Git HEAD by itself is insufficient when uncommitted content matters; require a frozen content/delta fingerprint, immutable checkout, or other proven materialization. Active writers, rebind and cleanup must be coordinated during review. Same-OS-account agents are not OS security sandboxes.
-9. **Explicit intervention.** Fewer valid outcomes than required is `incomplete`, not `pass`; after bounded retries the operator can retry/reassign, cancel or approve an auditable reduction/waiver if policy permits. A quorum waiver is **not** human acceptance of the code.
-10. **No hidden fan-in through provider status.** Terminal Session/Turn is not a review result; only an authenticated/attributed and validated instance submission can count.
+1. Engine activates a user-defined workflow step once and pins its definition/instructions, output contract, effect scope, instance count, completion/resolution policies and required evidence to its attempt.
+2. **After activation**, establish the common input baseline where the step requires comparable input. Activation itself can mutate workflow metadata; do not hash material before `step start` and silently compare it against material after activation.
+3. Allocate stable `instanceId` values; authorize each concrete `runId`/invocation separately. `step start` for a second instance must not reactivate the step or be rejected merely because a first instance exists. Enforce side-effect admission independently.
+4. The user-defined step instructions and output schema are passed to each permitted execution. The Engine validates and durably stores each contribution under its exact slot/run/attempt, without progressing the shared workflow.
+5. Evaluate completion policy against **valid submitted results**, not terminal Turns. Once satisfied, evaluate the chosen deterministic result reducer against the frozen definition and accepted contributions.
+6. If a declared result/transition can be determined and required gates/actions pass, finalize the step **once**, with a durable idempotent operation. A provider's completion is not the canonical step completion. Otherwise leave an explicit unresolved/incomplete state with appropriate configured or operator actions.
 
-## Submission boundary: two candidates, decision still open
+The distinction between `step start` and group input capture is important: a `change.yaml` write by activation should not make all subsequent instances appear to review different input. A stable step definition revision and an input snapshot revision are separate facts.
 
-**A. Contextual `step start` / `step finish`.** Keep the legacy skill entry points. Engine associates each admitted call with a **trusted** `instanceId` and current `runId`; `finish` of an instance stores immutable evidence and responds `contribution-recorded`, not `step-completed`. A separate Engine-owned finalization performs the only workflow transition. Single-instance calls retain existing semantics. Pros: skill continuity; cons: same verb has context-dependent behavior, and the consumer must not interpret every successful finish as step completion.
+## Effects, worktrees and repeatability
 
-**B. Explicit instance submission.** Keep `step start` for activation/context but use a distinct CLI/MCP command (e.g. `workflow instance submit`) for each independent result; `workflow step finish` remains strictly the single step finalization. Pros: unambiguous APIs and safer tools; cons: new agent skill protocol and compatibility adapter needed. Neither option may grant authority from an arbitrary user-supplied instance ID or Session ID.
+**Multi-instance does not intrinsically mean read-only.** Effects belong to the user-defined step and verified executor capabilities: no source mutation, workspace writer, Git/ref changes or external side effects. The first **concurrent same-workspace** proof can be restricted to *technically enforced read-only* executions; this is a staged support limitation, not a rule that every multi-instance step must be a review.
 
-For either choice, separate **instance result persistence** from **aggregate finalization**, and make both recovery-safe under a short state lock/CAS. The agent must know whether its own contribution was recorded, whether more instances remain, and whether the step transitioned; do not assume one successful CLI exit means all three.
+- True readers can coexist without a long-lived exclusive writer claim. CLI/MCP submission still performs Engine-owned control-plane writes using a short state lock/CAS.
+- Independent writers need proven isolation or serialization. A declared "readOnly" prompt does not prevent a provider from modifying files; a worktree is not an OS sandbox, and per-spec worktrees are not per-instance sandboxes.
+- External effects (network requests, APIs, tests generating files, Git refs) require declared admission and repeat/retry safety. Do not automatically retry an uncertain *effectful* run.
+- Comparable read-only analysis may require one immutable code/spec/input snapshot across instances. Git HEAD alone misses staged, unstaged and untracked changes. The policy may instead explicitly state that inputs are independent; do not impose an immutable review snapshot on all arbitrary user-defined steps.
+- For shared-input steps, coordinate activation -> snapshot/baseline -> instance starts, and block or invalidate source changes, rebind and cleanup according to the adopted isolation policy. Existing external writers may remain physically unfenceable.
 
-## Aggregation: typed semantics, not an untyped merge function
+**Verification gates are also effects.** `inspect` is non-mutating, but `verify` and finalize actions may run tests, write caches/reports, commit or push. The step definition must establish whether verification happens before instance admission, in isolated per-instance environments, or once during finalization. Never run write-producing gates concurrently inside supposedly read-only instances just because the agent's own tools are read-only; preserve existing Engine inspect/verify separation.
 
-Propose two independent policies: (1) **completion** decides whether enough valid contributions exist; (2) **resolution** maps their typed outcomes to one configured step transition, or `needs-triage`/`incomplete` requiring explicit resolution. Do not silently promote `incomplete` to existing `pass/fail` transitions. Freeze policy version with the attempt.
+## Contribution result and agent-facing command boundary
 
-| Payload | Candidate reduction | Pitfall |
-| --- | --- | --- |
-| Boolean predicate | `all` or `any`, selected by predicate semantics | `approved` and `hasBlockingFinding` require opposite operators. |
-| Ordered severity | Explicit severity ordering / highest blocking severity | Unknown severity or inconclusive review is not the lowest severity. |
-| Nominal enum | Exact-match/unanimity, declared conflict handling | `pass/fail/blocked` is not automatically an ordered severity scale. |
-| Findings / feedback | Preserve all attributed findings; optionally deduplicate in a derived view | Duplicate clustering must not erase original findings or provenance. |
-| Free text / Markdown | Retain separately; render a combined report only from sources | Cannot safely determine a semantic verdict by concatenating strings. |
+Keep the single-instance CLI/skill behavior compatible. Two candidate multi-instance contracts remain open:
 
-For safety-oriented code review, **majority voting is not the default**: two `pass` results must not outvote a plausible P1. A candidate first policy is `all-required-results` followed by `any-blocking-finding -> changes-required/triage`, otherwise `pass`. Contradictory findings, unknown severity, stale snapshot or unresolved evidence require triage rather than an invented deterministic verdict. Define what a validated `pass` report means when it contains findings.
+- **A — contextual `step finish`:** a valid instance-specific `finish` records a contribution and returns `contribution-recorded` (not a canonical step-completed signal); Engine finalizes only after policy resolution. Risk: same command changes meaning with cardinality.
+- **B — explicit `instance submit`:** `step start` provides instructions/context and authorizes a run, a distinct CLI/MCP command records its result, and Engine retains the only `step finish` authority. This preserves unambiguous `finish` semantics and deserves preference pending owner approval; costs skill/API compatibility work.
 
-## Failure and recovery matrix (deferred)
+Neither design trusts a user-supplied bare `instanceId` or Session ID as admission authority. Freeze and verify the instance-run association; retry has a new run ID but retains its required slot. Store submitted payload, optional artifacts, provenance, effective instruction/definition revision, input correlation, and technical execution status separately. An accepted result can be replay-read idempotently after a crash without an extra vote.
 
-| Event | Expected behavior |
-| --- | --- |
-| Three required, one provider fails before submission | Preserve other accepted results; independently retry **that instance** up to configured bound. |
-| One run crashes after storing contribution, before acknowledging it | Same run idempotently re-reads accepted submission; no duplicate count. |
-| Timeout with uncertain provider liveness or effects | Fence old run/late callbacks; do not blindly redispatch if unproven side effects are possible. |
-| Two starts race for the same instance | One admitted run or idempotent replay, no double allocation or extra votes. |
-| Three results refer to different HEAD/dirty baselines | Refuse aggregation; diagnose invalid/stale material, do not report partial success. |
-| Workspace rebind, cleanup or writer attempts during review | Check active/frozen snapshot constraints; block or invalidate safely, preserve evidence. |
-| All retries exhausted with fewer than required results | `incomplete` plus operator retry/reassign/waiver/cancel choices; no implicit success. |
-| Waiver permits one result instead of three | Durable actor and reason with original policy, missing instances and remaining evidence; separate later human sign-off. |
-| Aggregation/finalization crashes after some durable effects | Resume same operation by identity; no second transition, report commit or continuation. |
+## Completion and typed, explicitly declared aggregation
 
-## Promotion questions for owner
+Completion policy asks *how many valid contributions are needed*; result aggregation asks *how to derive the declared step output from them*. Both are part of the user-defined versioned policy. There is **no generic implicit reduction** of arbitrary booleans, enums, arrays or strings.
 
-1. Should the agent-facing `finish` submit a contribution in multi-instance context (A), or should there be a new instance-result command (B)? What is the exact successful-but-not-step-complete response?
-2. Is a required `N` always `N` distinct completed contributions, or may a definition declare a minimum/maximum and optional reviewers? What is the default (`1` suggested)?
-3. Which providers/models count as independent, and how are repeated models/reassignments represented without inventing diversity?
-4. What enforces immutable review input: fixed worktree writer barrier, isolated read-only snapshot, or another approach? What about active external writers and dirty baselines?
-5. What structured result schema is supported first, and which findings/severities are blocking? What happens when two valid reviewers disagree?
-6. Which failures permit safe automatic retry, how many attempts/timeouts, and what operator authority is required for waiver/partial coverage?
-7. Where do contribution records live so external CLI works without Runtime and commits only happen at aggregate finalize, if configured?
+| Field / policy  | Candidate declared behavior                                      | Failure if undeclared                          |
+| --------------- | ---------------------------------------------------------------- | ---------------------------------------------- |
+| Boolean         | all / any with explicit predicate semantics                      | AND for every boolean is not meaningful        |
+| Ordered enum    | Declared order and min/max/worst/best reducer                    | No inferred severity order                     |
+| Nominal enum    | Unanimity, declared priority, conflict or other explicit reducer | No arbitrary highest-severity guess            |
+| Numeric         | min, max, sum, average with explicit units                       | No automatic aggregation                       |
+| List / findings | Concatenate and optionally derive a deduplicated view            | Do not discard original results                |
+| Free text       | Preserve individually or user-defined deterministic formatter    | Do not infer a structured verdict from prose   |
+| Completion      | Exact N or approved quorum/waiver policy                         | Cannot treat missing data as a positive result |
 
-## Scope and sequencing
+Example **only**: a user-defined review step may choose `all-approved`, `any-blocking-finding`, or explicit triage if two passes conflict with one P1. Another user-defined step can legitimately choose `any`, `majority` or a different type-safe rule. Engine must validate the reducer, output schema and transition mapping; if no declared policy resolves the inputs, fail closed rather than choosing a branch. Every original contribution remains attributable even if a derived summary is computed.
 
-**Not part of Foundation A/B, Sessions Foundation or current E1–E5 implementation acceptance.** Reserve only compatibility seams in E3/E4/E5 (one workflow attempt is not the same as one Turn; read-only turns do not occupy writer claims; current single-instance `finish` remains idempotent). Do not widen E5.T07's limited Task-batch/handover into multi-review orchestration.
+## Independence of work and evidential quality
 
-After E3/E4/E5 are demonstrated, use the [separate future plan](multi-instance-plan/README.md) and [deferred scenarios](test-plan.md). Its folder intentionally sits outside disposable `execution-plans/` and survives deletion of E1–E5 temporary implementation tasks. No behavior here is an accepted architecture contract.
+**Technical independence:** distinct admitted instance IDs, execution runs and result provenance. **Semantic independence:** the user-configurable execution strategy (models/providers, distinct prompts/roles, exposure to other contributions, randomness, shared history). Separate Sessions alone do not prove different reasoning.
+
+Record *requested independence policy* and *observed provenance* where available. Do not claim diversity based solely on `N=3`. A policy may require distinct provider families, different agent profiles, no shared reviewer history or only unique runs; lacking provenance must be explicit, not silently represented as independent evidence. A strict requirement may block admission/finalization if it cannot be verified; other policies can permit repeated models. Keep initial prompts independent only where the step defines that rule.
+
+## Failure, recovery and operator action
+
+| Scenario                                 | Expected generic behavior                                                          |
+| ---------------------------------------- | ---------------------------------------------------------------------------------- |
+| One of N agents times out                | Keep accepted other results; retry only that slot when effects are proven safe     |
+| Provider has quota/error                 | Technical run failure, never an invented step result                               |
+| Late result after slot retry             | Fence superseded run; preserve idempotent accepted replay                          |
+| Crash after storing contribution         | Resume from its immutable record, no extra result/transition                       |
+| Same-input snapshot changes              | Reject/invalidate stale contributions if that step requires snapshot consistency   |
+| Different effectful executions race      | Admit only with proven isolation or serialize; no hidden extra writer              |
+| Fewer valid results than policy requires | Incomplete, with configured retry/reassignment or authorized exception             |
+| Operator waives missing result           | Record actor, reason and changed effective requirement; do not invent missing data |
+| Two finalizers race                      | One durable finalization and single workflow transition                            |
+
+Human authorization for a waiver is **not** necessarily a human approval step. Such a gate exists only when the user-defined workflow declares it.
+
+## Decisions before promotion
+
+1. Choose A vs B (preference B, **not** a frozen API) and preserve existing single-instance skill semantics.
+2. Decide exact N vs quorum, provider diversity policy, execution strategy and `maxConcurrency` independently.
+3. Determine typed output schemas and policy-reducer registry/validation; choose behavior for unresolved conflicts.
+4. Define when input is frozen (post-activation), how snapshot rules and effect scopes are expressed, and how gates that generate files execute.
+5. Determine technical retry/reassignment, unknown effectful dispatch recovery and whether authorized partial-completion waivers are allowed.
+6. Define how a step's instructions and candidate contributions are kept independent or deliberately shared, with documented provenance limitations.
+7. Keep Engine state, CLI/MCP submission and managed Session/Turn dispatch decoupled; do not require Runtime for offline contributions.
+
+## Timing
+
+This is a future optional capability, **not** a hidden requirement of current Foundation A/B or E1–E5 managed integration. E3/E4/E5 should merely avoid assuming `workflow attempt == provider Turn` or `agent work always requires an exclusive writer claim`. Start with Engine-owned offline per-instance result collection and deterministic aggregation; integrate managed scheduling after it is proven. The [future task plan](multi-instance-plan/README.md) stays outside disposable `execution-plans/`.
