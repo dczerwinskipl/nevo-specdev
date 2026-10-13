@@ -1,3 +1,4 @@
+import { within } from 'storybook/test';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { RoutedApplication } from '../../app/SpecFlowShell.stories';
 
@@ -34,8 +35,7 @@ export const TaskPreviewFlow: Story = {
     );
     await userEvent.click(taskElement);
 
-    const taskMatches = await canvas.findAllByText('TASK-03', {}, { timeout: 5000 });
-    if (taskMatches.length < 2) throw new Error('Expected TASK-03 in both row and preview');
+    await canvas.findByText('TASK-03 · admission', {}, { timeout: 5000 });
 
     const closeBtn = await canvas.findByRole('button', { name: /Close secondary content/i });
     await userEvent.click(closeBtn);
@@ -58,8 +58,7 @@ export const NestedHistoryTaskPreviewFlow: Story = {
 
     // Confirm Task Preview opens in secondary
     await canvas.findByRole('heading', { name: /Task preview/i }, { timeout: 5000 });
-    const task4Matches = await canvas.findAllByText('TASK-04', {}, { timeout: 5000 });
-    if (task4Matches.length < 2) throw new Error('Expected TASK-04 in row and preview');
+    await canvas.findByText('TASK-04 · admission', {}, { timeout: 5000 });
 
     // Press Back in secondary stack
     const backBtn = await canvas.findByRole('button', { name: /Back/i });
@@ -72,7 +71,7 @@ export const NestedHistoryTaskPreviewFlow: Story = {
 
 export const FullTaskPromotionFlow: Story = {
   args: { path: '/specs/admission?collection=current' },
-  play: async ({ canvas, userEvent }) => {
+  play: async ({ canvas, canvasElement, userEvent }) => {
     await canvas.findByText('Specification ID: admission', {}, { timeout: 10000 });
 
     const taskElement = await canvas.findByText(
@@ -80,12 +79,16 @@ export const FullTaskPromotionFlow: Story = {
     );
     await userEvent.click(taskElement);
 
-    const fullTaskButtons = await canvas.findAllByText(/Full task view/i);
-    const firstButton = fullTaskButtons[0];
-    if (!firstButton) {
-      throw new Error('Expected Full task view action in task preview');
-    }
-    await userEvent.click(firstButton);
+    const heading = await canvas.findByRole('heading', { name: /Task preview/i });
+    const trigger = heading
+      .closest('[data-workspace-header]')
+      ?.querySelector<HTMLButtonElement>('button[aria-haspopup="menu"]');
+    if (!trigger) throw new Error('Task preview must have an overflow menu');
+    await userEvent.click(trigger);
+    const fullTaskAction = await within(canvasElement.ownerDocument.body).findByRole('menuitem', {
+      name: /Full task view/i,
+    });
+    await userEvent.click(fullTaskAction);
 
     await canvas.findByRole('heading', { name: /Task \/ TASK-03/i }, { timeout: 5000 });
 
@@ -146,7 +149,6 @@ export const DocumentReturnNavigation: Story = {
   play: async ({ canvas, userEvent }) => {
     await canvas.findByText('Specification ID: docs-spec', {}, { timeout: 10000 });
     await userEvent.click(await canvas.findByRole('button', { name: 'Obszar: uwierzytelnianie' }));
-    await canvas.findByRole('button', { name: 'Open full document' });
     await userEvent.click(await canvas.findByRole('button', { name: 'Open full document' }));
     await canvas.findByRole('link', { name: /Back to specification/i });
     await userEvent.click(await canvas.findByRole('link', { name: /Back to specification/i }));
@@ -255,7 +257,11 @@ export const ApiDtoToTaskScreen: Story = {
       { name: 'Fresh task detail from Runtime API' },
       { timeout: 10000 },
     );
-    await canvas.findByText('Latest acceptance criterion', {}, { timeout: 10000 });
+    await canvas.findByText(
+      'Latest purpose loaded independently from the detail endpoint.',
+      {},
+      { timeout: 10000 },
+    );
   },
 };
 

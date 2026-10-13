@@ -276,13 +276,16 @@ export const EditorDraftSurvivesDataLoss: Story = {
   ),
   play: async ({ canvas, canvasElement, userEvent }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Open editor' }));
+    // Let the workspace finish its entry focus before typing into the editor.
+    await frame();
     const original = canvasElement.querySelector('[data-editor-mount]')?.textContent;
     assert(original, 'Editor must mount');
     const draft = canvas.getByRole('textbox', { name: 'Draft' });
     await userEvent.clear(draft);
     await userEvent.type(draft, 'Changed!');
+    assert((draft as HTMLInputElement).value === 'Changed!', 'The dirty draft must be entered');
     await userEvent.click(canvas.getByRole('button', { name: 'Make data unavailable' }));
-    assert(canvas.getByText('Editing data unavailable.'), 'Unavailable state must be visible');
+    await canvas.findByText('Editing data unavailable.');
     await userEvent.click(canvas.getByRole('button', { name: 'Back' }));
     assert(
       canvas.getByText('Editing data unavailable.'),
@@ -290,7 +293,8 @@ export const EditorDraftSurvivesDataLoss: Story = {
     );
     await userEvent.click(canvas.getByRole('button', { name: 'Restore data' }));
     assert(
-      canvas.getByRole<HTMLInputElement>('textbox', { name: 'Draft' }).value === 'Changed!',
+      (await canvas.findByRole<HTMLInputElement>('textbox', { name: 'Draft' })).value ===
+        'Changed!',
       'Draft must survive',
     );
     assert(

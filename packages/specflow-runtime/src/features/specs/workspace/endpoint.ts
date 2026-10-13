@@ -19,6 +19,7 @@ import { requireCapability } from '../../auth';
 import type { SpecificationWorkspaceRepository } from './repository';
 import { presentWorkspace } from './presenter';
 import { authorizeSessionReferences } from './authorize-projection';
+import { authorizedTaskResources, registerTaskPages } from './task-pages';
 
 export interface SpecificationWorkspaceEndpointOptions {
   readonly repository?: SpecificationWorkspaceRepository;
@@ -117,13 +118,52 @@ export const specificationWorkspaceEndpoint: FastifyPluginCallback<
       reply.header('Cache-Control', 'no-store');
       if (!options.repository)
         return reply.code(503).send({ error: 'specification_source_unavailable' });
-      const task = await options.repository.readTask(request.params.specId, request.params.taskId);
+      const sourceTask = await options.repository.readTask(
+        request.params.specId,
+        request.params.taskId,
+      );
+      const task = sourceTask ? structuredClone(sourceTask) : null;
       if (task && task.task.id !== request.params.taskId) {
         throw new Error('Task source returned a mismatched identifier.');
+      }
+      if (task?.snapshot) {
+        if (task.snapshot.specification.id !== request.params.specId)
+          throw new Error('Mismatched Task Specification.');
+        const resources = task.snapshot.sections.resources;
+        if (resources.state === 'available') {
+          // Authorize before choosing recommendations/count, including page-only references.
+          const all = await options.repository.readTaskResources?.(
+            request.params.specId,
+            request.params.taskId,
+          );
+          if (!all && resources.data.page) {
+            task.snapshot.sections.resources = { state: 'unavailable', reason: 'not_implemented' };
+          } else {
+            const visible = authorizedTaskResources(
+              all ?? resources.data.recommended,
+              request.params.specId,
+              (sessionId) =>
+                request.authz.can({
+                  resource: SessionCapabilities,
+                  capability: SessionCapabilities.capabilities.View,
+                  scope: { specId: request.params.specId, sessionId },
+                }),
+            );
+            task.snapshot.sections.resources = {
+              state: 'available',
+              data: {
+                ...resources.data,
+                recommended: visible.slice(0, 3),
+                visibleTotal: visible.length,
+              },
+            };
+          }
+        }
       }
       return task ?? reply.code(404).send({ error: 'specification_task_not_found' });
     },
   );
 
+  registerTaskPages(app, options.repository);
   done();
 };

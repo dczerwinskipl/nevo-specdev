@@ -1,43 +1,44 @@
 import { Typography } from '@nevo/ui';
-import { useTranslation } from 'react-i18next';
-import { useWorkspaceRuntime } from '../WorkspaceContext';
+import { DocumentDescription } from '../../../documents/description/DocumentDescription';
+import { markdownIntro } from '../../../documents/description/markdownIntro';
+import { DocumentContent } from '../../../documents/connected/DocumentContent';
 
 export interface SpecificationSummarySectionProps {
   readonly title: string;
   readonly intro?: string;
   readonly isEmpty?: boolean;
   readonly mainDocumentId?: string;
+  readonly specId?: string;
 }
-
 export function SpecificationSummarySection({
   title,
   intro,
   isEmpty = false,
   mainDocumentId,
+  specId,
 }: SpecificationSummarySectionProps) {
-  const { t } = useTranslation();
-  const runtime = useWorkspaceRuntime();
-
   return (
     <div>
-      <Typography as="h2" variant="title-lg" className="font-semibold text-content-primary">
+      <Typography
+        as="h2"
+        variant="title-lg"
+        className="font-semibold text-content-primary [overflow-wrap:anywhere]"
+      >
         {title}
       </Typography>
-      {!isEmpty && intro ? (
-        <div className="mt-2 grid gap-2">
-          <Typography variant="body-md" className="text-content-secondary">
-            {intro}
-          </Typography>
-          {mainDocumentId ? (
-            <button
-              type="button"
-              onClick={() => runtime.openDoc(mainDocumentId)}
-              className="w-fit text-left text-body-sm font-medium text-accent-primary hover:underline focus-visible:outline-2 focus-visible:outline-focus-ring"
-            >
-              {t('specification.readSpecificationLink')}
-            </button>
-          ) : null}
-        </div>
+      {!isEmpty ? (
+        <DocumentDescription
+          key={`${specId}:${mainDocumentId}`}
+          intro={intro ? markdownIntro(intro, title).intro : undefined}
+          hasMore={Boolean(mainDocumentId && specId)}
+          renderDocument={
+            mainDocumentId && specId
+              ? () => (
+                  <DocumentContent specId={specId} documentId={mainDocumentId} omitTitle={title} />
+                )
+              : undefined
+          }
+        />
       ) : null}
     </div>
   );

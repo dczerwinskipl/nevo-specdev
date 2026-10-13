@@ -1,4 +1,6 @@
 import { Type, type Static } from 'typebox';
+import { TaskSnapshotSchema } from './task-read';
+export * from './task-read';
 
 const IdSchema = Type.String({
   minLength: 1,
@@ -161,6 +163,7 @@ export const SpecificationTaskResponseSchema = Type.Object({
   purpose: Type.Optional(Type.String()),
   acceptanceCriteria: Type.Array(Type.String()),
   workflow: Type.Optional(Type.String()),
+  snapshot: Type.Optional(TaskSnapshotSchema),
 });
 export const SpecificationReadErrorSchema = Type.Object({
   error: Type.Union([

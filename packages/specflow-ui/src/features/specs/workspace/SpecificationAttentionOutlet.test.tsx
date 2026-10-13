@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { UiModulesProvider } from '../../../app/ui-modules/UiModulesProvider';
 import { contributeTo, type UiModule } from '../../../app/ui-modules/contracts';
 import { createUiRegistry } from '../../../app/ui-modules/registry';
-import { LocalizationProvider } from '../../../i18n';
+import { LocalizationProvider, createSpecFlowI18n } from '../../../i18n';
 import { createSpecificationWorkspaceFixture } from '../../../../test-support/specs/workspace/fixtures';
 import { specificationAttentionItems } from '../extensions/specificationAttentionItems';
 import { specificationWorkSections } from '../extensions/specificationWorkSections';
@@ -59,7 +59,7 @@ describe('Specification Attention source isolation', () => {
     try {
       const markup = renderToStaticMarkup(
         <UiModulesProvider modules={registry}>
-          <LocalizationProvider>
+          <LocalizationProvider instance={createSpecFlowI18n('en')}>
             <AppShell navigation={<div>Navigation</div>}>
               <WorkspaceProvider runtime={createFakeWorkspaceRuntime()}>
                 <WorkView data={data} />
@@ -102,7 +102,7 @@ describe('Specification Attention source isolation', () => {
     );
     const markup = renderToStaticMarkup(
       <UiModulesProvider modules={registry}>
-        <LocalizationProvider>
+        <LocalizationProvider instance={createSpecFlowI18n('en')}>
           <AppShell navigation={<div>Navigation</div>}>
             <WorkspaceProvider runtime={createFakeWorkspaceRuntime()}>
               <WorkView data={legacyOnly} />
@@ -160,7 +160,7 @@ describe('Specification Attention source isolation', () => {
     const registry = createUiRegistry([specificationAttentionItems], [taskModule, sessionModule]);
     const markup = renderToStaticMarkup(
       <UiModulesProvider modules={registry}>
-        <LocalizationProvider>
+        <LocalizationProvider instance={createSpecFlowI18n('en')}>
           <WorkspaceProvider runtime={createFakeWorkspaceRuntime()}>
             <SpecificationAttentionOutlet
               specId="SPEC-42"
@@ -238,7 +238,7 @@ describe('Specification Attention source isolation', () => {
     try {
       const markup = renderToStaticMarkup(
         <UiModulesProvider modules={registry}>
-          <LocalizationProvider>
+          <LocalizationProvider instance={createSpecFlowI18n('en')}>
             <WorkspaceProvider runtime={createFakeWorkspaceRuntime()}>
               <SpecificationAttentionOutlet
                 specId="SPEC-42"

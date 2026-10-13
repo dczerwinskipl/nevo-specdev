@@ -42,6 +42,7 @@ export type {
 } from './workspace/workspaceSizing';
 export { APP_NAVIGATION_INLINE_PADDING, APP_SHELL_GAP } from './workspace/workspaceSizing';
 export * from './floating';
+export { useWorkspaceCapabilities } from './workspace/useWorkspaceCapabilities';
 export type {
   AppContentContainerSize,
   AppWorkspaceRegionProps,

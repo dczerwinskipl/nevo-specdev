@@ -45,7 +45,7 @@ export function SpecsOverviewCollection({
   }
 
   return (
-    <div className="grid min-w-0 gap-4">
+    <div className="@container/collection grid min-w-0 gap-5 @min-[40rem]/collection:gap-6">
       {projection.sections.map((section) => {
         const rows = projection.items.filter((item) => item.classification.section === section);
         if (!rows.length) return null;
@@ -54,7 +54,11 @@ export function SpecsOverviewCollection({
         const controls = id + '-' + section;
 
         return (
-          <section className="min-w-0" key={section} aria-label={t(sectionTranslationKey[section])}>
+          <section
+            className="grid min-w-0 gap-2"
+            key={section}
+            aria-label={t(sectionTranslationKey[section])}
+          >
             <SpecSectionHeader
               label={t(sectionTranslationKey[section])}
               count={rows.length}

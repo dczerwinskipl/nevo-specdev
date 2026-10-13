@@ -102,10 +102,19 @@ export interface WorkspaceTaskDetailRecord {
   readonly purpose?: string;
   readonly acceptanceCriteria: string[];
   readonly workflow?: string;
+  readonly snapshot?: import('@nevo/specflow-contracts/specs/workspace').TaskSnapshot;
 }
 
 export interface SpecificationWorkspaceRepository {
   readWorkspace(specId: string): Promise<WorkspaceReadModel | null>;
   readDocument(specId: string, documentId: string): Promise<WorkspaceDocumentRecord | null>;
   readTask(specId: string, taskId: string): Promise<WorkspaceTaskDetailRecord | null>;
+  readTaskResources?(
+    specId: string,
+    taskId: string,
+  ): Promise<import('@nevo/specflow-contracts/specs/workspace').TaskResource[] | null>;
+  readTaskHistory?(
+    specId: string,
+    taskId: string,
+  ): Promise<import('@nevo/specflow-contracts/specs/workspace').TaskHistoryPage['items'] | null>;
 }

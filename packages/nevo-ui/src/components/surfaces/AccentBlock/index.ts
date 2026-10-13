@@ -1,0 +1,1 @@
+export { AccentBlock } from './AccentBlock';

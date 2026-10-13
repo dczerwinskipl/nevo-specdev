@@ -22,6 +22,7 @@ export interface TaskRelatedSession {
 }
 
 export interface TaskItem {
+  readonly snapshot?: SpecificationTaskResponse['snapshot'];
   readonly id: string;
   readonly title: string;
   readonly status: string;
@@ -90,6 +91,7 @@ export function getTaskStatePresentation(task: TaskItem): TaskStatePresentation 
 
 /** Full Task identity and detail are independent of Workspace task-group membership. */
 export interface FullTaskData {
+  readonly snapshot?: SpecificationTaskResponse['snapshot'];
   readonly id: string;
   readonly title: string;
   readonly status: string;
@@ -112,5 +114,6 @@ export function mapFullTaskResponse(response: SpecificationTaskResponse): FullTa
     purpose: response.purpose,
     acceptanceCriteria: response.acceptanceCriteria,
     workflow: response.workflow,
+    snapshot: response.snapshot,
   };
 }

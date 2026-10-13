@@ -10,7 +10,7 @@ import {
   WorkspaceHeader,
 } from '@nevo/ui';
 import { useTranslation } from 'react-i18next';
-import { FullTaskView } from './FullTaskView';
+import { FullTaskWorkspace } from './FullTaskWorkspace';
 import { mapFullTaskResponse } from '../model';
 import type { useSpecificationTask } from '../useSpecificationTask';
 
@@ -32,6 +32,21 @@ export function SpecificationTaskPage({
 }: SpecificationTaskPageProps) {
   const { t } = useTranslation();
   const backHref = `/specs/${encodeURIComponent(specId)}?collection=${collection}`;
+  if (
+    taskState.data?.task.id === taskId &&
+    !(taskState.isError && (taskState.errorStatus === 403 || taskState.isTaskNotFound))
+  ) {
+    return (
+      <FullTaskWorkspace
+        task={mapFullTaskResponse(taskState.data)}
+        specId={specId}
+        onBack={onBack}
+        backHref={backHref}
+        stale={taskState.isError}
+        onRetry={() => void taskState.refetch()}
+      />
+    );
+  }
   return (
     <AppWorkspace
       split="primary"
@@ -41,7 +56,9 @@ export function SpecificationTaskPage({
         openNavigation: t('navigation.open'),
       }}
     >
-      <AppWorkspace.Primary header={<WorkspaceHeader title={`Task / ${taskId}`} />}>
+      <AppWorkspace.Primary
+        header={<WorkspaceHeader title={`Task / ${taskId}`} icon="list-checks" />}
+      >
         <AppContent className="w-content-xwide max-w-full">
           <AppWorkspaceBody className="py-6">
             <AppContentContainer align="start" size="full">
@@ -85,12 +102,7 @@ export function SpecificationTaskPage({
                   {t('specification.unavailableDescription', { id: taskId })}
                 </Alert>
               ) : (
-                <FullTaskView
-                  task={mapFullTaskResponse(taskState.data)}
-                  specKey={specId}
-                  onBack={onBack}
-                  backHref={backHref}
-                />
+                <Alert tone="attention" title={t('specification.unavailableTitle')} />
               )}
             </AppContentContainer>
           </AppWorkspaceBody>

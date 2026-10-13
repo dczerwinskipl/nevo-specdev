@@ -9,6 +9,7 @@ import { createSampleSpecsOverviewRepository } from '../overview/repository/samp
 import type { SpecsOverviewRepository } from '../overview/repository/read-repository';
 import type { CurrentSpecRecord, ArchivedSpecRecord } from '../overview/repository/model';
 import type { SpecificationWorkspaceRepository } from '../workspace/repository';
+import { demoTaskSnapshot, demoTaskResources, demoTaskHistory } from './task';
 
 type DemoSpec = CurrentSpecRecord | ArchivedSpecRecord;
 function isCurrent(record: DemoSpec): record is CurrentSpecRecord {
@@ -166,7 +167,21 @@ export function createDemoSpecsRepositories(): {
       },
       async readDocument(specId, documentId): Promise<WorkspaceDocumentRecord | null> {
         const record = await find(specId);
-        if (!record || documentId !== 'spec') return null;
+        if (!record) return null;
+        const task = buildTasks(record).find((item) => item.id === documentId);
+        if (task)
+          return {
+            id: task.id,
+            title: task.title,
+            content:
+              '# ' +
+              task.title +
+              '\n\nDemonstration Task for ' +
+              record.title +
+              '\n\n## Acceptance criteria\n\n- Verify navigation and session behaviour.\n- Preserve user context.',
+            revision: 'demo-document-1',
+          };
+        if (documentId !== 'spec') return null;
         return {
           id: 'spec',
           title: 'Specification',
@@ -178,7 +193,24 @@ export function createDemoSpecsRepositories(): {
         const record = await find(specId);
         const task = record && buildTasks(record).find((item) => item.id === taskId);
         return task
-          ? { task, purpose: 'Demonstration Task for ' + record.title, acceptanceCriteria: [] }
+          ? {
+              task,
+              purpose: 'Demonstration Task for ' + record.title,
+              acceptanceCriteria: [],
+              snapshot: demoTaskSnapshot(specId, record.title, task),
+            }
+          : null;
+      },
+      async readTaskResources(specId, taskId) {
+        const record = await find(specId);
+        return record && buildTasks(record).some((task) => task.id === taskId)
+          ? demoTaskResources(specId, taskId)
+          : null;
+      },
+      async readTaskHistory(specId, taskId) {
+        const record = await find(specId);
+        return record && buildTasks(record).some((task) => task.id === taskId)
+          ? demoTaskHistory(specId, taskId)
           : null;
       },
     },

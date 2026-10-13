@@ -496,3 +496,62 @@ identity changes isolate and clear previous-user cached data.
 
 Feature APIs must not use raw `HttpClient.axios`, which bypasses application
 recovery. It remains an exceptional, explicitly documented low-level escape hatch.
+
+## Task workbench composition
+
+Full Task and Secondary Task Preview compose the same Task details core. The Tasks
+feature owns the connected detail/page queries and product sections; Nevo UI owns
+`AccentBlock`, InformationList geometry and the measured split capability. The
+snapshot is generic deterministic flow data, with no required review/report/Session.
+Visible status and flow identity stay next to the title and inline document disclosure;
+technical state and flow description belong to inspection. Human work and pending
+independent gates share one attention surface and initial three-item disclosure.
+
+Preview/full show two/three resource recommendations. Disclosure keeps the third
+recommendation before the lazy pages and deduplicates stable resource IDs. Canonical
+attempt history is the default desktop Secondary, with a menu entry when the measured
+workspace cannot split. Stack catalogues retain IDs, while current data comes from
+context/Query. Task disclosure state and scroll survive nested inspection and Back;
+DocumentDescription restores its opener and scroll after either collapse control.
+
+The transport increment is additive and backed by explicit Runtime demo data. Project
+mode has no fixture fallback. Unknown resource owners and absent snapshot/page/document
+readers remain explicitly unavailable. Workflow mutations, confirmation forms, flow
+editing and project workflow projection are outside this increment.
+
+Operational lists reserve a leading rail only for a real affordance or a selectable
+collection's shared axis. Text-only rows use InformationList's default control-height
+minimum; actual controls retain their own height plus row padding. On wide rows,
+metadata has a bounded content-sized rail (up to 18rem), leaving the primary/supporting
+region flexible; on narrow rows it follows the content. Long metadata must never collapse
+that region. Task history facts, purpose, transitions and feedback occupy separate blocks;
+source availability also occupies its own block below Task identity.
+
+Step context is opened at its owner: a ghost Details action inside a compatible human-step
+Attention row, Step details beside active agent work, or Next step details beside known
+next work. Terminal and unknown-next positions expose no fictitious active-step action.
+There is no generic Step context footer. Flow remains in the work section menu.
+
+A human-step inspection combines work and requirement only when specification, Task,
+step, attempt (or unstarted next) and definition revision match. Both distinct instructions,
+hints, blockers, previous feedback provenance, evidence and separately named work transitions
+and requirement decisions remain reachable. Independently available requirements survive an
+unavailable work source. Open inspections pin the snapshot revision; refresh shows a stale
+context instead of silently substituting another attempt. Hints currently carry raw references
+only, so their content is explicitly unavailable without typed resolution and an owning reader.
+
+History has inline Attempt details per keyed record, including its own hints, resources and
+provenance. A history document target uses Documents with the recorded revision and returns to
+the expanded record, scroll and resource opener. History never borrows current work to fill a
+historical gap. Historical inspect conditions, gate evidence and decision state are not part of
+the current history read model and are described as unavailable. This does not add readers or
+workflow mutations. Storybook promotion exercises the Full Task callback seam; canonical routing
+and project reader availability remain separate integration concerns.
+
+The dedicated Task Workspace stories exercise the revised workspace composition on
+explicit fixtures, separately from the connected Full Task surface. Session links in
+these stories open a clearly labelled, read-only Session Demo story in a new tab.
+That development handoff carries the exact displayed fixture snapshot, including
+session status, association and optional question; invalid snapshots remain unavailable.
+It does not add a global Session client, production route, reader or workflow mutation.
+The presentation accepts a real owner-supplied Session URL at the application boundary.

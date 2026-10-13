@@ -20,6 +20,42 @@ function currentSecondary(root: HTMLElement) {
   );
 }
 
+export const ClosePageReturnsToParent: Story = {
+  args: { width: 1400, closeBehavior: 'page' },
+  play: async ({ canvas, canvasElement, userEvent }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'Review navigation' }));
+    await userEvent.click(canvas.getByRole('button', { name: 'Todo history' }));
+    const opener = canvas.getByRole('button', { name: 'Open e1' });
+    await userEvent.click(opener);
+    await userEvent.click(canvas.getByRole('button', { name: 'Close secondary content' }));
+    assert(
+      currentSecondary(canvasElement)?.textContent?.includes('Todo history'),
+      'Page Close must return to the parent page',
+    );
+    for (
+      let frame = 0;
+      frame < 40 && canvasElement.ownerDocument.activeElement?.textContent !== 'Open e1';
+      frame++
+    ) {
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    }
+    assert(
+      canvasElement.ownerDocument.activeElement?.textContent === 'Open e1',
+      'Page Close must restore the opener focus',
+    );
+    await userEvent.click(canvas.getByRole('button', { name: 'Close secondary content' }));
+    assert(
+      currentSecondary(canvasElement)?.textContent?.includes('Review navigation'),
+      'Page Close must preserve the root until it is closed',
+    );
+    await userEvent.click(canvas.getByRole('button', { name: 'Close secondary content' }));
+    assert(
+      canvas.getByText(/Default Secondary/),
+      'Closing the root must restore declarative Secondary',
+    );
+  },
+};
+
 export const DesktopDeepNavigationAndRefresh: Story = {
   args: { width: 1400 },
   play: async ({ canvas, canvasElement, userEvent }) => {
