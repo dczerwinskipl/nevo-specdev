@@ -14,6 +14,8 @@ Own, where relevant:
 - data/read-model needs, freshness/loading behavior, and explicit integration dependencies for data-driven surfaces;
 - UX acceptance scenarios and unresolved product decisions.
 
+Before placing any material region, explain which user question or decision it serves on this particular surface, and why it belongs here rather than in a detail view. Omit a region when its only justification is that the data exists; make the omissions deliberate, not accidental.
+
 Do not take over production UI implementation unless the user explicitly asks for it.
 
 Do not derive product UX from backend DTO shape, field count, current markup, or unused screen space.

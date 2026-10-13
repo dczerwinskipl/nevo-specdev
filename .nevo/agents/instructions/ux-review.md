@@ -1,8 +1,31 @@
 Use this procedure when reviewing an existing UX contract, mock, rendered screen, or implemented surface.
 
-### Recover the intended task first
+### Independent first-read before contract review
 
-Identify:
+For an independent UX review of another designer's mock or rendered screen, this
+pass takes precedence over the normal contract-first review order.
+
+- Start with only the user's goal, entry point and unannotated, accessible
+  interactive render. Do not read the intended first scan, author's layout
+  rationale or owning screen contract yet.
+- Record, before seeing the contract, what the screen appears to be for, the
+  next meaningful action, where deeper information is found and what is
+  confusing or disproportionately prominent.
+- Only then inspect the contract and repository evidence to classify the
+  observations. Do not rewrite the original first-read observations to match
+  the author's intentions.
+
+If a usable render or independent reviewer is unavailable, the required
+first-read is **blocked**, not passed. If the reviewer has already seen the
+author's rationale or intended hierarchy, disclose this limitation and obtain
+a fresh independent first-read before claiming that gate passed.
+
+For contract-only reviews or the designer's own self-review, use the normal
+contract-first procedure below. Self-review is never independent review.
+
+### Recover the intended task and contract
+
+After the independent first-read, when applicable, identify:
 
 - the user's goal;
 - the owning product contract;
@@ -52,6 +75,26 @@ Check:
 Do not replace an established pattern merely because another layout is plausible.
 
 For each proposed change, state what user problem it fixes and what contract/invariant it restores or intentionally changes.
+
+### Report an explicit review outcome
+
+Report the result for the requested UX scope, without creating a persisted
+workflow status:
+
+- **pass** — the independent first-read, when required, was performed and
+  no material UX findings or unresolved decisions remain;
+- **changes-required** — a material contract or implementation defect needs
+  correction and a new review of the affected scenario;
+- **owner-decision-required** — a material product choice cannot be resolved
+  from the approved evidence; obtain the decision, update the contract and
+  review the affected scenario again;
+- **blocked** — required render, scenario, access or independent review is
+  unavailable. Do not imply a review occurred.
+
+Non-blocking refinements can accompany `pass`. A completed review with
+unresolved material findings is not a passing review. If the owner explicitly
+accepts a risk or changes the intended behavior, record that decision in the
+owning contract and reassess the affected scenario; silence is not acceptance.
 
 ### Produce actionable findings
 

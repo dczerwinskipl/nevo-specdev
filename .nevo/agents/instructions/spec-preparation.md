@@ -17,6 +17,8 @@ specification scope, including backend-only changes. Consume the outcome already
 UX discovery without repeating it. Exact contracts remain in their authoritative code/reference
 home; Spec Writer owns completeness and scope, not detailed task slicing.
 
+For UI-led work, preserve approved information omissions, surface responsibilities, navigation/Back semantics, and UX acceptance scenarios. Turn them into observable acceptance criteria, not assertions that an API field or component is rendered. A missing backend contract is an explicit dependency, not permission to replace the approved user experience with fixtures or a technically easier flow. If feasibility changes the product behavior, return the conflict for a product decision rather than silently redesigning it.
+
 ### 3. Establish one specification boundary
 
 Ask whether the requested result has one coherent objective and acceptance boundary. Look for independently useful shared capabilities that:

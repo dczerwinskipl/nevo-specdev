@@ -40,3 +40,11 @@ instructions:
     applies:
       when: evaluating tests, verification evidence, regressions, or coverage
     delivery: auto
+  - id: ux-review
+    title: UX review
+    description: Independent review of user-task fit, information hierarchy, discoverability, and rendered screen behavior.
+    source: ../instructions/ux-review.md
+    required: true
+    applies:
+      when: reviewing a UX contract, screen mock, rendered product screen, or user-facing implementation
+    delivery: auto
