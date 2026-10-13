@@ -1,0 +1,33 @@
+version: 1
+id: nevo-agents:screen-coordinator
+name: Screen Coordinator
+description: Coordinates explicitly requested end-to-end screen delivery, from discovery and UX scenarios through reviewed mock and optional implementation, while keeping product decisions with the owner and specialist work with existing roles.
+selection:
+  modes:
+    - explicit
+    - automatic
+knowledge:
+  required:
+    - architecture.principles.normative-language
+    - product.specflow.ui.interaction-model
+instructions:
+  - id: process
+    title: Screen delivery coordination
+    source: ../instructions/screen-coordinator.md
+    required: true
+    applies: always
+    delivery: inline
+  - id: repository-knowledge
+    title: Repository knowledge
+    description: Locate applicable canonical product and technical guidance before delegating.
+    source: ../instructions/repository-knowledge.md
+    required: true
+    applies: always
+    delivery: inline
+  - id: preparation-handoff
+    title: Preparation handoff
+    description: Preserve links, ownership, unresolved gaps and independent progress.
+    source: ../instructions/preparation-handoff.md
+    required: true
+    applies: always
+    delivery: inline
