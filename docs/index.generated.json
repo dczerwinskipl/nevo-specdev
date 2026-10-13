@@ -373,7 +373,8 @@
       "related": [
         "ideas.specflow-engine",
         "ideas.specflow-engine.multi-instance",
-        "ideas.specflow-engine.execution-plans"
+        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.test-plan"
       ],
       "scope": "specflow",
       "areas": [
@@ -1069,7 +1070,8 @@
         "ideas.specflow-engine.locking",
         "ideas.specflow-engine.managed-session-integration",
         "ideas.specflow-engine.worktrees",
-        "ideas.specflow-engine.decisions"
+        "ideas.specflow-engine.decisions",
+        "architecture.workflow.deterministic-workflow"
       ],
       "scope": "specflow",
       "areas": [
@@ -2156,7 +2158,8 @@
       "summary": "Deferred task for the generic user-defined step execution contract and its separately testable instance coordination and result lifecycle.",
       "related": [
         "ideas.specflow-engine.multi-instance-plan",
-        "ideas.specflow-engine.multi-instance"
+        "ideas.specflow-engine.multi-instance",
+        "ideas.specflow-engine.test-plan"
       ],
       "scope": "specflow",
       "areas": [
@@ -2185,7 +2188,8 @@
       "summary": "Deferred task for the generic user-defined step execution contract and its separately testable instance coordination and result lifecycle.",
       "related": [
         "ideas.specflow-engine.multi-instance-plan",
-        "ideas.specflow-engine.multi-instance"
+        "ideas.specflow-engine.multi-instance",
+        "ideas.specflow-engine.test-plan"
       ],
       "scope": "specflow",
       "areas": [
@@ -2214,7 +2218,8 @@
       "summary": "Deferred task for the generic user-defined step execution contract and its separately testable instance coordination and result lifecycle.",
       "related": [
         "ideas.specflow-engine.multi-instance-plan",
-        "ideas.specflow-engine.multi-instance"
+        "ideas.specflow-engine.multi-instance",
+        "ideas.specflow-engine.test-plan"
       ],
       "scope": "specflow",
       "areas": [
@@ -2243,7 +2248,8 @@
       "summary": "Deferred task for the generic user-defined step execution contract and its separately testable instance coordination and result lifecycle.",
       "related": [
         "ideas.specflow-engine.multi-instance-plan",
-        "ideas.specflow-engine.multi-instance"
+        "ideas.specflow-engine.multi-instance",
+        "ideas.specflow-engine.test-plan"
       ],
       "scope": "specflow",
       "areas": [
@@ -2272,7 +2278,8 @@
       "summary": "Deferred task for the generic user-defined step execution contract and its separately testable instance coordination and result lifecycle.",
       "related": [
         "ideas.specflow-engine.multi-instance-plan",
-        "ideas.specflow-engine.multi-instance"
+        "ideas.specflow-engine.multi-instance",
+        "ideas.specflow-engine.test-plan"
       ],
       "scope": "specflow",
       "areas": [
@@ -2301,7 +2308,8 @@
       "summary": "Deferred task for the generic user-defined step execution contract and its separately testable instance coordination and result lifecycle.",
       "related": [
         "ideas.specflow-engine.multi-instance-plan",
-        "ideas.specflow-engine.multi-instance"
+        "ideas.specflow-engine.multi-instance",
+        "ideas.specflow-engine.test-plan"
       ],
       "scope": "specflow",
       "areas": [
