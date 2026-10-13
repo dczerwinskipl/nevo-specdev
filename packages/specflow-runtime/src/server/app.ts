@@ -39,6 +39,7 @@ import {
 } from '../features/specs';
 import type { RuntimeFeature } from '../features/runtime-feature';
 import { registerRuntimeErrorHandler } from './error-handler';
+import { registerEndpointPolicy } from './endpoint-policy';
 import { serializeRuntimeRequest } from './logging';
 import { isRequestAtPublicOrigin } from './origin';
 import { registerRuntimeWebApp, type RuntimeWebApp } from './web-app';
@@ -85,6 +86,7 @@ export async function configureRuntimeApp<RawServer extends RawServerBase>(
 ): Promise<void> {
   await app.register(cookie);
   registerRuntimeErrorHandler(app);
+  await registerEndpointPolicy(app, config.server.rateLimit);
 
   const mode = dependencies.dataMode ?? 'project';
   const demo = mode === 'demo' ? createDemoSpecsRepositories() : undefined;

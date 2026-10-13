@@ -554,7 +554,36 @@
       "related": [
         "docs.architecture-runtime-readme",
         "architecture.runtime.ownership-and-lifecycle",
-        "reference.cli.nevo-specflow-contract"
+        "reference.cli.nevo-specflow-contract",
+        "architecture.runtime.endpoint-policy"
+      ]
+    },
+    {
+      "id": "architecture.runtime.endpoint-policy",
+      "type": "architecture",
+      "title": "Runtime endpoint policy",
+      "status": "current",
+      "file": "docs/architecture/runtime/endpoint-policy.md",
+      "read_when": [
+        "adding Runtime HTTP endpoints or expensive operations",
+        "configuring shared request limits and Auth exceptions"
+      ],
+      "summary": "Server-owned default source request budget, feature-owned stricter Auth limits, project configuration ownership and truthful HTTP 429 responses.",
+      "related": [
+        "architecture.runtime.configuration",
+        "architecture.runtime.authorization",
+        "reference.api.task-reads"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "runtime",
+        "server",
+        "security"
+      ],
+      "tags": [
+        "http",
+        "rate-limit",
+        "endpoint-policy"
       ]
     },
     {
