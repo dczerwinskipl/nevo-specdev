@@ -26,10 +26,7 @@ export async function startRuntime(options: RuntimeStartOptions): Promise<Runtim
   const loaded = await loadRuntimeConfig(options);
   const app = await createListeningApp(loaded.config, options.projectRoot, {
     ...options.dependencies,
-    specs: {
-      ...options.dependencies?.specs,
-      ...(options.demo ? { mode: 'demo' as const } : {}),
-    },
+    ...(options.demo ? { dataMode: 'demo' as const } : {}),
   });
 
   try {

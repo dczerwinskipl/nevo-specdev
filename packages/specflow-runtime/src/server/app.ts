@@ -14,20 +14,41 @@ import {
   type SpecFlowRoleId,
 } from '../features/auth';
 import type { RuntimeConfig } from '../config/types';
-import { createSessionsFeature, SessionCapabilities } from '../features/sessions';
+import {
+  createSessionsFeature,
+  SessionCapabilities,
+  createDemoSessionReferences,
+  type SessionReferenceOwner,
+} from '../features/sessions';
+import {
+  createTasksFeature,
+  createDemoTaskSources,
+  type TasksFeatureDependencies,
+} from '../features/tasks';
+import {
+  createDocumentsFeature,
+  createDemoDocumentSource,
+  type DocumentsFeatureDependencies,
+} from '../features/documents';
 import { createSettingsFeature, SettingsCapabilities } from '../features/settings';
 import {
   createSpecsFeature,
+  createDemoSpecsRepositories,
   SpecCapabilities,
   type SpecsFeatureDependencies,
 } from '../features/specs';
 import type { RuntimeFeature } from '../features/runtime-feature';
 import { registerRuntimeErrorHandler } from './error-handler';
+import { registerEndpointPolicy } from './endpoint-policy';
 import { serializeRuntimeRequest } from './logging';
 import { isRequestAtPublicOrigin } from './origin';
 import { registerRuntimeWebApp, type RuntimeWebApp } from './web-app';
 
 export interface RuntimeAppDependencies {
+  readonly dataMode?: 'project' | 'demo';
+  readonly tasks?: TasksFeatureDependencies;
+  readonly documents?: DocumentsFeatureDependencies;
+  readonly sessions?: { references?: SessionReferenceOwner };
   readonly auth?: AuthFeatureDependencies;
   readonly specs?: SpecsFeatureDependencies;
   readonly webApp?: RuntimeWebApp;
@@ -65,11 +86,32 @@ export async function configureRuntimeApp<RawServer extends RawServerBase>(
 ): Promise<void> {
   await app.register(cookie);
   registerRuntimeErrorHandler(app);
+  await registerEndpointPolicy(app, config.server.rateLimit);
 
+  const mode = dependencies.dataMode ?? 'project';
+  const demo = mode === 'demo' ? createDemoSpecsRepositories() : undefined;
+  const sessionReferences =
+    dependencies.sessions?.references ??
+    (demo ? createDemoSessionReferences(demo.catalogue) : undefined);
   const productFeatures: readonly RuntimeFeature[] = [
     createSpecsFeature({
       ...(config.specs ? { config: config.specs } : {}),
-      ...(dependencies.specs ? { dependencies: dependencies.specs } : {}),
+      dependencies: {
+        overviewRepository: dependencies.specs?.overviewRepository ?? demo?.overviewRepository,
+        workspaceRepository: dependencies.specs?.workspaceRepository ?? demo?.workspaceRepository,
+        contributions: dependencies.specs?.contributions ?? demo?.contributions,
+        sessions: sessionReferences,
+      },
+    }),
+    createTasksFeature({
+      ...(demo ? createDemoTaskSources(demo.catalogue) : {}),
+      ...dependencies.tasks,
+      sessions: dependencies.tasks?.sessions ?? sessionReferences,
+    }),
+    createDocumentsFeature({
+      source:
+        dependencies.documents?.source ??
+        (demo ? createDemoDocumentSource(demo.catalogue) : undefined),
     }),
     createSessionsFeature(),
     createSettingsFeature(),
@@ -96,7 +138,7 @@ export async function configureRuntimeApp<RawServer extends RawServerBase>(
     (_request, reply) => {
       reply.header('Cache-Control', 'no-store');
       return {
-        dataMode: dependencies.specs?.mode === 'demo' ? ('demo' as const) : ('project' as const),
+        dataMode: mode,
       };
     },
   );

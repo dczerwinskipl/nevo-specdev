@@ -1,6 +1,7 @@
 import { createContext, useContext, type HTMLAttributes, type PropsWithChildren } from 'react';
 import { tv } from 'tailwind-variants/lite';
 import { cn } from '../../lib';
+import { ScrollArea } from '../../components/layout/ScrollArea';
 
 const appWorkspaceBodyVariants = tv({
   base: 'min-h-0 flex-1 overflow-y-auto',
@@ -88,9 +89,25 @@ export function AppWorkspaceBody({
   className,
   tabIndex = 0,
   padding = 'md',
+  scroll = 'native',
   ...props
-}: PropsWithChildren<HTMLAttributes<HTMLDivElement> & { padding?: 'none' | 'sm' | 'md' }>) {
+}: PropsWithChildren<
+  HTMLAttributes<HTMLDivElement> & { padding?: 'none' | 'sm' | 'md'; scroll?: 'native' | 'area' }
+>) {
   const ancestorOwnsScroll = useContext(AppContentScrollContext);
+
+  if (scroll === 'area' && !ancestorOwnsScroll) {
+    return (
+      <ScrollArea
+        {...props}
+        className={cn('min-h-0 flex-1 w-full', className)}
+        contentClassName={padding === 'md' ? 'p-4' : padding === 'sm' ? 'p-3' : undefined}
+        tabIndex={tabIndex}
+      >
+        {children}
+      </ScrollArea>
+    );
+  }
 
   return (
     <div

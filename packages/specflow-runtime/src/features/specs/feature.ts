@@ -4,13 +4,17 @@ import { defaultSpecsFeatureConfig, type SpecsFeatureConfig } from './configurat
 import { specsOverviewEndpoint } from './overview/endpoint';
 import type { SpecsOverviewRepository } from './overview/repository/read-repository';
 import { specificationWorkspaceEndpoint } from './workspace/endpoint';
-import type { SpecificationWorkspaceRepository } from './workspace/repository';
-import { createDemoSpecsRepositories } from './demo/repositories';
+import type {
+  SpecificationWorkspaceRepository,
+  WorkspaceContributions,
+} from './workspace/repository';
+import type { SessionReferenceOwner } from '../sessions';
 
 export interface SpecsFeatureDependencies {
-  readonly mode?: 'project' | 'demo';
   readonly overviewRepository?: SpecsOverviewRepository;
   readonly workspaceRepository?: SpecificationWorkspaceRepository;
+  readonly contributions?: WorkspaceContributions;
+  readonly sessions?: SessionReferenceOwner;
 }
 
 export interface CreateSpecsFeatureOptions {
@@ -19,10 +23,8 @@ export interface CreateSpecsFeatureOptions {
 }
 
 export function createSpecsFeature(options: CreateSpecsFeatureOptions = {}): RuntimeFeature {
-  const demo = options.dependencies?.mode === 'demo' ? createDemoSpecsRepositories() : undefined;
-  const overviewRepository = options.dependencies?.overviewRepository ?? demo?.overviewRepository;
-  const workspaceRepository =
-    options.dependencies?.workspaceRepository ?? demo?.workspaceRepository;
+  const overviewRepository = options.dependencies?.overviewRepository;
+  const workspaceRepository = options.dependencies?.workspaceRepository;
   const config = options.config ?? defaultSpecsFeatureConfig();
 
   return {
@@ -32,7 +34,11 @@ export function createSpecsFeature(options: CreateSpecsFeatureOptions = {}): Run
         repository: overviewRepository,
         currentSections: config.overview.current.sections,
       });
-      app.register(specificationWorkspaceEndpoint, { repository: workspaceRepository });
+      app.register(specificationWorkspaceEndpoint, {
+        repository: workspaceRepository,
+        contributions: options.dependencies?.contributions,
+        sessions: options.dependencies?.sessions,
+      });
     },
   };
 }

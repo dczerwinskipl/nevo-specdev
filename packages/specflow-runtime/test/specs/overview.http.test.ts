@@ -19,7 +19,7 @@ describe('Specs overview HTTP integration', () => {
         ...config,
         authentication: { ...config.authentication, mode: 'none' },
       },
-      { specs: { mode: 'demo' } },
+      { dataMode: 'demo' },
     );
 
     try {
@@ -44,7 +44,7 @@ describe('Specs overview HTTP integration', () => {
           assignments: [{ userId: 'demo-user', role: 'viewer', scope: {} }],
         },
       },
-      { specs: { mode: 'demo' } },
+      { dataMode: 'demo' },
     );
 
     try {
@@ -120,7 +120,7 @@ describe('Specs overview HTTP integration', () => {
           ],
         },
       },
-      { auth: { store }, specs: { mode: 'demo' } },
+      { auth: { store }, dataMode: 'demo' },
     );
     const headers = { cookie: `${authCookieNames(config.server.port).session}=${session}` };
 
@@ -198,7 +198,7 @@ describe('Specs overview HTTP integration', () => {
             ],
           },
         },
-        { auth: { store }, specs: { mode: 'demo' } },
+        { auth: { store }, dataMode: 'demo' },
       );
 
       try {

@@ -1,137 +1,50 @@
-import type {
-  WorkspaceReadModel,
-  WorkspaceTaskRecord,
-  WorkspaceSessionRecord,
-  WorkspaceDocumentRecord,
-  WorkspaceTaskDetailRecord,
-} from '../workspace/repository';
+import type { SpecificationReadModel } from '../workspace/repository';
 import { createSampleSpecsOverviewRepository } from '../overview/repository/sample-repository';
 import type { SpecsOverviewRepository } from '../overview/repository/read-repository';
 import type { CurrentSpecRecord, ArchivedSpecRecord } from '../overview/repository/model';
 import type { SpecificationWorkspaceRepository } from '../workspace/repository';
+import { buildDemoTaskContribution } from '../../tasks';
+import { buildDemoSessionContribution } from '../../sessions';
+import { buildDemoDocumentManifest } from '../../documents';
+import type { DemoCatalogue } from '../../demo-catalogue';
 
 type DemoSpec = CurrentSpecRecord | ArchivedSpecRecord;
 function isCurrent(record: DemoSpec): record is CurrentSpecRecord {
   return 'currentExecutions' in record;
 }
 
-function buildTasks(record: DemoSpec): WorkspaceTaskRecord[] {
-  const activeIds = new Set(
-    isCurrent(record) ? record.currentExecutions.flatMap((execution) => execution.taskIds) : [],
-  );
-  const completedIds = Array.from(
-    { length: record.progress.total },
-    (_, index) => 'TASK-' + String(index + 1).padStart(2, '0'),
-  )
-    .filter((id) => !activeIds.has(id))
-    .slice(0, record.progress.completed);
-  if (completedIds.length !== record.progress.completed) {
-    throw new Error('Demo progress is incompatible with active executions.');
-  }
-  const completedSet = new Set(completedIds);
-  return Array.from({ length: record.progress.total }, (_, index) => {
-    const id = 'TASK-' + String(index + 1).padStart(2, '0');
-    const completed = completedSet.has(id);
-    const active = activeIds.has(id);
-    return {
-      id,
-      title: id + ' · ' + record.title,
-      status: {
-        id: completed ? 'completed' : active ? 'in_progress' : 'ready',
-        label: completed ? 'Completed' : active ? 'In progress' : 'Ready',
-        lifecycle: completed
-          ? ('completed' as const)
-          : active
-            ? ('in_progress' as const)
-            : ('pending' as const),
-      },
-    };
-  });
-}
-
-function buildSessions(record: DemoSpec): WorkspaceSessionRecord[] {
-  if (!isCurrent(record)) return [];
-  const sessions = new Map<string, WorkspaceSessionRecord>();
-  for (const execution of record.currentExecutions) {
-    sessions.set(execution.sessionId, {
-      id: execution.sessionId,
-      title: execution.agentRole + ' · ' + record.title,
-      status: 'active',
-      taskIds: [...execution.taskIds],
-    });
-  }
-  for (const signal of record.signals) {
-    if (signal.target.kind !== 'session') continue;
-    const id = signal.target.sessionId;
-    if (!sessions.has(id)) {
-      sessions.set(id, {
-        id,
-        title: signal.label,
-        status: signal.kind === 'attention' ? 'attention' : 'quiet',
-        taskIds: [],
-      });
-    }
-  }
-  return [...sessions.values()];
-}
-
-function buildWorkspace(record: DemoSpec): WorkspaceReadModel {
-  const tasks = buildTasks(record);
-  const sessions = buildSessions(record);
+function buildSpecification(record: DemoSpec): SpecificationReadModel {
   const attention = isCurrent(record)
-    ? record.signals
-        .filter((item) => item.kind === 'attention')
-        .map((item) => ({
-          id: item.id,
-          kind:
-            item.target.kind === 'session'
-              ? ('session' as const)
-              : item.target.kind === 'task'
-                ? ('task' as const)
-                : ('specification' as const),
-          title: item.label,
-          reason: item.reason ?? item.label,
-          // The demo's explicit input reason is a fact about required human action,
-          // not a UI inference from a generic Session kind.
-          priority: item.attentionReason === 'input' ? ('high' as const) : ('normal' as const),
-          ...(item.target.kind === 'session'
-            ? { targetId: item.target.sessionId }
-            : item.target.kind === 'task'
-              ? { targetId: item.target.taskId }
-              : {}),
-        }))
+    ? record.signals.flatMap((signal) =>
+        signal.kind === 'attention' && signal.target.kind === 'specification'
+          ? [
+              {
+                id: signal.id,
+                kind: 'specification' as const,
+                title: signal.label,
+                reason: signal.reason ?? signal.label,
+                priority:
+                  signal.attentionReason === 'input' ? ('high' as const) : ('normal' as const),
+              },
+            ]
+          : [],
+      )
     : [];
-  const docs = [{ id: 'spec', title: 'Specification', kind: 'markdown', summary: record.title }];
   return {
     revision: 'demo-workspace-1',
-    ...(sessions.length > 0 ? { recommendedSessionId: sessions[0]!.id } : {}),
     specification: {
       id: record.id,
       title: record.title,
       summary: record.title,
       preparationState:
-        tasks.length === 0
+        record.progress.total === 0
           ? 'empty'
           : isCurrent(record) && !record.readyForWork
             ? 'preparing'
             : 'prepared',
-      attention: attention.filter((item) => item.kind === 'specification'),
+      attention,
     },
     sections: {
-      tasks: {
-        state: 'available',
-        data: {
-          groups: tasks.length ? [{ id: 'tasks', name: 'Tasks', tasks }] : [],
-          completed: record.progress.completed,
-          total: record.progress.total,
-          attention: attention.filter((item) => item.kind === 'task'),
-        },
-      },
-      documents: { state: 'available', data: { items: docs } },
-      sessions: {
-        state: 'available',
-        data: { items: sessions, attention: attention.filter((item) => item.kind === 'session') },
-      },
       activity: { state: 'available', data: { items: [] } },
       repository: { state: 'unavailable', reason: 'not_implemented' },
       changes: { state: 'unavailable', reason: 'not_implemented' },
@@ -146,6 +59,8 @@ function buildWorkspace(record: DemoSpec): WorkspaceReadModel {
 export function createDemoSpecsRepositories(): {
   overviewRepository: SpecsOverviewRepository;
   workspaceRepository: SpecificationWorkspaceRepository;
+  catalogue: DemoCatalogue;
+  contributions: import('../workspace/repository').WorkspaceContributions;
 } {
   const overviewRepository = createSampleSpecsOverviewRepository();
 
@@ -160,26 +75,39 @@ export function createDemoSpecsRepositories(): {
   return {
     overviewRepository,
     workspaceRepository: {
-      async readWorkspace(specId) {
+      async readSpecification(specId) {
         const record = await find(specId);
-        return record ? buildWorkspace(record) : null;
+        if (!record) return null;
+        return buildSpecification(record);
       },
-      async readDocument(specId, documentId): Promise<WorkspaceDocumentRecord | null> {
+    },
+    contributions: {
+      async tasks(specId) {
         const record = await find(specId);
-        if (!record || documentId !== 'spec') return null;
-        return {
-          id: 'spec',
-          title: 'Specification',
-          content: '# ' + record.title + '\n\nDemonstration Specification for ' + record.id + '.',
-          revision: 'demo-document-1',
-        };
+        return record
+          ? buildDemoTaskContribution(record)
+          : { state: 'unavailable', reason: 'source_unavailable' };
       },
-      async readTask(specId, taskId): Promise<WorkspaceTaskDetailRecord | null> {
+      async documents(specId) {
         const record = await find(specId);
-        const task = record && buildTasks(record).find((item) => item.id === taskId);
-        return task
-          ? { task, purpose: 'Demonstration Task for ' + record.title, acceptanceCriteria: [] }
-          : null;
+        return record
+          ? { state: 'available', data: { items: buildDemoDocumentManifest(record) } }
+          : { state: 'unavailable', reason: 'source_unavailable' };
+      },
+      async sessions(specId) {
+        const record = await find(specId);
+        if (!record) return { section: { state: 'unavailable', reason: 'source_unavailable' } };
+        return buildDemoSessionContribution(record);
+      },
+    },
+    catalogue: {
+      find,
+      async all() {
+        const [current, archive] = await Promise.all([
+          overviewRepository.readCurrent(),
+          overviewRepository.readArchive(),
+        ]);
+        return [...current.items, ...archive.items];
       },
     },
   };

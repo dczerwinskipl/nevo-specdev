@@ -257,6 +257,76 @@ Session summary
 
 The examples illustrate role assignment, not a required layout.
 
+## Reading continuity and reachable detail
+
+**A surface MUST preserve a readable path through the user's task; expanding detail MUST increase
+specificity without making the user reconstruct the object's identity and hierarchy.**
+
+This is a composed-surface requirement. Correct typography tokens, complete DTO rendering, no
+overflow, and passing automated tests do not by themselves establish readable hierarchy.
+
+### Establish the first scan
+
+Before implementing a new screen or materially changing a region, the owning UX contract MUST state:
+
+- the ordered questions answered on the first scan, such as object identity, relevant state,
+  consequence/reason, and available next action, where those questions apply to the user task;
+- which facts answer those questions and which are inspection-only detail;
+- the visible owner of each action;
+- the explicit entry and return path for each group of information placed deeper.
+
+Use a short mapping in the existing handoff; a local spacing correction does not require a new
+screen specification. No universal field count or fixed number of levels substitutes for this mapping.
+The order follows the actual task, not a mandatory template for every screen.
+
+### Preserve the reading anchor
+
+The item's identity is the reading anchor. Inline detail MUST remain visibly subordinate to that
+item and MUST NOT restart the same item with a duplicate title and unchanged identity metadata
+merely to introduce an expanded region. A separately navigated surface or a context-preserving
+sticky header may repeat identity when it is needed to orient the user.
+
+Comparable sibling items MUST preserve the same semantic reading order. Group purpose, state,
+materials, and actions by the questions they answer; do not interleave them with unrelated technical
+keys or provenance because those fields happen to be adjacent in the read model. Concrete alignment,
+spacing, and scan geometry remain owned by `design-system.principles.layout-and-containment`.
+
+### Make depth useful
+
+Information MUST be reachable, but need not all be permanently expanded. A disclosure MUST have a
+visible, meaningful opener belonging to the object it explains, keyboard access, and a defined
+collapse/return behavior that preserves context. Required decision evidence, an actionable blocker,
+or an access failure MUST NOT be moved behind generic technical detail when it changes what the
+user can understand or do on the current surface.
+
+Technical identifiers, memberships, and provenance SHOULD be grouped under an explicitly named
+inspection entry when they do not answer a first-scan question. A raw reference MUST NOT become a
+dominant multi-line title solely to avoid truncation. Use a truthful readable identity where one
+exists, enough context to distinguish collisions, and explicit access to the complete value.
+Do not invent a resolved title, target, or reader for an opaque reference.
+
+If a complete value is shortened, the UI MUST provide an explicit way to read the full value using
+keyboard and touch; hover-only disclosure or silent ellipsis is insufficient. The full reference
+MUST remain selectable or copyable. An unavailable resource reader and an unavailable reference
+value are different conditions and MUST NOT be conflated.
+
+Repeated source limitations SHOULD be explained at their shared owner, with each affected item's
+state still clear. Distinct item failures MUST remain distinguishable. Known empty optional regions
+SHOULD disappear; an unavailable source MUST NOT be represented as a known empty region.
+
+### Acceptance evidence
+
+A material UI handoff MUST identify the first scan, the disclosure paths, and the composed renders
+used to verify them. Review MUST check the collapsed and expanded states with both ordinary and
+long/dense content, including a width where text changes from wrapping to truncation or columns.
+Verify the actual panel width as well as the window width.
+
+The review MUST reject a composed surface when technical content overwhelms the intended primary
+answer, inline expansion restarts the same context, a complete value becomes unreachable, or
+responsive changes lose the reading order or action owner. A clean axe/overflow report does not
+waive these checks. UI verification procedure remains in
+`design-system.principles.ui-ux-guidelines`.
+
 ## When a new role is justified
 
 Do not create feature-specific typography roles such as `task-title`, `session-metadata`, or

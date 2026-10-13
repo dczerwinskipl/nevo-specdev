@@ -5,7 +5,7 @@ import type { SpecificationTaskResponse } from '@nevo/specflow-contracts/specs/w
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { createSpecFlowQueryClient } from '../../../app/queryClient';
-import { LocalizationProvider } from '../../../i18n';
+import { LocalizationProvider, createSpecFlowI18n } from '../../../i18n';
 import { createSpecFlowAppServices } from '../../../services';
 import { TestServicesRouterContext } from '../../../../test-support/app/TestServicesRouterContext';
 import { taskKeys } from '../queries';
@@ -55,7 +55,7 @@ function renderTask(options: { error?: HttpClientError; seedDetail?: boolean } =
   return renderToStaticMarkup(
     <QueryClientProvider client={queryClient}>
       <TestServicesRouterContext services={createSpecFlowAppServices()}>
-        <LocalizationProvider>
+        <LocalizationProvider instance={createSpecFlowI18n('en')}>
           <AppShell navigation={<div>Nav</div>}>
             <TaskHarness />
           </AppShell>

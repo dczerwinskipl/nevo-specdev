@@ -52,7 +52,7 @@ export function SpecificationAttentionOutlet({
   );
   if (!items.length && !failedSources.length) return null;
   return (
-    <div className="py-6">
+    <div className="pt-3 pb-4 @min-[40rem]/work:pb-5">
       {items.length > 0 ? <AttentionSection items={items} /> : null}
       {failedSources.length > 0 ? (
         <Alert role="alert" tone="attention" title={t('specification.attentionSourceFailedTitle')}>

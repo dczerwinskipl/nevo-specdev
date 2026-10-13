@@ -3,20 +3,25 @@ import { isHttpClientError } from '@nevo/http-client';
 import { Alert, Button, MarkdownDocument, Typography } from '@nevo/ui';
 import { useTranslation } from 'react-i18next';
 import { useAppServices } from '../../../app/useAppServices';
+import { markdownIntro } from '../description/markdownIntro';
 import { documentKeys } from '../queries';
 
 export function DocumentContent({
   specId,
   documentId,
+  expectedRevision,
+  omitTitle,
 }: {
   readonly specId: string;
   readonly documentId: string;
+  readonly expectedRevision?: string;
+  readonly omitTitle?: string;
 }) {
   const { t } = useTranslation();
   const { documentApi } = useAppServices();
   const query = useQuery({
-    queryKey: documentKeys.detail(specId, documentId),
-    queryFn: ({ signal }) => documentApi.getDocument(specId, documentId, signal),
+    queryKey: documentKeys.detail(specId, documentId, expectedRevision),
+    queryFn: ({ signal }) => documentApi.getDocument(specId, documentId, signal, expectedRevision),
   });
 
   if (query.isPending)
@@ -44,8 +49,15 @@ export function DocumentContent({
       </div>
     );
   }
-  if (query.data.id !== documentId) {
+  if (
+    query.data.id !== documentId ||
+    (expectedRevision && query.data.revision !== expectedRevision)
+  ) {
     return <Alert tone="attention" role="alert" title={t('specification.unavailableTitle')} />;
   }
-  return <MarkdownDocument source={query.data.content} />;
+  return (
+    <MarkdownDocument
+      source={omitTitle ? markdownIntro(query.data.content, omitTitle).source : query.data.content}
+    />
+  );
 }

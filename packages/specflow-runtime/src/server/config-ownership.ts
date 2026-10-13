@@ -1,6 +1,6 @@
 import { onlyKeys, record } from '../config/parsing/value-parsers';
 
-const PROJECT_SERVER_KEYS = new Set(['host', 'port', 'publicOrigin', 'tls']);
+const PROJECT_SERVER_KEYS = new Set(['host', 'port', 'publicOrigin', 'tls', 'rateLimit']);
 const PROJECT_TLS_KEYS = new Set(['enabled']);
 const LOCAL_SERVER_KEYS = new Set(['tls']);
 const LOCAL_TLS_KEYS = new Set(['certFile', 'keyFile']);

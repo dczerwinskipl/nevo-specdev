@@ -3,11 +3,12 @@ import type { SpecificationWorkspaceResponse } from '@nevo/specflow-contracts/sp
 import { createDemoSpecsRepositories } from '../../src/features/specs/demo/repositories';
 import { authorizeSessionReferences } from '../../src/features/specs/workspace/authorize-projection';
 import { presentWorkspace } from '../../src/features/specs/workspace/presenter';
+import { readWorkspace } from '../../src/features/specs/workspace/read-workspace';
 
 describe('Workspace Session authorization projection', () => {
   it('filters all Session references, independently of visibility of the Sessions section', async () => {
-    const source =
-      await createDemoSpecsRepositories().workspaceRepository.readWorkspace('admission');
+    const demo = createDemoSpecsRepositories();
+    const source = await readWorkspace(demo.workspaceRepository, demo.contributions, 'admission');
     if (!source) throw new Error('Missing demonstration Specification');
     const snapshot = presentWorkspace({
       ...source,
@@ -153,8 +154,8 @@ describe('Workspace Session authorization projection', () => {
   });
 
   it('never returns an unauthorized Session detail when none are permitted', async () => {
-    const source =
-      await createDemoSpecsRepositories().workspaceRepository.readWorkspace('admission');
+    const demo = createDemoSpecsRepositories();
+    const source = await readWorkspace(demo.workspaceRepository, demo.contributions, 'admission');
     if (!source) throw new Error('Missing demonstration Specification');
     const filtered = authorizeSessionReferences(presentWorkspace(source), () => false);
     expect(filtered.sections.sessions).toEqual({ state: 'forbidden' });
