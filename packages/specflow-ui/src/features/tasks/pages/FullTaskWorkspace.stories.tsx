@@ -25,6 +25,7 @@ export function TaskWorkbenchFixture({
   narrowPanel = false,
   pageState = 'ready',
   emptyHistoryHints = false,
+  mixedReferences = false,
 }: {
   scenario?: TaskScenario;
   stress?: boolean;
@@ -32,10 +33,27 @@ export function TaskWorkbenchFixture({
   narrowPanel?: boolean;
   pageState?: 'ready' | 'loading' | 'error' | 'expired';
   emptyHistoryHints?: boolean;
+  mixedReferences?: boolean;
 }) {
   const [promoted, setPromoted] = useState(false);
   const setup = useMemo(() => {
     const fixture = createTaskDetailFixture(scenario, stress);
+    if (mixedReferences) {
+      fixture.resources[1]!.title = 'Session without a reader';
+      fixture.resources[1]!.kind = 'session';
+      fixture.resources[1]!.link = {
+        state: 'available',
+        target: { kind: 'session', sessionId: 'session-1' },
+      };
+      fixture.resources[2]!.title = 'Missing material';
+      fixture.resources[2]!.link = { state: 'unavailable', reason: 'not_found' };
+      const human = fixture.response.snapshot!.sections.humanRequirements;
+      if (human.state === 'available')
+        human.data.items[0]!.evidence.push(
+          { title: 'Session evidence without a reader', link: fixture.resources[1]!.link },
+          { title: 'Missing evidence', link: fixture.resources[2]!.link },
+        );
+    }
     const query = createSpecFlowQueryClient();
     query.setQueryDefaults(taskKeys.detail('admission', 'TASK-03'), { staleTime: Infinity });
     query.setQueryData(taskKeys.detail('admission', 'TASK-03'), fixture.response);
@@ -163,7 +181,7 @@ export function TaskWorkbenchFixture({
         ],
       },
     };
-  }, [scenario, stress, pageState, emptyHistoryHints]);
+  }, [scenario, stress, pageState, emptyHistoryHints, mixedReferences]);
   return (
     <StoryLocalization>
       <QueryClientProvider client={setup.query}>
@@ -726,4 +744,26 @@ export const RichLongPreview: Story = {
 };
 export const RichNarrowPreview: Story = {
   args: { scenario: 'rich-human', preview: true, narrowPanel: true },
+};
+
+export const MixedReferences: Story = {
+  args: { scenario: 'rich-human', mixedReferences: true },
+};
+export const MixedReferenceReaders: Story = {
+  ...MixedReferences,
+  tags: ['contract'],
+  play: async ({ canvas, userEvent }) => {
+    await canvas.findByText('Session without a reader');
+    if (canvas.queryByRole('button', { name: 'Session without a reader' }))
+      throw Error('Unsupported reader must not offer navigation');
+    if (canvas.queryByRole('button', { name: 'Missing material' }))
+      throw Error('Unavailable material must not offer navigation');
+    await userEvent.click(await canvas.findByRole('button', { name: 'Details' }));
+    await canvas.findByText('Session evidence without a reader');
+    if (canvas.queryByRole('button', { name: 'Session evidence without a reader' }))
+      throw Error('Unsupported evidence reader must not offer navigation');
+    if (canvas.queryByRole('button', { name: 'Missing evidence' }))
+      throw Error('Unavailable evidence must not offer navigation');
+    await canvas.findByRole('button', { name: 'Verification instructions' });
+  },
 };

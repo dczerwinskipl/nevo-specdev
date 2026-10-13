@@ -106,7 +106,9 @@ Requirement evidence uses the same typed reference inspection as related resourc
 pushed onto the current Secondary stack, so Back returns focus to its requirement opener.
 The inspection binds to the snapshot revision and must not silently select another evidence
 item after refresh. Available documents use the Documents owner with their exact revision;
-reference types without an inspection reader remain explicitly unavailable.
+reference types without an inspection reader show a noninteractive reader-unavailable state.
+Reference availability alone MUST NOT enable an inspection action. The current generic Task
+inspector supports only available document references, including requirement evidence and history.
 
 Resources carry stable IDs, attempt provenance and resolved link availability.
 The authorized first three recommendations and visible total are returned in detail;
@@ -123,6 +125,19 @@ the UI refreshes Task detail before retrying against its new token. Session reso
 references are authorized at their concrete Session scope before count/ranking/page
 selection. The document reference includes the exact revision; the Documents reader
 owns Markdown and authorization, and a revision mismatch is explicitly unavailable.
+
+The same scoped reference policy applies to requirement evidence, dependencies and recovery,
+not only resource lists and history. Denied references and their descriptive metadata are omitted;
+a denied recovery source is forbidden. Non-Session references outside the selected Specification
+are excluded by this increment's bounded read policy.
+
+`recommended` contains at most the first three authorized resources. `visibleTotal` counts the
+complete authorized collection, never just the recommendations of an incomplete read.
+`page: null` means there are no remaining resources: `visibleTotal` equals `recommended.length`.
+When further resources exist, a page reference and a complete resource reader are required.
+An adapter without a complete reader may provide only a confirmed complete inline collection;
+inconsistent counts, missing paging or an incomplete source yield an unavailable resource section.
+The UI must not offer a page request without both its token and client reader.
 
 This increment supplies additive transport schemas, guarded routes and explicit demo
 data. It does not provide a project workflow reader, policy-bound production paging,

@@ -6,6 +6,7 @@ import { TaskHints } from './TaskHints';
 import { TaskCopyValue, TaskDetailDisclosure } from './TaskDetailDisclosure';
 import { TaskSourceState } from './TaskDetails';
 import type { TaskHistoryResourceParams } from './TaskHistoryResourceInspection';
+import { canInspectTaskReference } from './taskReference';
 
 export function TaskHistoryDetails({
   entry,
@@ -34,10 +35,7 @@ export function TaskHistoryDetails({
           <InformationList>
             {entry.resources.map((resource, index) => {
               const forbidden = resource.link.state === 'forbidden';
-              const readable =
-                resource.link.state === 'available' &&
-                resource.link.target.kind === 'document' &&
-                !!onOpenResource;
+              const readable = canInspectTaskReference(resource.link) && !!onOpenResource;
               return (
                 <OperationalRow
                   key={resource.id}

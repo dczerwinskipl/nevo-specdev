@@ -1,5 +1,7 @@
 import { InformationList, Typography } from '@nevo/ui';
 import { useTranslation } from 'react-i18next';
+import { canInspectTaskReference } from './taskReference';
+import { TaskReferenceAvailability } from './TaskReferenceAvailability';
 import { useTaskInspectionScroll } from './useTaskInspectionScroll';
 import type { FullTaskData } from '../model';
 import { OperationalRow } from '../../specs/shared/OperationalList';
@@ -149,7 +151,7 @@ export function TaskStepInspection({
                 key={index}
                 primary={evidence.title}
                 onPrimaryClick={
-                  evidence.link.state === 'available' && onOpenEvidence
+                  canInspectTaskReference(evidence.link) && onOpenEvidence
                     ? () => {
                         remember();
                         onOpenEvidence({
@@ -160,11 +162,7 @@ export function TaskStepInspection({
                       }
                     : undefined
                 }
-                supporting={
-                  evidence.link.state !== 'available' ? (
-                    <TaskSourceState state={evidence.link.state} />
-                  ) : undefined
-                }
+                supporting={<TaskReferenceAvailability link={evidence.link} />}
               />
             ))}
           </InformationList>

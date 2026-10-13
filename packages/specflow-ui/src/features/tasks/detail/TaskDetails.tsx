@@ -13,6 +13,8 @@ import { DocumentDescription } from '../../documents/description/DocumentDescrip
 import type { FullTaskData } from '../model';
 import { matchesWork } from './taskInspectionModel';
 import { taskStatusLabel } from '../status';
+import { canInspectTaskReference } from './taskReference';
+import { TaskReferenceAvailability } from './TaskReferenceAvailability';
 
 export function mergeTaskResources(
   recommended: readonly TaskResource[],
@@ -342,9 +344,14 @@ export function TaskDetails({
                         ? ref.producedFor.map((key) => `${key.stepId} / ${key.attempt}`).join(', ')
                         : '',
                     ]}
-                    supporting={t(`taskDetails.relation.${ref.relation}`)}
+                    supporting={
+                      <div className="grid min-w-0 gap-1">
+                        <span>{t(`taskDetails.relation.${ref.relation}`)}</span>
+                        <TaskReferenceAvailability link={ref.link} />
+                      </div>
+                    }
                     onPrimaryClick={
-                      onOpenResource && ref.link.state !== 'forbidden'
+                      onOpenResource && canInspectTaskReference(ref.link)
                         ? () => onOpenResource(ref)
                         : undefined
                     }

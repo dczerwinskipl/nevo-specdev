@@ -6,6 +6,45 @@ import { TaskDetails, mergeTaskResources, pendingRequirements } from './TaskDeta
 import { createTaskDetailFixture } from './taskDetail.test-support';
 
 describe('Task presentation policy', () => {
+  it.each([true, false])('only offers document readers in preview=%s', (preview) => {
+    const { response, resources } = createTaskDetailFixture();
+    const section = response.snapshot!.sections.resources;
+    if (section.state !== 'available') throw new Error('Expected resources');
+    const document = { ...resources[0]!, title: 'Readable document' };
+    const unsupported = {
+      ...resources[1]!,
+      title: 'Protected session',
+      link: {
+        state: 'available' as const,
+        target: { kind: 'session' as const, sessionId: 'session-1' },
+      },
+    };
+    const unavailable = {
+      ...resources[2]!,
+      title: 'Missing material',
+      link: { state: 'unavailable' as const, reason: 'not_found' as const },
+    };
+    section.data = {
+      recommended: [document, unsupported, unavailable],
+      visibleTotal: 3,
+      page: null,
+    };
+    const html = renderToStaticMarkup(
+      <LocalizationProvider instance={createSpecFlowI18n('en')}>
+        <TaskDetails
+          task={mapFullTaskResponse(response)}
+          specKey="admission"
+          preview={preview}
+          onOpenResource={() => undefined}
+        />
+      </LocalizationProvider>,
+    );
+    expect(html).toMatch(/<button[^>]*>Readable document<\/button>/);
+    expect(html).not.toMatch(/<button[^>]*>Protected session<\/button>/);
+    expect(html).not.toMatch(/<button[^>]*>Missing material<\/button>/);
+    expect(html).toContain('No reader is available for this material.');
+    if (!preview) expect(html).toContain('Content unavailable');
+  });
   it('keeps the third recommendation ahead of overlapping pages, without duplicate IDs', () => {
     const { resources } = createTaskDetailFixture();
     const result = mergeTaskResources(resources.slice(0, 3), [

@@ -449,6 +449,7 @@
     "historyContextUnavailable": "Pełny kontekst historyczny niedostępny",
     "materialAvailable": "Dostępne",
     "materialUnavailable": "Treść niedostępna",
+    "readerUnavailable": "Brak czytnika tego materiału.",
     "materialForbidden": "Dostęp ograniczony",
     "restrictedMaterial": "Materiał chroniony"
   }

@@ -19,7 +19,8 @@ import { requireCapability } from '../../auth';
 import type { SpecificationWorkspaceRepository } from './repository';
 import { presentWorkspace } from './presenter';
 import { authorizeSessionReferences } from './authorize-projection';
-import { authorizedTaskResources, registerTaskPages } from './task-pages';
+import { registerTaskPages } from './task-pages';
+import { authorizedTaskResources, authorizeTaskReferences } from './authorize-task-references';
 
 export interface SpecificationWorkspaceEndpointOptions {
   readonly repository?: SpecificationWorkspaceRepository;
@@ -129,6 +130,13 @@ export const specificationWorkspaceEndpoint: FastifyPluginCallback<
       if (task?.snapshot) {
         if (task.snapshot.specification.id !== request.params.specId)
           throw new Error('Mismatched Task Specification.');
+        const canReadSession = (sessionId: string) =>
+          request.authz.can({
+            resource: SessionCapabilities,
+            capability: SessionCapabilities.capabilities.View,
+            scope: { specId: request.params.specId, sessionId },
+          });
+        authorizeTaskReferences(task.snapshot, request.params.specId, canReadSession);
         const resources = task.snapshot.sections.resources;
         if (resources.state === 'available') {
           // Authorize before choosing recommendations/count, including page-only references.
@@ -136,27 +144,30 @@ export const specificationWorkspaceEndpoint: FastifyPluginCallback<
             request.params.specId,
             request.params.taskId,
           );
-          if (!all && resources.data.page) {
+          if (
+            !all &&
+            (resources.data.page ||
+              resources.data.visibleTotal !== resources.data.recommended.length)
+          ) {
             task.snapshot.sections.resources = { state: 'unavailable', reason: 'not_implemented' };
           } else {
             const visible = authorizedTaskResources(
               all ?? resources.data.recommended,
               request.params.specId,
-              (sessionId) =>
-                request.authz.can({
-                  resource: SessionCapabilities,
-                  capability: SessionCapabilities.capabilities.View,
-                  scope: { specId: request.params.specId, sessionId },
-                }),
+              canReadSession,
             );
-            task.snapshot.sections.resources = {
-              state: 'available',
-              data: {
-                ...resources.data,
-                recommended: visible.slice(0, 3),
-                visibleTotal: visible.length,
-              },
-            };
+            task.snapshot.sections.resources =
+              visible.length > 3 && !resources.data.page
+                ? { state: 'unavailable', reason: 'source_unavailable' }
+                : {
+                    state: 'available',
+                    data: {
+                      ...resources.data,
+                      recommended: visible.slice(0, 3),
+                      visibleTotal: visible.length,
+                      page: visible.length > 3 ? resources.data.page : null,
+                    },
+                  };
           }
         }
       }

@@ -35,7 +35,7 @@ export function useTaskResources(specId: string, taskId: string, snapshot?: Task
     ...query,
     retryPage,
     accessDenied: isHttpClientError(query.error) && query.error.status === 403,
-    readerAvailable: typeof taskApi.getResources === 'function',
+    readerAvailable: Boolean(token) && typeof taskApi.getResources === 'function',
   };
 }
 export function useTaskHistory(specId: string, taskId: string, snapshot?: TaskSnapshot) {

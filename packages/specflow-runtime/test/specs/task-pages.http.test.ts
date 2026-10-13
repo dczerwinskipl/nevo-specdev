@@ -1,4 +1,4 @@
-import { authorizedTaskResources } from '../../src/features/specs/workspace/task-pages';
+import { authorizedTaskResources } from '../../src/features/specs/workspace/authorize-task-references';
 import { demoTaskResources } from '../../src/features/specs/demo/task';
 import { describe, expect, it } from 'vitest';
 import type {

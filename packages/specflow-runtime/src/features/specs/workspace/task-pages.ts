@@ -8,7 +8,6 @@ import {
   TaskHistoryPageSchema,
   TaskSnapshotExpiredSchema,
   SpecificationReadErrorSchema,
-  type TaskResource,
 } from '@nevo/specflow-contracts/specs/workspace';
 import {
   AuthenticationRequiredErrorResponseSchema,
@@ -16,19 +15,7 @@ import {
 } from '@nevo/specflow-contracts/authorization';
 import { requireCapability } from '../../auth';
 import type { SpecificationWorkspaceRepository } from './repository';
-
-export function authorizedTaskResources(
-  items: TaskResource[],
-  specId: string,
-  canReadSession: (id: string) => boolean,
-) {
-  return items.filter((item) => {
-    if (item.link.state === 'forbidden') return false;
-    if (item.link.state !== 'available') return true;
-    const target = item.link.target;
-    return target.kind === 'session' ? canReadSession(target.sessionId) : target.specId === specId;
-  });
-}
+import { authorizedTaskResources } from './authorize-task-references';
 
 export function registerTaskPages(
   app: FastifyInstance,

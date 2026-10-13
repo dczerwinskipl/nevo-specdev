@@ -61,6 +61,13 @@ describe('Task inspection', () => {
       title: 'Private evidence',
       link: { state: 'forbidden' },
     });
+    section.data.items[0]!.evidence.push(
+      {
+        title: 'Session evidence',
+        link: { state: 'available', target: { kind: 'session', sessionId: 's1' } },
+      },
+      { title: 'Missing evidence', link: { state: 'unavailable', reason: 'not_found' } },
+    );
     const html = render(
       <TaskInspection
         task={mapFullTaskResponse(response)}
@@ -71,6 +78,9 @@ describe('Task inspection', () => {
     );
     expect(html).toMatch(/<button[^>]*>Verification instructions<\/button>/);
     expect(html).not.toMatch(/<button[^>]*>Private evidence<\/button>/);
+    expect(html).not.toMatch(/<button[^>]*>Session evidence<\/button>/);
+    expect(html).not.toMatch(/<button[^>]*>Missing evidence<\/button>/);
+    expect(html).toContain('No reader is available for this material.');
   });
   it('does not retarget open evidence when the snapshot changes', () => {
     const { response } = createTaskDetailFixture();

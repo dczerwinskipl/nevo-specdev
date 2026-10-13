@@ -449,6 +449,7 @@
     "historyContextUnavailable": "Full historical context unavailable",
     "materialAvailable": "Available",
     "materialUnavailable": "Content unavailable",
+    "readerUnavailable": "No reader is available for this material.",
     "materialForbidden": "Access restricted",
     "restrictedMaterial": "Restricted material"
   }
