@@ -25,7 +25,7 @@ related:
 
 Build declarative workflow loader and validation within Engine. Resolve definition from **target execution workspace**; pin immutable definition provenance to attempt (digest/retained content or verified Git object). Respect identity `(change, task, step, attempt)` and versioned transition semantics.
 
-**Future compatibility only:** Keep workflow-step attempt identity independent from the number of later execution instances, Sessions or Runs. This task still proves one minimal attempt, not multi-instance definition schema. See [deferred multi-instance design](../../../multi-instance-execution.md).
+**Future compatibility only:** Keep workflow-step attempt identity independent from the number of later execution instances, Sessions or Runs. This task still proves one minimal attempt, not the deferred user-configurable multi-instance definition schema. See [deferred multi-instance design](../../../multi-instance-execution.md).
 
 ## Prerequisites
 

@@ -25,7 +25,7 @@ related:
 
 Implement read-only `inspect`, readiness and blocker reporting; explicit `start` activates or resumes, `finish` completes without automatically starting the next step; enforce declared transition branch. Preserve one canonical state, not UI/status duplicates.
 
-**Future compatibility only:** A step is the canonical transition unit; do not make the one Session/Turn that performed work its durable identity. This task implements exactly one real step start/finish, not N independent contribution slots or aggregate finalization; see [deferred multi-instance design](../../../multi-instance-execution.md).
+**Future compatibility only:** A step is the canonical transition unit; do not make the one Session/Turn that performed work its durable identity. This task implements exactly one real step start/finish, not future N instance slots, typed contribution aggregation or aggregate finalization; see [deferred multi-instance design](../../../multi-instance-execution.md).
 
 ## Prerequisites
 

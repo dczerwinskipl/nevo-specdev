@@ -25,7 +25,7 @@ related:
 
 Define stable product `sessionId`, `turnId`, `workId`, `interactionId` and separate provider native `ProviderSessionRef=(provider, providerSessionId)`; preserve existing normative adapter meaning until the new owned-ID contract is deliberately adopted. Do **not** derive Session from Task, workspace path or providerSessionId alone.
 
-**Future compatibility only:** Keep product Session/Turn identities independent of `(spec, task, step, attempt)` and do not assume one Turn per workflow attempt. Stable review instance/run identities are deferred to the [future plan](../../../multi-instance-plan/README.md).
+**Future compatibility only:** Keep product Session/Turn identities independent of `(spec, task, step, attempt)` and do not assume one Turn per workflow attempt. Stable step-instance/run identities are deferred to the [future plan](../../../multi-instance-plan/README.md).
 
 ## Prerequisites
 

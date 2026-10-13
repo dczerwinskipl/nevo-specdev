@@ -25,7 +25,7 @@ related:
 
 Link one managed writable Turn to an actual Workflow attempt, then call explicit Engine `step finish` after passing declared gates; verify no hidden transition on Turn settlement. Also show a standalone truly read-only Turn with no workflow/claim.
 
-**Future compatibility only:** Prove the current single-instance `step finish` changes canonical workflow state exactly once. Do not assume provider Turn termination is finalization and do not hardwire the concept that there can never be several evidence-producing runs for one step. The agent-facing multi-instance `finish` versus explicit submit decision is deferred to the [idea](../../../multi-instance-execution.md).
+**Future compatibility only:** Prove the current single-instance `step finish` changes canonical workflow state exactly once. Do not assume provider Turn termination is finalization and do not hardwire the concept that there can never be several evidence-producing runs for one step. The agent-facing contribution `finish` versus a dedicated instance-submit command remains an open decision in the [idea](../../../multi-instance-execution.md); current one-instance semantics do not change.
 
 ## Prerequisites
 
