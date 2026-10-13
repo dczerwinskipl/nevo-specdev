@@ -20,8 +20,8 @@ export function DocumentContent({
   const { t } = useTranslation();
   const { documentApi } = useAppServices();
   const query = useQuery({
-    queryKey: documentKeys.detail(specId, documentId),
-    queryFn: ({ signal }) => documentApi.getDocument(specId, documentId, signal),
+    queryKey: documentKeys.detail(specId, documentId, expectedRevision),
+    queryFn: ({ signal }) => documentApi.getDocument(specId, documentId, signal, expectedRevision),
   });
 
   if (query.isPending)

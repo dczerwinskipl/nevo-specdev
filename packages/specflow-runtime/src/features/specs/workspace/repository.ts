@@ -91,30 +91,18 @@ export interface WorkspaceReadModel {
     readonly startSession: { readonly available: boolean; readonly reason?: string };
   };
 }
-export interface WorkspaceDocumentRecord {
-  readonly id: string;
-  readonly title: string;
-  readonly content: string;
-  readonly revision: string;
-}
-export interface WorkspaceTaskDetailRecord {
-  readonly task: WorkspaceTaskRecord;
-  readonly purpose?: string;
-  readonly acceptanceCriteria: string[];
-  readonly workflow?: string;
-  readonly snapshot?: import('@nevo/specflow-contracts/specs/workspace').TaskSnapshot;
-}
-
+export type SpecificationReadModel = Omit<
+  WorkspaceReadModel,
+  'sections' | 'recommendedSessionId'
+> & { sections: Pick<WorkspaceReadModel['sections'], 'activity' | 'repository' | 'changes'> };
 export interface SpecificationWorkspaceRepository {
-  readWorkspace(specId: string): Promise<WorkspaceReadModel | null>;
-  readDocument(specId: string, documentId: string): Promise<WorkspaceDocumentRecord | null>;
-  readTask(specId: string, taskId: string): Promise<WorkspaceTaskDetailRecord | null>;
-  readTaskResources?(
-    specId: string,
-    taskId: string,
-  ): Promise<import('@nevo/specflow-contracts/specs/workspace').TaskResource[] | null>;
-  readTaskHistory?(
-    specId: string,
-    taskId: string,
-  ): Promise<import('@nevo/specflow-contracts/specs/workspace').TaskHistoryPage['items'] | null>;
+  readSpecification(specId: string): Promise<SpecificationReadModel | null>;
+}
+export interface WorkspaceContributions {
+  tasks?(specId: string): Promise<WorkspaceReadModel['sections']['tasks']>;
+  documents?(specId: string): Promise<WorkspaceReadModel['sections']['documents']>;
+  sessions?(specId: string): Promise<{
+    section: WorkspaceReadModel['sections']['sessions'];
+    recommendedSessionId?: string;
+  }>;
 }

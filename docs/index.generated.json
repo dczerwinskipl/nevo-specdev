@@ -580,6 +580,41 @@
       ]
     },
     {
+      "id": "architecture.runtime.task-read-composition",
+      "type": "architecture",
+      "title": "Task read composition and domain ownership",
+      "status": "current",
+      "file": "docs/architecture/runtime/task-read-composition.md",
+      "read_when": [
+        "separating Task and Document reads from Specification Workspace",
+        "integrating Engine reads with Task HTTP projections",
+        "reviewing authority, coherence or pagination of Task detail"
+      ],
+      "summary": "Feature-owned Task and Document application reads, Engine-owned execution facts, bounded authorized paging, and explicit production readiness.",
+      "related": [
+        "architecture.workflow.deterministic-workflow",
+        "architecture.runtime.ownership-and-lifecycle",
+        "architecture.runtime.authorization",
+        "engineering.shared.code-organization",
+        "product.specflow.ui.data-loading-and-integration",
+        "reference.api.task-reads"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "runtime",
+        "workflow",
+        "server",
+        "security"
+      ],
+      "tags": [
+        "tasks",
+        "projections",
+        "engine",
+        "pagination",
+        "ownership"
+      ]
+    },
+    {
       "id": "architecture.workflow.deterministic-workflow",
       "type": "architecture",
       "title": "Deterministic workflow",
@@ -2838,8 +2873,9 @@
         "implementing or consuming the Specification Workspace API",
         "validating Workspace authentication and feature availability"
       ],
-      "summary": "Typed Specification Workspace, document and Task read endpoints with explicit Runtime data source, authorization and independent detail loading.",
+      "summary": "Typed Specification Workspace composition with explicit Runtime data source, authorization and independent detail loading.",
       "related": [
+        "reference.api.task-reads",
         "reference.api.specs-overview",
         "architecture.runtime.authorization",
         "product.specflow.ui.data-loading-and-integration"
@@ -2859,6 +2895,37 @@
       "related": [
         "architecture.runtime.authorization",
         "product.specflow.ui.application-architecture"
+      ]
+    },
+    {
+      "id": "reference.api.task-reads",
+      "type": "reference",
+      "title": "Task and document read API",
+      "status": "current",
+      "file": "docs/reference/api/task-reads.md",
+      "read_when": [
+        "implementing the Task read ownership refactor",
+        "migrating Task schemas out of Specification Workspace",
+        "implementing scoped Task page tokens and continuation"
+      ],
+      "summary": "Compatible Task and Document HTTP ownership, application outcomes, page lease semantics and migration constraints; production Engine adapters remain dependent.",
+      "related": [
+        "architecture.runtime.task-read-composition",
+        "reference.api.specification-workspace",
+        "reference.api.authorization"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "server",
+        "runtime",
+        "workflow",
+        "security"
+      ],
+      "tags": [
+        "tasks",
+        "documents",
+        "pagination",
+        "compatibility"
       ]
     },
     {

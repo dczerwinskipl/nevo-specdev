@@ -6,14 +6,15 @@ export interface DocumentApi {
     specId: string,
     documentId: string,
     signal?: AbortSignal,
+    revision?: string,
   ): Promise<SpecificationDocumentResponse>;
 }
 
 export function createRuntimeDocumentApi(http: HttpRequestClient): DocumentApi {
   return {
-    getDocument: (specId, documentId, signal) =>
+    getDocument: (specId, documentId, signal, revision) =>
       http.get<SpecificationDocumentResponse>(
-        `/api/specs/${encodeURIComponent(specId)}/documents/${encodeURIComponent(documentId)}`,
+        `/api/specs/${encodeURIComponent(specId)}/documents/${encodeURIComponent(documentId)}${revision === undefined ? '' : `?revision=${encodeURIComponent(revision)}`}`,
         { signal },
       ),
   };

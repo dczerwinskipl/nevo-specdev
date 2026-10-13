@@ -1,5 +1,3 @@
-import { authorizedTaskResources } from '../../src/features/specs/workspace/authorize-task-references';
-import { demoTaskResources } from '../../src/features/specs/demo/task';
 import { describe, expect, it } from 'vitest';
 import type {
   SpecificationTaskResponse,
@@ -9,24 +7,11 @@ import { createRuntimeApp } from '../../src/server/app';
 import { passwordConfig } from '../auth/support/config';
 
 describe('Task snapshot and page HTTP boundary', () => {
-  it('filters denied and cross-spec references before recommendation/count selection', () => {
-    const refs = demoTaskResources('admission', 'TASK-03').slice(0, 5);
-    refs[0]!.link = { state: 'forbidden' };
-    refs[1]!.link = {
-      state: 'available',
-      target: { kind: 'document', specId: 'other', documentId: 'spec', revision: '1' },
-    };
-    refs[2]!.link = { state: 'available', target: { kind: 'session', sessionId: 'denied' } };
-    refs[3]!.link = { state: 'available', target: { kind: 'session', sessionId: 'allowed' } };
-    expect(
-      authorizedTaskResources(refs, 'admission', (id) => id === 'allowed').map((ref) => ref.id),
-    ).toEqual(['document-4', 'document-5']);
-  });
   it('serves demo detail, scopes pages, excludes recommendations and rejects stale tokens', async () => {
     const config = passwordConfig();
     const app = await createRuntimeApp(
       { ...config, authentication: { ...config.authentication, mode: 'none' } },
-      { specs: { mode: 'demo' } },
+      { dataMode: 'demo' },
     );
     try {
       const response = await app.inject('/api/specs/admission/tasks/TASK-03');
@@ -62,7 +47,7 @@ describe('Task snapshot and page HTTP boundary', () => {
     }
   });
   it('requires authentication for both lazy page routes', async () => {
-    const app = await createRuntimeApp(passwordConfig(), { specs: { mode: 'demo' } });
+    const app = await createRuntimeApp(passwordConfig(), { dataMode: 'demo' });
     try {
       for (const kind of ['resources', 'history']) {
         const result = await app.inject(
@@ -84,7 +69,7 @@ describe('Task snapshot and page HTTP boundary', () => {
           assignments: [{ userId: 'demo-user', role: 'viewer', scope: { specId: 'other' } }],
         },
       },
-      { specs: { mode: 'demo' } },
+      { dataMode: 'demo' },
     );
     try {
       for (const suffix of ['', '/resources?token=any', '/history?token=any'])

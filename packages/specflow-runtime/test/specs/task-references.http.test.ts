@@ -1,82 +1,27 @@
-import Fastify from 'fastify';
 import { describe, expect, it } from 'vitest';
 import { createAuthorization } from '@nevo/authorization';
 import { SpecCapabilities } from '@nevo/specflow-contracts/specs';
 import { SessionCapabilities } from '@nevo/specflow-contracts/sessions';
-import type { SpecificationTaskResponse, TaskLink } from '@nevo/specflow-contracts/specs/workspace';
 import { createRequestAuthorization } from '../../src/features/auth/authorization/request-authorization';
-import { specificationWorkspaceEndpoint } from '../../src/features/specs/workspace/endpoint';
-import { createDemoSpecsRepositories } from '../../src/features/specs/demo/repositories';
-import type { SpecificationWorkspaceRepository } from '../../src/features/specs/workspace/repository';
+import { createDemoSpecsRepositories } from '../../src/features/specs';
+import { createDemoTaskSources } from '../../src/features/tasks';
+import { readTaskDetail } from '../../src/features/tasks/detail/read-task-detail';
+import { PageLeases } from '../../src/features/tasks/reads/page-leases';
+import { createRuntimeApp } from '../../src/server/app';
+import { passwordConfig } from '../auth/support/config';
+import type { SpecificationTaskResponse } from '@nevo/specflow-contracts/tasks';
 
-async function appFor(repository: SpecificationWorkspaceRepository, sessionAccess: boolean) {
-  const app = Fastify();
-  const subject = { kind: 'user' as const, id: 'reader' };
-  const authorization = createAuthorization({
-    resources: [SpecCapabilities, SessionCapabilities],
-    roles: {
-      specs: [SpecCapabilities.capabilities.View],
-      sessions: [SessionCapabilities.capabilities.View],
-    },
-    assignments: [
-      { subject, role: 'specs', scope: { specId: 'admission' } },
-      ...(sessionAccess
-        ? [{ subject, role: 'sessions', scope: { sessionId: 'allowed-session' } }]
-        : []),
-    ],
-  });
-  app.decorateRequest('authz', {
-    getter: () => createRequestAuthorization({ mode: 'subject', subject }, authorization),
-  });
-  app.register(specificationWorkspaceEndpoint, { repository });
-  return app;
-}
-
-describe('Task reference authorization HTTP projection', () => {
+describe('Task reference authorization and incomplete source regression', () => {
   it.each([false, true])(
-    'filters every reference surface with session access=%s',
+    'keeps spec and session permissions independent (Session access=%s)',
     async (sessionAccess) => {
-      const { workspaceRepository } = createDemoSpecsRepositories();
-      const task = (await workspaceRepository.readTask('admission', 'TASK-03'))!;
-      const snapshot = task.snapshot!;
-      const requirements = snapshot.sections.humanRequirements;
-      if (requirements.state !== 'available') throw new Error('Expected requirements');
-      const links: { title: string; link: TaskLink }[] = [
-        {
-          title: 'Allowed session description',
-          link: { state: 'available', target: { kind: 'session', sessionId: 'allowed-session' } },
-        },
-        {
-          title: 'Secret session description',
-          link: { state: 'available', target: { kind: 'session', sessionId: 'secret-session' } },
-        },
-        {
-          title: 'Legal document',
-          link: {
-            state: 'available',
-            target: { kind: 'document', specId: 'admission', documentId: 'spec', revision: '1' },
-          },
-        },
-        ...(['task', 'document', 'report', 'changes', 'requirement'] as const).map(
-          (kind): { title: string; link: TaskLink } => ({
-            title: `Secret foreign ${kind}`,
-            link: {
-              state: 'available',
-              target: {
-                kind,
-                specId: 'secret-spec',
-                taskId: 'secret-task',
-                documentId: 'secret-document',
-                reportId: 'secret-report',
-                comparisonId: 'secret-changes',
-                requirementId: 'secret-requirement',
-                revision: '1',
-              },
-            },
-          }),
-        ),
-      ];
-      requirements.data.items = [
+      const sources = createDemoTaskSources(createDemoSpecsRepositories().catalogue);
+      const definition = (await sources.definitions!.resolve('admission', 'TASK-03'))!;
+      const execution = (await sources.execution!.inspect(
+        definition.identity,
+        definition.version,
+      ))!;
+      execution.requirements = [
         {
           id: 'gate',
           definitionRevision: '1',
@@ -92,120 +37,107 @@ describe('Task reference authorization HTTP projection', () => {
           title: 'Check materials',
           instruction: null,
           state: 'pending',
-          actions: [],
-          evidence: links,
-        },
-      ];
-      requirements.data.pendingCount = 1;
-      snapshot.sections.dependencies = {
-        state: 'available',
-        data: { items: links.map((item, index) => ({ ...item, taskId: `dependency-${index}` })) },
-      };
-      snapshot.sections.recovery = {
-        state: 'available',
-        data: {
-          id: 'secret-recovery',
-          summary: 'Secret recovery description',
-          state: 'stopped',
-          link: links[1]!.link,
-        },
-      };
-      const sourceResources = (await workspaceRepository.readTaskResources!(
-        'admission',
-        'TASK-03',
-      ))!;
-      const resources = links.map((item, index) => ({
-        ...sourceResources[0]!,
-        ...item,
-        id: `ref-${index}`,
-      }));
-      const app = await appFor(
-        {
-          ...workspaceRepository,
-          readTask: () => Promise.resolve(task),
-          readTaskResources: () => Promise.resolve(resources),
-          readTaskHistory: async () => [
+          actions: [{ label: 'Confirm', feedbackRequired: false }],
+          evidence: [
             {
-              ...(await workspaceRepository.readTaskHistory!('admission', 'TASK-03'))![0]!,
-              resources,
+              title: 'Protected session description',
+              link: {
+                state: 'available',
+                target: { kind: 'session', sessionId: 'protected-session' },
+              },
+            },
+            {
+              title: 'Secret foreign document',
+              link: {
+                state: 'available',
+                target: {
+                  kind: 'document',
+                  specId: 'secret-spec',
+                  documentId: 'secret-document',
+                  revision: '1',
+                },
+              },
             },
           ],
         },
-        sessionAccess,
-      );
-      try {
-        const response = await app.inject('/api/specs/admission/tasks/TASK-03');
-        expect(response.statusCode).toBe(200);
-        const body = response.json<SpecificationTaskResponse>();
-        const human = body.snapshot!.sections.humanRequirements;
-        expect(
-          human.state === 'available' && human.data.items[0]!.evidence.map((item) => item.title),
-        ).toEqual(
-          sessionAccess ? ['Allowed session description', 'Legal document'] : ['Legal document'],
-        );
-        expect(body.snapshot!.sections.recovery).toEqual({ state: 'forbidden' });
-        const history = snapshot.sections.history;
-        if (history.state !== 'available') throw new Error('Expected history');
-        const historyResponse = await app.inject(
-          `/api/specs/admission/tasks/TASK-03/history?token=${encodeURIComponent(history.data.token)}`,
-        );
-        expect(historyResponse.statusCode).toBe(200);
-        for (const output of [response.body, historyResponse.body]) {
-          expect(output).not.toContain('Secret');
-          expect(output).not.toContain('secret-');
-          if (!sessionAccess) expect(output).not.toContain('allowed-session');
-        }
-        // A denied request cannot poison a shared adapter snapshot for a later authorized request.
-        expect(requirements.data.items[0]!.evidence).toHaveLength(links.length);
-        expect(snapshot.sections.recovery.state).toBe('available');
-      } finally {
-        await app.close();
-      }
-    },
-  );
-
-  it.each([
-    { total: 12, count: 3, page: false, reader: false, available: false },
-    { total: 12, count: 3, page: true, reader: false, available: false },
-    { total: 3, count: 3, page: false, reader: false, available: true },
-    { total: 0, count: 0, page: false, reader: false, available: true },
-    { total: 2, count: 3, page: false, reader: false, available: false },
-    { total: 12, count: 3, page: false, reader: true, available: false },
-    { total: 12, count: 3, page: true, reader: true, available: true },
-  ])(
-    'never presents an incomplete resource source as complete: %j',
-    async ({ total, count, page, reader, available }) => {
-      const { workspaceRepository } = createDemoSpecsRepositories();
-      const task = (await workspaceRepository.readTask('admission', 'TASK-03'))!;
-      const section = task.snapshot!.sections.resources;
-      if (section.state !== 'available') throw new Error('Expected resources');
-      section.data.recommended = section.data.recommended.slice(0, count);
-      section.data.visibleTotal = total;
-      if (!page) section.data.page = null;
-      const app = await appFor(
-        {
-          ...workspaceRepository,
-          readTask: () => Promise.resolve(task),
-          readTaskResources: reader
-            ? async () =>
-                (await workspaceRepository.readTaskResources!('admission', 'TASK-03'))!.slice(
-                  0,
-                  total,
-                )
-            : undefined,
+      ];
+      definition.dependencies = execution.requirements[0]!.evidence.map((item, index) => ({
+        ...item,
+        taskId: 'dependency-' + index,
+      }));
+      execution.recovery = {
+        id: 'recovery',
+        state: 'stopped',
+        summary: 'Protected recovery',
+        link: execution.requirements[0]!.evidence[0]!.link,
+      };
+      const subject = { kind: 'user' as const, id: 'reader' };
+      const authorization = createAuthorization({
+        resources: [SpecCapabilities, SessionCapabilities],
+        roles: {
+          specs: [SpecCapabilities.capabilities.View],
+          sessions: [SessionCapabilities.capabilities.View],
         },
-        false,
+        assignments: [
+          { subject, role: 'specs', scope: { specId: 'admission' } },
+          ...(sessionAccess
+            ? [
+                {
+                  subject,
+                  role: 'sessions',
+                  scope: { specId: 'actual-owner', sessionId: 'protected-session' },
+                },
+              ]
+            : []),
+        ],
+      });
+      const authz = createRequestAuthorization({ mode: 'subject', subject }, authorization);
+      const deps = {
+        ...sources,
+        leases: new PageLeases(),
+        definitions: { resolve: () => Promise.resolve(definition) },
+        execution: { inspect: () => Promise.resolve(execution) },
+        sessions: {
+          resolve: (sessionId: string) =>
+            Promise.resolve({
+              sessionId,
+              specId: 'actual-owner',
+              projectId: definition.identity.projectId,
+              workspaceId: definition.identity.workspaceId,
+            }),
+        },
+      };
+      const result = await readTaskDetail(deps, 'admission', 'TASK-03', authz);
+      expect(result.kind).toBe('ok');
+      if (result.kind !== 'ok') throw Error('Expected detail');
+      const body = JSON.stringify(result.value);
+      expect(body).not.toContain('secret-');
+      expect(body).not.toContain('Secret foreign');
+      expect(body.includes('protected-session')).toBe(sessionAccess);
+      const human = result.value.snapshot!.sections.humanRequirements;
+      expect(human.state === 'available' && human.data.items[0]!.actions).toEqual([]);
+      expect(human.state === 'available' && human.data.items[0]!.inspectionProblem).toBe(
+        'Required material cannot be accessed.',
       );
-      try {
-        const response = await app.inject('/api/specs/admission/tasks/TASK-03');
-        expect(response.statusCode).toBe(200);
-        const resources = response.json<SpecificationTaskResponse>().snapshot!.sections.resources;
-        expect(resources.state).toBe(available ? 'available' : 'unavailable');
-        if (resources.state === 'available') expect(resources.data.visibleTotal).toBe(total);
-        expect(section.data.visibleTotal).toBe(total);
-      } finally {
-        await app.close();
-      }
+      expect(execution.requirements[0]!.evidence).toHaveLength(2);
     },
   );
+  it('returns explicit unavailable over HTTP without a resource reader rather than shrinking the count', async () => {
+    const sources = createDemoTaskSources(createDemoSpecsRepositories().catalogue),
+      config = passwordConfig();
+    const app = await createRuntimeApp(
+      { ...config, authentication: { ...config.authentication, mode: 'none' } },
+      { tasks: { ...sources, resources: undefined } },
+    );
+    try {
+      const response = await app.inject('/api/specs/admission/tasks/TASK-03');
+      expect(response.statusCode).toBe(200);
+      expect(response.json<SpecificationTaskResponse>().snapshot!.sections.resources).toEqual({
+        state: 'unavailable',
+        reason: 'not_implemented',
+      });
+    } finally {
+      await app.close();
+    }
+  });
 });

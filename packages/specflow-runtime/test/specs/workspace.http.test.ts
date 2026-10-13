@@ -9,37 +9,38 @@ import { InMemoryAuthenticationStore } from '../../src/features/auth/authenticat
 import { authCookieNames } from '../../src/features/auth/authentication/http/cookies';
 import { createRuntimeApp } from '../../src/server/app';
 import { passwordConfig } from '../auth/support/config';
-import { createDemoSpecsRepositories } from '../../src/features/specs/demo/repositories';
+import { createDemoSpecsRepositories } from '../../src/features/specs';
+import { createDemoTaskSources } from '../../src/features/tasks';
 
 describe('Specification Workspace Runtime HTTP integration', () => {
   it('rejects mismatched document and Task identifiers returned by the source', async () => {
     const config = passwordConfig();
-    const { workspaceRepository } = createDemoSpecsRepositories();
+    const { catalogue } = createDemoSpecsRepositories();
+    const sources = createDemoTaskSources(catalogue);
     const app = await createRuntimeApp(
+      { ...config, authentication: { ...config.authentication, mode: 'none' } },
       {
-        ...config,
-        authentication: { ...config.authentication, mode: 'none' },
-      },
-      {
-        specs: {
-          workspaceRepository: {
-            ...workspaceRepository,
-            readDocument: () =>
+        documents: {
+          source: {
+            read: () =>
               Promise.resolve({
-                id: 'different',
-                title: 'Wrong',
-                content: 'Secret',
-                revision: '1',
-              }),
-            readTask: () =>
-              Promise.resolve({
-                task: {
-                  id: 'WRONG',
+                kind: 'ok',
+                document: {
+                  specId: 'admission',
+                  id: 'different',
                   title: 'Wrong',
-                  status: { id: 'ready', label: 'Ready', lifecycle: 'pending' },
+                  content: 'Secret',
+                  revision: '1',
                 },
-                acceptanceCriteria: [],
               }),
+          },
+        },
+        tasks: {
+          definitions: {
+            async resolve() {
+              const def = (await sources.definitions!.resolve('admission', 'TASK-01'))!;
+              return { ...def, task: { ...def.task, id: 'WRONG' } };
+            },
           },
         },
       },
@@ -47,8 +48,8 @@ describe('Specification Workspace Runtime HTTP integration', () => {
     try {
       const doc = await app.inject('/api/specs/admission/documents/spec');
       const task = await app.inject('/api/specs/admission/tasks/TASK-01');
-      expect(doc.statusCode).toBe(500);
-      expect(task.statusCode).toBe(500);
+      expect(doc.statusCode).toBe(503);
+      expect(task.statusCode).toBe(503);
       expect(doc.body).not.toContain('Secret');
     } finally {
       await app.close();
@@ -62,7 +63,7 @@ describe('Specification Workspace Runtime HTTP integration', () => {
         ...config,
         authentication: { ...config.authentication, mode: 'none' },
       },
-      { specs: { mode: 'demo' } },
+      { dataMode: 'demo' },
     );
     try {
       const overviewResponse = await app.inject('/api/specs/overview');
@@ -142,7 +143,7 @@ describe('Specification Workspace Runtime HTTP integration', () => {
         ...config,
         authentication: { ...config.authentication, mode: 'none' },
       },
-      { specs: { mode: 'demo' } },
+      { dataMode: 'demo' },
     );
     try {
       const missing = await app.inject('/api/specs/unknown-spec/workspace');
@@ -175,7 +176,7 @@ describe('Specification Workspace Runtime HTTP integration', () => {
           assignments: [{ userId: 'demo-user', role: 'viewer', scope: { specId: 'security' } }],
         },
       },
-      { auth: { store }, specs: { mode: 'demo' } },
+      { auth: { store }, dataMode: 'demo' },
     );
     try {
       const anonymous = await app.inject('/api/specs/security/workspace');
