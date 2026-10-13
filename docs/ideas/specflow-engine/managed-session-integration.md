@@ -90,9 +90,9 @@ Every new Turn/start/resume resolves the current `workspaceId -> verified root` 
 
 ## Deferred same-step multi-instance execution
 
-The current Batch/Handover candidates do not schedule several reviewers for the **same** step/attempt. Preserve the future one-to-many association `workflowAttempt -> instance slots -> provider execution runs -> optional Runtime Session/Turn`, without making Sessions canonical workflow owners. Each slot keeps a stable ID across retries; each invocation has a distinct identity and recovery/fencing evidence. One terminal Turn must not close the group's workflow step or trigger the next Session automatically.
+Current Batch/Handover candidates do not schedule independent executions of the **same user-defined step attempt**. The future association is `workflowAttempt -> instance slots -> execution runs -> optional Runtime Session/Turn`; Sessions are not canonical workflow owners. Slots retain identity across retries, while invocations have distinct fencing/recovery identity. A terminal Turn does not close the workflow step.
 
-When configured, the group requires per-instance verified read-only capabilities and a frozen common review snapshot. Runtime may dispatch multiple concurrent provider Turns subject to capacity, but Engine must accept results through one offline-safe contribution/admission contract and perform the only aggregate workflow transition. External CLI reviewers need not appear as managed Runtime Sessions. This is a [future separate plan](multi-instance-plan/README.md), not SI01–SI08 scope.
+Runtime dispatches according to step instructions, effect scope, requested independence and concurrency limit. Engine accepts typed contributions and performs user-configured deterministic aggregation/one workflow finish through offline-safe operations shared with CLI/MCP. Read-only and common-input snapshots are **conditional policies**, not inherent in multi-instance. Prove offline Engine aggregation before managed scheduling; see [future plan](multi-instance-plan/README.md).
 
 ## Authorization and observation
 

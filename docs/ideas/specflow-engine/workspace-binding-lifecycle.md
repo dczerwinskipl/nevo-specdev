@@ -74,9 +74,9 @@ workflow complete (domain) -> integration proven (Git)
 
 These are not one automatic "finish" side effect. Deleting a worktree that remains canonical would create a self-inflicted unavailable spec.
 
-## Deferred review-group implications
+## Deferred multi-instance lifecycle implications
 
-A future multi-instance read-only review may not hold an exclusive writer claim yet still depends on a **specific frozen source**. Before rebind, relocation or cleanup, consider active review group/snapshot reservations as well as current writer claims and active managed Turns. Preserve historical per-instance evidence after relocation; never silently accept a review whose materialization no longer matches the originally frozen snapshot. Decide the source barrier/snapshot policy in [multi-instance design](multi-instance-execution.md), not during Foundation A.
+A group of instances for one user-defined step may depend on a configured input baseline or hold effect-specific resource ownership even without an exclusive writer claim. Rebind, relocation and cleanup must account for active instances, source reservations, writer claims and managed Turns. Preserve per-instance history and reject stale results when declared input consistency is violated. Do not impose frozen source inputs on steps that explicitly allow independent input; see [multi-instance execution](multi-instance-execution.md).
 
 ## Authorization scope after binding
 

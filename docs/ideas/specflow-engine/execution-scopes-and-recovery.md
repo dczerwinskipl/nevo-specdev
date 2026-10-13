@@ -88,9 +88,9 @@ Batch scope is explicit, ordered, per-Task, never inferred from historical Sessi
 
 ## Multi-instance scope (future; distinct from task batch)
 
-A `task-batch` means **one executor covering multiple Task attempts**. A proposed multi-instance step instead has **one** workflow attempt and several Engine-assigned independent contribution slots; either a slot may use several provider execution runs after technical retries. Do not infer the required slot count from Session history, the number of active Turns or `maxConcurrency`, and do not automatically allocate a new workflow attempt when one reviewer fails. Preserve accepted contributions when independently retrying another slot.
+A `task-batch` covers multiple Task attempts. Multi-instance execution instead has **one user-defined step attempt** and several Engine-assigned contribution slots, each with independent execution runs and retries. Step instructions, output schema, effect requirements and declared reducer determine result semantics. Do not infer slot count from Sessions, concurrent Turns or `maxConcurrency`, or allocate a new workflow attempt just because one run failed.
 
-Read-only instances skip a writer claim only when enforcement is real, while `start`/submit/finalize still transact under short Engine state locks. A terminal Turn without a valid result is not a review failure/pass. Partial/unknown results, stale run identities and ambiguous dispatch must not release an unsafe writer or cause aggregate `finish`. See [multi-instance design](multi-instance-execution.md); no multi-instance support is required by Foundation B.
+Read-only instances skip writer claims only when enforced capabilities prove that safe; write-producing instances need admission or isolation. Instance starts/submissions/finalization still use short Engine state coordination. Terminal Turns without validated contributions are not workflow results; stale runs and ambiguous effects cannot cause aggregate `finish`. See [multi-instance execution](multi-instance-execution.md). Foundation B remains single-instance.
 
 ## Acceptance and stage ownership
 

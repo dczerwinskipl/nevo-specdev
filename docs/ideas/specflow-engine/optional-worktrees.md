@@ -74,11 +74,11 @@ Do **not** reuse legacy `git checkout main` in the spec's linked worktree: a bra
 
 If removal fails, keep registry/journal for repair and return an explicit reason. Disappearing directory must not cause silent spec rebinding to main.
 
-## Deferred multi-instance review of one worktree
+## Deferred multi-instance execution and worktrees
 
-The one-spec managed worktree policy does **not** imply one Session/Turn or one reviewer per worktree. Several *enforced read-only* reviewer instances may inspect the same verified checkout without taking a long-lived exclusive writer claim, while their CLI/MCP result submissions use short Engine state coordination. This is not the same as several concurrently writing tasks and does not justify provisioning a worktree per reviewer by default.
+The one-spec managed worktree policy does **not** imply one Session, Turn or step instance per worktree. Several instances of one user-defined step may access the same verified checkout. Only technically enforced read-only executions can safely share it without a long-lived exclusive writer claim; their CLI/MCP contribution submissions still use short Engine state coordination. Writer or external-effect steps require suitable isolation, serialization and admission. Creating a worktree per instance is not a default requirement.
 
-A common checkout identity or Git HEAD does **not** prove that each reviewer read identical material: dirty/index/untracked content and an external writer can change independently. A future [multi-instance design](multi-instance-execution.md) must freeze verifiable review material, block or detect conflicting modifications/rebind/cleanup and invalidate stale evidence. An uninstrumented external process with OS-level file access cannot be physically fenced by a registry claim alone. No multi-review worktree mode is part of Foundation A.
+When a step requires comparable inputs, Git HEAD alone is insufficient: dirty/index/untracked content and external writers may change the material. Capture the requested baseline **after step activation**, then block or invalidate conflicting writes, rebind or cleanup. Other user-defined steps may have independent input policies. A registry claim cannot physically fence an external process with OS-level file access. This capability is outside Foundation A; see [multi-instance execution](multi-instance-execution.md).
 
 ## Move/delete outside SpecFlow
 

@@ -74,11 +74,11 @@ Define consistent hierarchy (project registry reservation -> specific workspace 
 | Claim expiry without proof of end                              | State becomes uncertain, not automatically free            |
 | Two claim-release attempts race                                | CAS/owner check means only real owner wins                 |
 
-## Deferred read-only multi-instance admission
+## Deferred multi-instance effects and admission
 
-A future one-step/many-reviewer design requires **no long-lived writer claim** for proven read-only work, even when several Session/Turns share one worktree. This does **not** remove the need for short cross-process control locks on instance allocation, result submission, aggregate finalization and owner intervention: those actions mutate durable Engine state and must use trusted identity, CAS and idempotency. Treat workflow attempt, instance and run identities separately. An unsupported writable provider cannot be made safe by merely giving it a `readOnly` label.
+Several instances of one **user-defined step** need independent run identity, but do not automatically imply either an exclusive writer claim or read-only access. Effects govern admission: enforced readers may share a verified workspace; writers require physical coordination or isolated workspaces; Git refs and external effects need separate checks. A writable provider does not become read-only through a prompt or flag.
 
-Read-only reviewer concurrency also requires a stable reviewed snapshot: concurrent source writers, external modifications, worktree rebind or cleanup may invalidate the group despite no reviewer holding a writer claim. Choose a compatible snapshot or writer-barrier policy before permitting concurrent reviews; only assert isolation guaranteed by the actual OS/provider capabilities. This is **deferred**, not a change to the current one-writer physical-workspace admission contract. See [multi-instance execution](multi-instance-execution.md).
+Instance allocation, submission, finalization and operator intervention still mutate Engine control-plane records under short cross-process locks/CAS. If a step requires shared input, pin the baseline **after activation** and enforce a source-change/rebind/cleanup policy. Verification gates may generate files and cannot bypass the effect policy. This capability remains deferred; see [multi-instance execution](multi-instance-execution.md).
 
 ## Admission versus authorization
 
