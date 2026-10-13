@@ -366,10 +366,10 @@
       "status": "draft",
       "file": "docs/ideas/specflow-engine/multi-instance-plan/README.md",
       "read_when": [
-        "planning follow-up work after Engine and managed execution integration",
-        "reviewing task dependencies and proof required for multi-agent review"
+        "planning user-defined step fan-out and deterministic fan-in after Engine foundation",
+        "reviewing dependencies for offline aggregation before managed orchestration"
       ],
-      "summary": "Future implementation plan with independent tasks to add evidence-producing instances under a single deterministic workflow step, without expanding the E1-E5 foundation.",
+      "summary": "Future implementation sequence for user-defined multi-instance workflow steps: Engine identities, effects and contributions, offline deterministic aggregation, then managed provider scheduling and end-to-end recovery.",
       "related": [
         "ideas.specflow-engine",
         "ideas.specflow-engine.multi-instance",
@@ -387,8 +387,7 @@
         "future-plan",
         "multi-instance",
         "deterministic",
-        "deferred",
-        "review"
+        "deferred"
       ]
     },
     {
@@ -1059,11 +1058,11 @@
       "status": "draft",
       "file": "docs/ideas/specflow-engine/multi-instance-execution.md",
       "read_when": [
-        "evaluating several independent AI reviewers of one task and one workflow step",
-        "designing independent start, result submission, retry and final step settlement",
-        "distinguishing multi-instance execution from parallel tasks and task batches"
+        "configuring multiple independent executions of one user-defined workflow step",
+        "designing instance start, result submission, retry and deterministic final settlement",
+        "distinguishing step instances from task batches and scheduler concurrency"
       ],
-      "summary": "Deferred exploration of multiple independently identified executions of one deterministic step, read-only review provenance, fault handling and deterministic aggregation without replacing the single canonical workflow attempt and transition.",
+      "summary": "Deferred, step-agnostic exploration of multiple independently identified executions of one user-defined deterministic step with policy-driven effects, result collection, aggregation and a single canonical workflow transition.",
       "related": [
         "ideas.specflow-engine",
         "ideas.specflow-engine.execution-scopes",
@@ -1083,11 +1082,10 @@
       ],
       "tags": [
         "multi-instance",
-        "review",
         "deterministic",
         "aggregation",
         "recovery",
-        "read-only"
+        "admission"
       ]
     },
     {
@@ -2148,14 +2146,14 @@
     {
       "id": "ideas.specflow-engine.multi-instance-plan.task-01",
       "type": "engineering",
-      "title": "M1 — Freeze step-instance identities and completion semantics",
+      "title": "M1 — Freeze user-defined step policy and execution identities",
       "status": "draft",
       "file": "docs/ideas/specflow-engine/multi-instance-plan/tasks/T01-execution-contracts.md",
       "read_when": [
         "implementing the deferred deterministic multi-instance execution plan",
-        "reviewing evidence for one stage of multi-review orchestration"
+        "reviewing independently verifiable Engine and Runtime execution stages"
       ],
-      "summary": "Deferred implementation task for freeze step-instance identities and completion semantics.",
+      "summary": "Deferred task for the generic user-defined step execution contract and its separately testable instance coordination and result lifecycle.",
       "related": [
         "ideas.specflow-engine.multi-instance-plan",
         "ideas.specflow-engine.multi-instance"
@@ -2171,21 +2169,20 @@
       "tags": [
         "future-task",
         "multi-instance",
-        "review",
         "deferred"
       ]
     },
     {
       "id": "ideas.specflow-engine.multi-instance-plan.task-02",
       "type": "engineering",
-      "title": "M2 — Freeze reviewed material and enforce read-only execution",
+      "title": "M2 — Capture input and enforce effect-scoped admission",
       "status": "draft",
       "file": "docs/ideas/specflow-engine/multi-instance-plan/tasks/T02-review-snapshot-and-admission.md",
       "read_when": [
         "implementing the deferred deterministic multi-instance execution plan",
-        "reviewing evidence for one stage of multi-review orchestration"
+        "reviewing independently verifiable Engine and Runtime execution stages"
       ],
-      "summary": "Deferred implementation task for freeze reviewed material and enforce read-only execution.",
+      "summary": "Deferred task for the generic user-defined step execution contract and its separately testable instance coordination and result lifecycle.",
       "related": [
         "ideas.specflow-engine.multi-instance-plan",
         "ideas.specflow-engine.multi-instance"
@@ -2201,21 +2198,20 @@
       "tags": [
         "future-task",
         "multi-instance",
-        "review",
         "deferred"
       ]
     },
     {
       "id": "ideas.specflow-engine.multi-instance-plan.task-03",
       "type": "engineering",
-      "title": "M3 — Persist instance contributions through one Engine contract",
+      "title": "M3 — Persist typed instance contributions via offline Engine",
       "status": "draft",
       "file": "docs/ideas/specflow-engine/multi-instance-plan/tasks/T03-result-submission.md",
       "read_when": [
         "implementing the deferred deterministic multi-instance execution plan",
-        "reviewing evidence for one stage of multi-review orchestration"
+        "reviewing independently verifiable Engine and Runtime execution stages"
       ],
-      "summary": "Deferred implementation task for persist instance contributions through one engine contract.",
+      "summary": "Deferred task for the generic user-defined step execution contract and its separately testable instance coordination and result lifecycle.",
       "related": [
         "ideas.specflow-engine.multi-instance-plan",
         "ideas.specflow-engine.multi-instance"
@@ -2231,21 +2227,20 @@
       "tags": [
         "future-task",
         "multi-instance",
-        "review",
         "deferred"
       ]
     },
     {
       "id": "ideas.specflow-engine.multi-instance-plan.task-04",
       "type": "engineering",
-      "title": "M4 — Schedule independent reviewers and recover each run",
+      "title": "M4 — Dispatch user-defined instances and recover individual runs",
       "status": "draft",
       "file": "docs/ideas/specflow-engine/multi-instance-plan/tasks/T04-managed-orchestration.md",
       "read_when": [
         "implementing the deferred deterministic multi-instance execution plan",
-        "reviewing evidence for one stage of multi-review orchestration"
+        "reviewing independently verifiable Engine and Runtime execution stages"
       ],
-      "summary": "Deferred implementation task for schedule independent reviewers and recover each run.",
+      "summary": "Deferred task for the generic user-defined step execution contract and its separately testable instance coordination and result lifecycle.",
       "related": [
         "ideas.specflow-engine.multi-instance-plan",
         "ideas.specflow-engine.multi-instance"
@@ -2261,21 +2256,20 @@
       "tags": [
         "future-task",
         "multi-instance",
-        "review",
         "deferred"
       ]
     },
     {
       "id": "ideas.specflow-engine.multi-instance-plan.task-05",
       "type": "engineering",
-      "title": "M5 — Apply typed aggregation and final transition once",
+      "title": "M5 — Resolve typed outputs and finalize one step offline",
       "status": "draft",
       "file": "docs/ideas/specflow-engine/multi-instance-plan/tasks/T05-aggregation-and-waivers.md",
       "read_when": [
         "implementing the deferred deterministic multi-instance execution plan",
-        "reviewing evidence for one stage of multi-review orchestration"
+        "reviewing independently verifiable Engine and Runtime execution stages"
       ],
-      "summary": "Deferred implementation task for apply typed aggregation and final transition once.",
+      "summary": "Deferred task for the generic user-defined step execution contract and its separately testable instance coordination and result lifecycle.",
       "related": [
         "ideas.specflow-engine.multi-instance-plan",
         "ideas.specflow-engine.multi-instance"
@@ -2291,21 +2285,20 @@
       "tags": [
         "future-task",
         "multi-instance",
-        "review",
         "deferred"
       ]
     },
     {
       "id": "ideas.specflow-engine.multi-instance-plan.task-06",
       "type": "engineering",
-      "title": "M6 — Prove offline/managed compatibility and regression",
+      "title": "M6 — Prove CLI and managed multi-instance compatibility",
       "status": "draft",
       "file": "docs/ideas/specflow-engine/multi-instance-plan/tasks/T06-end-to-end-proof.md",
       "read_when": [
         "implementing the deferred deterministic multi-instance execution plan",
-        "reviewing evidence for one stage of multi-review orchestration"
+        "reviewing independently verifiable Engine and Runtime execution stages"
       ],
-      "summary": "Deferred implementation task for prove offline/managed compatibility and regression.",
+      "summary": "Deferred task for the generic user-defined step execution contract and its separately testable instance coordination and result lifecycle.",
       "related": [
         "ideas.specflow-engine.multi-instance-plan",
         "ideas.specflow-engine.multi-instance"
@@ -2321,7 +2314,6 @@
       "tags": [
         "future-task",
         "multi-instance",
-        "review",
         "deferred"
       ]
     },
