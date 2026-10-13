@@ -23,22 +23,22 @@
   },
   "devDependencies": {
     "@nevo/figma-capture": "workspace:*",
-    "@playwright/test": "1.63.0",
+    "@playwright/test": "1.64.0",
     "@storybook/addon-a11y": "10.6.1",
     "@storybook/addon-docs": "10.6.1",
     "@storybook/addon-vitest": "10.6.1",
     "@storybook/react-vite": "10.6.1",
     "@tailwindcss/vite": "4.3.3",
-    "@tanstack/react-router": "1.170.41",
-    "@types/node": "24.19.0",
+    "@tanstack/react-router": "1.170.42",
+    "@types/node": "24.19.2",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitest/browser-playwright": "5.0.3",
-    "chromatic": "18.10.2",
-    "playwright": "1.63.0",
+    "chromatic": "18.12.0",
+    "playwright": "1.64.0",
     "storybook": "10.6.1",
     "tailwindcss": "4.3.3",
-    "vite": "8.3.2",
+    "vite": "8.3.4",
     "vitest": "5.0.3"
   }
 }

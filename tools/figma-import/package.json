@@ -20,10 +20,10 @@
     "@nevo/figma-core": "workspace:*"
   },
   "devDependencies": {
-    "@figma/plugin-typings": "1.140.0",
-    "@types/node": "24.19.0",
+    "@figma/plugin-typings": "1.141.0",
+    "@types/node": "24.19.2",
     "esbuild": "0.28.2",
-    "playwright": "1.63.0",
+    "playwright": "1.64.0",
     "vitest": "5.0.3"
   }
 }
