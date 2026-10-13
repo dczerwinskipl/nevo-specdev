@@ -22,5 +22,5 @@ jobs:
           pnpm docs:check --write
           pnpm docs:check
           echo 'DOCS_INDEX_DIFF_BEGIN'
-          git diff --no-ext-diff --unified=3 -- docs/index.generated.json
+          git diff --text --no-ext-diff --unified=2 -- docs/index.generated.json
           echo 'DOCS_INDEX_DIFF_END'
