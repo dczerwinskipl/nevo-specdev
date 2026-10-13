@@ -45,7 +45,30 @@ Own the delivery of one requested product screen from problem framing to the req
 
 An available DTO field, existing component or spare screen space is never evidence that a region belongs on the screen. For each major region ask what decision/question it serves, and whether deeper inspection is a better place. Unnecessary technical completeness is a design defect, not a reason to add another card.
 
-The independent UX review begins from the rendered mock and a minimal user scenario, **without the designer's explanatory layout rationale**. A reviewer must infer what the screen is for, what action matters and how detail is found, then reconcile observations with the authoritative contract. Review may recommend deleting/restructuring a region or revising the use case; do not fix repeated comprehension failures with cosmetic changes only. The author’s self-check is not independent review.
+The independent UX review begins with only the user goal, entry point and
+unannotated interactive render, **before** the reviewer reads the intended
+first scan, screen contract or designer's rationale. Preserve first-read
+observations, then reconcile them with authoritative evidence. The author’s
+self-check is not independent review. Review may recommend removing or
+restructuring a region or revising the use case, not just changing styling.
+
+Treat UX review as an actual gate rather than a completed activity:
+
+- **pass:** advance toward owner approval and implementation-facing
+  specification only when no material finding or product decision remains.
+- **changes-required:** correct the affected use case, hierarchy or mock
+  and obtain a new independent review of the affected scenario.
+- **owner-decision-required:** present the concrete choice to the owner,
+  record the decision in the owning contract and review the affected
+  scenario again.
+- **blocked:** do not claim a reviewed or verified design while the
+  interactive render, independent reviewer or essential evidence is missing.
+
+An explicit owner decision to accept a deviation must document its
+consequence and be included in the subsequent review. Do not proceed to
+implementation-facing specification or task planning with an open
+material UX finding; unaffected discovery or technical preparation can
+continue. These outcomes are local handoff decisions, not new Engine statuses.
 
 ### Gate dependencies and evidence
 
@@ -57,9 +80,20 @@ The independent UX review begins from the rendered mock and a minimal user scena
 
 ### Delegation is capability-dependent
 
-When the execution environment supports real subagents or separate independent invocations, delegate evidence gathering, UX design, technical specification, implementation and independent review to the appropriate existing profiles. Keep UX use cases, composition and mock in the **same UX Designer context** for continuity. Do not split them into artificial agent stages.
+- **Executable delegation:** only when available tools can actually
+  start an isolated specialist invocation and return its output, dispatch
+  work to the existing profiles and reconcile their results. Keep UX use
+  cases, composition and mock in the **same UX Designer context**.
+- **Manual handoff:** when tools cannot start and receive a specialist
+  invocation, prepare a precise artifact-linked handoff for the user or
+  another explicit invocation. An independently openable session is not
+  automatic delegation. Continue any unrelated work, but leave the
+  corresponding specialist/review gate pending until its real result is
+  received.
 
-If the environment cannot spawn/switch profiles, continue work legitimately available in the current context and provide a precise handoff with links for a separate invocation. Never impersonate a subagent, pretend a profile switched, or label your own second pass independent. An independent-review gate remains pending until genuinely performed.
+Never impersonate a subagent, claim a profile switch that did not occur
+or present the coordinator's own second pass as independent review.
+No scheduler or automatic transition is implied by these instructions.
 
 ### Handoffs and closeout
 
