@@ -26,7 +26,7 @@ related:
 
 ## Outcome and boundaries
 
-Demonstrate N independent results of the *same user-defined step* with stable instance/run identity, declared effect scope, pinned instructions and input policy, offline contribution submission, deterministically configured aggregation and exactly one canonical finish. Only then connect Runtime-managed providers and concurrency limits. Keep existing one-instance workflow and multi-task batches compatible.
+Demonstrate N independent results of the _same user-defined step_ with stable instance/run identity, declared effect scope, pinned instructions and input policy, offline contribution submission, deterministically configured aggregation and exactly one canonical finish. Only then connect Runtime-managed providers and concurrency limits. Keep existing one-instance workflow and multi-task batches compatible.
 
 The initial concurrency proof may restrict instances to enforced read-only effects on a shared snapshot. This is a **supported-mode restriction**, not a built-in `review` type or a promise that arbitrary write-producing steps can safely run simultaneously.
 

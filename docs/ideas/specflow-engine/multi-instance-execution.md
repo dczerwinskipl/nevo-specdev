@@ -57,11 +57,11 @@ The distinction between `step start` and group input capture is important: a `ch
 
 ## Effects, worktrees and repeatability
 
-**Multi-instance does not intrinsically mean read-only.** Effects belong to the user-defined step and verified executor capabilities: no source mutation, workspace writer, Git/ref changes or external side effects. The first **concurrent same-workspace** proof can be restricted to *technically enforced read-only* executions; this is a staged support limitation, not a rule that every multi-instance step must be a review.
+**Multi-instance does not intrinsically mean read-only.** Effects belong to the user-defined step and verified executor capabilities: no source mutation, workspace writer, Git/ref changes or external side effects. The first **concurrent same-workspace** proof can be restricted to _technically enforced read-only_ executions; this is a staged support limitation, not a rule that every multi-instance step must be a review.
 
 - True readers can coexist without a long-lived exclusive writer claim. CLI/MCP submission still performs Engine-owned control-plane writes using a short state lock/CAS.
 - Independent writers need proven isolation or serialization. A declared "readOnly" prompt does not prevent a provider from modifying files; a worktree is not an OS sandbox, and per-spec worktrees are not per-instance sandboxes.
-- External effects (network requests, APIs, tests generating files, Git refs) require declared admission and repeat/retry safety. Do not automatically retry an uncertain *effectful* run.
+- External effects (network requests, APIs, tests generating files, Git refs) require declared admission and repeat/retry safety. Do not automatically retry an uncertain _effectful_ run.
 - Comparable read-only analysis may require one immutable code/spec/input snapshot across instances. Git HEAD alone misses staged, unstaged and untracked changes. The policy may instead explicitly state that inputs are independent; do not impose an immutable review snapshot on all arbitrary user-defined steps.
 - For shared-input steps, coordinate activation -> snapshot/baseline -> instance starts, and block or invalidate source changes, rebind and cleanup according to the adopted isolation policy. Existing external writers may remain physically unfenceable.
 
@@ -78,7 +78,7 @@ Neither design trusts a user-supplied bare `instanceId` or Session ID as admissi
 
 ## Completion and typed, explicitly declared aggregation
 
-Completion policy asks *how many valid contributions are needed*; result aggregation asks *how to derive the declared step output from them*. Both are part of the user-defined versioned policy. There is **no generic implicit reduction** of arbitrary booleans, enums, arrays or strings.
+Completion policy asks _how many valid contributions are needed_; result aggregation asks _how to derive the declared step output from them_. Both are part of the user-defined versioned policy. There is **no generic implicit reduction** of arbitrary booleans, enums, arrays or strings.
 
 - **Boolean:** all / any with explicit predicate semantics. Without a declared policy: AND for every boolean is not meaningful.
 - **Ordered enum:** Declared order and min/max/worst/best reducer. Without a declared policy: No inferred severity order.
@@ -94,7 +94,7 @@ Example **only**: a user-defined review step may choose `all-approved`, `any-blo
 
 **Technical independence:** distinct admitted instance IDs, execution runs and result provenance. **Semantic independence:** the user-configurable execution strategy (models/providers, distinct prompts/roles, exposure to other contributions, randomness, shared history). Separate Sessions alone do not prove different reasoning.
 
-Record *requested independence policy* and *observed provenance* where available. Do not claim diversity based solely on `N=3`. A policy may require distinct provider families, different agent profiles, no shared reviewer history or only unique runs; lacking provenance must be explicit, not silently represented as independent evidence. A strict requirement may block admission/finalization if it cannot be verified; other policies can permit repeated models. Keep initial prompts independent only where the step defines that rule.
+Record _requested independence policy_ and _observed provenance_ where available. Do not claim diversity based solely on `N=3`. A policy may require distinct provider families, different agent profiles, no shared reviewer history or only unique runs; lacking provenance must be explicit, not silently represented as independent evidence. A strict requirement may block admission/finalization if it cannot be verified; other policies can permit repeated models. Keep initial prompts independent only where the step defines that rule.
 
 ## Failure, recovery and operator action
 
