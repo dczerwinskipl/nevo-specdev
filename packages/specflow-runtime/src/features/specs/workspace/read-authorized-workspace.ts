@@ -46,7 +46,8 @@ export async function readAuthorizedWorkspace(
   for (const id of ids) {
     const owner = await sessions?.resolve(id);
     if (
-      owner?.specId === specId &&
+      owner?.sessionId === id &&
+      owner.specId === specId &&
       authz.can({
         resource: SessionCapabilities,
         capability: SessionCapabilities.capabilities.View,

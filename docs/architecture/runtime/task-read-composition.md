@@ -191,11 +191,17 @@ Retain existing `spec.view` at `{ specId }` for Task/document reads during this 
 feature modules do not automatically create new permission resources. Session data additionally
 requires `session.view` in its actual owning scope. Resolve membership before authorizing a
 reference; a URL's `specId` or a reference string is not proof of membership.
+The Session owner MUST return the exact requested `sessionId`. A mismatched identity is rejected
+before checking capabilities; a grant for another Session cannot authorize the original reference.
 
 Do not weaken the working authorization fixes on top of #60. Apply one reference-visibility policy
 to inline resources, page results, history materials, requirement evidence, dependencies and
 recovery. Counts and recommendations are computed after visibility. Denied titles, IDs, paths and
 provenance do not leak through alternative sections.
+The Task projection revision includes the actual authorized view, including ordered evidence
+bindings. A membership/visibility change invalidates pinned inspection even when source versions
+and the immutable authorization instance have not changed. Fresh page lease tokens alone do not
+change this revision.
 
 Optional denied references may be omitted. Required decision material that cannot be read must
 make the containing decision inspection non-actionable/unavailable, without exposing protected

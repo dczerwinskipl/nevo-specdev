@@ -138,12 +138,17 @@ export async function readTaskDetail(
         initialLimit: 5,
       }),
     };
-  snapshot.revision = projectionRevision(identity, context, [
-    definition.version,
-    coherent ? execution.version : null,
-    resources?.version ?? null,
-    history?.version ?? null,
-  ]);
+  snapshot.revision = projectionRevision(
+    identity,
+    context,
+    [
+      definition.version,
+      coherent ? execution.version : null,
+      resources?.version ?? null,
+      history?.version ?? null,
+    ],
+    snapshot,
+  );
   return {
     kind: 'ok',
     value: {

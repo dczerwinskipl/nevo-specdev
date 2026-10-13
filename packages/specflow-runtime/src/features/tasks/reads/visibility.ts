@@ -14,7 +14,7 @@ export function taskVisibility(
     if (link.target.kind !== 'session') return link.target.specId === identity.specId;
     const owner = await sessions?.resolve(link.target.sessionId);
     return (
-      !!owner &&
+      owner?.sessionId === link.target.sessionId &&
       owner.projectId === identity.projectId &&
       owner.workspaceId === identity.workspaceId &&
       authz.can({
