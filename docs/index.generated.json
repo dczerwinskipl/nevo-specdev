@@ -2177,7 +2177,7 @@
       "type": "engineering",
       "title": "M2 — Capture input and enforce effect-scoped admission",
       "status": "draft",
-      "file": "docs/ideas/specflow-engine/multi-instance-plan/tasks/T02-review-snapshot-and-admission.md",
+      "file": "docs/ideas/specflow-engine/multi-instance-plan/tasks/T02-input-and-effect-admission.md",
       "read_when": [
         "implementing the deferred deterministic multi-instance execution plan",
         "reviewing independently verifiable Engine and Runtime execution stages"
