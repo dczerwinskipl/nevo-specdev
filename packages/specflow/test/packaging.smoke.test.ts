@@ -30,7 +30,9 @@ function pinnedDependencyVersion(packageName: string, dependencyName: string): s
   ) as { dependencies?: Record<string, string> };
   const version = manifest.dependencies?.[dependencyName];
   if (!version || !/^\d+\.\d+\.\d+$/u.test(version)) {
-    throw new Error(`Expected a pinned version for ${dependencyName} in ${packageName}/package.json.`);
+    throw new Error(
+      `Expected a pinned version for ${dependencyName} in ${packageName}/package.json.`,
+    );
   }
   return version;
 }
