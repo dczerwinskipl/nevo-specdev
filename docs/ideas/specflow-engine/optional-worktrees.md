@@ -1,0 +1,92 @@
+---
+id: ideas.specflow-engine.worktrees
+type: architecture
+title: Optional per Specification Git worktrees
+status: draft
+scope: specflow
+areas: [workflow, configuration, security]
+tags: [worktree, git, lifecycle, isolation]
+read_when:
+  - designing one worktree per spec as optional execution isolation
+  - deciding workspace creation reuse and cleanup
+summary: >
+  Optional worktree placement policy, isolation guarantees, lifecycle, guardrails, and
+  safe cleanup rules without imposing new workflow types or automatic branch switching.
+related:
+  - ideas.specflow-engine
+  - ideas.specflow-engine.git
+  - ideas.specflow-engine.workspace-registry
+  - ideas.specflow-engine.project-workspace
+  - ideas.specflow-engine.locking
+  - ideas.specflow-engine.workspace-binding-lifecycle
+---
+
+# Optional per-Specification worktree
+
+## Product rule candidate
+
+The Specification is the same kind of domain entity whether stored in the primary checkout or a linked Git worktree. Worktree placement is a **local execution/workspace binding**, not a new spec lifecycle mode, a field to commit into the manifest or a reason to duplicate workflow definitions.
+
+A person can continue using one checkout for everything. Worktree is opt-in at create time and is available only with a functioning enabled Git capability. Engine/CLI operations receive the resolved root; agent tooling receives the same root as `cwd`.
+
+## What isolation actually buys
+
+Linked worktrees share Git object storage but keep checkout files and Git index separate. In normal cases two specs can make independent uncommitted edits, run tests and progress without competing for one physical workspace writer. It does **not** isolate package caches, databases, local services/ports, external APIs or a shared branch/reference namespace. Do not treat worktrees as general security sandboxes.
+
+## One-spec managed worktree in MVP
+
+For worktrees created by SpecFlow for a spec, propose one owner `specId` per managed worktree at first. This avoids ambiguous automatic cleanup. An explicitly attached existing worktree may already contain multiple specs: either defer that workflow to a future capability, or support shared occupancy with clear workspace-scoped locking. Never assume "one spec ID = one filesystem directory" universally.
+
+The worktree registry is workstation-local; commits and PRs may be seen from another machine with no equivalent local checkout.
+
+## Lifecycle proposal
+
+```text
+planned/reserved -> provisioning -> available -> active
+                                  \-> recovery-required
+available/active -> finalized/integrated -> eligible-for-cleanup -> removed
+                               \-> retained (manual)
+```
+
+These are workspace-management states, **not** Specification workflow statuses and should not create additional duplicate canonical domain state if derivable. In first implementation, only necessary recovery/ownership facts need persistence.
+
+### Create
+
+Provision from a verified base ref under configured safe location, e.g. sibling `<project>-worktrees/<spec-slug>`. Directory and branch naming are suggestions, never unique identity. A `new-worktree` operation must not alter HEAD of the primary checkout.
+
+### Normal use
+
+Spec ID resolves to bound worktree, independent of the caller's `cwd`. Git checks and documents use that workspace, not the process's current directory. Each workspace has its own conflict coordination. Every durable operation is recoverable without a running server.
+
+### Finalization boundary
+
+Do **not** reuse legacy `git checkout main` in the spec's linked worktree: a branch is typically checked out in one worktree only, and main may already be checked out elsewhere. Split workflow completion, integration/merge confirmation and worktree cleanup. Before removing a worktree, verify committed spec/archive outcome is represented in the intended destination branch, not only in the worktree that will disappear. Then perform an explicit [canonical binding rebind](workspace-binding-lifecycle.md) **before** cleanup; a workflow completion or merged PR alone cannot redirect the registry.
+
+### Cleanup conditions
+
+- Worktree was created and registered as `managed`, or user explicitly approved removing an attached checkout under a separate guarded operation.
+- No active or ambiguous Engine execution/claim/recovery record in that workspace.
+- No Runtime-managed active Session/Turn bound to it; external claims checked through Engine.
+- Clean Git status, no untracked meaningful files, no unpushed commits or unreconciled local branch changes.
+- Integration/merge verified against intended destination (no inference from a completed Task).
+- Recorded path/branch/common-dir match actual Git facts at deletion.
+- User confirms cleanup for MVP; no default force; do not delete branch automatically as a side effect.
+
+If removal fails, keep registry/journal for repair and return an explicit reason. Disappearing directory must not cause silent spec rebinding to main.
+
+## Move/delete outside SpecFlow
+
+A manually moved worktree or deleted directory becomes unavailable/needs repair. Runtime must retain already authorized historical Session/Turn views; a new Turn resolves and checks the updated workspace before dispatch/native provider resume. Reattach only after matching Git membership and validated identity; do not guess based on basename or slug. `git worktree prune` and worktree removal metadata need careful handling. A worktree may continue to exist while its local product registry binding is invalid; report both independently.
+
+## Alternatives rejected for MVP
+
+- Mandatory worktree for every Specification.
+- A separate Runtime per worktree.
+- Scanning every checkout and treating duplicate spec manifests as distinct specs.
+- Automatic forced removal immediately when a Task or workflow step finishes.
+- Treating an external agent Session as required to own an Engine workspace.
+- A special second category of Specs visible only in worktree UI.
+
+## Unresolved and measurable
+
+Decide branch naming defaults, safe filesystem root, import/reattach policy, lifecycle retention after merge, and multi-spec checkout semantics. Validate the model on Windows and POSIX, especially worktrees with spaces in paths and mixed casing. See [test plan](test-plan.md).

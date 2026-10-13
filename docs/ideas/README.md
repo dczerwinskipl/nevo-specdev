@@ -46,6 +46,7 @@ When an idea is accepted for implementation:
 
 ## Current packages
 
+- [Offline Engine, CLI/Runtime boundaries, and Git worktrees](specflow-engine/README.md)
 - [Authorization follow-ups](authorization/README.md)
 - [SpecFlow Runtime / AI adapter hardening](specflow-runtime/ai-adapters/README.md)
 - [Developer workspace / code inspection and IDE integration](developer-workspace/README.md)

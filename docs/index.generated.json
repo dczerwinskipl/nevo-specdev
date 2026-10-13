@@ -295,6 +295,37 @@
       ]
     },
     {
+      "id": "ideas.specflow-engine",
+      "type": "hub",
+      "title": "Offline engine and workspace foundation",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/README.md",
+      "read_when": [
+        "evaluating the architecture before migrating legacy Nevo capabilities",
+        "planning optional Git worktrees for specifications"
+      ],
+      "summary": "Non-authoritative design dossier for an offline-first SpecFlow Engine, CLI/Runtime boundaries, per-spec workspaces, filesystem coordination, Git integration, and migration verification.",
+      "related": [
+        "ideas.readme",
+        "architecture.workflow.deterministic-workflow",
+        "architecture.runtime.ownership-and-lifecycle",
+        "architecture.repository-structure"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "runtime",
+        "cli",
+        "configuration"
+      ],
+      "tags": [
+        "engine",
+        "worktree",
+        "offline",
+        "migration"
+      ]
+    },
+    {
       "id": "ideas.specflow-runtime.ai-adapters",
       "type": "hub",
       "title": "AI adapter hardening ideas",
@@ -755,6 +786,562 @@
         "worktree",
         "file-reference",
         "remote-development"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.baseline-evidence",
+      "type": "architecture",
+      "title": "Baseline and migration evidence",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/baseline-and-evidence.md",
+      "read_when": [
+        "comparing main to open PR 45 before implementing engine foundations",
+        "deciding what existing functionality should be preserved"
+      ],
+      "summary": "Code-evidenced distinction between committed SpecFlow architecture, unmerged PR 45 direction, and useful or problematic legacy Nevo implementation details.",
+      "related": [
+        "ideas.specflow-engine",
+        "architecture.repository-structure",
+        "architecture.workflow.deterministic-workflow",
+        "architecture.runtime.ownership-and-lifecycle"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "runtime",
+        "workflow",
+        "cli",
+        "docs"
+      ],
+      "tags": [
+        "legacy-nevo",
+        "pr-review",
+        "migration"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.boundaries",
+      "type": "architecture",
+      "title": "Offline Engine CLI and Runtime boundaries",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/engine-cli-runtime-boundaries.md",
+      "read_when": [
+        "allocating responsibility between product CLI and Runtime",
+        "migrating workflow or creating a new mutation endpoint"
+      ],
+      "summary": "Candidate independent application Engine invoked by CLI and Runtime without either adapter owning canonical workflow progression or long-running provider processes.",
+      "related": [
+        "ideas.specflow-engine",
+        "ideas.specflow-engine.baseline-evidence",
+        "architecture.workflow.deterministic-workflow",
+        "architecture.runtime.ownership-and-lifecycle",
+        "adr.0012-product-package-topology-and-dependency-direction"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "cli",
+        "runtime",
+        "workflow"
+      ],
+      "tags": [
+        "engine",
+        "adapter",
+        "architecture",
+        "offline"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.decisions",
+      "type": "architecture",
+      "title": "Open decisions tradeoffs and promotion plan",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/decisions-and-promotion.md",
+      "read_when": [
+        "agreeing which engine/worktree concepts should be adopted",
+        "preparing ADRs and freezing the architecture after tests"
+      ],
+      "summary": "Non-authoritative decision backlog, tradeoffs, owners and explicit evidence required before promoting offline Engine/worktree proposals into normative architecture documents.",
+      "related": [
+        "ideas.specflow-engine",
+        "ideas.specflow-engine.boundaries",
+        "ideas.specflow-engine.ownership",
+        "ideas.specflow-engine.test-plan",
+        "ideas.specflow-engine.acceptance",
+        "ideas.specflow-engine.managed-session-integration",
+        "ideas.specflow-engine.project-home",
+        "ideas.specflow-engine.local-actors"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "docs",
+        "workflow",
+        "runtime",
+        "cli",
+        "configuration"
+      ],
+      "tags": [
+        "decision-record",
+        "alternatives",
+        "adr",
+        "migration"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.execution-scopes",
+      "type": "architecture",
+      "title": "Execution scopes ownership and claim recovery",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-scopes-and-recovery.md",
+      "read_when": [
+        "admitting external CLI or managed AI work without assuming a Task",
+        "recovering abandoned or uncertain writer claims"
+      ],
+      "summary": "Distinguishes workflow attempt, Turn, execution effects and physical ownership; proposes evidence-driven inspect/reconcile/release flows that also work without a running Runtime.",
+      "related": [
+        "ideas.specflow-engine",
+        "ideas.specflow-engine.locking",
+        "ideas.specflow-engine.offline-agents",
+        "ideas.specflow-engine.managed-session-integration",
+        "ideas.specflow-engine.local-actors",
+        "architecture.workflow.deterministic-workflow"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "runtime",
+        "cli",
+        "ai",
+        "security"
+      ],
+      "tags": [
+        "execution-scope",
+        "ownership",
+        "claims",
+        "recovery"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.git",
+      "type": "architecture",
+      "title": "Optional Git capability and adapter",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/git-capability.md",
+      "read_when": [
+        "enabling optional Git integration for Specs/workspaces",
+        "designing safe branch and linked worktree creation"
+      ],
+      "summary": "Candidate capability-owned Git port with explicit enablement, verified checkout membership, guarded branch/worktree operations and no Git shell logic in Specification use cases.",
+      "related": [
+        "ideas.specflow-engine",
+        "ideas.specflow-engine.project-workspace",
+        "ideas.specflow-engine.spec-creation",
+        "ideas.specflow-engine.worktrees",
+        "engineering.repository.git-workflow"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "configuration",
+        "security"
+      ],
+      "tags": [
+        "git",
+        "worktree",
+        "branch",
+        "capability"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.local-actors",
+      "type": "architecture",
+      "title": "Offline CLI actors and human approval authority",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/local-actor-and-human-gates.md",
+      "read_when": [
+        "allowing external agents to invoke local workflow commands",
+        "designing human review approvals and authoritative evidence outside Runtime"
+      ],
+      "summary": "Candidate distinction between local filesystem execution, workflow owner admission and authorized human decisions, preventing an agent action from impersonating a human approval.",
+      "related": [
+        "ideas.specflow-engine",
+        "ideas.specflow-engine.ownership",
+        "ideas.specflow-engine.execution-scopes",
+        "ideas.specflow-engine.offline-agents",
+        "architecture.workflow.deterministic-workflow"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "cli",
+        "workflow",
+        "runtime",
+        "security"
+      ],
+      "tags": [
+        "authentication",
+        "authorization",
+        "human-gates",
+        "local-trust"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.locking",
+      "type": "architecture",
+      "title": "Cross-process locks claims and admission",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/locking-and-admission.md",
+      "read_when": [
+        "coordinating CLI and Runtime writes to the same workspace",
+        "designing external agent claim lifetime and stale recovery"
+      ],
+      "summary": "Separate short atomic cross-process mutation locks from long-lived physical-workspace execution claims, with fail-closed admission and recovery independent of managed AI Sessions.",
+      "related": [
+        "ideas.specflow-engine",
+        "ideas.specflow-engine.ownership",
+        "ideas.specflow-engine.offline-agents",
+        "ideas.specflow-engine.recovery",
+        "architecture.workflow.deterministic-workflow"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "runtime",
+        "cli",
+        "testing"
+      ],
+      "tags": [
+        "locking",
+        "admission",
+        "race-condition",
+        "claim"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.managed-session-integration",
+      "type": "architecture",
+      "title": "Managed Sessions and Engine execution integration",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/managed-session-integration.md",
+      "read_when": [
+        "migrating Nevo Session and Turn lifecycle into SpecFlow Runtime",
+        "integrating a managed provider Turn with Engine workflow and workspace claims"
+      ],
+      "summary": "Proposed managed execution handshake, correlation identities, read-only Turn behavior, provider dispatch recovery, and explicit batch/handover boundaries.",
+      "related": [
+        "ideas.specflow-engine",
+        "ideas.specflow-engine.boundaries",
+        "ideas.specflow-engine.execution-scopes",
+        "ideas.specflow-engine.workspace-binding-lifecycle",
+        "ideas.specflow-engine.local-actors",
+        "architecture.ai.canonical-session-turn-work",
+        "architecture.ai.provider-boundary"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "ai",
+        "runtime",
+        "workflow",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "sessions",
+        "turns",
+        "admission",
+        "handover",
+        "crash-recovery"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.offline-agents",
+      "type": "architecture",
+      "title": "Offline CLI and external agent execution",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/offline-cli-and-external-agents.md",
+      "read_when": [
+        "allowing agents launched outside SpecFlow Runtime to use workflow commands",
+        "mapping external workflow execution to optional Runtime observability"
+      ],
+      "summary": "External agents use vendor-neutral skills and CLI to progress Engine workflow without a live Runtime, while provider-native conversations remain outside managed Session/Turn ownership.",
+      "related": [
+        "ideas.specflow-engine",
+        "ideas.specflow-engine.boundaries",
+        "ideas.specflow-engine.ownership",
+        "ideas.specflow-engine.locking",
+        "architecture.ai.provider-boundary",
+        "architecture.ai.canonical-session-turn-work"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "ai",
+        "workflow",
+        "cli",
+        "runtime",
+        "security"
+      ],
+      "tags": [
+        "offline",
+        "external-agent",
+        "skills",
+        "session",
+        "cli"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.ownership",
+      "type": "architecture",
+      "title": "Execution ownership and state authority",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/ownership-and-state.md",
+      "read_when": [
+        "deciding which process owns workflow versus AI execution state",
+        "designing persistence and lifecycle across CLI and Runtime"
+      ],
+      "summary": "Candidate authority split between committed specification facts, Engine execution state, transient workspace claims, and Runtime-owned live Session/Turn resources.",
+      "related": [
+        "ideas.specflow-engine",
+        "ideas.specflow-engine.boundaries",
+        "ideas.specflow-engine.offline-agents",
+        "ideas.specflow-engine.locking",
+        "architecture.ai.canonical-session-turn-work"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "runtime",
+        "configuration",
+        "security"
+      ],
+      "tags": [
+        "ownership",
+        "authority",
+        "persistence",
+        "session"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.project-home",
+      "type": "architecture",
+      "title": "Discovering the Project Home from any Git worktree",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/project-home-discovery.md",
+      "read_when": [
+        "making CLI work from a linked checkout with Runtime stopped",
+        "selecting the canonical local state and configuration home"
+      ],
+      "summary": "Testable candidate discovery protocol for the one local Project Home from the primary checkout and managed linked worktrees, including moves, ambiguity, offline startup, and repair.",
+      "related": [
+        "ideas.specflow-engine",
+        "ideas.specflow-engine.project-workspace",
+        "ideas.specflow-engine.workspace-registry",
+        "ideas.specflow-engine.recovery",
+        "architecture.runtime.configuration"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "configuration",
+        "cli",
+        "runtime",
+        "workflow"
+      ],
+      "tags": [
+        "project-home",
+        "worktree",
+        "discovery",
+        "identity"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.project-workspace",
+      "type": "architecture",
+      "title": "Project Workspace discovery and identity",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/project-and-workspace-context.md",
+      "read_when": [
+        "resolving spec roots from the project or a linked Git checkout",
+        "designing stable workspace identity independent of physical paths"
+      ],
+      "summary": "Candidate Project versus Execution Workspace identity model and safe discovery of a home registry from any linked Git worktree, without confusing Git branch names or paths with canonical IDs.",
+      "related": [
+        "ideas.specflow-engine",
+        "ideas.specflow-engine.boundaries",
+        "ideas.specflow-engine.workspace-registry",
+        "ideas.specflow-engine.project-home",
+        "ideas.specflow-engine.workspace-binding-lifecycle",
+        "architecture.runtime.configuration"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "configuration",
+        "workflow",
+        "runtime",
+        "cli"
+      ],
+      "tags": [
+        "project",
+        "workspace",
+        "identity",
+        "discovery",
+        "worktree"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.recovery",
+      "type": "architecture",
+      "title": "Durable mutation journal and crash recovery",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/durable-operations-and-recovery.md",
+      "read_when": [
+        "making multi-stage create or workflow operations retry-safe",
+        "reconciling crashes without a long-running daemon"
+      ],
+      "summary": "Durable intent and stage evidence for recoverable worktree provisioning and workflow mutations, with offline CLI reconciliation, safe replay, and no fabricated Runtime sessions.",
+      "related": [
+        "ideas.specflow-engine",
+        "ideas.specflow-engine.spec-creation",
+        "ideas.specflow-engine.locking",
+        "ideas.specflow-engine.ownership",
+        "architecture.workflow.deterministic-workflow"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "runtime",
+        "testing",
+        "configuration"
+      ],
+      "tags": [
+        "recovery",
+        "idempotency",
+        "journal",
+        "persistence"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.runtime-http",
+      "type": "architecture",
+      "title": "Runtime HTTP and read model integration",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/runtime-http-and-reads.md",
+      "read_when": [
+        "exposing offline Engine operations through the real Runtime API",
+        "integrating creation with Specs Overview and Workspace reads"
+      ],
+      "summary": "Thin authorized HTTP adapters over the same Engine use cases as offline CLI, with real read repositories, correct source availability and cache invalidation across processes.",
+      "related": [
+        "ideas.specflow-engine",
+        "ideas.specflow-engine.boundaries",
+        "ideas.specflow-engine.spec-creation",
+        "ideas.specflow-engine.workspace-registry",
+        "product.specflow.ui.application-architecture"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "runtime",
+        "server",
+        "ui",
+        "workflow"
+      ],
+      "tags": [
+        "http",
+        "api",
+        "read-model",
+        "synchronization"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.workspace-binding-lifecycle",
+      "type": "architecture",
+      "title": "Canonical Specification workspace binding lifecycle",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/workspace-binding-lifecycle.md",
+      "read_when": [
+        "moving canonical Spec ownership after branch integration",
+        "relocating or deleting worktrees used by Specs and managed Sessions"
+      ],
+      "summary": "Transactional Spec-to-workspace binding changes and safe post-merge rebind, move, unavailable, session-compatibility and cleanup behavior without branch-guessing or stale fallback.",
+      "related": [
+        "ideas.specflow-engine",
+        "ideas.specflow-engine.workspace-registry",
+        "ideas.specflow-engine.project-home",
+        "ideas.specflow-engine.worktrees",
+        "ideas.specflow-engine.managed-session-integration",
+        "ideas.specflow-engine.recovery"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "runtime",
+        "configuration",
+        "security"
+      ],
+      "tags": [
+        "workspace-binding",
+        "worktree",
+        "rebind",
+        "integration"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.workspace-registry",
+      "type": "architecture",
+      "title": "Workspace registry and Specification discovery",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/workspace-registry-and-discovery.md",
+      "read_when": [
+        "listing Specs across primary and linked worktrees",
+        "designing source-of-truth and unavailable-worktree behavior"
+      ],
+      "summary": "Local spec-to-workspace binding registry, authoritative manifest selection, duplicate handling, and safe cross-worktree discovery for CLI and Runtime reads.",
+      "related": [
+        "ideas.specflow-engine",
+        "ideas.specflow-engine.project-workspace",
+        "ideas.specflow-engine.worktrees",
+        "ideas.specflow-engine.recovery",
+        "ideas.specflow-engine.project-home",
+        "ideas.specflow-engine.workspace-binding-lifecycle"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "configuration",
+        "runtime"
+      ],
+      "tags": [
+        "registry",
+        "discovery",
+        "deduplication",
+        "workspace"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.worktrees",
+      "type": "architecture",
+      "title": "Optional per Specification Git worktrees",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/optional-worktrees.md",
+      "read_when": [
+        "designing one worktree per spec as optional execution isolation",
+        "deciding workspace creation reuse and cleanup"
+      ],
+      "summary": "Optional worktree placement policy, isolation guarantees, lifecycle, guardrails, and safe cleanup rules without imposing new workflow types or automatic branch switching.",
+      "related": [
+        "ideas.specflow-engine",
+        "ideas.specflow-engine.git",
+        "ideas.specflow-engine.workspace-registry",
+        "ideas.specflow-engine.project-workspace",
+        "ideas.specflow-engine.locking",
+        "ideas.specflow-engine.workspace-binding-lifecycle"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "configuration",
+        "security"
+      ],
+      "tags": [
+        "worktree",
+        "git",
+        "lifecycle",
+        "isolation"
       ]
     },
     {
@@ -1502,6 +2089,77 @@
       ]
     },
     {
+      "id": "ideas.specflow-engine.legacy-migration",
+      "type": "engineering",
+      "title": "Legacy Nevo migration map and instructions",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/legacy-nevo-migration.md",
+      "read_when": [
+        "preparing deterministic workflow or AI migrations from the old nevo repository",
+        "reviewing whether a legacy module may be copied or needs redesign"
+      ],
+      "summary": "Evidence-based map of old Nevo modules to Engine, CLI and Runtime owners, including known coupling to reject and checks required during future module-by-module migration.",
+      "related": [
+        "ideas.specflow-engine",
+        "ideas.specflow-engine.baseline-evidence",
+        "ideas.specflow-engine.boundaries",
+        "ideas.specflow-engine.ownership",
+        "ideas.specflow-engine.acceptance",
+        "ideas.specflow-runtime.ai-adapters"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "docs",
+        "workflow",
+        "runtime",
+        "cli",
+        "testing"
+      ],
+      "tags": [
+        "legacy-nevo",
+        "migration",
+        "architecture",
+        "workflow"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.test-plan",
+      "type": "engineering",
+      "title": "Engine workspace integration test plan",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/test-plan.md",
+      "read_when": [
+        "designing a proof-of-concept test suite for offline CLI and worktree Specs",
+        "investigating crash consistency or cross-process state"
+      ],
+      "summary": "Executable matrix using real temporary Git repositories, offline child processes, HTTP integration and fault injection to validate Engine/Runtime/worktree boundaries.",
+      "related": [
+        "ideas.specflow-engine",
+        "ideas.specflow-engine.spec-creation",
+        "ideas.specflow-engine.locking",
+        "ideas.specflow-engine.recovery",
+        "ideas.specflow-engine.acceptance",
+        "ideas.specflow-engine.managed-session-integration",
+        "ideas.specflow-engine.execution-scopes",
+        "ideas.specflow-engine.project-home"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "testing",
+        "workflow",
+        "runtime",
+        "cli",
+        "security"
+      ],
+      "tags": [
+        "integration-testing",
+        "git",
+        "worktree",
+        "concurrency",
+        "recovery"
+      ]
+    },
+    {
       "id": "ideas.specflow-runtime.ai-adapters.correlation-identity",
       "type": "engineering",
       "title": "Provider correlation identity",
@@ -2097,6 +2755,41 @@
         "cost",
         "providers",
         "sessions"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.spec-creation",
+      "type": "product",
+      "title": "Specification creation vertical slice",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/specification-creation.md",
+      "read_when": [
+        "implementing the initial cross-layer proof of concept",
+        "defining creation inputs and CLI HTTP parity"
+      ],
+      "summary": "Narrow end-to-end create-Spec experiment with title-only UX, explicit target workspace, optional Git worktree provisioning, durable operation intent, and consistent CLI/HTTP results.",
+      "related": [
+        "ideas.specflow-engine",
+        "ideas.specflow-engine.project-workspace",
+        "ideas.specflow-engine.git",
+        "ideas.specflow-engine.worktrees",
+        "ideas.specflow-engine.recovery",
+        "ideas.specflow-engine.acceptance",
+        "ideas.specflow-engine.project-home",
+        "ideas.specflow-engine.execution-scopes"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "server",
+        "ui"
+      ],
+      "tags": [
+        "specifications",
+        "create",
+        "vertical-slice",
+        "worktree"
       ]
     },
     {
@@ -2838,6 +3531,39 @@
       "related": [
         "product.specflow.ui.interaction-model",
         "product.specflow.cli.personas"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.acceptance",
+      "type": "reference",
+      "title": "Engine worktree foundation acceptance criteria",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/acceptance-criteria.md",
+      "read_when": [
+        "deciding whether the engine/worktree PoC proved its architecture",
+        "freezing documentation or approving migration of legacy workflow"
+      ],
+      "summary": "Separate evidence-based acceptance gates for Specs/workspace Foundation A, real workflow coordination Foundation B, and later Runtime-managed Sessions integration.",
+      "related": [
+        "ideas.specflow-engine",
+        "ideas.specflow-engine.spec-creation",
+        "ideas.specflow-engine.test-plan",
+        "ideas.specflow-engine.decisions",
+        "ideas.specflow-engine.managed-session-integration",
+        "ideas.specflow-engine.execution-scopes"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "testing",
+        "docs",
+        "cli",
+        "workflow",
+        "runtime"
+      ],
+      "tags": [
+        "acceptance",
+        "proof-of-concept",
+        "requirements"
       ]
     },
     {
