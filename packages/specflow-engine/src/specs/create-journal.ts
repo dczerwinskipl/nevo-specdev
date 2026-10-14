@@ -172,7 +172,7 @@ export async function publishCreateJournal(
     // A historical journal may advance stages, but new v1 reservations are
     // forbidden after the v2 transport/writer cutover.
     const previous = await readCreateJournal(context, record.operationId);
-    if (!previous || previous.version !== 1) {
+    if (previous?.version !== 1) {
       throw new CreateOperationError(
         'CREATE_RECOVERY_REQUIRED',
         'A new v1 reservation cannot be published after VC05.',

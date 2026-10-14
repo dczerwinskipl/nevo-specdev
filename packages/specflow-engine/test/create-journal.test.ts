@@ -7,7 +7,10 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { bootstrapProjectHome } from '../src/index';
-import { fingerprintCreateClientIntent, normalizeCreateClientIntent } from '../src/specs/create-intent';
+import {
+  fingerprintCreateClientIntent,
+  normalizeCreateClientIntent,
+} from '../src/specs/create-intent';
 import {
   createJournalPath,
   listCreateJournals,

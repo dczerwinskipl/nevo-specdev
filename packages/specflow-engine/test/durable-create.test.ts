@@ -250,29 +250,39 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
     const config = join(root, '.nevo/config.yaml');
     const head = git(root, 'rev-parse', 'HEAD');
     git(root, 'branch', 'develop');
-    await writeFile(config, [
-      'runtime: {}',
-      'git:',
-      '  enabled: true',
-      '  worktrees:',
-      '    branchPattern: "feature/{slug}-{shortId}"',
-      '    baseRef: develop',
-      '',
-    ].join('\n'));
+    await writeFile(
+      config,
+      [
+        'runtime: {}',
+        'git:',
+        '  enabled: true',
+        '  worktrees:',
+        '    branchPattern: "feature/{slug}-{shortId}"',
+        '    baseRef: develop',
+        '',
+      ].join('\n'),
+    );
     const { createSpecificationFromRequest } = await import('../src/index');
     const operationId = randomUUID();
-    const request = { operationId, title: 'Policy picked once', target: { kind: 'new-worktree' as const } };
+    const request = {
+      operationId,
+      title: 'Policy picked once',
+      target: { kind: 'new-worktree' as const },
+    };
     const first = await createSpecificationFromRequest(engine, request);
     roots.push(dirname(first.workspaceRoot));
     const reserved = await inspectCreateSpecification(engine, operationId);
     expect(reserved?.version).toBe(2);
-    expect(reserved?.target.branch).toBe('feature/policy-picked-once-' + reserved!.specId.slice(0, 8));
+    expect(reserved?.target.branch).toBe(
+      'feature/policy-picked-once-' + reserved!.specId.slice(0, 8),
+    );
     expect(reserved?.target.baseCommit).toBe(head);
     await writeFile(config, 'runtime: {}\ngit:\n  enabled: false\n');
     expect(await createSpecificationFromRequest(engine, request)).toEqual(first);
     await expect(
       createSpecificationFromRequest(engine, {
-        ...request, target: { kind: 'new-worktree', baseRef: 'HEAD' },
+        ...request,
+        target: { kind: 'new-worktree', baseRef: 'HEAD' },
       }),
     ).rejects.toMatchObject({ code: 'CREATE_CONFLICT' });
   }, 120000);

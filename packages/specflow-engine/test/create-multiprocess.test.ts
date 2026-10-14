@@ -146,12 +146,19 @@ describe('E2.T04 — cross-process durable create reservation and registry CAS',
   it('VC05: same operationId across two process clocks has one durable date and binding', async () => {
     const { engine, root } = await project();
     const operationId = randomUUID();
-    const one = { ...input(engine.workspace.workspaceId, 'Concurrent midnight'), operationId, created: '2026-10-14' };
+    const one = {
+      ...input(engine.workspace.workspaceId, 'Concurrent midnight'),
+      operationId,
+      created: '2026-10-14',
+    };
     const two = { ...one, created: '2026-10-15' };
     const workers = [spawnCreateWorker(root, one), spawnCreateWorker(root, two)];
     await startTogether(workers);
     const outcomes = await Promise.all(workers.map((worker) => worker.done));
-    expect(outcomes.map((x) => x.code), JSON.stringify(outcomes)).toEqual([0, 0]);
+    expect(
+      outcomes.map((x) => x.code),
+      JSON.stringify(outcomes),
+    ).toEqual([0, 0]);
     const { readCreateJournal } = await import('../src/specs/create-journal');
     const journal = await readCreateJournal(engine.context, operationId);
     expect(journal?.version).toBe(2);

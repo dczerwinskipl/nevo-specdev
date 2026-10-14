@@ -278,7 +278,8 @@ function legacyFingerprint(intent: CreateClientIntent, created: string): string 
         ? intent.target
         : {
             kind: 'new-worktree',
-            baseRef: intent.target.baseRef.kind === 'explicit' ? intent.target.baseRef.value : 'HEAD',
+            baseRef:
+              intent.target.baseRef.kind === 'explicit' ? intent.target.baseRef.value : 'HEAD',
             ...(intent.target.branch.kind === 'explicit'
               ? { branch: intent.target.branch.value }
               : {}),
@@ -420,10 +421,14 @@ async function followExistingOperation(
   engine: SpecFlowEngine,
   operationId: string,
 ): Promise<CreateJournal> {
-  const deadline = Date.now() + 18000;
+  const deadline = Date.now() + 8000;
   let record = await readCreateJournal(engine.context, operationId);
   if (!record) throw recovery('Create journal disappeared during a concurrent operation.');
-  while (record.stage !== 'completed' && record.stage !== 'recovery-required' && Date.now() < deadline) {
+  while (
+    record.stage !== 'completed' &&
+    record.stage !== 'recovery-required' &&
+    Date.now() < deadline
+  ) {
     await sleep(100);
     const current = await readCreateJournal(engine.context, operationId);
     if (!current) throw recovery('Create journal disappeared during a concurrent operation.');

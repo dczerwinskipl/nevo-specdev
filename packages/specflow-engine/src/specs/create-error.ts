@@ -13,4 +13,3 @@ export class CreateOperationError extends Error {
     this.code = code;
   }
 }
-

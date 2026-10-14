@@ -120,8 +120,9 @@ describe('VC05 — atomic v2 writer with legacy v1 retry', () => {
     expect(
       (await restarted.readRegistry()).specBindings.filter((item) => item.specId === specId),
     ).toHaveLength(1);
-    expect(await readFile(join(createdResult.workspaceRoot, createdResult.relativeManifestPath), 'utf8'))
-      .toContain(specId);
+    expect(
+      await readFile(join(createdResult.workspaceRoot, createdResult.relativeManifestPath), 'utf8'),
+    ).toContain(specId);
 
     await expect(
       createSpecificationFromRequest(restarted, { ...request, title: 'Other legacy intent' }),

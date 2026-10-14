@@ -2,10 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import type { SpecFlowEngine } from '../application';
 import { normalizeCreateClientIntent, type CreateClientTargetInput } from './create-intent';
-import {
-  createSpecificationWithIntent,
-  type CreatedSpecification,
-} from './durable-create';
+import { createSpecificationWithIntent, type CreatedSpecification } from './durable-create';
 
 /** Transport-neutral request: optional overrides preserve user omission. */
 export interface CreateSpecificationRequest {
