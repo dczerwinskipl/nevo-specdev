@@ -73,6 +73,9 @@ describe('internal Git worktree adapter (VC02)', () => {
     expect(git(root, 'rev-parse', 'HEAD')).toBe(before);
     await expect(worktrees.plan({
       slug: 'gamma', shortId: 'abcdef01',
+    })).rejects.toMatchObject({ code: 'WORKTREE_PATH_CONFLICT' });
+    await expect(worktrees.plan({
+      slug: 'another', shortId: 'abcdef01', branchOverride: plan.branch,
     })).rejects.toMatchObject({ code: 'BRANCH_ALREADY_EXISTS' });
     await writeFile(join(plan.targetPath, 'readme.txt'), 'legitimate changes\n');
     expect(await readFile(join(plan.targetPath, 'readme.txt'), 'utf8')).toBe('legitimate changes\n');
