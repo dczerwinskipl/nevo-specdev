@@ -344,8 +344,6 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
     );
     expect(reserved?.target.baseCommit).toBe(head);
 
-    const { createSpecificationWithIntent } = await import('../src/specs/durable-create');
-    const { normalizeCreateClientIntent } = await import('../src/specs/create-intent');
     const resumeReserved = () =>
       createSpecificationWithIntent(
         engine,

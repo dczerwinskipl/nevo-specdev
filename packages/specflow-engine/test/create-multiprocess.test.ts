@@ -66,7 +66,10 @@ interface ProcessWorker {
 function spawnCreateWorker(
   root: string,
   request: CreateSpecificationInput,
-  options: { readonly pauseEffect?: 'git' | 'manifest'; readonly observeReservation?: boolean } = {},
+  options: {
+    readonly pauseEffect?: 'git' | 'manifest';
+    readonly observeReservation?: boolean;
+  } = {},
 ): ProcessWorker {
   const token = randomUUID();
   const ready = join(root, 'create-' + token + '.ready');
@@ -206,9 +209,7 @@ describe('E2.T04 — cross-process durable create reservation and registry CAS',
         const { readCreateJournal } = await import('../src/specs/create-journal');
         const journal = await readCreateJournal(engine.context, operationId);
         expect(journal?.version).toBe(2);
-        expect(journal?.stage).toBe(
-          pausedAt === 'git' ? 'git-initiated' : 'manifest-writing',
-        );
+        expect(journal?.stage).toBe(pausedAt === 'git' ? 'git-initiated' : 'manifest-writing');
 
         const follower = spawnCreateWorker(
           root,
@@ -226,15 +227,20 @@ describe('E2.T04 — cross-process durable create reservation and registry CAS',
         ]);
         expect(resultWhilePaused).toBe('still-following');
         expect((await engine.readRegistry()).specBindings).toHaveLength(0);
-        expect(execFileSync('git', ['worktree', 'list', '--porcelain'], {
-          cwd: root,
-          encoding: 'utf8',
-        }).match(/worktree /gu)).toHaveLength(2);
+        expect(
+          execFileSync('git', ['worktree', 'list', '--porcelain'], {
+            cwd: root,
+            encoding: 'utf8',
+          }).match(/worktree /gu),
+        ).toHaveLength(2);
         expect((await readCreateJournal(engine.context, operationId))?.stage).toBe(journal?.stage);
 
         await writeFile(writer.release, 'continue');
         const outcomes = await Promise.all([writer.done, follower.done]);
-        expect(outcomes.map((x) => x.code), JSON.stringify(outcomes)).toEqual([0, 0]);
+        expect(
+          outcomes.map((x) => x.code),
+          JSON.stringify(outcomes),
+        ).toEqual([0, 0]);
         const [writerResult, followerResult] = await Promise.all([
           readFile(writer.result, 'utf8'),
           readFile(follower.result, 'utf8'),
@@ -243,10 +249,12 @@ describe('E2.T04 — cross-process durable create reservation and registry CAS',
         expect((await readCreateJournal(engine.context, operationId))?.stage).toBe('completed');
         expect((await engine.readRegistry()).specBindings).toHaveLength(1);
         expect(await discoverSpecifications(engine)).toHaveLength(1);
-        expect(execFileSync('git', ['worktree', 'list', '--porcelain'], {
-          cwd: root,
-          encoding: 'utf8',
-        }).match(/worktree /gu)).toHaveLength(2);
+        expect(
+          execFileSync('git', ['worktree', 'list', '--porcelain'], {
+            cwd: root,
+            encoding: 'utf8',
+          }).match(/worktree /gu),
+        ).toHaveLength(2);
       },
       150000,
     );
