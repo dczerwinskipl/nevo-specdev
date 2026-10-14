@@ -1,10 +1,10 @@
 import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
-import { mkdtemp, mkdir, readFile, realpath, rm, writeFile } from 'node:fs/promises';
+import { lstat, mkdtemp, mkdir, readFile, realpath, rename, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { bootstrapProjectHome } from '../src';
 import { openVersionControl } from '../src/version-control';
@@ -46,6 +46,62 @@ async function project() {
 }
 
 describe('internal Git worktree adapter (VC02)', () => {
+  it('rejects a different-case sibling directory on POSIX without Git or FS effects', async () => {
+    if (process.platform === 'win32') return;
+    const { root, worktrees } = await project();
+    const plan = await worktrees.plan({ slug: 'case-proof', shortId: '1234abcd' });
+    const unexpectedParent = join(dirname(root), basename(root) + '-WORKTREES');
+    const unexpectedTarget = join(unexpectedParent, 'case-proof');
+    const tampered = { ...plan, targetPath: unexpectedTarget };
+    const refsBefore = git(root, 'for-each-ref', '--format=%(refname)', 'refs/heads');
+    const worktreesBefore = git(root, 'worktree', 'list', '--porcelain');
+
+    await expect(worktrees.validateReservedPlan(tampered)).rejects.toMatchObject({
+      code: 'WORKTREE_PATH_CONFLICT',
+    });
+    await expect(worktrees.create(tampered)).rejects.toMatchObject({
+      code: 'WORKTREE_PATH_CONFLICT',
+    });
+    await expect(lstat(unexpectedParent)).rejects.toMatchObject({ code: 'ENOENT' });
+    expect(git(root, 'for-each-ref', '--format=%(refname)', 'refs/heads')).toBe(refsBefore);
+    expect(git(root, 'worktree', 'list', '--porcelain')).toBe(worktreesBefore);
+  });
+
+  it('reports Git executable absence as unavailable without masking failed mutation', async () => {
+    const { root, worktrees } = await project();
+    const refsBefore = git(root, 'branch', '--list');
+    vi.stubEnv('PATH', join(root, 'no-git-on-path'));
+    try {
+      expect(await worktrees.availability()).toEqual({
+        status: 'unavailable',
+        reason: 'GIT_UNAVAILABLE',
+      });
+      await expect(worktrees.plan({ slug: 'missing-git', shortId: 'abcdef12' })).rejects.toMatchObject({
+        code: 'GIT_UNAVAILABLE',
+      });
+    } finally {
+      vi.unstubAllEnvs();
+    }
+    expect(git(root, 'branch', '--list')).toBe(refsBefore);
+  });
+
+  it('reports missing Git repository separately from corrupt identity/configuration', async () => {
+    const { root, worktrees } = await project();
+    const gitMetadata = join(root, '.git');
+    const moved = join(root, '.git-hidden-for-test');
+    await rename(gitMetadata, moved);
+    try {
+      expect(await worktrees.availability()).toEqual({
+        status: 'unavailable',
+        reason: 'NOT_GIT_REPOSITORY',
+      });
+    } finally {
+      await rename(moved, gitMetadata);
+    }
+    await writeFile(join(root, '.nevo/config.yaml'), 'runtime: {}\ngit:\n  enabled: maybe\n');
+    await expect(worktrees.availability()).rejects.toMatchObject({ code: 'GIT_POLICY_INVALID' });
+  });
+
   it('honors project-owned naming, base commit and read-only planning', async () => {
     const { root, worktrees } = await project();
     const before = git(root, 'worktree', 'list', '--porcelain');

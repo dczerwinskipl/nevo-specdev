@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -6,7 +6,12 @@ import { join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { bootstrapProjectHome } from '../src';
+import {
+  bootstrapProjectHome,
+  createSpecification,
+  createSpecificationFromRequest,
+  openSpecFlowEngine,
+} from '../src';
 import {
   fingerprintCreateClientIntent,
   normalizeCreateClientIntent,
@@ -41,6 +46,7 @@ async function fixture() {
   return (await bootstrapProjectHome(root)).context;
 }
 
+/** Parser-only structural fixture; actual v1 recovery is tested using the live v1 writer below. */
 function legacy(context: Awaited<ReturnType<typeof fixture>>): CreateJournalV1 {
   const slug = 'legacy-journal';
   return {
@@ -66,7 +72,61 @@ function legacy(context: Awaited<ReturnType<typeof fixture>>): CreateJournalV1 {
 }
 
 describe('VC03 — journal v2 reader without v2 writer activation', () => {
-  it('still persists and parses unchanged v1 intent', async () => {
+  it('recovers an authentic v1 reservation and fingerprint after an Engine restart', async () => {
+    const context = await fixture();
+    const engine = await openSpecFlowEngine({ cwd: context.project.homeRoot });
+    const operationId = randomUUID();
+    const input = {
+      operationId,
+      title: 'Authentic legacy retry',
+      created: '2026-10-13',
+      target: { kind: 'existing' as const, workspaceId: engine.workspace.workspaceId },
+    };
+    await expect(
+      createSpecification(engine, input, {
+        afterEffect: async (effect) => {
+          if (effect === 'reservation') throw new Error('Injected stop after genuine v1 reservation');
+        },
+      }),
+    ).rejects.toThrow('Injected stop after genuine v1 reservation');
+
+    const reserved = await readCreateJournal(context, operationId);
+    expect(reserved?.version).toBe(1);
+    expect(reserved?.stage).toBe('reserved');
+    expect(reserved?.target.workspaceId).toBe(engine.workspace.workspaceId);
+    const legacyFingerprint = createHash('sha256')
+      .update(
+        JSON.stringify({
+          title: input.title,
+          created: input.created,
+          target: input.target,
+        }),
+        'utf8',
+      )
+      .digest('hex');
+    expect(reserved?.inputFingerprint).toBe(legacyFingerprint);
+
+    const restarted = await openSpecFlowEngine({ cwd: context.project.homeRoot });
+    const request = {
+      operationId,
+      title: input.title,
+      target: input.target,
+    };
+    const result = await createSpecificationFromRequest(restarted, request);
+    expect(result.specId).toBe(reserved?.specId);
+    expect(result.workspaceId).toBe(engine.workspace.workspaceId);
+    expect(await createSpecificationFromRequest(restarted, request)).toEqual(result);
+    const completed = await readCreateJournal(context, operationId);
+    expect(completed?.version).toBe(1);
+    expect(completed?.stage).toBe('completed');
+    expect(completed?.created).toBe(input.created);
+    expect(completed?.inputFingerprint).toBe(legacyFingerprint);
+    expect((await restarted.readRegistry()).specBindings.filter((item) => item.specId === result.specId)).toHaveLength(1);
+    expect((await readFile(join(result.workspaceRoot, result.relativeManifestPath), 'utf8')))
+      .toContain(result.specId);
+  });
+
+  it('round-trips a structural v1 journal fixture without changing its representation', async () => {
     const context = await fixture();
     const item = legacy(context);
     await withCreateJournalLock(context, () => publishCreateJournal(context, item));

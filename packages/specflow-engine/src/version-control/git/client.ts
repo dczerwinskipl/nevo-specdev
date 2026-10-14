@@ -5,7 +5,7 @@ import { parse as parseYaml } from 'yaml';
 import { GitCapabilityError } from '../../git/errors';
 import { executeGitMutation } from '../../git/mutation';
 import { executeGit } from '../../git/process';
-import { normalizeBaseRef, validateBranchName } from '../worktrees/policy';
+import { normalizeBaseRef, validateBranchName } from './refs';
 
 export interface LocalWorktreeFacts {
   readonly root: string;
@@ -40,14 +40,18 @@ export function createLocalGitClient(home: string): LocalGitClient {
   };
   return {
     async inspectRepository() {
-      const value = await requireSuccess(
-        ['rev-parse', '--git-common-dir'],
-        'Project Home is not a usable Git repository.',
-      );
-      if (!value.trim()) {
-        throw new GitCapabilityError('NOT_GIT_REPOSITORY', 'Empty Git common directory.');
+      const result = await read(['rev-parse', '--git-common-dir']);
+      if (result.exitCode !== 0 || !result.stdout.trim()) {
+        throw new GitCapabilityError('NOT_GIT_REPOSITORY', 'Project Home is not a Git repository.');
       }
-      return realpath(resolve(home, value.trim()));
+      try {
+        return await realpath(resolve(home, result.stdout.trim()));
+      } catch {
+        throw new GitCapabilityError(
+          'NOT_GIT_REPOSITORY',
+          'Git repository metadata is unavailable.',
+        );
+      }
     },
     async listWorktrees() {
       const raw = await requireSuccess(

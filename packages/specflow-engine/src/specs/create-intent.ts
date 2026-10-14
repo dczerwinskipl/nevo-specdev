@@ -41,23 +41,32 @@ export function normalizeCreateClientIntent(input: {
   if (!title || title.length > 200) {
     throw new CreateOperationError('CREATE_OPERATION_INVALID', 'Invalid specification title.');
   }
-  const target: ClientCreateTarget =
-    input.target.kind === 'existing'
-      ? { kind: 'existing', workspaceId: input.target.workspaceId }
-      : {
-          kind: 'new-worktree',
-          baseRef:
-            input.target.baseRef === undefined
-              ? { kind: 'omitted' }
-              : { kind: 'explicit', value: input.target.baseRef },
-          branch:
-            input.target.branch === undefined
-              ? { kind: 'omitted' }
-              : { kind: 'explicit', value: input.target.branch },
-        };
+  const target = normalizeClientTarget(input.target);
   return { title, ...(goal ? { goal } : {}), target };
 }
 
 export function fingerprintCreateClientIntent(intent: CreateClientIntent): string {
   return createHash('sha256').update(JSON.stringify(intent), 'utf8').digest('hex');
+}
+
+function normalizeClientTarget(input: CreateClientTargetInput): ClientCreateTarget {
+  switch (input.kind) {
+    case 'existing':
+      return { kind: 'existing', workspaceId: input.workspaceId };
+    case 'new-worktree':
+      return {
+        kind: 'new-worktree',
+        baseRef: normalizeOverride(input.baseRef),
+        branch: normalizeOverride(input.branch),
+      };
+    default: {
+      const exhaustive: never = input;
+      return exhaustive;
+    }
+  }
+}
+
+function normalizeOverride(value: string | undefined): ClientOverride {
+  if (value === undefined) return { kind: 'omitted' };
+  return { kind: 'explicit', value };
 }

@@ -27,8 +27,10 @@ export function createGitWorktreePort(engine: SpecFlowEngine): WorktreePort {
   const parent = join(dirname(home), basename(home) + '-worktrees');
 
   const assertRepository = async (): Promise<void> => {
-    await engine.readRegistry();
+    // Check the Git executable first so capability discovery can report an
+    // unavailable client before Project Home verification invokes other Git reads.
     const commonDir = await git.inspectRepository();
+    await engine.readRegistry();
     if (commonDir !== engine.context.project.gitCommonDir) {
       throw new GitCapabilityError(
         'WORKTREE_MEMBERSHIP_MISMATCH',
@@ -54,7 +56,7 @@ export function createGitWorktreePort(engine: SpecFlowEngine): WorktreePort {
     if (
       !isAbsolute(path) ||
       resolve(path) !== path ||
-      resolve(dirname(path)).toLowerCase() !== resolve(parent).toLowerCase() ||
+      !sameFilesystemPath(dirname(path), parent) ||
       !basename(path) ||
       basename(path).startsWith('.')
     ) {
@@ -94,7 +96,20 @@ export function createGitWorktreePort(engine: SpecFlowEngine): WorktreePort {
 
   return {
     async availability() {
-      await assertRepository();
+      try {
+        await assertRepository();
+      } catch (error) {
+        // Only expected Git absence/non-repository failures are capability
+        // unavailability. Identity mismatches, corrupt state and invalid policy
+        // must remain explicit errors instead of being hidden from the caller.
+        if (
+          error instanceof GitCapabilityError &&
+          (error.code === 'GIT_UNAVAILABLE' || error.code === 'NOT_GIT_REPOSITORY')
+        ) {
+          return { status: 'unavailable', reason: error.code };
+        }
+        throw error;
+      }
       const policy = await loadGitWorktreePolicy(engine.context);
       return policy.enabled ? { status: 'available' } : { status: 'disabled' };
     },
@@ -153,7 +168,7 @@ export function createGitWorktreePort(engine: SpecFlowEngine): WorktreePort {
       }
       await mkdir(parent, { recursive: true });
       const stat = await lstat(parent);
-      if (!stat.isDirectory() || stat.isSymbolicLink() || (await realpath(parent)) !== parent) {
+      if (!stat.isDirectory() || stat.isSymbolicLink() || !sameFilesystemPath(await realpath(parent), parent)) {
         throw new GitCapabilityError('WORKTREE_PATH_CONFLICT', 'Managed worktree parent changed.');
       }
       if ((await inspect(plan)) !== 'absent') {
@@ -211,6 +226,13 @@ function refsConflict(actual: string, candidate: string): boolean {
     existing.startsWith(proposed + '/') ||
     proposed.startsWith(existing + '/')
   );
+}
+
+/** Exact on case-sensitive filesystems; case-fold only for Windows paths. */
+function sameFilesystemPath(a: string, b: string): boolean {
+  const left = resolve(a);
+  const right = resolve(b);
+  return process.platform === 'win32' ? left.toLowerCase() === right.toLowerCase() : left === right;
 }
 
 function key(path: string): string {
