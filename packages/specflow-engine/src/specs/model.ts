@@ -160,13 +160,8 @@ export function createSpecificationScaffold(
   if (!isValidSpecificationId(input.specId)) {
     throw new SpecificationError('SPEC_VALIDATION_ERROR', 'A canonical specId is required.');
   }
+  validateSpecificationScaffoldInput(input);
   const title = input.title.replace(/\s+/gu, ' ').trim();
-  if (!title || title.length > 200) {
-    throw new SpecificationError('SPEC_VALIDATION_ERROR', 'Title must be 1 to 200 characters.');
-  }
-  if (!/^\d{4}-\d{2}-\d{2}$/u.test(input.created)) {
-    throw new SpecificationError('SPEC_VALIDATION_ERROR', 'Creation date must use YYYY-MM-DD.');
-  }
   const slug = specificationSlugFromTitle(title, input.specId);
   const base = 'specs/active/' + slug + '/';
   const manifest = stringify({
@@ -228,4 +223,17 @@ function fingerprint(relativePath: string, content: string): SpecificationScaffo
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** Validate a create intent without allocating a speculative specification identity. */
+export function validateSpecificationScaffoldInput(
+  input: Pick<SpecificationScaffoldInput, 'title' | 'created'>,
+): void {
+  const title = input.title.replace(/\s+/gu, ' ').trim();
+  if (!title || title.length > 200) {
+    throw new SpecificationError('SPEC_VALIDATION_ERROR', 'Title must be 1 to 200 characters.');
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/u.test(input.created)) {
+    throw new SpecificationError('SPEC_VALIDATION_ERROR', 'Creation date must use YYYY-MM-DD.');
+  }
 }

@@ -21,6 +21,7 @@ import {
 import {
   createSpecificationScaffold,
   isValidSpecificationId,
+  validateSpecificationScaffoldInput,
   type SpecificationScaffold,
 } from './model';
 import { discoverSpecifications } from './discovery';
@@ -101,112 +102,118 @@ export async function createSpecification(
   // The Git command itself does not hold that lock. A durable git-initiated
   // stage fences concurrent retries until explicit quiescence reconciliation.
   for (let count = 0; count < 12; count++) {
-    if (record.stage === 'completed') {
-      // Retrying a completed create must remain idempotent after legitimate
-      // human edits: verify canonical identity, not the original scaffold bytes.
-      await verifyResult(engine, record);
-      return resultOf(record);
-    }
-    if (record.stage === 'recovery-required') {
-      throw recovery('Operation needs explicit repair; inspect the durable journal.');
-    }
-    if (record.stage === 'git-initiated') {
-      if (!options.confirmInterruptedGitSettled) {
-        throw recovery('Git effect may still be running; confirm process quiescence before retry.');
+    switch (record.stage) {
+      case 'completed': {
+        // Retrying a completed create must remain idempotent after legitimate
+        // human edits: verify canonical identity, not the original scaffold bytes.
+        await verifyResult(engine, record);
+        return resultOf(record);
       }
-      const state = await inspectPlannedGitEffect(engine, record);
-      if (state === 'present') {
-        record = await transition(engine, record, 'git-provisioned');
-      } else if (state === 'absent') {
-        record = await transition(engine, record, 'reserved');
-      } else {
-        throw recovery('Git branch/worktree does not match the intent; manual recovery required.');
+      case 'recovery-required': {
+        throw recovery('Operation needs explicit repair; inspect the durable journal.');
       }
-      continue;
-    }
-
-    if (record.stage === 'reserved') {
-      if (record.target.kind === 'new-worktree') {
-        await validateNewGitReservation(engine, record);
-        record = await transition(engine, record, 'git-initiated');
-        // mkdir on the bounded, project-owned sibling directory only.
-        // Existing unexpected directories and symlinks fail in revalidation.
-        const worktreesParent = dirname(record.target.workspaceRoot);
-        await mkdir(worktreesParent, { recursive: true });
-        const parentStat = await lstat(worktreesParent);
-        if (
-          !parentStat.isDirectory() ||
-          parentStat.isSymbolicLink() ||
-          (await realpath(worktreesParent)) !== worktreesParent
-        ) {
-          throw recovery('Managed worktree parent was redirected before the Git mutation.');
+      case 'git-initiated': {
+        if (!options.confirmInterruptedGitSettled) {
+          throw recovery('Git effect may still be running; confirm process quiescence before retry.');
         }
         const state = await inspectPlannedGitEffect(engine, record);
-        if (state !== 'absent') {
-          throw recovery('Git state changed between reservation and execution.');
+        if (state === 'present') {
+          record = await transition(engine, record, 'git-provisioned');
+        } else if (state === 'absent') {
+          record = await transition(engine, record, 'reserved');
+        } else {
+          throw recovery('Git branch/worktree does not match the intent; manual recovery required.');
         }
-        const completed = await executeGitMutation(engine.context.project.homeRoot, [
-          'worktree',
-          'add',
-          '-b',
-          record.target.branch!,
-          record.target.workspaceRoot,
-          record.target.baseCommit!,
-        ]);
-        if (completed.exitCode !== 0) {
-          throw recovery('Git worktree creation had an uncertain effect; reconcile before retry.');
-        }
-        await options.afterEffect?.('git');
-        if ((await inspectPlannedGitEffect(engine, record)) !== 'present') {
-          throw recovery('Created Git worktree does not match the recorded intent.');
-        }
-        record = await transition(engine, record, 'git-provisioned');
-      } else {
-        record = await transition(engine, record, 'git-provisioned');
+        continue;
       }
-      continue;
-    }
 
-    if (record.stage === 'git-provisioned') {
-      if (record.target.kind === 'new-worktree') {
-        if ((await inspectPlannedGitEffect(engine, record)) !== 'present') {
-          throw recovery('Managed Git worktree changed before identity provisioning.');
+      case 'reserved': {
+        if (record.target.kind === 'new-worktree') {
+          await validateNewGitReservation(engine, record);
+          record = await transition(engine, record, 'git-initiated');
+          // mkdir on the bounded, project-owned sibling directory only.
+          // Existing unexpected directories and symlinks fail in revalidation.
+          const worktreesParent = dirname(record.target.workspaceRoot);
+          await mkdir(worktreesParent, { recursive: true });
+          const parentStat = await lstat(worktreesParent);
+          if (
+            !parentStat.isDirectory() ||
+            parentStat.isSymbolicLink() ||
+            (await realpath(worktreesParent)) !== worktreesParent
+          ) {
+            throw recovery('Managed worktree parent was redirected before the Git mutation.');
+          }
+          const state = await inspectPlannedGitEffect(engine, record);
+          if (state !== 'absent') {
+            throw recovery('Git state changed between reservation and execution.');
+          }
+          const completed = await executeGitMutation(engine.context.project.homeRoot, [
+            'worktree',
+            'add',
+            '-b',
+            record.target.branch!,
+            record.target.workspaceRoot,
+            record.target.baseCommit!,
+          ]);
+          if (completed.exitCode !== 0) {
+            throw recovery('Git worktree creation had an uncertain effect; reconcile before retry.');
+          }
+          await options.afterEffect?.('git');
+          if ((await inspectPlannedGitEffect(engine, record)) !== 'present') {
+            throw recovery('Created Git worktree does not match the recorded intent.');
+          }
+          record = await transition(engine, record, 'git-provisioned');
+        } else {
+          record = await transition(engine, record, 'git-provisioned');
         }
-        record = await ensureLinkedIdentity(engine, record);
-      } else {
-        await requireRegisteredTarget(engine, record);
+        continue;
       }
-      record = await transition(engine, record, 'manifest-writing');
-      continue;
-    }
 
-    if (record.stage === 'manifest-writing') {
-      await requireTargetIdentity(engine, record);
-      await writeScaffoldWithEvidence(record);
-      await options.afterEffect?.('manifest');
-      record = await transition(engine, record, 'manifest-written');
-      continue;
-    }
+      case 'git-provisioned': {
+        if (record.target.kind === 'new-worktree') {
+          if ((await inspectPlannedGitEffect(engine, record)) !== 'present') {
+            throw recovery('Managed Git worktree changed before identity provisioning.');
+          }
+          record = await ensureLinkedIdentity(engine, record);
+        } else {
+          await requireRegisteredTarget(engine, record);
+        }
+        record = await transition(engine, record, 'manifest-writing');
+        continue;
+      }
 
-    if (record.stage === 'manifest-written') {
-      await verifyScaffold(record);
-      record = await transition(engine, record, 'registry-writing');
-      continue;
-    }
+      case 'manifest-writing': {
+        await requireTargetIdentity(engine, record);
+        await writeScaffoldWithEvidence(record);
+        await options.afterEffect?.('manifest');
+        record = await transition(engine, record, 'manifest-written');
+        continue;
+      }
 
-    if (record.stage === 'registry-writing') {
-      await requireTargetIdentity(engine, record);
-      await verifyScaffold(record);
-      await commitBinding(engine, record);
-      await options.afterEffect?.('registry');
-      record = await transition(engine, record, 'registry-linked');
-      continue;
-    }
+      case 'manifest-written': {
+        await verifyScaffold(record);
+        record = await transition(engine, record, 'registry-writing');
+        continue;
+      }
 
-    if (record.stage === 'registry-linked') {
-      await verifyResult(engine, record);
-      record = await transition(engine, record, 'completed');
-      continue;
+      case 'registry-writing': {
+        await requireTargetIdentity(engine, record);
+        await verifyScaffold(record);
+        await commitBinding(engine, record);
+        await options.afterEffect?.('registry');
+        record = await transition(engine, record, 'registry-linked');
+        continue;
+      }
+
+      case 'registry-linked': {
+        await verifyResult(engine, record);
+        record = await transition(engine, record, 'completed');
+        continue;
+      }
+      default: {
+        const exhaustive: never = record.stage;
+        return exhaustive;
+      }
     }
   }
   throw recovery('Create operation exceeded its bounded state transition count.');
@@ -215,8 +222,8 @@ export async function createSpecification(
 function normalize(input: CreateSpecificationInput): Omit<CreateSpecificationInput, 'operationId'> {
   const title = input.title.replace(/\s+/gu, ' ').trim();
   const goal = input.goal?.trim();
-  // Use T01's canonical validation rather than adding a competing model.
-  createSpecificationScaffold({ specId: randomUUID(), title, created: input.created, goal });
+  // Reuse canonical validation without generating a throwaway Spec identity.
+  validateSpecificationScaffoldInput({ title, created: input.created });
   if (input.target.kind === 'existing') {
     if (!isValidSpecificationId(input.target.workspaceId)) {
       throw new CreateOperationError('CREATE_OPERATION_INVALID', 'Invalid target workspaceId.');
