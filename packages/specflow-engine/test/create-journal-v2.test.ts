@@ -2,7 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -132,7 +132,6 @@ describe('VC05 — atomic v2 writer with legacy v1 retry', () => {
   it('VC05: replays a pre-cutover v1 worktree with old omitted HEAD semantics', async () => {
     const context = await fixture();
     const root = context.project.homeRoot;
-    const engine = await openSpecFlowEngine({ cwd: root });
     const title = 'Legacy linked once';
     const created = '2026-10-13';
     const specId = randomUUID();
@@ -161,7 +160,7 @@ describe('VC05 — atomic v2 writer with legacy v1 retry', () => {
       target: {
         kind: 'new-worktree',
         workspaceId,
-        workspaceRoot: root + '-worktrees/' + scaffold.slug,
+        workspaceRoot: join(dirname(root), basename(root) + '-worktrees', scaffold.slug),
         instanceId: randomUUID(),
         branch: 'spec/' + scaffold.slug + '-' + specId.slice(0, 8),
         baseCommit: execFileSync('git', ['rev-parse', 'HEAD'], {
