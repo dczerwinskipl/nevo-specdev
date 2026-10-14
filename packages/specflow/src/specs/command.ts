@@ -1,12 +1,9 @@
-import { randomUUID } from 'node:crypto';
-
 import {
-  createSpecification,
+  createSpecificationFromRequest,
   discoverSpecifications,
-  inspectCreateSpecification,
   openSpecFlowEngine,
   resolveSpecification,
-  type CreateSpecificationInput,
+  type CreateSpecificationTarget,
   type DiscoveredSpecification,
   type SpecFlowEngine,
 } from '@nevo/specflow-engine';
@@ -66,39 +63,14 @@ export function createSpecsCommand(context: SpecsCommandContext): Command {
         projectRoot?: string;
         json?: boolean;
       }) => {
-        if (options.worktree && options.workspaceId) {
-          throw new Error('Choose either --worktree or --workspace-id.');
-        }
-        if (!options.worktree && (options.baseRef || options.branch)) {
-          throw new Error('--base-ref and --branch require --worktree.');
-        }
-        const engine = await openSpecFlowEngine({
-          cwd: context.cwd,
-          ...(options.projectRoot ? { projectRoot: options.projectRoot } : {}),
-        });
-        const target: CreateSpecificationInput['target'] = options.worktree
-          ? {
-              kind: 'new-worktree',
-              baseRef: options.baseRef ?? 'HEAD',
-              ...(options.branch ? { branch: options.branch } : {}),
-            }
-          : {
-              kind: 'existing',
-              workspaceId: options.workspaceId ?? engine.workspace.workspaceId,
-            };
-        // The Engine fingerprints creation date as immutable input. A caller
-        // retrying by operationId must reuse the original date, even tomorrow.
-        const journal = options.operationId
-          ? await inspectCreateSpecification(engine, options.operationId)
-          : undefined;
-        const input: CreateSpecificationInput = {
-          operationId: options.operationId ?? randomUUID(),
+        validateCreateOptions(options);
+        const engine = await engineAt(context.cwd, options.projectRoot);
+        const result = await createSpecificationFromRequest(engine, {
+          operationId: options.operationId,
           title: options.title,
-          created: journal?.created ?? new Date().toISOString().slice(0, 10),
-          ...(options.goal ? { goal: options.goal } : {}),
-          target,
-        };
-        const result = await createSpecification(engine, input);
+          goal: options.goal,
+          target: resolveCliCreateTarget(engine, options),
+        });
         if (options.json) {
           output(context, result);
         } else {
@@ -154,4 +126,34 @@ async function engineAt(cwd: string, projectRoot?: string): Promise<SpecFlowEngi
     cwd,
     ...(projectRoot ? { projectRoot } : {}),
   });
+}
+
+interface CliCreateOptions {
+  readonly worktree?: boolean;
+  readonly workspaceId?: string;
+  readonly baseRef?: string;
+  readonly branch?: string;
+}
+
+function validateCreateOptions(options: CliCreateOptions): void {
+  if (options.worktree && options.workspaceId) {
+    throw new Error('Choose either --worktree or --workspace-id.');
+  }
+  if (!options.worktree && (options.baseRef || options.branch)) {
+    throw new Error('--base-ref and --branch require --worktree.');
+  }
+}
+
+function resolveCliCreateTarget(
+  engine: SpecFlowEngine,
+  options: CliCreateOptions,
+): CreateSpecificationTarget {
+  if (options.worktree) {
+    return {
+      kind: 'new-worktree',
+      baseRef: options.baseRef ?? 'HEAD',
+      ...(options.branch ? { branch: options.branch } : {}),
+    };
+  }
+  return { kind: 'existing', workspaceId: options.workspaceId ?? engine.workspace.workspaceId };
 }

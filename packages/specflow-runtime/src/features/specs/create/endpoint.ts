@@ -1,5 +1,3 @@
-import { randomUUID } from 'node:crypto';
-
 import {
   CreateOperationError,
   GitCapabilityError,
@@ -7,9 +5,8 @@ import {
   ProjectHomeError,
   SpecificationError,
   WorkspaceRegistryError,
-  createSpecification,
-  inspectCreateSpecification,
-  type CreateSpecificationInput,
+  createSpecificationFromRequest,
+  type CreateSpecificationTarget,
   type SpecFlowEngine,
 } from '@nevo/specflow-engine';
 import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
@@ -26,6 +23,7 @@ import {
 } from '@nevo/specflow-contracts/specs';
 
 import { requireCapability } from '../../auth';
+import { statusForCreateError, type CreateErrorCode } from './error-status';
 
 export interface SpecsCreateEndpointOptions {
   readonly engine?: SpecFlowEngine;
@@ -76,32 +74,13 @@ export const specsCreateEndpoint: FastifyPluginCallback<SpecsCreateEndpointOptio
         const body = request.body;
         // Resolve default from the verified Project Home (not the HTTP server
         // process cwd or a user-provided, unverified root).
-        const target: CreateSpecificationInput['target'] =
-          body.target?.kind === 'new-worktree'
-            ? {
-                kind: 'new-worktree',
-                baseRef: body.target.baseRef ?? 'HEAD',
-                ...(body.target.branch ? { branch: body.target.branch } : {}),
-              }
-            : {
-                kind: 'existing',
-                workspaceId:
-                  body.target?.kind === 'existing'
-                    ? body.target.workspaceId
-                    : (await engine.readRegistry()).primaryWorkspaceId,
-              };
-        const existing = body.operationId
-          ? await inspectCreateSpecification(engine, body.operationId)
-          : undefined;
-        const input: CreateSpecificationInput = {
-          operationId: body.operationId ?? randomUUID(),
+        const target = await resolveCreateTarget(engine, body.target);
+        const result = await createSpecificationFromRequest(engine, {
+          operationId: body.operationId,
           title: body.title,
-          created: existing?.created ?? new Date().toISOString().slice(0, 10),
-          ...(body.goal ? { goal: body.goal } : {}),
+          goal: body.goal,
           target,
-        };
-
-        const result = await createSpecification(engine, input);
+        });
         return reply.code(201).send(result);
       } catch (error) {
         const code = errorCode(error);
@@ -115,7 +94,32 @@ export const specsCreateEndpoint: FastifyPluginCallback<SpecsCreateEndpointOptio
   done();
 };
 
-function errorCode(error: unknown): string | undefined {
+async function resolveCreateTarget(
+  engine: SpecFlowEngine,
+  target:
+    | { readonly kind: 'existing'; readonly workspaceId: string }
+    | { readonly kind: 'new-worktree'; readonly baseRef?: string; readonly branch?: string }
+    | undefined,
+): Promise<CreateSpecificationTarget> {
+  switch (target?.kind) {
+    case undefined:
+      return { kind: 'existing', workspaceId: (await engine.readRegistry()).primaryWorkspaceId };
+    case 'existing':
+      return { kind: 'existing', workspaceId: target.workspaceId };
+    case 'new-worktree':
+      return {
+        kind: 'new-worktree',
+        baseRef: target.baseRef ?? 'HEAD',
+        ...(target.branch ? { branch: target.branch } : {}),
+      };
+    default: {
+      const exhaustive: never = target;
+      return exhaustive;
+    }
+  }
+}
+
+function errorCode(error: unknown): CreateErrorCode | undefined {
   // Only Engine's public, typed failures are safe transport errors. A Node
   // filesystem error such as EACCES is not a client validation failure and
   // must never be misreported as HTTP 422.
@@ -132,27 +136,3 @@ function errorCode(error: unknown): string | undefined {
   return undefined;
 }
 
-function statusForCreateError(code: string): 400 | 409 | 422 | 503 {
-  if (code.includes('VALIDATION') || code === 'CREATE_OPERATION_INVALID') return 400;
-  if (
-    code === 'CREATE_CONFLICT' ||
-    code === 'SPEC_CONFLICT' ||
-    code === 'BRANCH_ALREADY_EXISTS' ||
-    code === 'BRANCH_ALREADY_CHECKED_OUT' ||
-    code === 'WORKTREE_PATH_CONFLICT'
-  )
-    return 409;
-  if (
-    code.includes('RECOVERY') ||
-    code.includes('CORRUPT') ||
-    code.includes('MISMATCH') ||
-    code === 'GIT_UNAVAILABLE' ||
-    code === 'CONTROL_LOCK_BUSY' ||
-    code === 'CONTROL_LOCK_CORRUPT' ||
-    code === 'CONTROL_LOCK_OWNERSHIP_LOST' ||
-    code === 'CONTROL_LOCK_INVALID_HOME' ||
-    code === 'GIT_OPERATION_UNCERTAIN'
-  )
-    return 503;
-  return 422;
-}

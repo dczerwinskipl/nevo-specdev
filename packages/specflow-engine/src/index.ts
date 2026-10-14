@@ -121,3 +121,8 @@ export {
   type CreateJournal,
   type CreateStage,
 } from './specs/create-journal';
+
+export {
+  createSpecificationFromRequest,
+  type CreateSpecificationRequest,
+} from './specs/create-request';
