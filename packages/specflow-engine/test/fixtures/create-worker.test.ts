@@ -29,9 +29,31 @@ it.skipIf(!process.env.NEVO_CREATE_WORKER)(
         await sleep(25);
       }
     }
-    const result = await createSpecification(engine, input);
+    const result = await createSpecification(engine, input, {
+      afterEffect: async (effect) => {
+        if (effect === 'reservation' && process.env.NEVO_CREATE_WORKER_OBSERVED) {
+          await writeFile(process.env.NEVO_CREATE_WORKER_OBSERVED, 'reserved');
+        }
+        if (effect !== process.env.NEVO_CREATE_WORKER_PAUSE_STAGE) return;
+        await writeFile(process.env.NEVO_CREATE_WORKER_PAUSED!, effect);
+        const release = process.env.NEVO_CREATE_WORKER_RELEASE!;
+        const deadline = Date.now() + 30000;
+        while (true) {
+          try {
+            await access(release);
+            break;
+          } catch {
+            if (Date.now() > deadline) throw new Error('Create pause barrier timed out.');
+            await sleep(25);
+          }
+        }
+      },
+    });
     if (!result.specId)
       throw new Error('Create did not produce a canonical specification identity.');
+    if (process.env.NEVO_CREATE_WORKER_RESULT) {
+      await writeFile(process.env.NEVO_CREATE_WORKER_RESULT, JSON.stringify(result));
+    }
   },
   120000,
 );
