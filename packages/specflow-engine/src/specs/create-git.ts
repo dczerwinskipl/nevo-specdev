@@ -1,5 +1,5 @@
 import { lstat, readFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 
 import type { SpecFlowEngine } from '../application';
 import { GitCapabilityError } from '../git/errors';
@@ -34,11 +34,24 @@ export function planFromCreateJournal(engine: SpecFlowEngine, record: CreateJour
   ) {
     throw recovery('Create journal has no valid pinned Git worktree plan.');
   }
+  // V1 did not persist a separate Git plan: its original target identity is
+  // derived from the reserved slug and the immutable Project Home location.
+  // A different direct child under the same managed parent is NOT equivalent.
+  const home = engine.context.project.homeRoot;
+  const expectedTarget = join(dirname(home), basename(home) + '-worktrees', record.slug);
+  const actualTarget = target.workspaceRoot;
+  const matchesTarget =
+    process.platform === 'win32'
+      ? actualTarget.toLowerCase() === expectedTarget.toLowerCase()
+      : actualTarget === expectedTarget;
+  if (resolve(actualTarget) !== actualTarget || !matchesTarget) {
+    throw recovery('Journal worktree target does not match the originally reserved slug.');
+  }
   return {
     projectId: record.projectId,
     gitInstanceId: engine.context.project.gitInstanceId,
-    projectRoot: engine.context.project.homeRoot,
-    targetPath: target.workspaceRoot,
+    projectRoot: home,
+    targetPath: actualTarget,
     branch: target.branch,
     baseCommit: target.baseCommit,
   };

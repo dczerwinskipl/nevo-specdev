@@ -1,8 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
+import { lstat, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
+
+import { createJournalPath } from '../src/specs/create-journal';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -157,6 +159,59 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
     expect((await inspectCreateSpecification(restarted, input.operationId))?.version).toBe(1);
     expect(git(root, 'rev-parse', 'HEAD')).toBe(originalHead);
     expect(git(root, 'worktree', 'list', '--porcelain').match(/worktree /gu)).toHaveLength(2);
+  }, 90000);
+
+  it('VC04: rejects a tampered v1 reserved target even when it is a direct managed child', async () => {
+    const { root, engine } = await project();
+    const input = linked('Original managed destination');
+
+    await expect(
+      createSpecification(engine, input, {
+        afterEffect: (effect) =>
+          effect === 'reservation'
+            ? Promise.reject(new Error('Stop after journal reservation'))
+            : Promise.resolve(),
+      }),
+    ).rejects.toThrow('Stop after journal reservation');
+
+    const original = await inspectCreateSpecification(engine, input.operationId);
+    expect(original?.version).toBe(1);
+    expect(original?.stage).toBe('reserved');
+    expect(original?.target.kind).toBe('new-worktree');
+    if (!original || original.target.kind !== 'new-worktree') {
+      throw new Error('Expected a real, durable v1 worktree reservation.');
+    }
+
+    const originalTarget = original.target.workspaceRoot;
+    const substitutedTarget = join(dirname(originalTarget), 'other-location');
+    expect(substitutedTarget).not.toBe(originalTarget);
+    const path = createJournalPath(engine.context, input.operationId);
+    const tampered = {
+      ...original,
+      target: { ...original.target, workspaceRoot: substitutedTarget },
+    };
+    await writeFile(path, JSON.stringify(tampered) + '\n');
+    const journalBefore = await readFile(path, 'utf8');
+    const refsBefore = git(root, 'for-each-ref', '--format=%(refname) %(objectname)', 'refs/heads');
+    const worktreesBefore = git(root, 'worktree', 'list', '--porcelain');
+    const registryBefore = await readFile(workspaceRegistryPath(engine.context), 'utf8');
+
+    const restarted = await openSpecFlowEngine({ cwd: root });
+    await expect(createSpecification(restarted, input)).rejects.toMatchObject({
+      code: 'CREATE_RECOVERY_REQUIRED',
+    });
+
+    expect(await readFile(path, 'utf8')).toBe(journalBefore);
+    expect((await inspectCreateSpecification(restarted, input.operationId))?.stage).toBe(
+      'reserved',
+    );
+    expect(await lstat(substitutedTarget)).rejects.toMatchObject({ code: 'ENOENT' });
+    expect(await lstat(originalTarget)).rejects.toMatchObject({ code: 'ENOENT' });
+    expect(git(root, 'for-each-ref', '--format=%(refname) %(objectname)', 'refs/heads')).toBe(
+      refsBefore,
+    );
+    expect(git(root, 'worktree', 'list', '--porcelain')).toBe(worktreesBefore);
+    expect(await readFile(workspaceRegistryPath(engine.context), 'utf8')).toBe(registryBefore);
   }, 90000);
 
   it('VC04: disabled policy blocks new Git mutation before git-initiated but allows completed replay', async () => {
