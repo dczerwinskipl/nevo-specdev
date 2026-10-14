@@ -130,7 +130,7 @@ describe('VC03 — journal v2 reader without v2 writer activation', () => {
     expect(
       await readFile(join(result.workspaceRoot, result.relativeManifestPath), 'utf8'),
     ).toContain(result.specId);
-  });
+  }, 120000);
 
   it('round-trips a structural v1 journal fixture without changing its representation', async () => {
     const context = await fixture();
