@@ -110,7 +110,9 @@ export async function createSpecification(
       }
       case 'git-initiated': {
         if (!options.confirmInterruptedGitSettled) {
-          throw recovery('Git effect may still be running; confirm process quiescence before retry.');
+          throw recovery(
+            'Git effect may still be running; confirm process quiescence before retry.',
+          );
         }
         const state = await inspectPlannedGitEffect(engine, record);
         if (state === 'present') {
@@ -118,7 +120,9 @@ export async function createSpecification(
         } else if (state === 'absent') {
           record = await transition(engine, record, 'reserved');
         } else {
-          throw recovery('Git branch/worktree does not match the intent; manual recovery required.');
+          throw recovery(
+            'Git branch/worktree does not match the intent; manual recovery required.',
+          );
         }
         continue;
       }
@@ -152,7 +156,9 @@ export async function createSpecification(
             record.target.baseCommit!,
           ]);
           if (completed.exitCode !== 0) {
-            throw recovery('Git worktree creation had an uncertain effect; reconcile before retry.');
+            throw recovery(
+              'Git worktree creation had an uncertain effect; reconcile before retry.',
+            );
           }
           await options.afterEffect?.('git');
           if ((await inspectPlannedGitEffect(engine, record)) !== 'present') {

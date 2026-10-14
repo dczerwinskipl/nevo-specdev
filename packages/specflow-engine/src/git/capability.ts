@@ -226,7 +226,10 @@ async function assertNoBranchCollision(home: string, branch: string): Promise<vo
   }
   const requestedRef = 'refs/heads/' + branch;
   if (branches.stdout.split('\n').some((ref) => gitRefsConflict(ref, requestedRef))) {
-    throw new GitCapabilityError('BRANCH_ALREADY_EXISTS', 'Requested branch conflicts with an existing Git ref.');
+    throw new GitCapabilityError(
+      'BRANCH_ALREADY_EXISTS',
+      'Requested branch conflicts with an existing Git ref.',
+    );
   }
 }
 
@@ -267,13 +270,19 @@ async function verifyBaseProjectConfig(home: string, baseCommit: string): Promis
   }
   const configContent = await executeGit(home, ['show', baseCommit + ':.nevo/config.yaml']);
   if (configContent.exitCode !== 0) {
-    throw new GitCapabilityError('GIT_BASE_CONFIG_MISSING', 'Base commit configuration could not be read.');
+    throw new GitCapabilityError(
+      'GIT_BASE_CONFIG_MISSING',
+      'Base commit configuration could not be read.',
+    );
   }
   let baseConfig: unknown;
   try {
     baseConfig = parseYaml(configContent.stdout) as unknown;
   } catch {
-    throw new GitCapabilityError('GIT_BASE_CONFIG_MISSING', 'Base commit project configuration is not valid YAML.');
+    throw new GitCapabilityError(
+      'GIT_BASE_CONFIG_MISSING',
+      'Base commit project configuration is not valid YAML.',
+    );
   }
   if (!isRecord(baseConfig) || !isRecord(baseConfig.runtime)) {
     throw new GitCapabilityError(

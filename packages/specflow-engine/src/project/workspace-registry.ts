@@ -327,4 +327,3 @@ function isObject(value: unknown): value is Record<string, unknown> {
 function isMissing(error: unknown): boolean {
   return isObject(error) && error.code === 'ENOENT';
 }
-

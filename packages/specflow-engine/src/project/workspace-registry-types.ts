@@ -58,4 +58,3 @@ export type RegisteredWorkspaceInspection =
       readonly workspace: WorkspaceRegistration;
       readonly reason: string;
     };
-

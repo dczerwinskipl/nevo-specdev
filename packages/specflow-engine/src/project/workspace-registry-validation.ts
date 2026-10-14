@@ -140,7 +140,6 @@ function parseBindings(
   return bindings;
 }
 
-
 export function isIdentifier(value: unknown): value is string {
   return (
     typeof value === 'string' &&
@@ -161,4 +160,3 @@ export function pathKey(value: string): string {
 export function corrupt(message: string): WorkspaceRegistryError {
   return new WorkspaceRegistryError('REGISTRY_CORRUPT', message);
 }
-

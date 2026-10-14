@@ -143,7 +143,10 @@ export async function requireRegisteredTarget(
   }
 }
 
-export async function requireTargetIdentity(engine: SpecFlowEngine, record: CreateJournal): Promise<void> {
+export async function requireTargetIdentity(
+  engine: SpecFlowEngine,
+  record: CreateJournal,
+): Promise<void> {
   if (record.target.kind === 'existing') {
     await requireRegisteredTarget(engine, record);
   } else {
