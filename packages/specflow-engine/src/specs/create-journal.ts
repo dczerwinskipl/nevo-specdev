@@ -7,16 +7,19 @@ import type { ResolvedProjectHome } from '../project/project-home';
 
 export const CREATE_JOURNAL_RELATIVE_DIR = 'engine/operations/create';
 
-export type CreateStage =
-  | 'reserved'
-  | 'git-initiated'
-  | 'git-provisioned'
-  | 'manifest-writing'
-  | 'manifest-written'
-  | 'registry-writing'
-  | 'registry-linked'
-  | 'completed'
-  | 'recovery-required';
+export const CREATE_STAGES = [
+  'reserved',
+  'git-initiated',
+  'git-provisioned',
+  'manifest-writing',
+  'manifest-written',
+  'registry-writing',
+  'registry-linked',
+  'completed',
+  'recovery-required',
+] as const;
+
+export type CreateStage = (typeof CREATE_STAGES)[number];
 
 export interface CreateJournalTarget {
   readonly kind: 'existing' | 'new-worktree';
@@ -170,60 +173,80 @@ function parseJournal(
   value: unknown,
   operationId: string,
 ): CreateJournal {
-  if (!isRecord(value) || !isRecord(value.target) || !Array.isArray(value.files)) {
-    throw invalidJournal();
-  }
   if (
-    value.version !== 1 ||
-    value.projectId !== context.project.projectId ||
-    value.operationId !== operationId ||
-    !UUID.test(operationId) ||
-    typeof value.inputFingerprint !== 'string' ||
-    !SHA256.test(value.inputFingerprint) ||
-    typeof value.specId !== 'string' ||
-    !UUID.test(value.specId) ||
-    typeof value.slug !== 'string' ||
-    typeof value.title !== 'string' ||
-    typeof value.created !== 'string' ||
-    (value.goal !== undefined && typeof value.goal !== 'string') ||
-    ![
-      'reserved',
-      'git-initiated',
-      'git-provisioned',
-      'manifest-writing',
-      'manifest-written',
-      'registry-writing',
-      'registry-linked',
-      'completed',
-      'recovery-required',
-    ].includes(value.stage as string) ||
-    (value.reason !== undefined && typeof value.reason !== 'string') ||
-    (value.target.kind !== 'existing' && value.target.kind !== 'new-worktree') ||
-    typeof value.target.workspaceId !== 'string' ||
-    !UUID.test(value.target.workspaceId) ||
-    typeof value.target.workspaceRoot !== 'string' ||
-    (value.target.instanceId !== undefined &&
-      (typeof value.target.instanceId !== 'string' || !UUID.test(value.target.instanceId))) ||
-    (value.target.kind === 'new-worktree' &&
-      (typeof value.target.branch !== 'string' ||
-        typeof value.target.baseCommit !== 'string' ||
-        !/^[a-f0-9]{40}(?:[a-f0-9]{24})?$/iu.test(value.target.baseCommit))) ||
-    value.files.length !== 2 ||
-    !isRecord(value.files[0]) ||
-    value.files[0].relativePath !== 'specs/active/' + value.slug + '/change.yaml' ||
-    !isRecord(value.files[1]) ||
-    value.files[1].relativePath !== 'specs/active/' + value.slug + '/overview.md' ||
-    value.files.some(
-      (f: unknown) =>
-        !isRecord(f) ||
-        typeof f.relativePath !== 'string' ||
-        typeof f.sha256 !== 'string' ||
-        !SHA256.test(f.sha256),
-    )
+    !isRecord(value) ||
+    !isValidJournalIdentity(context, value, operationId) ||
+    !isValidJournalTarget(value.target) ||
+    !isValidJournalFiles(value.files, value.slug)
   ) {
     throw invalidJournal();
   }
+  // Each part has been validated without changing the serialized record.
   return value as unknown as CreateJournal;
+}
+
+function isValidJournalIdentity(
+  context: ResolvedProjectHome,
+  value: Record<string, unknown>,
+  operationId: string,
+): boolean {
+  return (
+    value.version === 1 &&
+    value.projectId === context.project.projectId &&
+    value.operationId === operationId &&
+    UUID.test(operationId) &&
+    typeof value.inputFingerprint === 'string' &&
+    SHA256.test(value.inputFingerprint) &&
+    typeof value.specId === 'string' &&
+    UUID.test(value.specId) &&
+    typeof value.slug === 'string' &&
+    typeof value.title === 'string' &&
+    typeof value.created === 'string' &&
+    (value.goal === undefined || typeof value.goal === 'string') &&
+    isCreateStage(value.stage) &&
+    (value.reason === undefined || typeof value.reason === 'string')
+  );
+}
+
+function isCreateStage(value: unknown): value is CreateStage {
+  return typeof value === 'string' && CREATE_STAGES.some((stage) => stage === value);
+}
+
+function isValidJournalTarget(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  if (value.kind !== 'existing' && value.kind !== 'new-worktree') return false;
+  if (
+    typeof value.workspaceId !== 'string' ||
+    !UUID.test(value.workspaceId) ||
+    typeof value.workspaceRoot !== 'string' ||
+    (value.instanceId !== undefined &&
+      (typeof value.instanceId !== 'string' || !UUID.test(value.instanceId)))
+  ) {
+    return false;
+  }
+  if (value.kind === 'existing') return true;
+  return (
+    typeof value.branch === 'string' &&
+    typeof value.baseCommit === 'string' &&
+    /^[a-f0-9]{40}(?:[a-f0-9]{24})?$/iu.test(value.baseCommit)
+  );
+}
+
+function isValidJournalFiles(value: unknown, slug: unknown): boolean {
+  if (!Array.isArray(value) || value.length !== 2 || typeof slug !== 'string') return false;
+  return (
+    value.every(
+      (file: unknown) =>
+        isRecord(file) &&
+        typeof file.relativePath === 'string' &&
+        typeof file.sha256 === 'string' &&
+        SHA256.test(file.sha256),
+    ) &&
+    isRecord(value[0]) &&
+    value[0].relativePath === 'specs/active/' + slug + '/change.yaml' &&
+    isRecord(value[1]) &&
+    value[1].relativePath === 'specs/active/' + slug + '/overview.md'
+  );
 }
 
 function invalidJournal(): CreateOperationError {

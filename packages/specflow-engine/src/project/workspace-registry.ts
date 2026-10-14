@@ -112,9 +112,7 @@ export function validateWorkspaceRegistry(
   source: unknown,
   context: ResolvedProjectHome,
 ): WorkspaceRegistry {
-  if (!isObject(source)) {
-    throw corrupt('Registry root must be an object.');
-  }
+  if (!isObject(source)) throw corrupt('Registry root must be an object.');
   if (source.version !== WORKSPACE_REGISTRY_VERSION) {
     throw new WorkspaceRegistryError(
       'REGISTRY_UNSUPPORTED_VERSION',
@@ -137,50 +135,87 @@ export function validateWorkspaceRegistry(
     throw corrupt('Invalid registry revision, primary identity or collections.');
   }
 
+  const workspaces = parseRegistrations(source.workspaces);
+  assertPrimaryRegistration(workspaces, source.primaryWorkspaceId, context.project.homeRoot);
+  const specBindings = parseBindings(
+    source.specBindings,
+    new Set(workspaces.map((workspace) => workspace.workspaceId)),
+    source.revision as number,
+  );
+
+  return {
+    version: WORKSPACE_REGISTRY_VERSION,
+    projectId: source.projectId,
+    revision: source.revision as number,
+    primaryWorkspaceId: source.primaryWorkspaceId,
+    workspaces,
+    specBindings,
+  };
+}
+
+function parseRegistrations(values: unknown[]): WorkspaceRegistration[] {
   const workspaces: WorkspaceRegistration[] = [];
   const workspaceIds = new Set<string>();
   const paths = new Set<string>();
-  for (const value of source.workspaces) {
-    if (
-      !isObject(value) ||
-      !isIdentifier(value.workspaceId) ||
-      (value.kind !== 'primary' && value.kind !== 'linked') ||
-      typeof value.root !== 'string' ||
-      !isAbsolute(value.root) ||
-      resolve(value.root) !== value.root ||
-      typeof value.managed !== 'boolean' ||
-      (value.kind === 'linked' && !isIdentifier(value.instanceId)) ||
-      (value.kind === 'primary' && value.instanceId !== undefined)
-    ) {
-      throw corrupt('Invalid workspace registration.');
-    }
-    if (workspaceIds.has(value.workspaceId) || paths.has(pathKey(value.root))) {
+  for (const value of values) {
+    const workspace = parseRegistration(value);
+    if (workspaceIds.has(workspace.workspaceId) || paths.has(pathKey(workspace.root))) {
       throw corrupt('Duplicate workspace identity or root.');
     }
-    workspaceIds.add(value.workspaceId);
-    paths.add(pathKey(value.root));
-    workspaces.push({
-      workspaceId: value.workspaceId,
-      kind: value.kind,
-      root: value.root,
-      managed: value.managed,
-      ...(value.kind === 'linked' ? { instanceId: value.instanceId as string } : {}),
-    });
+    workspaceIds.add(workspace.workspaceId);
+    paths.add(pathKey(workspace.root));
+    workspaces.push(workspace);
   }
+  return workspaces;
+}
 
-  const primary = workspaces.filter((w) => w.kind === 'primary');
+function parseRegistration(value: unknown): WorkspaceRegistration {
+  if (
+    !isObject(value) ||
+    !isIdentifier(value.workspaceId) ||
+    (value.kind !== 'primary' && value.kind !== 'linked') ||
+    typeof value.root !== 'string' ||
+    !isAbsolute(value.root) ||
+    resolve(value.root) !== value.root ||
+    typeof value.managed !== 'boolean' ||
+    (value.kind === 'linked' && !isIdentifier(value.instanceId)) ||
+    (value.kind === 'primary' && value.instanceId !== undefined)
+  ) {
+    throw corrupt('Invalid workspace registration.');
+  }
+  return {
+    workspaceId: value.workspaceId,
+    kind: value.kind,
+    root: value.root,
+    managed: value.managed,
+    ...(value.kind === 'linked' ? { instanceId: value.instanceId as string } : {}),
+  };
+}
+
+function assertPrimaryRegistration(
+  workspaces: readonly WorkspaceRegistration[],
+  primaryWorkspaceId: string,
+  homeRoot: string,
+): void {
+  const primary = workspaces.filter((workspace) => workspace.kind === 'primary');
   if (
     primary.length !== 1 ||
-    primary[0]?.workspaceId !== source.primaryWorkspaceId ||
-    primary[0]?.root !== context.project.homeRoot ||
+    primary[0]?.workspaceId !== primaryWorkspaceId ||
+    primary[0]?.root !== homeRoot ||
     primary[0]?.managed
   ) {
     throw corrupt('Exactly one unmanaged primary workspace must identify Project Home.');
   }
+}
 
+function parseBindings(
+  values: unknown[],
+  workspaceIds: ReadonlySet<string>,
+  revision: number,
+): SpecWorkspaceBinding[] {
   const specIds = new Set<string>();
   const bindings: SpecWorkspaceBinding[] = [];
-  for (const value of source.specBindings) {
+  for (const value of values) {
     if (
       !isObject(value) ||
       !isIdentifier(value.specId) ||
@@ -188,7 +223,7 @@ export function validateWorkspaceRegistry(
       !workspaceIds.has(value.workspaceId) ||
       !Number.isSafeInteger(value.generation) ||
       (value.generation as number) < 0 ||
-      (value.generation as number) > (source.revision as number)
+      (value.generation as number) > revision
     ) {
       throw corrupt('Invalid specification binding or unknown workspace identity.');
     }
@@ -200,15 +235,7 @@ export function validateWorkspaceRegistry(
       generation: value.generation as number,
     });
   }
-
-  return {
-    version: WORKSPACE_REGISTRY_VERSION,
-    projectId: source.projectId,
-    revision: source.revision as number,
-    primaryWorkspaceId: source.primaryWorkspaceId,
-    workspaces,
-    specBindings: bindings,
-  };
+  return bindings;
 }
 
 export async function readWorkspaceRegistry(
