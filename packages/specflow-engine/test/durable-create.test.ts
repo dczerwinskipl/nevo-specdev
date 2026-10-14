@@ -178,7 +178,7 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
     expect(original?.version).toBe(1);
     expect(original?.stage).toBe('reserved');
     expect(original?.target.kind).toBe('new-worktree');
-    if (!original || original.target.kind !== 'new-worktree') {
+    if (original?.target.kind !== 'new-worktree') {
       throw new Error('Expected a real, durable v1 worktree reservation.');
     }
 
@@ -205,8 +205,8 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
     expect((await inspectCreateSpecification(restarted, input.operationId))?.stage).toBe(
       'reserved',
     );
-    expect(await lstat(substitutedTarget)).rejects.toMatchObject({ code: 'ENOENT' });
-    expect(await lstat(originalTarget)).rejects.toMatchObject({ code: 'ENOENT' });
+    await expect(lstat(substitutedTarget)).rejects.toMatchObject({ code: 'ENOENT' });
+    await expect(lstat(originalTarget)).rejects.toMatchObject({ code: 'ENOENT' });
     expect(git(root, 'for-each-ref', '--format=%(refname) %(objectname)', 'refs/heads')).toBe(
       refsBefore,
     );
