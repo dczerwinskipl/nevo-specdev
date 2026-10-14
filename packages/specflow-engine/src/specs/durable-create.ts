@@ -130,100 +130,100 @@ export async function createSpecificationWithIntent(
   // stage fences concurrent retries until explicit quiescence reconciliation.
   try {
     for (let count = 0; count < 12; count++) {
-    switch (record.stage) {
-      case 'completed': {
-        // Retrying a completed create must remain idempotent after legitimate
-        // human edits: verify canonical identity, not the original scaffold bytes.
-        await verifyResult(engine, record);
-        return resultOf(record);
-      }
-      case 'recovery-required': {
-        throw recovery('Operation needs explicit repair; inspect the durable journal.');
-      }
-      case 'git-initiated': {
-        if (!options.confirmInterruptedGitSettled) {
-          throw recovery(
-            'Git effect may still be running; confirm process quiescence before retry.',
-          );
+      switch (record.stage) {
+        case 'completed': {
+          // Retrying a completed create must remain idempotent after legitimate
+          // human edits: verify canonical identity, not the original scaffold bytes.
+          await verifyResult(engine, record);
+          return resultOf(record);
         }
-        const state = await inspectPlannedGitEffect(engine, record);
-        if (state === 'present') {
-          record = await transition(engine, record, 'git-provisioned');
-        } else if (state === 'absent') {
-          record = await transition(engine, record, 'reserved');
-        } else {
-          throw recovery(
-            'Git branch/worktree does not match the intent; manual recovery required.',
-          );
+        case 'recovery-required': {
+          throw recovery('Operation needs explicit repair; inspect the durable journal.');
         }
-        continue;
-      }
-
-      case 'reserved': {
-        if (record.target.kind === 'new-worktree') {
-          await validateNewGitReservation(engine, record);
-          record = await transition(engine, record, 'git-initiated');
-          // WorktreePort owns every filesystem/Git side effect. The durable
-          // git-initiated transition was committed above, before this call.
-          await createPlannedGitWorktree(engine, record);
-          await options.afterEffect?.('git');
-          if ((await inspectPlannedGitEffect(engine, record)) !== 'present') {
-            throw recovery('Created Git worktree does not match the recorded intent.');
+        case 'git-initiated': {
+          if (!options.confirmInterruptedGitSettled) {
+            throw recovery(
+              'Git effect may still be running; confirm process quiescence before retry.',
+            );
           }
-          record = await transition(engine, record, 'git-provisioned');
-        } else {
-          record = await transition(engine, record, 'git-provisioned');
-        }
-        continue;
-      }
-
-      case 'git-provisioned': {
-        if (record.target.kind === 'new-worktree') {
-          if ((await inspectPlannedGitEffect(engine, record)) !== 'present') {
-            throw recovery('Managed Git worktree changed before identity provisioning.');
+          const state = await inspectPlannedGitEffect(engine, record);
+          if (state === 'present') {
+            record = await transition(engine, record, 'git-provisioned');
+          } else if (state === 'absent') {
+            record = await transition(engine, record, 'reserved');
+          } else {
+            throw recovery(
+              'Git branch/worktree does not match the intent; manual recovery required.',
+            );
           }
-          record = await ensureLinkedIdentity(engine, record);
-        } else {
-          await requireRegisteredTarget(engine, record);
+          continue;
         }
-        record = await transition(engine, record, 'manifest-writing');
-        continue;
-      }
 
-      case 'manifest-writing': {
-        await requireTargetIdentity(engine, record);
-        await writeScaffoldWithEvidence(record);
-        await options.afterEffect?.('manifest');
-        record = await transition(engine, record, 'manifest-written');
-        continue;
-      }
+        case 'reserved': {
+          if (record.target.kind === 'new-worktree') {
+            await validateNewGitReservation(engine, record);
+            record = await transition(engine, record, 'git-initiated');
+            // WorktreePort owns every filesystem/Git side effect. The durable
+            // git-initiated transition was committed above, before this call.
+            await createPlannedGitWorktree(engine, record);
+            await options.afterEffect?.('git');
+            if ((await inspectPlannedGitEffect(engine, record)) !== 'present') {
+              throw recovery('Created Git worktree does not match the recorded intent.');
+            }
+            record = await transition(engine, record, 'git-provisioned');
+          } else {
+            record = await transition(engine, record, 'git-provisioned');
+          }
+          continue;
+        }
 
-      case 'manifest-written': {
-        await verifyScaffold(record);
-        record = await transition(engine, record, 'registry-writing');
-        continue;
-      }
+        case 'git-provisioned': {
+          if (record.target.kind === 'new-worktree') {
+            if ((await inspectPlannedGitEffect(engine, record)) !== 'present') {
+              throw recovery('Managed Git worktree changed before identity provisioning.');
+            }
+            record = await ensureLinkedIdentity(engine, record);
+          } else {
+            await requireRegisteredTarget(engine, record);
+          }
+          record = await transition(engine, record, 'manifest-writing');
+          continue;
+        }
 
-      case 'registry-writing': {
-        await requireTargetIdentity(engine, record);
-        await verifyScaffold(record);
-        await commitBinding(engine, record);
-        await options.afterEffect?.('registry');
-        record = await transition(engine, record, 'registry-linked');
-        continue;
-      }
+        case 'manifest-writing': {
+          await requireTargetIdentity(engine, record);
+          await writeScaffoldWithEvidence(record);
+          await options.afterEffect?.('manifest');
+          record = await transition(engine, record, 'manifest-written');
+          continue;
+        }
 
-      case 'registry-linked': {
-        await verifyResult(engine, record);
-        record = await transition(engine, record, 'completed');
-        continue;
-      }
-      default: {
-        const exhaustive: never = record.stage;
-        return exhaustive;
+        case 'manifest-written': {
+          await verifyScaffold(record);
+          record = await transition(engine, record, 'registry-writing');
+          continue;
+        }
+
+        case 'registry-writing': {
+          await requireTargetIdentity(engine, record);
+          await verifyScaffold(record);
+          await commitBinding(engine, record);
+          await options.afterEffect?.('registry');
+          record = await transition(engine, record, 'registry-linked');
+          continue;
+        }
+
+        case 'registry-linked': {
+          await verifyResult(engine, record);
+          record = await transition(engine, record, 'completed');
+          continue;
+        }
+        default: {
+          const exhaustive: never = record.stage;
+          return exhaustive;
+        }
       }
     }
-  }
     throw recovery('Create operation exceeded its bounded state transition count.');
   } catch (error) {
     if (
