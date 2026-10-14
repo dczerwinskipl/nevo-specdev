@@ -16,6 +16,11 @@ import {
   type SecondaryScreenProps,
 } from '@nevo/ui';
 import { useTranslation } from 'react-i18next';
+import {
+  ApplicationLocationIdentity,
+  ApplicationContextLine,
+} from '../../../app/navigation/ApplicationLocation';
+import { WorkspaceRouteLeaveGuard } from '../../../app/navigation/WorkspaceRouteLeaveGuard';
 import type { FullTaskData } from '../model';
 import { TaskContent } from '../detail/TaskContent';
 import { inspectionAnchor, type TaskInspectionAnchor } from '../detail/taskInspectionModel';
@@ -261,6 +266,7 @@ export function FullTaskWorkspace(props: {
 }) {
   return (
     <AppWorkspaceProvider scopeKey={`${props.specId}:${props.task.id}`}>
+      <WorkspaceRouteLeaveGuard />
       <TaskViewStateProvider key={`${props.specId}:${props.task.id}`}>
         <Context.Provider value={{ task: props.task, specId: props.specId }}>
           <Workspace {...props} />
@@ -299,7 +305,16 @@ function Workspace({
       <AppWorkspace.Primary
         header={
           <WorkspaceHeader
-            title={`Task / ${task.id}`}
+            title={t('specification.viewTasks')}
+            as="span"
+            identityContent={
+              <ApplicationLocationIdentity
+                title={t('specification.viewTasks')}
+                view="task"
+                specId={specId}
+                detailLabel={task.id}
+              />
+            }
             icon="list-checks"
             actions={
               !supportsSplit
@@ -321,6 +336,7 @@ function Workspace({
         <AppContent className="w-content-xwide max-w-full">
           <AppWorkspaceBody className="py-6">
             <AppContentContainer align="start" size="full">
+              <ApplicationContextLine specId={specId} view="task" />
               {stale ? (
                 <Alert tone="attention" title={t('taskDetails.pageFailed')}>
                   <Button variant="secondary" size="sm" onClick={onRetry}>

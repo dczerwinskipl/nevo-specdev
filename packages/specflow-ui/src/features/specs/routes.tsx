@@ -7,7 +7,7 @@ import { SpecsOverview } from './overview/SpecsOverview';
 import { useSpecsOverview } from './overview/useSpecsOverview';
 import { SpecsAccessDenied } from './overview/SpecsAccessDenied';
 import { SpecificationSurface } from './SpecificationSurface';
-import { operationalPrimaryLinkClassName } from './shared/OperationalList/OperationalRow';
+import { specPrimaryLinkClassName } from './overview/SpecListRow';
 
 export const specsForbiddenRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -176,7 +176,7 @@ function SpecsRouteScreen() {
           to="/specs/$specId"
           params={{ specId }}
           search={{ collection }}
-          className={operationalPrimaryLinkClassName}
+          className={specPrimaryLinkClassName}
           aria-label={ariaLabel}
           data-focus-ring="delegated"
         >

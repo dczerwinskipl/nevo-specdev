@@ -6,9 +6,19 @@ import {
   createSpecsFixture,
 } from '../../../../test-support/specs/overview/fixtures';
 import { sectionTranslationKey } from './model';
-import { archiveRow, currentRow } from './presentation';
+import { archiveRow, currentRow, sortArchiveItems } from './presentation';
 
 describe('Specs Overview presentation boundary', () => {
+  it('sorts the displayed milestone using completion precedence, invalid dates last and stable identity ties', () => {
+    const items = [
+      createArchiveItem({ id: 'invalid', completedAt: 'broken', archivedAt: '2099-01-01' }),
+      createArchiveItem({ id: 'older', completedAt: '2026-01-01', archivedAt: '2099-01-01' }),
+      createArchiveItem({ id: 'b', archivedAt: '2026-09-01' }),
+      createArchiveItem({ id: 'a', archivedAt: '2026-09-01' }),
+    ];
+    expect(sortArchiveItems(items).map((item) => item.id)).toEqual(['a', 'b', 'older', 'invalid']);
+    expect(items[0]!.id).toBe('invalid');
+  });
   it('derives row summary and concurrent qualifier from the simplified Current model', () => {
     const source = createSpecsFixture().items[0]!;
     const row = currentRow(source);
@@ -118,6 +128,10 @@ describe('Specs Overview presentation boundary', () => {
       { kind: 'completed', timestamp: '2026-09-22T14:00:00Z' },
     ],
     [{}, { kind: 'archived', timestamp: undefined }],
+    [
+      { completedAt: '', archivedAt: '2026-09-25T09:00:00Z' },
+      { kind: 'completed', timestamp: '' },
+    ],
   ])('uses only authoritative Archive lifecycle data: %j', (timestamps, history) => {
     const row = archiveRow(createArchiveItem({ ...timestamps, updatedAt: '2099-01-01T00:00:00Z' }));
 

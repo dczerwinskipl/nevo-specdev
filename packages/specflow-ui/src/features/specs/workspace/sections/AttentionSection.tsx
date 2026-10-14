@@ -24,7 +24,7 @@ export function AttentionSection({ items }: AttentionSectionProps) {
             <Icon name="clock" size="sm" />
           </span>
           <Typography
-            as="h3"
+            as="h2"
             variant="section-label"
             id={`${id}-heading`}
             className="font-semibold text-content-primary"

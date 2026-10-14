@@ -35,6 +35,8 @@ export interface WorkspaceHeaderProps {
   status?: ReactNode;
   subtitle?: ReactNode;
   title: ReactNode;
+  /** Structured location content, outside heading semantics. Actions remain discoverable. */
+  identityContent?: ReactNode;
   /** Primary defaults to h1; contextual Secondary headers use h2. */
   headingLevel?: 1 | 2;
 }
@@ -241,6 +243,7 @@ export function WorkspaceHeader({
   subtitle,
   title,
   headingLevel = 1,
+  identityContent,
 }: WorkspaceHeaderProps) {
   return (
     <WorkspaceHeaderFrame
@@ -248,14 +251,16 @@ export function WorkspaceHeader({
       className={className}
       labels={labels}
       content={
-        <WorkspaceHeaderIdentity
-          as={as}
-          headingLevel={headingLevel}
-          icon={icon}
-          status={status}
-          subtitle={subtitle}
-          title={title}
-        />
+        identityContent ?? (
+          <WorkspaceHeaderIdentity
+            as={as}
+            headingLevel={headingLevel}
+            icon={icon}
+            status={status}
+            subtitle={subtitle}
+            title={title}
+          />
+        )
       }
     />
   );

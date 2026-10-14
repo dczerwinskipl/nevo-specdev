@@ -13,6 +13,11 @@ import { useTranslation } from 'react-i18next';
 import { FullTaskWorkspace } from './FullTaskWorkspace';
 import { mapFullTaskResponse } from '../model';
 import type { useSpecificationTask } from '../useSpecificationTask';
+import {
+  ApplicationLocationIdentity,
+  ApplicationContextLine,
+  ViewPageTitle,
+} from '../../../app/navigation/ApplicationLocation';
 
 export interface SpecificationTaskPageProps {
   readonly specId: string;
@@ -57,11 +62,26 @@ export function SpecificationTaskPage({
       }}
     >
       <AppWorkspace.Primary
-        header={<WorkspaceHeader title={`Task / ${taskId}`} icon="list-checks" />}
+        header={
+          <WorkspaceHeader
+            title={t('specification.viewTasks')}
+            as="span"
+            identityContent={
+              <ApplicationLocationIdentity
+                title={t('specification.viewTasks')}
+                specId={specId}
+                view="task"
+                detailLabel={taskId}
+              />
+            }
+          />
+        }
       >
         <AppContent className="w-content-xwide max-w-full">
           <AppWorkspaceBody className="py-6">
             <AppContentContainer align="start" size="full">
+              <ApplicationContextLine specId={specId} view="task" />
+              <ViewPageTitle>{t('specification.viewTasks')}</ViewPageTitle>
               {taskState.isPending ? (
                 <div className="flex items-center gap-3 py-8" role="status">
                   <Spinner size="md" aria-label={t('common.loading')} />
@@ -91,9 +111,6 @@ export function SpecificationTaskPage({
                   <div className="flex flex-wrap gap-2">
                     <Button variant="secondary" size="sm" onClick={() => void taskState.refetch()}>
                       {t('common.retry')}
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={onBack}>
-                      {t('specification.backToSpecification')}
                     </Button>
                   </div>
                 </div>

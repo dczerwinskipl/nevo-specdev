@@ -5,6 +5,7 @@ export const designSpec = defineDesignComponent({
   description:
     'Determinate progress track. Runtime value controls fill width; the design component captures canonical geometry and semantic color roles.',
   order: 114,
-  variants: {},
+  variants: { size: ['default', 'compact'], variant: ['continuous', 'segmented'] },
+  defaults: { size: 'default', variant: 'continuous' },
   slots: {},
 });

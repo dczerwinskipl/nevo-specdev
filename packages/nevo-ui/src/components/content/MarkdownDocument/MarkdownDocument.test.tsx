@@ -3,6 +3,17 @@ import { describe, expect, it } from 'vitest';
 import { MarkdownDocument } from './MarkdownDocument';
 
 describe('MarkdownDocument', () => {
+  it('embeds headings below an owning title without changing their visual styles', () => {
+    const source = '# Section\n\n## Subsection\n\n###### Deep section';
+    const standalone = renderToStaticMarkup(<MarkdownDocument source={source} />);
+    const embedded = renderToStaticMarkup(<MarkdownDocument source={source} headingOffset={1} />);
+    expect(standalone).toContain('<h1');
+    expect(embedded).not.toContain('<h1');
+    expect(embedded).toContain('<h2');
+    expect(embedded).toContain('<h3');
+    expect(embedded).toContain('<h6');
+    expect(embedded.match(/class="[^"]*"/g)).toEqual(standalone.match(/class="[^"]*"/g));
+  });
   it('supports GFM and safe external links', () => {
     const html = renderToStaticMarkup(
       <MarkdownDocument

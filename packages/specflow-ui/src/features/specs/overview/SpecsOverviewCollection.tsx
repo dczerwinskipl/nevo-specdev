@@ -1,9 +1,9 @@
 import { useId, useState, type ReactNode } from 'react';
-import { InformationList } from '@nevo/ui';
+import { InformationList, Typography } from '@nevo/ui';
 import { useTranslation } from 'react-i18next';
 
 import { sectionTranslationKey, type SpecsOverview, type CurrentSpecTarget } from './model';
-import { archiveRow, currentRow } from './presentation';
+import { archiveRow, currentRow, sortArchiveItems } from './presentation';
 import { SpecSectionHeader } from './SpecSectionHeader';
 import { SpecListRow } from './SpecListRow';
 
@@ -30,22 +30,31 @@ export function SpecsOverviewCollection({
 
   if (projection.collection === 'archive') {
     return (
-      <InformationList>
-        {projection.items.map((item) => (
-          <SpecListRow
-            key={item.id}
-            item={archiveRow(item)}
-            specificationHref={specificationHref?.(item.id)}
-            onOpenTarget={onOpenTarget}
-            renderSpecificationLink={renderSpecificationLink}
-          />
-        ))}
-      </InformationList>
+      <div className="@container/collection min-w-0">
+        {projection.items.length ? (
+          <Typography variant="body-sm" className="mb-3 text-content-secondary">
+            {t('specifications.newestMilestoneFirst')}
+          </Typography>
+        ) : null}
+        <OverviewColumns archive />
+        <InformationList>
+          {sortArchiveItems(projection.items).map((item) => (
+            <SpecListRow
+              key={item.id}
+              item={archiveRow(item)}
+              specificationHref={specificationHref?.(item.id)}
+              onOpenTarget={onOpenTarget}
+              renderSpecificationLink={renderSpecificationLink}
+            />
+          ))}
+        </InformationList>
+      </div>
     );
   }
 
   return (
     <div className="@container/collection grid min-w-0 gap-5 @min-[40rem]/collection:gap-6">
+      <OverviewColumns />
       {projection.sections.map((section) => {
         const rows = projection.items.filter((item) => item.classification.section === section);
         if (!rows.length) return null;
@@ -92,5 +101,24 @@ export function SpecsOverviewCollection({
         );
       })}
     </div>
+  );
+}
+
+function OverviewColumns({ archive = false }: { archive?: boolean }) {
+  const { t } = useTranslation();
+  return (
+    <Typography
+      as="div"
+      variant="body-sm"
+      aria-hidden="true"
+      data-spec-columns
+      className={`hidden min-w-0 gap-x-6 pl-2 pr-14 text-content-secondary @min-[48rem]/collection:grid ${archive ? 'grid-cols-[minmax(0,1fr)_12rem_6rem]' : 'grid-cols-[minmax(0,1fr)_15rem_7rem]'}`}
+    >
+      <span>{t('specifications.specificationColumn')}</span>
+      <span>
+        {t(archive ? 'specifications.milestoneColumn' : 'specifications.situationColumn')}
+      </span>
+      <span>{archive ? 'PR' : t('specifications.progressColumn')}</span>
+    </Typography>
   );
 }

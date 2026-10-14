@@ -54,6 +54,7 @@ export function mapWorkspaceResponse(
   const sessionSummaries = sessions.map((session) => ({
     id: session.id,
     title: session.title,
+    navigationStatus: session.status,
     taskCount: session.taskIds.length > 0 ? String(session.taskIds.length) : undefined,
     activityCode:
       session.status === 'active' || session.status === 'attention' ? session.status : undefined,

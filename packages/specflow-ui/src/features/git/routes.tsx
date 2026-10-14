@@ -42,6 +42,7 @@ function RepositoryRouteScreen() {
     >
       {(data) => (
         <RepositoryView
+          showHeading={false}
           repoContext={data.repoContext}
           onGoToChanges={() =>
             void navigate({
@@ -69,6 +70,7 @@ function ChangesRouteScreen() {
     >
       {(data) => (
         <ChangesView
+          showHeading={false}
           changes={data.changes}
           currentSource={source}
           onSourceChange={(nextSource) => {

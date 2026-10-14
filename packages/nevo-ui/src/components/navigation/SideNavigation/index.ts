@@ -7,3 +7,4 @@ export type {
   NavigationMatch,
   NavigationNode,
 } from '../NavigationCore/types';
+export { NavigationRow, type NavigationRowProps } from './NavigationRow';

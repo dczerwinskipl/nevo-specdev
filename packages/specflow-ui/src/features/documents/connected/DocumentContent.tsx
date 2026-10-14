@@ -11,11 +11,13 @@ export function DocumentContent({
   documentId,
   expectedRevision,
   omitTitle,
+  headingOffset = 0,
 }: {
   readonly specId: string;
   readonly documentId: string;
   readonly expectedRevision?: string;
   readonly omitTitle?: string;
+  readonly headingOffset?: 0 | 1 | 2 | 3 | 4 | 5;
 }) {
   const { t } = useTranslation();
   const { documentApi } = useAppServices();
@@ -57,6 +59,7 @@ export function DocumentContent({
   }
   return (
     <MarkdownDocument
+      headingOffset={headingOffset}
       source={omitTitle ? markdownIntro(query.data.content, omitTitle).source : query.data.content}
     />
   );

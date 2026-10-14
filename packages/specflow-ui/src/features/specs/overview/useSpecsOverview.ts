@@ -14,6 +14,18 @@ export function useSpecsOverview(api: SpecsOverviewApi, collection: SpecsCollect
       if (projection.collection !== collection) {
         throw new Error('Specs projection scope mismatch.');
       }
+      if (
+        projection.items.some(
+          ({ progress }) =>
+            !Number.isSafeInteger(progress.total) ||
+            progress.total < 0 ||
+            !Number.isSafeInteger(progress.completed) ||
+            progress.completed < 0 ||
+            progress.completed > progress.total,
+        )
+      ) {
+        throw new Error('Invalid Specs progress aggregate.');
+      }
       return projection;
     },
   });

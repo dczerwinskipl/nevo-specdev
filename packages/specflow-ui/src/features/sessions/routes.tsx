@@ -23,7 +23,7 @@ function SessionsRouteScreen() {
       title={t('specification.viewSessions')}
       section="sessions"
     >
-      {(data) => <SessionsView sessions={data.sessions} />}
+      {(data) => <SessionsView sessions={data.sessions} showHeading={false} />}
     </SpecificationAggregatePage>
   );
 }

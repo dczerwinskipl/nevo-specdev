@@ -82,10 +82,23 @@ export function archiveRow(item: ArchivedSpecOverviewItem): ArchiveSpecRowModel 
   return {
     ...identity(item),
     collection: 'archive',
-    history: item.completedAt
-      ? { kind: 'completed', timestamp: item.completedAt }
-      : { kind: 'archived', timestamp: item.archivedAt },
+    history:
+      item.completedAt !== undefined
+        ? { kind: 'completed', timestamp: item.completedAt }
+        : { kind: 'archived', timestamp: item.archivedAt },
   };
+}
+
+export function sortArchiveItems(items: readonly ArchivedSpecOverviewItem[]) {
+  const milestone = (item: ArchivedSpecOverviewItem) => {
+    const value = Date.parse(item.completedAt ?? item.archivedAt ?? '');
+    return Number.isFinite(value) ? value : -Infinity;
+  };
+  return [...items].sort((a, b) => {
+    const left = milestone(a);
+    const right = milestone(b);
+    return left === right ? a.id.localeCompare(b.id) : right > left ? 1 : -1;
+  });
 }
 
 function currentSummary(item: CurrentSpecOverviewItem): CurrentSummary {

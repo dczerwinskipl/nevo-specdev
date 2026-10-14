@@ -45,7 +45,7 @@ describe('SpecificationSurface', () => {
     );
 
     expect(markup).toContain('Odświeżanie sesji i zachowanie kontekstu użytkownika');
-    expect(markup).toContain('ID specyfikacji: spec-direct');
+    expect(markup).not.toContain('ID specyfikacji: spec-direct');
   });
 
   it('shows loading state on initial fetch without preloaded data', () => {
@@ -152,7 +152,7 @@ describe('SpecificationSurface', () => {
     );
 
     expect(markup).toContain('Odświeżanie sesji i zachowanie kontekstu użytkownika');
-    expect(markup).toContain('ID specyfikacji: spec-123');
+    expect(markup).not.toContain('ID specyfikacji: spec-123');
   });
 
   it('distinguishes forbidden Workspace from transient source failures', () => {

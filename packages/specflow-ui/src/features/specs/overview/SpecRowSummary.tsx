@@ -6,20 +6,29 @@ export function SpecRowSummary({ item }: { readonly item: SpecRowModel }) {
   const { t, i18n } = useTranslation();
   if (item.collection === 'archive') {
     const history = item.history;
-    const date = history.timestamp
+    const validDate = history.timestamp && Number.isFinite(Date.parse(history.timestamp));
+    const date = validDate
       ? new Intl.DateTimeFormat(i18n.resolvedLanguage, {
           year: 'numeric',
           month: 'short',
           day: 'numeric',
           timeZone: 'UTC',
-        }).format(new Date(history.timestamp))
+        }).format(new Date(history.timestamp!))
       : undefined;
-    return history.timestamp ? (
-      <time dateTime={history.timestamp}>
-        {t(`specifications.history.${history.kind}`, { date })}
-      </time>
-    ) : (
-      <span>{t('specifications.history.archivedWithoutDate')}</span>
+    return (
+      <span className="flex flex-wrap gap-x-1 @min-[48rem]/collection:flex-col">
+        <span className="@min-[48rem]/collection:order-2">
+          {t(`specifications.milestone.${history.kind}`)}
+        </span>
+        <span aria-hidden="true" className="@min-[48rem]/collection:hidden">
+          ·
+        </span>
+        {validDate ? (
+          <time dateTime={history.timestamp}>{date}</time>
+        ) : (
+          <span>{t('specifications.dateUnavailable')}</span>
+        )}
+      </span>
     );
   }
   const summary = item.summary;
@@ -28,16 +37,23 @@ export function SpecRowSummary({ item }: { readonly item: SpecRowModel }) {
       ? t(
           summary.reason
             ? `specifications.summary.${summary.reason}`
-            : 'specifications.summary.attention',
+            : 'specifications.sections.requiresAttention',
           {
-            count: summary.count ?? 1,
+            count: summary.reason === 'review' ? 1 : (summary.count ?? 1),
           },
         )
       : summary.kind === 'active'
         ? t('specifications.summary.active', { count: summary.executionCount })
         : t(`specifications.summary.${summary.kind}`);
   return (
-    <span className="text-content-secondary [overflow-wrap:anywhere]" data-spec-reason>
+    <span
+      className={
+        summary.kind === 'attention'
+          ? 'text-status-attention [overflow-wrap:anywhere]'
+          : 'text-content-secondary [overflow-wrap:anywhere]'
+      }
+      data-spec-reason
+    >
       {summary.kind === 'attention' ? (
         <Icon
           name={
@@ -53,9 +69,8 @@ export function SpecRowSummary({ item }: { readonly item: SpecRowModel }) {
       ) : null}
       <span>{text}</span>
       {item.qualifier ? (
-        <span>
-          {' '}
-          · {t('specifications.summary.concurrent', { count: item.qualifier.executionCount })}
+        <span className="block text-content-secondary">
+          {t('specifications.summary.concurrent', { count: item.qualifier.executionCount })}
         </span>
       ) : null}
     </span>

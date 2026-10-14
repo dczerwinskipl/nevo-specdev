@@ -18,6 +18,10 @@ import {
 import type { SpecsCollection, SpecsOverviewState, CurrentSpecTarget } from './model';
 import { SpecsOverviewCollection } from './SpecsOverviewCollection';
 import { filterSpecsOverview } from './search';
+import {
+  ApplicationLocationIdentity,
+  ViewPageTitle,
+} from '../../../app/navigation/ApplicationLocation';
 
 export interface SpecsOverviewProps {
   readonly state: SpecsOverviewState;
@@ -52,7 +56,7 @@ export function SpecsOverview({
   const projection =
     state.projection?.collection === state.collection ? state.projection : undefined;
   const searchable = Boolean(
-    projection && (state.collection === 'archive' || projection.items.length >= 12),
+    state.collection === 'archive' || term.trim() || (projection && projection.items.length >= 12),
   );
   const visible = projection ? filterSpecsOverview(projection, term) : undefined;
   const busy = state.loading || state.refreshing;
@@ -69,6 +73,13 @@ export function SpecsOverview({
       <AppWorkspace.Primary
         header={
           <WorkspaceHeader
+            as="span"
+            identityContent={
+              <ApplicationLocationIdentity
+                title={t('specifications.title')}
+                view="specifications"
+              />
+            }
             title={t('specifications.title')}
             labels={{
               moreActions: t('specifications.moreActions'),
@@ -106,7 +117,8 @@ export function SpecsOverview({
       >
         <AppContent>
           <AppWorkspaceBody className="py-6">
-            <AppContentContainer align="start" className="grid gap-4" size="full">
+            <AppContentContainer align="start" className="grid gap-4" size="xwide">
+              <ViewPageTitle className="mb-2">{t('specifications.title')}</ViewPageTitle>
               <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
                 <SegmentedControl
                   aria-label={t('specifications.collection')}

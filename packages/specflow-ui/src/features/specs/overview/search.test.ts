@@ -4,6 +4,22 @@ import { createSpecsFixture } from '../../../../test-support/specs/overview/fixt
 import { filterSpecsOverview } from './search';
 
 describe('one authoritative Overview search view', () => {
+  it('searches keys, all tags and PR number forms, including visually omitted tags', () => {
+    const base = createSpecsFixture();
+    const source = {
+      ...base,
+      items: [
+        {
+          ...base.items[0]!,
+          key: 'KEY-909',
+          tags: ['first', 'second', 'hidden-tag'],
+          pullRequests: [{ number: 789, url: 'https://example.test/789' }],
+        },
+      ],
+    };
+    for (const query of ['key-909', 'hidden-tag', 'PR #789', '#789', '789'])
+      expect(filterSpecsOverview(source, query).items).toHaveLength(1);
+  });
   it.each(['current', 'archive'] as const)(
     'filters %s titles with normalized matching and preserves the source',
     (collection) => {

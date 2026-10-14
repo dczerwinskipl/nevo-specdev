@@ -37,6 +37,7 @@ import { designSpec as separatorDesignSpec } from '../components/layout/Separato
 import { designSpec as breadcrumbsDesignSpec } from '../components/navigation/Breadcrumbs/Breadcrumbs.figma';
 import { designSpec as paginationDesignSpec } from '../components/navigation/Pagination/Pagination.figma';
 import { designSpec as sideNavigationDesignSpec } from '../components/navigation/SideNavigation/SideNavigation.figma';
+import { designSpec as navigationRowDesignSpec } from '../components/navigation/SideNavigation/NavigationRow.figma';
 import { designSpecs as tabsDesignSpecs } from '../components/navigation/Tabs/Tabs.figma';
 import { designSpec as alertDialogDesignSpec } from '../components/overlays/AlertDialog/AlertDialog.figma';
 import { designSpec as dialogDesignSpec } from '../components/overlays/Dialog/Dialog.figma';
@@ -90,6 +91,7 @@ export const nevoUiDesignSystem = defineDesignSystem([
   spinnerDesignSpec,
   toastDesignSpec,
   sideNavigationDesignSpec,
+  navigationRowDesignSpec,
   breadcrumbsDesignSpec,
   paginationDesignSpec,
   drawerDesignSpec,

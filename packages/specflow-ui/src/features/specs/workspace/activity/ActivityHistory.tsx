@@ -7,6 +7,7 @@ import { DocumentActivityItem } from './DocumentActivityItem';
 import { InformationalActivityItem } from './InformationalActivityItem';
 
 export interface ActivityHistoryProps {
+  readonly showHeading?: boolean;
   readonly events: readonly ActivityEvent[];
   readonly isExplicit?: boolean;
   readonly onClose?: () => void;
@@ -16,6 +17,7 @@ export interface ActivityHistoryProps {
 }
 
 export function ActivityHistory({
+  showHeading = true,
   events,
   isExplicit = false,
   onClose,
@@ -30,32 +32,34 @@ export function ActivityHistory({
       className="flex h-full flex-col overflow-y-auto p-5"
       aria-label={t('specification.historyAriaLabel')}
     >
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div>
-          <Typography
-            as="h3"
-            variant="title-sm"
-            className="flex items-center gap-2 text-content-primary"
-          >
-            <Icon name="clock" size="sm" className="text-content-muted" />
-            <span>{t('specification.activityHistory')}</span>
-          </Typography>
-          <Typography variant="body-sm" className="mt-0.5 text-content-muted">
-            {t('specification.thisSpecification')}
-          </Typography>
-        </div>
+      {showHeading ? (
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <Typography
+              as="h3"
+              variant="title-sm"
+              className="flex items-center gap-2 text-content-primary"
+            >
+              <Icon name="clock" size="sm" className="text-content-muted" />
+              <span>{t('specification.activityHistory')}</span>
+            </Typography>
+            <Typography variant="body-sm" className="mt-0.5 text-content-muted">
+              {t('specification.thisSpecification')}
+            </Typography>
+          </div>
 
-        {isExplicit && onClose ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            aria-label={t('specification.backFromHistory')}
-          >
-            {t('navigation.back')}
-          </Button>
-        ) : null}
-      </div>
+          {isExplicit && onClose ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              aria-label={t('specification.backFromHistory')}
+            >
+              {t('navigation.back')}
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
 
       <Timeline size="md">
         {events.map((event, index) => {

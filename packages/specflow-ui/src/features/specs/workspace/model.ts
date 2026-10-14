@@ -35,6 +35,7 @@ export interface SessionActivity {
 }
 
 export interface SessionSummary {
+  readonly navigationStatus?: 'active' | 'attention' | 'quiet' | 'unknown';
   readonly id: string;
   readonly title: string;
   readonly meta?: string;
