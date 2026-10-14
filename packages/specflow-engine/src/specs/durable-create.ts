@@ -68,6 +68,16 @@ export interface CreateSpecificationOptions {
    * The Engine still verifies exact ref/path/HEAD and fails closed on mismatch.
    */
   readonly confirmInterruptedGitSettled?: boolean;
+  /**
+   * Explicit operator assertion that the original create executor is no
+   * longer active. Required to resume a nonterminal v2 journal, including
+   * reserved, manifest-writing and registry-writing. This is NOT inferred
+   * from elapsed time or from a stale journal stage.
+   *
+   * The git-initiated stage additionally requires confirmInterruptedGitSettled.
+   * Neither recovery assertion is available to CLI/HTTP requests.
+   */
+  readonly resumeInterruptedOperation?: boolean;
   /** Internal test hook only; adapters must never expose this to HTTP callers. */
   readonly afterEffect?: (effect: 'reservation' | 'git' | 'manifest' | 'registry') => Promise<void>;
 }
@@ -120,14 +130,31 @@ export async function createSpecificationWithIntent(
   // terminated without any later mutation having started.
   await options.afterEffect?.('reservation');
 
-  // New v2 reservations and genuine retries may both progress. If two
-  // processes race with the same intent, only one CAS transition can win.
-  // The loser becomes a read-only follower; it must never replay a Git/FS
-  // effect merely because another process advanced the durable journal.
-  // An interrupted git-initiated stage remains explicitly recovery-gated.
-  // Each transition is CAS under the short Project Home control lock.
-  // The Git command itself does not hold that lock. A durable git-initiated
-  // stage fences concurrent retries until explicit quiescence reconciliation.
+  // A normal retry of an already-reserved v2 operation is *only* a reader.
+  // Its original writer may still be active inside an uncertain Git/FS stage,
+  // even if the journal has not changed for a long time. Do not infer a lease
+  // or quiescence from the persisted stage, and do not execute any side effect.
+  // A separately authorized, confirmed post-crash recovery can be the writer.
+  if (
+    reservation.existing &&
+    record.version === 2 &&
+    record.stage !== 'completed' &&
+    !options.resumeInterruptedOperation &&
+    !options.confirmInterruptedGitSettled
+  ) {
+    const observed = await followExistingOperation(engine, operationId);
+    if (observed.stage !== 'completed') {
+      throw recovery(
+        'Create is still active or interrupted; operator-confirmed recovery is required.',
+      );
+    }
+    await verifyResult(engine, observed);
+    return resultOf(observed);
+  }
+
+  // All subsequent transitions are CAS under the short Project Home lock.
+  // No Git or filesystem effects run while holding that lock. The original
+  // git-initiated quiescence gate applies unchanged to manual recovery.
   try {
     for (let count = 0; count < 12; count++) {
       switch (record.stage) {
