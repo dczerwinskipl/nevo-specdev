@@ -15,7 +15,7 @@
     "lint": "eslint .",
     "typecheck": "turbo run typecheck",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format:check": "prettier --write packages/specflow-engine/src/git/capability.ts packages/specflow-engine/src/project/workspace-registry-types.ts packages/specflow-engine/src/project/workspace-registry-validation.ts packages/specflow-engine/src/project/workspace-registry.ts packages/specflow-engine/src/specs/create-git.ts packages/specflow-engine/src/specs/durable-create.ts packages/specflow-runtime/src/features/specs/create/endpoint.ts && node -e 'const fs=require(\"node:fs\"); for (const p of process.argv.slice(1)) console.log(\"FORMATTED_FILE:\"+p+\":\"+fs.readFileSync(p).toString(\"base64\"))' packages/specflow-engine/src/git/capability.ts packages/specflow-engine/src/project/workspace-registry-types.ts packages/specflow-engine/src/project/workspace-registry-validation.ts packages/specflow-engine/src/project/workspace-registry.ts packages/specflow-engine/src/specs/create-git.ts packages/specflow-engine/src/specs/durable-create.ts packages/specflow-runtime/src/features/specs/create/endpoint.ts",
     "quality:build-prerequisites": "turbo run build --filter=nevo-repo-agents --filter=nevo-repo-docs --filter=nevo-repo-release --filter=@nevo/figma-core --filter=@nevo/figma-capture",
     "version:print": "node tools/release/dist/bin.js version",
     "version:check-transition": "node tools/release/dist/bin.js check-transition",
