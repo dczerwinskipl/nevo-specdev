@@ -15,7 +15,6 @@ import {
   WORKSPACE_REGISTRY_VERSION,
   WorkspaceRegistryError,
   type WorkspaceRegistration,
-  type SpecWorkspaceBinding,
   type WorkspaceRegistry,
   type RegisteredWorkspaceInspection,
 } from './workspace-registry-types';
@@ -39,7 +38,6 @@ export type {
   RegisteredWorkspaceInspection,
 } from './workspace-registry-types';
 export { validateWorkspaceRegistry } from './workspace-registry-validation';
-
 
 export function workspaceRegistryPath(context: ResolvedProjectHome): string {
   return join(context.project.stateRoot, WORKSPACE_REGISTRY_RELATIVE_PATH);
