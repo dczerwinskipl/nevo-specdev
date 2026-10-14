@@ -84,8 +84,11 @@ describe('VC03 — journal v2 reader without v2 writer activation', () => {
     };
     await expect(
       createSpecification(engine, input, {
-        afterEffect: async (effect) => {
-          if (effect === 'reservation') throw new Error('Injected stop after genuine v1 reservation');
+        afterEffect: (effect) => {
+          if (effect === 'reservation') {
+            return Promise.reject(new Error('Injected stop after genuine v1 reservation'));
+          }
+          return Promise.resolve();
         },
       }),
     ).rejects.toThrow('Injected stop after genuine v1 reservation');
@@ -121,9 +124,12 @@ describe('VC03 — journal v2 reader without v2 writer activation', () => {
     expect(completed?.stage).toBe('completed');
     expect(completed?.created).toBe(input.created);
     expect(completed?.inputFingerprint).toBe(legacyFingerprint);
-    expect((await restarted.readRegistry()).specBindings.filter((item) => item.specId === result.specId)).toHaveLength(1);
-    expect((await readFile(join(result.workspaceRoot, result.relativeManifestPath), 'utf8')))
-      .toContain(result.specId);
+    expect(
+      (await restarted.readRegistry()).specBindings.filter((item) => item.specId === result.specId),
+    ).toHaveLength(1);
+    expect(
+      await readFile(join(result.workspaceRoot, result.relativeManifestPath), 'utf8'),
+    ).toContain(result.specId);
   });
 
   it('round-trips a structural v1 journal fixture without changing its representation', async () => {

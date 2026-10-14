@@ -76,7 +76,9 @@ describe('internal Git worktree adapter (VC02)', () => {
         status: 'unavailable',
         reason: 'GIT_UNAVAILABLE',
       });
-      await expect(worktrees.plan({ slug: 'missing-git', shortId: 'abcdef12' })).rejects.toMatchObject({
+      await expect(
+        worktrees.plan({ slug: 'missing-git', shortId: 'abcdef12' }),
+      ).rejects.toMatchObject({
         code: 'GIT_UNAVAILABLE',
       });
     } finally {

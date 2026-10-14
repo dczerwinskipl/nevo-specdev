@@ -49,28 +49,8 @@ jobs:
 
       # The same canonical script contributors run locally: format:check, lint,
       # docs validation/index freshness, and the version.json transition gate.
-      # TEMPORARY diagnostic: collect output of repo-pinned Prettier before restoring strict CI.
-      - name: Quality gate (temporary pinned Prettier capture)
-        shell: bash
-        run: |
-          pnpm exec prettier --write             packages/specflow-engine/src/version-control/worktrees/git-adapter.ts             packages/specflow-engine/test/create-journal-v2.test.ts             packages/specflow-engine/test/version-control-adapter.test.ts
-          node --input-type=module <<'NODE'
-          import fs from 'node:fs';
-          const paths = [
-            'packages/specflow-engine/src/version-control/worktrees/git-adapter.ts',
-            'packages/specflow-engine/test/create-journal-v2.test.ts',
-            'packages/specflow-engine/test/version-control-adapter.test.ts',
-          ];
-          const payload = JSON.stringify(paths.map((path) => ({
-            path,
-            content: fs.readFileSync(path, 'utf8'),
-          })));
-          const chunkSize = 1800;
-          for (let i = 0; i < payload.length; i += chunkSize) {
-            console.log('VCREVIEWFMT:' + (i / chunkSize) + ':' + payload.slice(i, i + chunkSize));
-          }
-          NODE
-          pnpm check:quality
+      - name: Quality gate
+        run: pnpm check:quality
 
       - name: Resolved version
         run: pnpm version:print

@@ -168,7 +168,11 @@ export function createGitWorktreePort(engine: SpecFlowEngine): WorktreePort {
       }
       await mkdir(parent, { recursive: true });
       const stat = await lstat(parent);
-      if (!stat.isDirectory() || stat.isSymbolicLink() || !sameFilesystemPath(await realpath(parent), parent)) {
+      if (
+        !stat.isDirectory() ||
+        stat.isSymbolicLink() ||
+        !sameFilesystemPath(await realpath(parent), parent)
+      ) {
         throw new GitCapabilityError('WORKTREE_PATH_CONFLICT', 'Managed worktree parent changed.');
       }
       if ((await inspect(plan)) !== 'absent') {
