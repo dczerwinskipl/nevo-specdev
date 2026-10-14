@@ -2,7 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -127,6 +127,79 @@ describe('VC05 — atomic v2 writer with legacy v1 retry', () => {
     await expect(
       createSpecificationFromRequest(restarted, { ...request, title: 'Other legacy intent' }),
     ).rejects.toMatchObject({ code: 'CREATE_CONFLICT' });
+  }, 120000);
+
+  it('VC05: replays a pre-cutover v1 worktree with old omitted HEAD semantics', async () => {
+    const context = await fixture();
+    const root = context.project.homeRoot;
+    const engine = await openSpecFlowEngine({ cwd: root });
+    const title = 'Legacy linked once';
+    const created = '2026-10-13';
+    const specId = randomUUID();
+    const operationId = randomUUID();
+    const scaffold = createSpecificationScaffold({ specId, title, created });
+    const workspaceId = randomUUID();
+    const legacy: CreateJournalV1 = {
+      version: 1,
+      projectId: context.project.projectId,
+      operationId,
+      inputFingerprint: createHash('sha256')
+        .update(
+          JSON.stringify({
+            title,
+            created,
+            target: { kind: 'new-worktree', baseRef: 'HEAD' },
+          }),
+          'utf8',
+        )
+        .digest('hex'),
+      specId,
+      slug: scaffold.slug,
+      title,
+      created,
+      stage: 'reserved',
+      target: {
+        kind: 'new-worktree',
+        workspaceId,
+        workspaceRoot: root + '-worktrees/' + scaffold.slug,
+        instanceId: randomUUID(),
+        branch: 'spec/' + scaffold.slug + '-' + specId.slice(0, 8),
+        baseCommit: execFileSync('git', ['rev-parse', 'HEAD'], {
+          cwd: root,
+          encoding: 'utf8',
+        }).trim(),
+      },
+      files: scaffold.files.map(({ relativePath, sha256 }) => ({ relativePath, sha256 })),
+    };
+    await withCreateJournalLock(context, async () => {
+      await writeFile(createJournalPath(context, operationId), JSON.stringify(legacy) + '\n');
+    });
+    await writeFile(
+      join(root, '.nevo/config.yaml'),
+      'runtime: {}\ngit:\n  enabled: true\n  worktrees:\n    branchPattern: "replacement/{slug}-{shortId}"\n    baseRef: refs/heads/not-created\n',
+    );
+    const restarted = await openSpecFlowEngine({ cwd: root });
+    const omitted = { operationId, title, target: { kind: 'new-worktree' as const } };
+    const result = await createSpecificationFromRequest(restarted, omitted);
+    roots.push(dirname(result.workspaceRoot));
+    expect(result.specId).toBe(specId);
+    expect(result.workspaceRoot).toBe(legacy.target.workspaceRoot);
+    expect(
+      execFileSync('git', ['symbolic-ref', '--short', 'HEAD'], {
+        cwd: result.workspaceRoot,
+        encoding: 'utf8',
+      }).trim(),
+    ).toBe(legacy.target.branch);
+    expect((await readCreateJournal(context, operationId))?.version).toBe(1);
+    expect((await readCreateJournal(context, operationId))?.created).toBe(created);
+    expect(
+      await createSpecificationFromRequest(restarted, {
+        ...omitted,
+        target: { kind: 'new-worktree', baseRef: 'HEAD' },
+      }),
+    ).toEqual(result);
+    expect((await restarted.readRegistry()).specBindings.filter((x) => x.specId === specId))
+      .toHaveLength(1);
   }, 120000);
 
   it('round-trips a structural v1 journal fixture without changing its representation', async () => {
