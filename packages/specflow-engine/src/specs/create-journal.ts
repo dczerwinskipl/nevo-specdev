@@ -1,7 +1,13 @@
 import { lstat, mkdir, readFile, readdir, realpath } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { fingerprintCreateClientIntent, type CreateClientIntent } from './create-intent';
+import {
+  fingerprintCreateClientIntent,
+  normalizeCreateClientIntent,
+  type CreateClientIntent,
+} from './create-intent';
+import { CreateOperationError } from './create-error';
+export { CreateOperationError, type CreateOperationErrorCode } from './create-error';
 
 import { writeJsonAtomically } from '../project/atomic-json';
 import { withProjectControlLock } from '../project/control-lock';
@@ -63,22 +69,6 @@ export interface CreateJournalV2 extends CreateJournalFields {
 }
 
 export type CreateJournal = CreateJournalV1 | CreateJournalV2;
-
-export type CreateOperationErrorCode =
-  | 'CREATE_CONFLICT'
-  | 'CREATE_RECOVERY_REQUIRED'
-  | 'CREATE_OPERATION_INVALID'
-  | 'CREATE_JOURNAL_CORRUPT';
-
-export class CreateOperationError extends Error {
-  readonly code: CreateOperationErrorCode;
-
-  constructor(code: CreateOperationErrorCode, message: string) {
-    super(message);
-    this.name = 'CreateOperationError';
-    this.code = code;
-  }
-}
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 const SHA256 = /^[0-9a-f]{64}$/u;
@@ -177,15 +167,18 @@ export async function publishCreateJournal(
   context: ResolvedProjectHome,
   record: CreateJournal,
 ): Promise<void> {
-  // VC03 is read-only support for v2: no intermediate commit may publish v2
-  // until transport omission semantics and the Engine writer switch together.
-  if (record.version !== 1) {
-    throw new CreateOperationError(
-      'CREATE_RECOVERY_REQUIRED',
-      'Journal v2 writes are not active before the VC05 transport cutover.',
-    );
-  }
   parseJournal(context, record, record.operationId);
+  if (record.version === 1) {
+    // A historical journal may advance stages, but new v1 reservations are
+    // forbidden after the v2 transport/writer cutover.
+    const previous = await readCreateJournal(context, record.operationId);
+    if (!previous || previous.version !== 1) {
+      throw new CreateOperationError(
+        'CREATE_RECOVERY_REQUIRED',
+        'A new v1 reservation cannot be published after VC05.',
+      );
+    }
+  }
   await writeJsonAtomically(createJournalPath(context, record.operationId), record);
 }
 
@@ -316,10 +309,31 @@ function isValidV2Journal(context: ResolvedProjectHome, value: Record<string, un
     return false;
   }
   if (typeof value.inputFingerprint !== 'string') return false;
-  return (
-    fingerprintCreateClientIntent(intent as unknown as CreateClientIntent) ===
-    value.inputFingerprint
-  );
+  const persisted = intent as unknown as CreateClientIntent;
+  try {
+    const normalized = normalizeCreateClientIntent({
+      title: persisted.title,
+      goal: persisted.goal,
+      target:
+        persisted.target.kind === 'existing'
+          ? persisted.target
+          : {
+              kind: 'new-worktree',
+              ...(persisted.target.baseRef.kind === 'explicit'
+                ? { baseRef: persisted.target.baseRef.value }
+                : {}),
+              ...(persisted.target.branch.kind === 'explicit'
+                ? { branch: persisted.target.branch.value }
+                : {}),
+            },
+    });
+    return (
+      JSON.stringify(normalized) === JSON.stringify(persisted) &&
+      fingerprintCreateClientIntent(normalized) === value.inputFingerprint
+    );
+  } catch {
+    return false;
+  }
 }
 
 function isClientOverride(value: unknown): boolean {

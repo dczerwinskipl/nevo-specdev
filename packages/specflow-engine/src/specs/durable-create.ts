@@ -1,6 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import type { SpecFlowEngine } from '../application';
 import { openVersionControl } from '../version-control';
+import {
+  normalizeCreateClientIntent,
+  fingerprintCreateClientIntent,
+  type CreateClientIntent,
+} from './create-intent';
 import { inspectRegisteredWorkspace } from '../project/workspace-registry';
 import {
   createSpecificationScaffold,
@@ -78,15 +83,37 @@ export async function inspectCreateSpecification(
  * Offline, idempotent create use case. The Engine alone owns Git/FS/registry
  * mutations: HTTP/CLI will only adapt and authorize this operation in E2.T05.
  */
+/**
+ * Trusted low-level Engine API. Its explicit 'created' is a clock/test input;
+ * v2 still chooses it only while holding the first reservation lock.
+ */
 export async function createSpecification(
   engine: SpecFlowEngine,
   input: CreateSpecificationInput,
   options: CreateSpecificationOptions = {},
 ): Promise<CreatedSpecification> {
-  validateOperationId(input.operationId);
-  const normalized = normalize(input);
-  const fingerprint = sha256(JSON.stringify(normalized));
-  let record = await reserve(engine, normalized, input.operationId, fingerprint);
+  return createSpecificationWithIntent(
+    engine,
+    input.operationId,
+    normalizeCreateClientIntent(input),
+    () => input.created,
+    options,
+  );
+}
+
+/**
+ * One version-aware reservation path for both transports and direct Engine.
+ * No new journal v1 can be minted. Existing v1 is retained verbatim on retry.
+ */
+export async function createSpecificationWithIntent(
+  engine: SpecFlowEngine,
+  operationId: string,
+  intent: CreateClientIntent,
+  creationDate: () => string,
+  options: CreateSpecificationOptions = {},
+): Promise<CreatedSpecification> {
+  validateOperationId(operationId);
+  let record = await reserve(engine, intent, operationId, creationDate);
   // The journal intent is durable at this point. A test process can now be
   // terminated without any later mutation having started.
   await options.afterEffect?.('reservation');
@@ -223,16 +250,45 @@ function normalize(input: CreateSpecificationInput): Omit<CreateSpecificationInp
   };
 }
 
+function legacyFingerprint(intent: CreateClientIntent, created: string): string {
+  // The exact original v1 normalized field order and HEAD fallback.
+  const legacy: CreateSpecificationInput = {
+    operationId: '00000000-0000-4000-8000-000000000000',
+    title: intent.title,
+    created,
+    ...(intent.goal ? { goal: intent.goal } : {}),
+    target:
+      intent.target.kind === 'existing'
+        ? intent.target
+        : {
+            kind: 'new-worktree',
+            baseRef: intent.target.baseRef.kind === 'explicit' ? intent.target.baseRef.value : 'HEAD',
+            ...(intent.target.branch.kind === 'explicit'
+              ? { branch: intent.target.branch.value }
+              : {}),
+          },
+  };
+  return sha256(JSON.stringify(normalize(legacy)));
+}
+
+/**
+ * First lock winner owns the creation date and pinned Git effect plan.
+ * Previous operationId is checked BEFORE a local clock or config default.
+ */
 async function reserve(
   engine: SpecFlowEngine,
-  input: Omit<CreateSpecificationInput, 'operationId'>,
+  intent: CreateClientIntent,
   operationId: string,
-  fingerprint: string,
+  creationDate: () => string,
 ): Promise<CreateJournal> {
   return withCreateJournalLock(engine.context, async () => {
     const operations = await listCreateJournals(engine.context);
     const previous = operations.find((item) => item.operationId === operationId);
     if (previous) {
+      const fingerprint =
+        previous.version === 1
+          ? legacyFingerprint(intent, previous.created)
+          : fingerprintCreateClientIntent(intent);
       if (previous.inputFingerprint !== fingerprint) {
         throw new CreateOperationError(
           'CREATE_CONFLICT',
@@ -242,20 +298,19 @@ async function reserve(
       return previous;
     }
 
+    // Date generated once under Project Home lock, after checking no journal.
+    const created = creationDate();
+    validateSpecificationScaffoldInput({ title: intent.title, created });
     const canonical = await discoverSpecifications(engine);
-    // Explicit fail-closed policy: current registry binds specId to workspaceId,
-    // but does not persist the authoritative slug of every bound specification.
-    // If one source is unavailable, global slug uniqueness cannot be proven.
-    // Do not weaken this gate until slug ownership is durably indexed.
     if (canonical.some((item) => item.status !== 'available')) {
       throw recovery('Cannot reserve new Spec while an existing canonical source is unavailable.');
     }
     const specId = randomUUID();
     const scaffold = createSpecificationScaffold({
       specId,
-      title: input.title,
-      created: input.created,
-      goal: input.goal,
+      title: intent.title,
+      created,
+      goal: intent.goal,
     });
     if (
       canonical.some(
@@ -267,30 +322,35 @@ async function reserve(
     }
 
     let target: CreateJournal['target'];
-    if (input.target.kind === 'existing') {
+    let gitPlan: { readonly projectRoot: string; readonly gitInstanceId: string } | undefined;
+    if (intent.target.kind === 'existing') {
+      if (!isValidSpecificationId(intent.target.workspaceId)) {
+        throw new CreateOperationError('CREATE_OPERATION_INVALID', 'Invalid target workspaceId.');
+      }
       const registry = await engine.readRegistry();
       const inspected = await inspectRegisteredWorkspace(
         engine.context,
         registry,
-        input.target.workspaceId,
+        intent.target.workspaceId,
       );
       if (inspected.status !== 'available') {
         throw recovery('Selected existing workspace is unavailable.');
       }
       target = {
         kind: 'existing',
-        workspaceId: input.target.workspaceId,
+        workspaceId: intent.target.workspaceId,
         workspaceRoot: inspected.root,
       };
     } else {
-      // VC04 deliberately retains the original v1 naming/fingerprint semantics:
-      // configured branchPattern and baseRef are NOT applied to new v1 writes.
-      // VC05 activates policy defaults together with transport omission and v2.
       const plan = await openVersionControl(engine).worktrees.plan({
         slug: scaffold.slug,
         shortId: specId.slice(0, 8),
-        baseRefOverride: input.target.baseRef,
-        branchOverride: input.target.branch ?? 'spec/' + scaffold.slug + '-' + specId.slice(0, 8),
+        ...(intent.target.baseRef.kind === 'explicit'
+          ? { baseRefOverride: intent.target.baseRef.value }
+          : {}),
+        ...(intent.target.branch.kind === 'explicit'
+          ? { branchOverride: intent.target.branch.value }
+          : {}),
       });
       if (
         operations.some(
@@ -313,20 +373,26 @@ async function reserve(
         branch: plan.branch,
         baseCommit: plan.baseCommit,
       };
+      gitPlan = {
+        projectRoot: plan.projectRoot,
+        gitInstanceId: plan.gitInstanceId,
+      };
     }
 
     const record: CreateJournal = {
-      version: 1,
+      version: 2,
       projectId: engine.context.project.projectId,
       operationId,
-      inputFingerprint: fingerprint,
+      inputFingerprint: fingerprintCreateClientIntent(intent),
+      requestIntent: intent,
       specId,
       slug: scaffold.slug,
-      title: input.title,
-      created: input.created,
-      ...(input.goal ? { goal: input.goal } : {}),
+      title: intent.title,
+      created,
+      ...(intent.goal ? { goal: intent.goal } : {}),
       stage: 'reserved',
       target,
+      ...(gitPlan ? { gitPlan } : {}),
       files: scaffold.files.map(({ relativePath, sha256 }) => ({ relativePath, sha256 })),
     };
     await publishCreateJournal(engine.context, record);

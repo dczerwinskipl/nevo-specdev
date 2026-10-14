@@ -121,7 +121,7 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
     expect(git(root, 'worktree', 'list', '--porcelain').match(/worktree /gu)).toHaveLength(2);
   }, 90000);
 
-  it('VC04: retries pinned v1 Git reservation after branchPattern/baseRef change', async () => {
+  it('VC05: retries pinned Git reservation after branchPattern/baseRef change', async () => {
     const { root, engine } = await project();
     const input = linked('Pinned Git reservation');
     const originalHead = git(root, 'rev-parse', 'HEAD');
@@ -136,7 +136,7 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
     ).rejects.toThrow('Stop after durable reservation');
 
     const journal = await inspectCreateSpecification(engine, input.operationId);
-    expect(journal?.version).toBe(1);
+    expect(journal?.version).toBe(2);
     expect(journal?.stage).toBe('reserved');
     expect(journal?.target.branch).toBe(
       'spec/pinned-git-reservation-' + journal!.specId.slice(0, 8),
@@ -156,12 +156,12 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
     expect(git(created.workspaceRoot, 'symbolic-ref', '--short', 'HEAD')).toBe(
       journal?.target.branch,
     );
-    expect((await inspectCreateSpecification(restarted, input.operationId))?.version).toBe(1);
+    expect((await inspectCreateSpecification(restarted, input.operationId))?.version).toBe(2);
     expect(git(root, 'rev-parse', 'HEAD')).toBe(originalHead);
     expect(git(root, 'worktree', 'list', '--porcelain').match(/worktree /gu)).toHaveLength(2);
   }, 90000);
 
-  it('VC04: rejects a tampered v1 reserved target even when it is a direct managed child', async () => {
+  it('VC05: rejects a tampered reserved target even when it is a direct managed child', async () => {
     const { root, engine } = await project();
     const input = linked('Original managed destination');
 
@@ -175,11 +175,11 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
     ).rejects.toThrow('Stop after journal reservation');
 
     const original = await inspectCreateSpecification(engine, input.operationId);
-    expect(original?.version).toBe(1);
+    expect(original?.version).toBe(2);
     expect(original?.stage).toBe('reserved');
     expect(original?.target.kind).toBe('new-worktree');
     if (original?.target.kind !== 'new-worktree') {
-      throw new Error('Expected a real, durable v1 worktree reservation.');
+      throw new Error('Expected a real, durable worktree reservation.');
     }
 
     const originalTarget = original.target.workspaceRoot;
@@ -244,6 +244,38 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
       'completed',
     );
   }, 90000);
+
+  it('VC05: omission means pinned policy defaults; explicit HEAD is distinct intent', async () => {
+    const { root, engine } = await project();
+    const config = join(root, '.nevo/config.yaml');
+    const head = git(root, 'rev-parse', 'HEAD');
+    git(root, 'branch', 'develop');
+    await writeFile(config, [
+      'runtime: {}',
+      'git:',
+      '  enabled: true',
+      '  worktrees:',
+      '    branchPattern: "feature/{slug}-{shortId}"',
+      '    baseRef: develop',
+      '',
+    ].join('\n'));
+    const { createSpecificationFromRequest } = await import('../src/index');
+    const operationId = randomUUID();
+    const request = { operationId, title: 'Policy picked once', target: { kind: 'new-worktree' as const } };
+    const first = await createSpecificationFromRequest(engine, request);
+    roots.push(dirname(first.workspaceRoot));
+    const reserved = await inspectCreateSpecification(engine, operationId);
+    expect(reserved?.version).toBe(2);
+    expect(reserved?.target.branch).toBe('feature/policy-picked-once-' + reserved!.specId.slice(0, 8));
+    expect(reserved?.target.baseCommit).toBe(head);
+    await writeFile(config, 'runtime: {}\ngit:\n  enabled: false\n');
+    expect(await createSpecificationFromRequest(engine, request)).toEqual(first);
+    await expect(
+      createSpecificationFromRequest(engine, {
+        ...request, target: { kind: 'new-worktree', baseRef: 'HEAD' },
+      }),
+    ).rejects.toMatchObject({ code: 'CREATE_CONFLICT' });
+  }, 120000);
 
   it('retries completed linked create after a normal commit without side effects', async () => {
     const { root, engine } = await project();

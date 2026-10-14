@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-import { CreateOperationError } from './create-journal';
+import { CreateOperationError } from './create-error';
 
 export type ClientOverride =
   { readonly kind: 'omitted' } | { readonly kind: 'explicit'; readonly value: string };

@@ -1,36 +1,30 @@
 import { randomUUID } from 'node:crypto';
 
 import type { SpecFlowEngine } from '../application';
+import { normalizeCreateClientIntent, type CreateClientTargetInput } from './create-intent';
 import {
-  createSpecification,
-  inspectCreateSpecification,
+  createSpecificationWithIntent,
   type CreatedSpecification,
-  type CreateSpecificationTarget,
 } from './durable-create';
 
-/**
- * Transport-neutral convenience use case. Engine owns the immutable creation
- * date on retries; adapters own their distinct default workspace selectors.
- */
+/** Transport-neutral request: optional overrides preserve user omission. */
 export interface CreateSpecificationRequest {
   readonly operationId?: string;
   readonly title: string;
   readonly goal?: string;
-  readonly target: CreateSpecificationTarget;
+  readonly target: CreateClientTargetInput;
 }
 
 export async function createSpecificationFromRequest(
   engine: SpecFlowEngine,
   request: CreateSpecificationRequest,
 ): Promise<CreatedSpecification> {
-  const existing = request.operationId
-    ? await inspectCreateSpecification(engine, request.operationId)
-    : undefined;
-  return createSpecification(engine, {
-    operationId: request.operationId ?? randomUUID(),
-    title: request.title,
-    created: existing?.created ?? new Date().toISOString().slice(0, 10),
-    ...(request.goal ? { goal: request.goal } : {}),
-    target: request.target,
-  });
+  // No date or ref defaults are chosen outside the Project Home lock. An
+  // existing v1/v2 journal is inspected before sampling a fresh clock.
+  return createSpecificationWithIntent(
+    engine,
+    request.operationId ?? randomUUID(),
+    normalizeCreateClientIntent(request),
+    () => new Date().toISOString().slice(0, 10),
+  );
 }

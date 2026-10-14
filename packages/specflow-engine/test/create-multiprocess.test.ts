@@ -143,6 +143,23 @@ describe('E2.T04 — cross-process durable create reservation and registry CAS',
     expect(await discoverSpecifications(engine)).toHaveLength(1);
   }, 150000);
 
+  it('VC05: same operationId across two process clocks has one durable date and binding', async () => {
+    const { engine, root } = await project();
+    const operationId = randomUUID();
+    const one = { ...input(engine.workspace.workspaceId, 'Concurrent midnight'), operationId, created: '2026-10-14' };
+    const two = { ...one, created: '2026-10-15' };
+    const workers = [spawnCreateWorker(root, one), spawnCreateWorker(root, two)];
+    await startTogether(workers);
+    const outcomes = await Promise.all(workers.map((worker) => worker.done));
+    expect(outcomes.map((x) => x.code), JSON.stringify(outcomes)).toEqual([0, 0]);
+    const { readCreateJournal } = await import('../src/specs/create-journal');
+    const journal = await readCreateJournal(engine.context, operationId);
+    expect(journal?.version).toBe(2);
+    expect(['2026-10-14', '2026-10-15']).toContain(journal?.created);
+    expect((await engine.readRegistry()).specBindings).toHaveLength(1);
+    expect(await discoverSpecifications(engine)).toHaveLength(1);
+  }, 180000);
+
   it('L02: disjoint OS-process creates both persist without a lost registry update', async () => {
     const { engine, root } = await project();
     const workers = [

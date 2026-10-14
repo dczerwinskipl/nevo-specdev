@@ -3,7 +3,7 @@ import {
   discoverSpecifications,
   openSpecFlowEngine,
   resolveSpecification,
-  type CreateSpecificationTarget,
+  type CreateSpecificationRequest,
   type DiscoveredSpecification,
   type SpecFlowEngine,
 } from '@nevo/specflow-engine';
@@ -46,7 +46,7 @@ export function createSpecsCommand(context: SpecsCommandContext): Command {
     .option('--goal <description>', 'Optional Specification goal')
     .option('--workspace-id <id>', 'Target an existing registered workspace ID')
     .option('--worktree', 'Provision a managed Git worktree')
-    .option('--base-ref <ref>', 'Base Git ref for new worktree (default HEAD)')
+    .option('--base-ref <ref>', 'Optional Git base override (defaults to Project Home policy)')
     .option('--branch <branch>', 'Branch name for new worktree')
     .option('--operation-id <uuid>', 'Stable UUID for idempotent retries')
     .option('--project-root <path>', 'Require this verified Project Home root')
@@ -147,12 +147,12 @@ function validateCreateOptions(options: CliCreateOptions): void {
 function resolveCliCreateTarget(
   engine: SpecFlowEngine,
   options: CliCreateOptions,
-): CreateSpecificationTarget {
+): CreateSpecificationRequest['target'] {
   if (options.worktree) {
     return {
       kind: 'new-worktree',
-      baseRef: options.baseRef ?? 'HEAD',
-      ...(options.branch ? { branch: options.branch } : {}),
+      ...(options.baseRef !== undefined ? { baseRef: options.baseRef } : {}),
+      ...(options.branch !== undefined ? { branch: options.branch } : {}),
     };
   }
   return { kind: 'existing', workspaceId: options.workspaceId ?? engine.workspace.workspaceId };

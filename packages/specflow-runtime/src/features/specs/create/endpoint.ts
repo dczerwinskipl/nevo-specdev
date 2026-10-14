@@ -6,7 +6,7 @@ import {
   SpecificationError,
   WorkspaceRegistryError,
   createSpecificationFromRequest,
-  type CreateSpecificationTarget,
+  type CreateSpecificationRequest,
   type SpecFlowEngine,
 } from '@nevo/specflow-engine';
 import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
@@ -100,7 +100,7 @@ async function resolveCreateTarget(
     | { readonly kind: 'existing'; readonly workspaceId: string }
     | { readonly kind: 'new-worktree'; readonly baseRef?: string; readonly branch?: string }
     | undefined,
-): Promise<CreateSpecificationTarget> {
+): Promise<CreateSpecificationRequest['target']> {
   switch (target?.kind) {
     case undefined:
       return { kind: 'existing', workspaceId: (await engine.readRegistry()).primaryWorkspaceId };
@@ -109,8 +109,8 @@ async function resolveCreateTarget(
     case 'new-worktree':
       return {
         kind: 'new-worktree',
-        baseRef: target.baseRef ?? 'HEAD',
-        ...(target.branch ? { branch: target.branch } : {}),
+        ...(target.baseRef !== undefined ? { baseRef: target.baseRef } : {}),
+        ...(target.branch !== undefined ? { branch: target.branch } : {}),
       };
     default: {
       const exhaustive: never = target;
