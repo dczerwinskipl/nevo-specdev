@@ -69,7 +69,7 @@ export function createGitWorktreePort(engine: SpecFlowEngine): WorktreePort {
     await assertRepository();
     assertPlanIdentity(plan);
     const worktrees = await git.listWorktrees();
-    const matching = worktrees.filter((item) => key(item.root) === key(plan.targetPath));
+    const matching = worktrees.filter((item) => sameFilesystemPath(item.root, plan.targetPath));
     if (matching.length > 1) return 'conflict';
     const present = matching[0];
     if (present) {
@@ -187,7 +187,7 @@ export function createGitWorktreePort(engine: SpecFlowEngine): WorktreePort {
       await assertRepository();
       assertPlanIdentity(plan);
       const list: readonly LocalWorktreeFacts[] = await git.listWorktrees();
-      const matching = list.filter((item) => key(item.root) === key(plan.targetPath));
+      const matching = list.filter((item) => sameFilesystemPath(item.root, plan.targetPath));
       if (
         matching.length !== 1 ||
         matching[0]!.prunable ||
@@ -237,10 +237,6 @@ function sameFilesystemPath(a: string, b: string): boolean {
   const left = resolve(a);
   const right = resolve(b);
   return process.platform === 'win32' ? left.toLowerCase() === right.toLowerCase() : left === right;
-}
-
-function key(path: string): string {
-  return resolve(path).toLowerCase();
 }
 
 function isMissing(value: unknown): boolean {

@@ -119,6 +119,73 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
     expect(git(root, 'worktree', 'list', '--porcelain').match(/worktree /gu)).toHaveLength(2);
   }, 90000);
 
+  it('VC04: retries pinned v1 Git reservation after branchPattern/baseRef change', async () => {
+    const { root, engine } = await project();
+    const input = linked('Pinned Git reservation');
+    const originalHead = git(root, 'rev-parse', 'HEAD');
+
+    await expect(
+      createSpecification(engine, input, {
+        afterEffect: (effect) =>
+          effect === 'reservation'
+            ? Promise.reject(new Error('Stop after durable reservation'))
+            : Promise.resolve(),
+      }),
+    ).rejects.toThrow('Stop after durable reservation');
+
+    const journal = await inspectCreateSpecification(engine, input.operationId);
+    expect(journal?.version).toBe(1);
+    expect(journal?.stage).toBe('reserved');
+    expect(journal?.target.branch).toBe('spec/pinned-git-reservation-' + journal!.specId.slice(0, 8));
+    expect(journal?.target.baseCommit).toBe(originalHead);
+    const configPath = join(root, '.nevo/config.yaml');
+    await writeFile(
+      configPath,
+      'runtime: {}\ngit:\n  enabled: true\n  worktrees:\n    branchPattern: "feature/{slug}-{shortId}"\n    baseRef: "refs/heads/not-created"\n',
+    );
+
+    const restarted = await openSpecFlowEngine({ cwd: root });
+    const created = await createSpecification(restarted, input);
+    roots.push(dirname(created.workspaceRoot));
+    expect(created.specId).toBe(journal?.specId);
+    expect(git(created.workspaceRoot, 'rev-parse', 'HEAD')).toBe(originalHead);
+    expect(git(created.workspaceRoot, 'symbolic-ref', '--short', 'HEAD')).toBe(
+      journal?.target.branch,
+    );
+    expect((await inspectCreateSpecification(restarted, input.operationId))?.version).toBe(1);
+    expect(git(root, 'rev-parse', 'HEAD')).toBe(originalHead);
+    expect(git(root, 'worktree', 'list', '--porcelain').match(/worktree /gu)).toHaveLength(2);
+  }, 90000);
+
+  it('VC04: disabled policy blocks new Git mutation before git-initiated but allows completed replay', async () => {
+    const { root, engine } = await project();
+    const input = linked('Disable prior to Git mutation');
+    await expect(
+      createSpecification(engine, input, {
+        afterEffect: (effect) =>
+          effect === 'reservation'
+            ? Promise.reject(new Error('Stop after reservation'))
+            : Promise.resolve(),
+      }),
+    ).rejects.toThrow('Stop after reservation');
+
+    const configPath = join(root, '.nevo/config.yaml');
+    await writeFile(configPath, 'runtime: {}\ngit:\n  enabled: false\n');
+    await expect(createSpecification(engine, input)).rejects.toMatchObject({
+      code: 'GIT_DISABLED',
+    });
+    expect((await inspectCreateSpecification(engine, input.operationId))?.stage).toBe('reserved');
+    expect(git(root, 'worktree', 'list', '--porcelain').match(/worktree /gu)).toHaveLength(1);
+
+    await writeFile(configPath, 'runtime: {}\ngit:\n  enabled: true\n');
+    const created = await createSpecification(engine, input);
+    roots.push(dirname(created.workspaceRoot));
+    await writeFile(configPath, 'runtime: {}\ngit:\n  enabled: false\n');
+    const restarted = await openSpecFlowEngine({ cwd: root });
+    expect(await createSpecification(restarted, input)).toEqual(created);
+    expect((await inspectCreateSpecification(restarted, input.operationId))?.stage).toBe('completed');
+  }, 90000);
+
   it('retries completed linked create after a normal commit without side effects', async () => {
     const { root, engine } = await project();
     const input = linked('Committed linked specification');

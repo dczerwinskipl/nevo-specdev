@@ -1,10 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { lstat, mkdir, realpath } from 'node:fs/promises';
-import { dirname } from 'node:path';
-
 import type { SpecFlowEngine } from '../application';
-import { openGitCapability } from '../git/capability';
-import { executeGitMutation } from '../git/mutation';
+import { openVersionControl } from '../version-control';
 import { inspectRegisteredWorkspace } from '../project/workspace-registry';
 import {
   createSpecificationScaffold,
@@ -13,6 +9,7 @@ import {
 } from './model';
 import { commitBinding } from './create-binding';
 import {
+  createPlannedGitWorktree,
   ensureLinkedIdentity,
   inspectPlannedGitEffect,
   requireRegisteredTarget,
@@ -131,35 +128,9 @@ export async function createSpecification(
         if (record.target.kind === 'new-worktree') {
           await validateNewGitReservation(engine, record);
           record = await transition(engine, record, 'git-initiated');
-          // mkdir on the bounded, project-owned sibling directory only.
-          // Existing unexpected directories and symlinks fail in revalidation.
-          const worktreesParent = dirname(record.target.workspaceRoot);
-          await mkdir(worktreesParent, { recursive: true });
-          const parentStat = await lstat(worktreesParent);
-          if (
-            !parentStat.isDirectory() ||
-            parentStat.isSymbolicLink() ||
-            (await realpath(worktreesParent)) !== worktreesParent
-          ) {
-            throw recovery('Managed worktree parent was redirected before the Git mutation.');
-          }
-          const state = await inspectPlannedGitEffect(engine, record);
-          if (state !== 'absent') {
-            throw recovery('Git state changed between reservation and execution.');
-          }
-          const completed = await executeGitMutation(engine.context.project.homeRoot, [
-            'worktree',
-            'add',
-            '-b',
-            record.target.branch!,
-            record.target.workspaceRoot,
-            record.target.baseCommit!,
-          ]);
-          if (completed.exitCode !== 0) {
-            throw recovery(
-              'Git worktree creation had an uncertain effect; reconcile before retry.',
-            );
-          }
+          // WorktreePort owns every filesystem/Git side effect. The durable
+          // git-initiated transition was committed above, before this call.
+          await createPlannedGitWorktree(engine, record);
           await options.afterEffect?.('git');
           if ((await inspectPlannedGitEffect(engine, record)) !== 'present') {
             throw recovery('Created Git worktree does not match the recorded intent.');
@@ -312,11 +283,15 @@ async function reserve(
         workspaceRoot: inspected.root,
       };
     } else {
-      const plan = await openGitCapability(engine).planNewWorktree({
-        specId,
+      // VC04 deliberately retains the original v1 naming/fingerprint semantics:
+      // configured branchPattern and baseRef are NOT applied to new v1 writes.
+      // VC05 activates policy defaults together with transport omission and v2.
+      const plan = await openVersionControl(engine).worktrees.plan({
         slug: scaffold.slug,
-        baseRef: input.target.baseRef,
-        branch: input.target.branch,
+        shortId: specId.slice(0, 8),
+        baseRefOverride: input.target.baseRef,
+        branchOverride:
+          input.target.branch ?? 'spec/' + scaffold.slug + '-' + specId.slice(0, 8),
       });
       if (
         operations.some(

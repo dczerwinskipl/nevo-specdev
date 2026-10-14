@@ -2,8 +2,9 @@ import { lstat, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type { SpecFlowEngine } from '../application';
-import { openGitCapability } from '../git/capability';
-import { executeGit } from '../git/process';
+import { GitCapabilityError } from '../git/errors';
+import { openVersionControl } from '../version-control';
+import type { WorktreePlan, WorktreeEffect } from '../version-control/worktrees/port';
 import {
   inspectRegisteredWorkspace,
   verifyWorkspaceRoot,
@@ -16,69 +17,72 @@ import {
 } from '../project/workspace-identity';
 import { CreateOperationError, type CreateJournal } from './create-journal';
 
-/** Git worktree provisioning, reconciliation and physical checkout identity. */
+/**
+ * Reconstruct a fixed plan from durable evidence, never from the latest naming
+ * policy. V1 predates a stored gitInstanceId; Project Home's independently
+ * persisted sentinel/registry remains its authority (validated on port reads).
+ */
+export function planFromCreateJournal(engine: SpecFlowEngine, record: CreateJournal): WorktreePlan {
+  const target = record.target;
+  if (
+    target.kind !== 'new-worktree' ||
+    !target.branch ||
+    !target.baseCommit ||
+    (record.version === 2 &&
+      (!record.gitPlan ||
+        record.gitPlan.projectRoot !== engine.context.project.homeRoot ||
+        record.gitPlan.gitInstanceId !== engine.context.project.gitInstanceId))
+  ) {
+    throw recovery('Create journal has no valid pinned Git worktree plan.');
+  }
+  return {
+    projectId: record.projectId,
+    gitInstanceId: engine.context.project.gitInstanceId,
+    projectRoot: engine.context.project.homeRoot,
+    targetPath: target.workspaceRoot,
+    branch: target.branch,
+    baseCommit: target.baseCommit,
+  };
+}
+
+/**
+ * For a reserved operation, policy fences NEW mutations, but is not consulted
+ * for effects inspection or post-Git recovery. Do not re-resolve baseRef.
+ */
 export async function validateNewGitReservation(
   engine: SpecFlowEngine,
   record: CreateJournal,
 ): Promise<void> {
-  const plan = await openGitCapability(engine).planNewWorktree({
-    specId: record.specId,
-    slug: record.slug,
-    baseRef: record.target.baseCommit!,
-    branch: record.target.branch,
-    targetPath: record.target.workspaceRoot,
-  });
-  if (
-    plan.baseCommit !== record.target.baseCommit ||
-    plan.targetPath !== record.target.workspaceRoot
-  ) {
-    throw recovery('Planned Git repository or base identity has changed.');
+  const worktrees = openVersionControl(engine).worktrees;
+  const availability = await worktrees.availability();
+  if (availability.status === 'disabled') {
+    throw new GitCapabilityError('GIT_DISABLED', 'Managed worktree creation is disabled.');
+  }
+  if (availability.status === 'unavailable') {
+    throw new GitCapabilityError('GIT_UNAVAILABLE', 'Git worktree automation is unavailable.');
+  }
+  await worktrees.validateReservedPlan(planFromCreateJournal(engine, record));
+  // A newly reserved plan must have no evidence of a previous effect.
+  // An interrupted git-initiated stage takes a separate explicit recovery route.
+  if ((await worktrees.inspectEffect(planFromCreateJournal(engine, record))) !== 'absent') {
+    throw recovery('Git branch or worktree differs from the reserved intent.');
   }
 }
 
 export async function inspectPlannedGitEffect(
   engine: SpecFlowEngine,
   record: CreateJournal,
-): Promise<'absent' | 'present' | 'conflict'> {
-  const git = openGitCapability(engine);
-  const items = await git.listWorktrees();
-  const target = record.target;
-  const present = items.find(
-    (item) => item.root.toLowerCase() === target.workspaceRoot.toLowerCase(),
-  );
-  if (present) {
-    return !present.prunable &&
-      present.branch === 'refs/heads/' + target.branch &&
-      present.head === target.baseCommit
-      ? 'present'
-      : 'conflict';
-  }
-  const branchExists = items.some((item) => item.branch === 'refs/heads/' + target.branch);
-  if (branchExists) return 'conflict';
-  // Git can create a ref and then fail before publishing worktree metadata.
-  // A detached ref is NOT proof that the planned effect is absent.
-  const refs = await executeGit(engine.context.project.homeRoot, [
-    'for-each-ref',
-    '--format=%(refname)',
-    'refs/heads',
-  ]);
-  if (refs.exitCode !== 0) return 'conflict';
-  const plannedRef = ('refs/heads/' + target.branch).toLowerCase();
-  if (
-    refs.stdout.split('\n').some((value) => {
-      const ref = value.toLowerCase();
-      return (
-        ref === plannedRef || ref.startsWith(plannedRef + '/') || plannedRef.startsWith(ref + '/')
-      );
-    })
-  )
-    return 'conflict';
-  const stat = await lstat(target.workspaceRoot).catch((error: unknown) => {
-    if (isMissing(error)) return undefined;
-    throw error;
-  });
-  if (stat !== undefined) return 'conflict';
-  return 'absent';
+): Promise<WorktreeEffect> {
+  return openVersionControl(engine).worktrees.inspectEffect(planFromCreateJournal(engine, record));
+}
+
+export async function createPlannedGitWorktree(
+  engine: SpecFlowEngine,
+  record: CreateJournal,
+): Promise<void> {
+  // The caller is Durable Create only, after its persisted git-initiated stage.
+  // This module does not publish or modify journal/registry state.
+  await openVersionControl(engine).worktrees.create(planFromCreateJournal(engine, record));
 }
 
 export async function ensureLinkedIdentity(
@@ -154,17 +158,7 @@ export async function requireTargetIdentity(
       // After successful create, legitimate agents may advance HEAD. Validate
       // membership and the original branch, but not the provisioning commit.
       // Physical checkout incarnation remains verified below.
-      const worktrees = await openGitCapability(engine).listWorktrees();
-      const matching = worktrees.filter(
-        (item) => item.root.toLowerCase() === record.target.workspaceRoot.toLowerCase(),
-      );
-      if (
-        matching.length !== 1 ||
-        matching[0]!.prunable ||
-        matching[0]!.branch !== 'refs/heads/' + record.target.branch
-      ) {
-        throw recovery('Completed Git worktree changed its path or branch.');
-      }
+      await openVersionControl(engine).worktrees.inspectCreated(planFromCreateJournal(engine, record));
     } else if ((await inspectPlannedGitEffect(engine, record)) !== 'present') {
       // Before terminal completion, exact base HEAD is still critical evidence
       // that this is the worktree produced by the planned Git mutation.
