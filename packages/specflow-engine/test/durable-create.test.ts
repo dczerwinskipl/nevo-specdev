@@ -287,6 +287,78 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
     ).rejects.toMatchObject({ code: 'CREATE_CONFLICT' });
   }, 120000);
 
+  it('VC05: a reserved omitted policy stays pinned across naming, ref and enablement changes', async () => {
+    const { root, engine } = await project();
+    const config = join(root, '.nevo/config.yaml');
+    const head = git(root, 'rev-parse', 'HEAD');
+    git(root, 'branch', 'develop');
+    await writeFile(
+      config,
+      [
+        'runtime: {}',
+        'git:',
+        '  enabled: true',
+        '  worktrees:',
+        '    branchPattern: "feature/{slug}-{shortId}"',
+        '    baseRef: develop',
+        '',
+      ].join('\n'),
+    );
+    const operationId = randomUUID();
+    const request = {
+      operationId,
+      title: 'Omitted defaults pinned',
+      target: { kind: 'new-worktree' as const },
+    };
+    const { createSpecificationWithIntent } = await import('../src/specs/durable-create');
+    const { normalizeCreateClientIntent } = await import('../src/specs/create-intent');
+    await expect(
+      createSpecificationWithIntent(
+        engine,
+        operationId,
+        normalizeCreateClientIntent(request),
+        () => '2026-10-14',
+        {
+          afterEffect: (effect) =>
+            effect === 'reservation'
+              ? Promise.reject(new Error('Stop after frozen v2 reservation'))
+              : Promise.resolve(),
+        },
+      ),
+    ).rejects.toThrow('Stop after frozen v2 reservation');
+
+    const reserved = await inspectCreateSpecification(engine, operationId);
+    expect(reserved?.version).toBe(2);
+    expect(reserved?.stage).toBe('reserved');
+    expect(reserved?.created).toBe('2026-10-14');
+    expect(reserved?.target.branch).toBe(
+      'feature/omitted-defaults-pinned-' + reserved!.specId.slice(0, 8),
+    );
+    expect(reserved?.target.baseCommit).toBe(head);
+
+    const { createSpecificationFromRequest } = await import('../src/index');
+    await writeFile(config, 'runtime: {}\ngit:\n  enabled: false\n');
+    await expect(createSpecificationFromRequest(engine, request)).rejects.toMatchObject({
+      code: 'GIT_DISABLED',
+    });
+    expect((await inspectCreateSpecification(engine, operationId))?.stage).toBe('reserved');
+    expect(git(root, 'worktree', 'list', '--porcelain').match(/worktree /gu)).toHaveLength(1);
+
+    await writeFile(
+      config,
+      'runtime: {}\ngit:\n  enabled: true\n  worktrees:\n    branchPattern: "replacement/{slug}-{shortId}"\n    baseRef: refs/heads/not-created\n',
+    );
+    const result = await createSpecificationFromRequest(engine, request);
+    roots.push(dirname(result.workspaceRoot));
+    expect(result.specId).toBe(reserved?.specId);
+    expect(git(result.workspaceRoot, 'symbolic-ref', '--short', 'HEAD')).toBe(
+      reserved?.target.branch,
+    );
+    expect(git(result.workspaceRoot, 'rev-parse', 'HEAD')).toBe(head);
+    expect((await inspectCreateSpecification(engine, operationId))?.version).toBe(2);
+    expect(git(root, 'worktree', 'list', '--porcelain').match(/worktree /gu)).toHaveLength(2);
+  }, 120000);
+
   it('retries completed linked create after a normal commit without side effects', async () => {
     const { root, engine } = await project();
     const input = linked('Committed linked specification');
