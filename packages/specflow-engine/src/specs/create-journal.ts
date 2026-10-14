@@ -1,6 +1,11 @@
 import { lstat, mkdir, readFile, readdir, realpath } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import {
+  fingerprintCreateClientIntent,
+  type CreateClientIntent,
+} from './create-intent';
+
 import { writeJsonAtomically } from '../project/atomic-json';
 import { withProjectControlLock } from '../project/control-lock';
 import type { ResolvedProjectHome } from '../project/project-home';
@@ -35,8 +40,7 @@ export interface CreateJournalFile {
   readonly sha256: string;
 }
 
-export interface CreateJournal {
-  readonly version: 1;
+export interface CreateJournalFields {
   readonly projectId: string;
   readonly operationId: string;
   readonly inputFingerprint: string;
@@ -50,6 +54,18 @@ export interface CreateJournal {
   readonly files: readonly CreateJournalFile[];
   readonly reason?: string;
 }
+
+export interface CreateJournalV1 extends CreateJournalFields {
+  readonly version: 1;
+}
+
+export interface CreateJournalV2 extends CreateJournalFields {
+  readonly version: 2;
+  readonly requestIntent: CreateClientIntent;
+  readonly gitPlan?: { readonly projectRoot: string; readonly gitInstanceId: string };
+}
+
+export type CreateJournal = CreateJournalV1 | CreateJournalV2;
 
 export type CreateOperationErrorCode =
   | 'CREATE_CONFLICT'
@@ -164,6 +180,14 @@ export async function publishCreateJournal(
   context: ResolvedProjectHome,
   record: CreateJournal,
 ): Promise<void> {
+  // VC03 is read-only support for v2: no intermediate commit may publish v2
+  // until transport omission semantics and the Engine writer switch together.
+  if (record.version !== 1) {
+    throw new CreateOperationError(
+      'CREATE_RECOVERY_REQUIRED',
+      'Journal v2 writes are not active before the VC05 transport cutover.',
+    );
+  }
   parseJournal(context, record, record.operationId);
   await writeJsonAtomically(createJournalPath(context, record.operationId), record);
 }
@@ -177,7 +201,8 @@ function parseJournal(
     !isRecord(value) ||
     !isValidJournalIdentity(context, value, operationId) ||
     !isValidJournalTarget(value.target) ||
-    !isValidJournalFiles(value.files, value.slug)
+    !isValidJournalFiles(value.files, value.slug) ||
+    (value.version === 2 && !isValidV2Journal(context, value))
   ) {
     throw invalidJournal();
   }
@@ -191,7 +216,7 @@ function isValidJournalIdentity(
   operationId: string,
 ): boolean {
   return (
-    value.version === 1 &&
+    (value.version === 1 || value.version === 2) &&
     value.projectId === context.project.projectId &&
     value.operationId === operationId &&
     UUID.test(operationId) &&
@@ -246,6 +271,69 @@ function isValidJournalFiles(value: unknown, slug: unknown): boolean {
     value[0].relativePath === 'specs/active/' + slug + '/change.yaml' &&
     isRecord(value[1]) &&
     value[1].relativePath === 'specs/active/' + slug + '/overview.md'
+  );
+}
+
+
+/** Strict v2 evidence shape: no hidden current defaults or generated date in intent. */
+function isValidV2Journal(
+  context: ResolvedProjectHome,
+  value: Record<string, unknown>,
+): boolean {
+  const intent = value.requestIntent;
+  const plan = value.gitPlan;
+  if (
+    !isRecord(intent) ||
+    typeof intent.title !== 'string' ||
+    intent.title !== value.title ||
+    (intent.goal !== undefined && typeof intent.goal !== 'string') ||
+    intent.goal !== value.goal ||
+    !isRecord(intent.target) ||
+    Object.keys(intent).some((key) => key !== 'title' && key !== 'goal' && key !== 'target')
+  ) {
+    return false;
+  }
+  const target = intent.target;
+  if (target.kind === 'existing') {
+    if (
+      !isRecord(value.target) ||
+      value.target.kind !== 'existing' ||
+      target.workspaceId !== value.target.workspaceId ||
+      plan !== undefined ||
+      Object.keys(target).some((key) => key !== 'kind' && key !== 'workspaceId')
+    ) {
+      return false;
+    }
+  } else if (target.kind === 'new-worktree') {
+    if (
+      !isRecord(value.target) ||
+      value.target.kind !== 'new-worktree' ||
+      !isClientOverride(target.baseRef) ||
+      !isClientOverride(target.branch) ||
+      Object.keys(target).some((key) => key !== 'kind' && key !== 'baseRef' && key !== 'branch') ||
+      !isRecord(plan) ||
+      typeof plan.projectRoot !== 'string' ||
+      plan.projectRoot !== context.project.homeRoot ||
+      plan.gitInstanceId !== context.project.gitInstanceId ||
+      Object.keys(plan).some((key) => key !== 'projectRoot' && key !== 'gitInstanceId')
+    ) {
+      return false;
+    }
+  } else {
+    return false;
+  }
+  if (typeof value.inputFingerprint !== 'string') return false;
+  return fingerprintCreateClientIntent(intent as unknown as CreateClientIntent) === value.inputFingerprint;
+}
+
+function isClientOverride(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  if (value.kind === 'omitted') return Object.keys(value).length === 1;
+  return (
+    value.kind === 'explicit' &&
+    typeof value.value === 'string' &&
+    value.value.length > 0 &&
+    Object.keys(value).length === 2
   );
 }
 
