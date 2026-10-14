@@ -149,7 +149,9 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
     );
 
     const restarted = await openSpecFlowEngine({ cwd: root });
-    const created = await createSpecification(restarted, input);
+    const created = await createSpecification(restarted, input, {
+      resumeInterruptedOperation: true,
+    });
     roots.push(dirname(created.workspaceRoot));
     expect(created.specId).toBe(journal?.specId);
     expect(git(created.workspaceRoot, 'rev-parse', 'HEAD')).toBe(originalHead);
@@ -197,7 +199,9 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
     const registryBefore = await readFile(workspaceRegistryPath(engine.context), 'utf8');
 
     const restarted = await openSpecFlowEngine({ cwd: root });
-    await expect(createSpecification(restarted, input)).rejects.toMatchObject({
+    await expect(
+      createSpecification(restarted, input, { resumeInterruptedOperation: true }),
+    ).rejects.toMatchObject({
       code: 'CREATE_RECOVERY_REQUIRED',
     });
 
@@ -228,14 +232,18 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
 
     const configPath = join(root, '.nevo/config.yaml');
     await writeFile(configPath, 'runtime: {}\ngit:\n  enabled: false\n');
-    await expect(createSpecification(engine, input)).rejects.toMatchObject({
+    await expect(
+      createSpecification(engine, input, { resumeInterruptedOperation: true }),
+    ).rejects.toMatchObject({
       code: 'GIT_DISABLED',
     });
     expect((await inspectCreateSpecification(engine, input.operationId))?.stage).toBe('reserved');
     expect(git(root, 'worktree', 'list', '--porcelain').match(/worktree /gu)).toHaveLength(1);
 
     await writeFile(configPath, 'runtime: {}\ngit:\n  enabled: true\n');
-    const created = await createSpecification(engine, input);
+    const created = await createSpecification(engine, input, {
+      resumeInterruptedOperation: true,
+    });
     roots.push(dirname(created.workspaceRoot));
     await writeFile(configPath, 'runtime: {}\ngit:\n  enabled: false\n');
     const restarted = await openSpecFlowEngine({ cwd: root });
@@ -336,11 +344,18 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
     );
     expect(reserved?.target.baseCommit).toBe(head);
 
-    const { createSpecificationFromRequest } = await import('../src/index');
+    const { createSpecificationWithIntent } = await import('../src/specs/durable-create');
+    const { normalizeCreateClientIntent } = await import('../src/specs/create-intent');
+    const resumeReserved = () =>
+      createSpecificationWithIntent(
+        engine,
+        operationId,
+        normalizeCreateClientIntent(request),
+        () => '2026-10-15',
+        { resumeInterruptedOperation: true },
+      );
     await writeFile(config, 'runtime: {}\ngit:\n  enabled: false\n');
-    await expect(createSpecificationFromRequest(engine, request)).rejects.toMatchObject({
-      code: 'GIT_DISABLED',
-    });
+    await expect(resumeReserved()).rejects.toMatchObject({ code: 'GIT_DISABLED' });
     expect((await inspectCreateSpecification(engine, operationId))?.stage).toBe('reserved');
     expect(git(root, 'worktree', 'list', '--porcelain').match(/worktree /gu)).toHaveLength(1);
 
@@ -348,7 +363,7 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
       config,
       'runtime: {}\ngit:\n  enabled: true\n  worktrees:\n    branchPattern: "replacement/{slug}-{shortId}"\n    baseRef: refs/heads/not-created\n',
     );
-    const result = await createSpecificationFromRequest(engine, request);
+    const result = await resumeReserved();
     roots.push(dirname(result.workspaceRoot));
     expect(result.specId).toBe(reserved?.specId);
     expect(git(result.workspaceRoot, 'symbolic-ref', '--short', 'HEAD')).toBe(
@@ -426,10 +441,11 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
     expect(journal?.stage).toBe('git-initiated');
     const workspace = journal!.target.workspaceRoot;
     roots.push(dirname(workspace));
-    await expect(createSpecification(engine, input)).rejects.toMatchObject({
-      code: 'CREATE_RECOVERY_REQUIRED',
-    });
+    await expect(
+      createSpecification(engine, input, { resumeInterruptedOperation: true }),
+    ).rejects.toMatchObject({ code: 'CREATE_RECOVERY_REQUIRED' });
     const recovered = await createSpecification(engine, input, {
+      resumeInterruptedOperation: true,
       confirmInterruptedGitSettled: true,
     });
     expect(recovered.workspaceRoot).toBe(workspace);
@@ -451,7 +467,9 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
     expect((await inspectCreateSpecification(engine, input.operationId))?.stage).toBe(
       'manifest-writing',
     );
-    const output = await createSpecification(engine, input);
+    const output = await createSpecification(engine, input, {
+      resumeInterruptedOperation: true,
+    });
     expect(await discoverSpecifications(engine)).toHaveLength(1);
     expect((await engine.readRegistry()).specBindings).toHaveLength(1);
     expect(await readFile(join(root, output.relativeManifestPath), 'utf8')).toContain(
@@ -474,7 +492,9 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
       'registry-writing',
     );
     const previous = await readFile(workspaceRegistryPath(engine.context), 'utf8');
-    const output = await createSpecification(engine, input);
+    const output = await createSpecification(engine, input, {
+      resumeInterruptedOperation: true,
+    });
     expect(output.specId).toBe((await engine.readRegistry()).specBindings[0]?.specId);
     expect(await readFile(workspaceRegistryPath(engine.context), 'utf8')).toBe(previous);
   }, 90000);
@@ -493,9 +513,9 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
     const journal = (await inspectCreateSpecification(engine, input.operationId))!;
     const path = join(root, journal.files[0]!.relativePath);
     await writeFile(path, 'malicious: different\n');
-    await expect(createSpecification(engine, input)).rejects.toMatchObject({
-      code: 'CREATE_RECOVERY_REQUIRED',
-    });
+    await expect(
+      createSpecification(engine, input, { resumeInterruptedOperation: true }),
+    ).rejects.toMatchObject({ code: 'CREATE_RECOVERY_REQUIRED' });
     expect(await readFile(path, 'utf8')).toBe('malicious: different\n');
   }, 90000);
 

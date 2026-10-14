@@ -55,6 +55,9 @@ it.skipIf(!enabled)(
     const expectedError = process.env.NEVO_CREATE_CRASH_EXPECT_ERROR;
     try {
       const result = await createSpecification(engine, input, {
+        // A fresh, explicitly started crash-recovery process is the operator's
+        // evidence that the killed writer is no longer active.
+        resumeInterruptedOperation: true,
         confirmInterruptedGitSettled: process.env.NEVO_CREATE_CRASH_GIT_SETTLED === '1',
       });
       if (expectedError) throw new Error('Unexpected successful recovery: ' + result.specId);

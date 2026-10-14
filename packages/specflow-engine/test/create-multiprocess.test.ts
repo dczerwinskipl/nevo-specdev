@@ -191,7 +191,7 @@ describe('E2.T04 — cross-process durable create reservation and registry CAS',
       'VC05: second process joins live ' + pausedAt + ' checkpoint without repeating effects',
       async () => {
         const { engine, root } = await project();
-        await writeFile(join(root, '.nevo/config.yaml'), 'runtime: {}\\ngit:\\n  enabled: true\\n');
+        await writeFile(join(root, '.nevo/config.yaml'), 'runtime: {}\ngit:\n  enabled: true\n');
         roots.push(join(dirname(root), basename(root) + '-worktrees'));
         const operationId = randomUUID();
         const original = {
