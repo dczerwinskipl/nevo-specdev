@@ -120,24 +120,16 @@ export async function createSpecificationWithIntent(
   // terminated without any later mutation having started.
   await options.afterEffect?.('reservation');
 
-  if (reservation.existing && record.version === 2 && record.stage !== 'completed') {
-    // A second process with the same immutable v2 intent is a follower, not
-    // another writer. Wait for the already reserved operation to complete
-    // instead of competing for its CAS transitions or repeating Git effects.
-    // A stranded reservation is still recoverable after a bounded wait; an
-    // uncertain git-initiated stage retains the explicit recovery gate.
-    const observed = await followExistingOperation(engine, record.operationId);
-    if (observed.stage === 'completed') {
-      await verifyResult(engine, observed);
-      return resultOf(observed);
-    }
-    record = observed;
-  }
-
+  // New v2 reservations and genuine retries may both progress. If two
+  // processes race with the same intent, only one CAS transition can win.
+  // The loser becomes a read-only follower; it must never replay a Git/FS
+  // effect merely because another process advanced the durable journal.
+  // An interrupted git-initiated stage remains explicitly recovery-gated.
   // Each transition is CAS under the short Project Home control lock.
   // The Git command itself does not hold that lock. A durable git-initiated
   // stage fences concurrent retries until explicit quiescence reconciliation.
-  for (let count = 0; count < 12; count++) {
+  try {
+    for (let count = 0; count < 12; count++) {
     switch (record.stage) {
       case 'completed': {
         // Retrying a completed create must remain idempotent after legitimate
@@ -232,7 +224,24 @@ export async function createSpecificationWithIntent(
       }
     }
   }
-  throw recovery('Create operation exceeded its bounded state transition count.');
+    throw recovery('Create operation exceeded its bounded state transition count.');
+  } catch (error) {
+    if (
+      record.version === 2 &&
+      error instanceof CreateOperationError &&
+      error.code === 'CREATE_CONFLICT'
+    ) {
+      // An advanced CAS means another writer won. Do not retry the same
+      // effect; observe completion and verify the persisted identity.
+      const observed = await followExistingOperation(engine, record.operationId);
+      if (observed.stage === 'completed') {
+        await verifyResult(engine, observed);
+        return resultOf(observed);
+      }
+      throw recovery('Concurrent create did not reach completion; inspect the journal.');
+    }
+    throw error;
+  }
 }
 
 function normalize(input: CreateSpecificationInput): Omit<CreateSpecificationInput, 'operationId'> {
@@ -421,7 +430,7 @@ async function followExistingOperation(
   engine: SpecFlowEngine,
   operationId: string,
 ): Promise<CreateJournal> {
-  const deadline = Date.now() + 8000;
+  const deadline = Date.now() + 90000;
   let record = await readCreateJournal(engine.context, operationId);
   if (!record) throw recovery('Create journal disappeared during a concurrent operation.');
   while (
@@ -434,6 +443,8 @@ async function followExistingOperation(
     if (!current) throw recovery('Create journal disappeared during a concurrent operation.');
     record = current;
   }
+  // Never resume mutable stages after observing a concurrent writer timeout.
+  // The original writer may still be running (especially on Windows).
   return record;
 }
 
