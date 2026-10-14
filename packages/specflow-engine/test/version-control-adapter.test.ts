@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { mkdtemp, mkdir, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -21,6 +21,7 @@ function git(root: string, ...args: string[]): string {
 async function project() {
   const root = await realpath(await mkdtemp(join(tmpdir(), 'vc-worktree-Ż space ')));
   roots.push(root);
+  roots.push(join(dirname(root), basename(root) + '-worktrees'));
   git(root, 'init', '-q');
   await mkdir(join(root, '.nevo'));
   await writeFile(join(root, '.gitignore'), '.nevo/local/\n');
@@ -31,9 +32,13 @@ async function project() {
   git(root, 'add', '.gitignore', '.nevo/config.yaml');
   git(
     root,
-    '-c', 'user.name=Nevo Test',
-    '-c', 'user.email=nevo@example.invalid',
-    'commit', '-qm', 'initial',
+    '-c',
+    'user.name=Nevo Test',
+    '-c',
+    'user.email=nevo@example.invalid',
+    'commit',
+    '-qm',
+    'initial',
   );
   git(root, 'branch', 'develop');
   const engine = await bootstrapProjectHome(root);
@@ -71,14 +76,23 @@ describe('internal Git worktree adapter (VC02)', () => {
     await worktrees.create(plan);
     expect(await worktrees.inspectEffect(plan)).toBe('present');
     expect(git(root, 'rev-parse', 'HEAD')).toBe(before);
-    await expect(worktrees.plan({
-      slug: 'gamma', shortId: 'abcdef01',
-    })).rejects.toMatchObject({ code: 'WORKTREE_PATH_CONFLICT' });
-    await expect(worktrees.plan({
-      slug: 'another', shortId: 'abcdef01', branchOverride: plan.branch,
-    })).rejects.toMatchObject({ code: 'BRANCH_ALREADY_EXISTS' });
+    await expect(
+      worktrees.plan({
+        slug: 'gamma',
+        shortId: 'abcdef01',
+      }),
+    ).rejects.toMatchObject({ code: 'WORKTREE_PATH_CONFLICT' });
+    await expect(
+      worktrees.plan({
+        slug: 'another',
+        shortId: 'abcdef01',
+        branchOverride: plan.branch,
+      }),
+    ).rejects.toMatchObject({ code: 'BRANCH_ALREADY_EXISTS' });
     await writeFile(join(plan.targetPath, 'readme.txt'), 'legitimate changes\n');
-    expect(await readFile(join(plan.targetPath, 'readme.txt'), 'utf8')).toBe('legitimate changes\n');
+    expect(await readFile(join(plan.targetPath, 'readme.txt'), 'utf8')).toBe(
+      'legitimate changes\n',
+    );
     await worktrees.inspectCreated(plan);
   });
 });

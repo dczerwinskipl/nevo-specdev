@@ -3,8 +3,7 @@ import { createHash } from 'node:crypto';
 import { CreateOperationError } from './create-journal';
 
 export type ClientOverride =
-  | { readonly kind: 'omitted' }
-  | { readonly kind: 'explicit'; readonly value: string };
+  { readonly kind: 'omitted' } | { readonly kind: 'explicit'; readonly value: string };
 
 export type ClientCreateTarget =
   | { readonly kind: 'existing'; readonly workspaceId: string }
@@ -47,12 +46,14 @@ export function normalizeCreateClientIntent(input: {
       ? { kind: 'existing', workspaceId: input.target.workspaceId }
       : {
           kind: 'new-worktree',
-          baseRef: input.target.baseRef === undefined
-            ? { kind: 'omitted' }
-            : { kind: 'explicit', value: input.target.baseRef },
-          branch: input.target.branch === undefined
-            ? { kind: 'omitted' }
-            : { kind: 'explicit', value: input.target.branch },
+          baseRef:
+            input.target.baseRef === undefined
+              ? { kind: 'omitted' }
+              : { kind: 'explicit', value: input.target.baseRef },
+          branch:
+            input.target.branch === undefined
+              ? { kind: 'omitted' }
+              : { kind: 'explicit', value: input.target.branch },
         };
   return { title, ...(goal ? { goal } : {}), target };
 }

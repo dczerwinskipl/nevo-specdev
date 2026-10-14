@@ -68,9 +68,7 @@ export function validateBranchPattern(pattern: string): void {
   // Detect unmatched braces and hidden template expressions.
   const withoutTokens = pattern.replace(/\{(?:slug|shortId)\}/gu, '');
   if (/[{}]/u.test(withoutTokens)) throw invalid('Malformed Git branch template.');
-  validateBranchName(
-    pattern.replaceAll('{slug}', 'example').replaceAll('{shortId}', '12345678'),
-  );
+  validateBranchName(pattern.replaceAll('{slug}', 'example').replaceAll('{shortId}', '12345678'));
 }
 
 export function resolveWorktreeBranch(
@@ -83,8 +81,7 @@ export function resolveWorktreeBranch(
     throw invalid('Invalid worktree naming token.');
   }
   const branch =
-    override ??
-    policy.branchPattern.replaceAll('{slug}', slug).replaceAll('{shortId}', shortId);
+    override ?? policy.branchPattern.replaceAll('{slug}', slug).replaceAll('{shortId}', shortId);
   validateBranchName(branch);
   return branch;
 }

@@ -1,10 +1,7 @@
 import { lstat, mkdir, readFile, readdir, realpath } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import {
-  fingerprintCreateClientIntent,
-  type CreateClientIntent,
-} from './create-intent';
+import { fingerprintCreateClientIntent, type CreateClientIntent } from './create-intent';
 
 import { writeJsonAtomically } from '../project/atomic-json';
 import { withProjectControlLock } from '../project/control-lock';
@@ -274,12 +271,8 @@ function isValidJournalFiles(value: unknown, slug: unknown): boolean {
   );
 }
 
-
 /** Strict v2 evidence shape: no hidden current defaults or generated date in intent. */
-function isValidV2Journal(
-  context: ResolvedProjectHome,
-  value: Record<string, unknown>,
-): boolean {
+function isValidV2Journal(context: ResolvedProjectHome, value: Record<string, unknown>): boolean {
   const intent = value.requestIntent;
   const plan = value.gitPlan;
   if (
@@ -323,7 +316,10 @@ function isValidV2Journal(
     return false;
   }
   if (typeof value.inputFingerprint !== 'string') return false;
-  return fingerprintCreateClientIntent(intent as unknown as CreateClientIntent) === value.inputFingerprint;
+  return (
+    fingerprintCreateClientIntent(intent as unknown as CreateClientIntent) ===
+    value.inputFingerprint
+  );
 }
 
 function isClientOverride(value: unknown): boolean {

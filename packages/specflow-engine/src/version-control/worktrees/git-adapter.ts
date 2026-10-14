@@ -80,8 +80,11 @@ export function createGitWorktreePort(engine: SpecFlowEngine): WorktreePort {
     const refs = await git.listLocalRefs();
     if (refs.some((item) => refsConflict(item, 'refs/heads/' + plan.branch))) return 'conflict';
     if (
-      worktrees.some((item) => item.branch?.toLowerCase() === ('refs/heads/' + plan.branch).toLowerCase())
-    ) return 'conflict';
+      worktrees.some(
+        (item) => item.branch?.toLowerCase() === ('refs/heads/' + plan.branch).toLowerCase(),
+      )
+    )
+      return 'conflict';
     const stat = await lstat(plan.targetPath).catch((error: unknown) => {
       if (isMissing(error)) return undefined;
       throw error;
@@ -121,7 +124,10 @@ export function createGitWorktreePort(engine: SpecFlowEngine): WorktreePort {
       await this.validateReservedPlan(result);
       await git.validateBranch(branch);
       if ((await inspect(result)) !== 'absent') {
-        throw new GitCapabilityError('BRANCH_ALREADY_EXISTS', 'Branch or worktree target is occupied.');
+        throw new GitCapabilityError(
+          'BRANCH_ALREADY_EXISTS',
+          'Branch or worktree target is occupied.',
+        );
       }
       return result;
     },
@@ -140,7 +146,10 @@ export function createGitWorktreePort(engine: SpecFlowEngine): WorktreePort {
       }
       await this.validateReservedPlan(plan);
       if ((await inspect(plan)) !== 'absent') {
-        throw new GitCapabilityError('GIT_OPERATION_UNCERTAIN', 'Git state changed after preflight.');
+        throw new GitCapabilityError(
+          'GIT_OPERATION_UNCERTAIN',
+          'Git state changed after preflight.',
+        );
       }
       await mkdir(parent, { recursive: true });
       const stat = await lstat(parent);
@@ -148,7 +157,10 @@ export function createGitWorktreePort(engine: SpecFlowEngine): WorktreePort {
         throw new GitCapabilityError('WORKTREE_PATH_CONFLICT', 'Managed worktree parent changed.');
       }
       if ((await inspect(plan)) !== 'absent') {
-        throw new GitCapabilityError('GIT_OPERATION_UNCERTAIN', 'Git state changed before mutation.');
+        throw new GitCapabilityError(
+          'GIT_OPERATION_UNCERTAIN',
+          'Git state changed before mutation.',
+        );
       }
       await git.addWorktree(plan);
     },

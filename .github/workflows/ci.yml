@@ -49,33 +49,8 @@ jobs:
 
       # The same canonical script contributors run locally: format:check, lint,
       # docs validation/index freshness, and the version.json transition gate.
-      # TEMPORARY: capture pinned Prettier output for VC01-VC03 quality repair.
-      # The next commit restores the canonical quality gate.
-      - name: Quality gate (temporary formatting capture)
-        shell: bash
-        run: |
-          pnpm exec prettier --write             packages/specflow-engine/src/specs/create-intent.ts             packages/specflow-engine/src/specs/create-journal.ts             packages/specflow-engine/src/version-control/git/client.ts             packages/specflow-engine/src/version-control/worktrees/git-adapter.ts             packages/specflow-engine/src/version-control/worktrees/policy.ts             packages/specflow-engine/test/create-journal-v2.test.ts             packages/specflow-engine/test/version-control-adapter.test.ts
-          node --input-type=module <<'NODE'
-          import fs from 'node:fs';
-          const paths = [
-            'packages/specflow-engine/src/specs/create-intent.ts',
-            'packages/specflow-engine/src/specs/create-journal.ts',
-            'packages/specflow-engine/src/version-control/git/client.ts',
-            'packages/specflow-engine/src/version-control/worktrees/git-adapter.ts',
-            'packages/specflow-engine/src/version-control/worktrees/policy.ts',
-            'packages/specflow-engine/test/create-journal-v2.test.ts',
-            'packages/specflow-engine/test/version-control-adapter.test.ts',
-          ];
-          const payload = JSON.stringify(paths.map((path) => ({
-            path,
-            content: fs.readFileSync(path, 'utf8'),
-          })));
-          const chunkSize = 1800;
-          for (let i = 0; i < payload.length; i += chunkSize) {
-            console.log('VCFMT:' + (i / chunkSize) + ':' + payload.slice(i, i + chunkSize));
-          }
-          NODE
-          pnpm check:quality
+      - name: Quality gate
+        run: pnpm check:quality
 
       - name: Resolved version
         run: pnpm version:print

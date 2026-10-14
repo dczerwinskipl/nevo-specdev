@@ -33,7 +33,11 @@ async function fixture() {
   await writeFile(join(root, '.gitignore'), '.nevo/local/\n');
   await writeFile(join(root, '.nevo/config.yaml'), 'runtime: {}\n');
   execFileSync('git', ['add', '.gitignore', '.nevo/config.yaml'], { cwd: root });
-  execFileSync('git', ['-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'initial'], { cwd: root });
+  execFileSync(
+    'git',
+    ['-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'initial'],
+    { cwd: root },
+  );
   return (await bootstrapProjectHome(root)).context;
 }
 
@@ -49,7 +53,11 @@ function legacy(context: Awaited<ReturnType<typeof fixture>>): CreateJournalV1 {
     title: 'Legacy journal',
     created: '2026-10-13',
     stage: 'reserved',
-    target: { kind: 'existing', workspaceId: randomUUID(), workspaceRoot: context.project.homeRoot },
+    target: {
+      kind: 'existing',
+      workspaceId: randomUUID(),
+      workspaceRoot: context.project.homeRoot,
+    },
     files: [
       { relativePath: 'specs/active/' + slug + '/change.yaml', sha256: 'b'.repeat(64) },
       { relativePath: 'specs/active/' + slug + '/overview.md', sha256: 'c'.repeat(64) },
@@ -103,10 +111,12 @@ describe('VC03 — journal v2 reader without v2 writer activation', () => {
       fingerprintCreateClientIntent(explicit),
     );
     expect(fingerprintCreateClientIntent(omitted)).toBe(
-      fingerprintCreateClientIntent(normalizeCreateClientIntent({
-        ...base,
-        target: { kind: 'new-worktree' },
-      })),
+      fingerprintCreateClientIntent(
+        normalizeCreateClientIntent({
+          ...base,
+          target: { kind: 'new-worktree' },
+        }),
+      ),
     );
   });
 
@@ -143,7 +153,10 @@ describe('VC03 — journal v2 reader without v2 writer activation', () => {
     await expect(readCreateJournal(context, next.operationId)).rejects.toMatchObject({
       code: 'CREATE_JOURNAL_CORRUPT',
     });
-    await writeFile(path, JSON.stringify({ ...next, gitPlan: { ...next.gitPlan, gitInstanceId: randomUUID() } }));
+    await writeFile(
+      path,
+      JSON.stringify({ ...next, gitPlan: { ...next.gitPlan, gitInstanceId: randomUUID() } }),
+    );
     await expect(readCreateJournal(context, next.operationId)).rejects.toMatchObject({
       code: 'CREATE_JOURNAL_CORRUPT',
     });

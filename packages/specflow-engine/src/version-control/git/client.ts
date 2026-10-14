@@ -75,7 +75,10 @@ export function createLocalGitClient(home: string): LocalGitClient {
       const value = await read(['rev-parse', '--verify', '--end-of-options', name + '^{commit}']);
       const commit = value.stdout.trim();
       if (value.exitCode !== 0 || !OBJECT_ID.test(commit)) {
-        throw new GitCapabilityError('BASE_REF_NOT_FOUND', 'Base reference does not resolve to a commit.');
+        throw new GitCapabilityError(
+          'BASE_REF_NOT_FOUND',
+          'Base reference does not resolve to a commit.',
+        );
       }
       return commit;
     },
@@ -101,10 +104,16 @@ export function createLocalGitClient(home: string): LocalGitClient {
         if (config.exitCode !== 0) throw new Error('Missing config.');
         parsed = parseYaml(config.stdout) as unknown;
       } catch {
-        throw new GitCapabilityError('GIT_BASE_CONFIG_MISSING', 'Invalid base project configuration.');
+        throw new GitCapabilityError(
+          'GIT_BASE_CONFIG_MISSING',
+          'Invalid base project configuration.',
+        );
       }
       if (!isRecord(parsed) || !isRecord(parsed.runtime)) {
-        throw new GitCapabilityError('GIT_BASE_CONFIG_MISSING', 'Invalid base project configuration.');
+        throw new GitCapabilityError(
+          'GIT_BASE_CONFIG_MISSING',
+          'Invalid base project configuration.',
+        );
       }
     },
     async addWorktree(plan) {
@@ -151,7 +160,10 @@ function parseWorktrees(raw: string): readonly LocalWorktreeFacts[] {
       flush();
       const value = item.slice('worktree '.length);
       if (!isAbsolute(value)) {
-        throw new GitCapabilityError('GIT_OPERATION_FAILED', 'Git returned a relative worktree path.');
+        throw new GitCapabilityError(
+          'GIT_OPERATION_FAILED',
+          'Git returned a relative worktree path.',
+        );
       }
       current = { root: resolve(value), prunable: false };
     } else if (item.startsWith('HEAD ') && current) {
