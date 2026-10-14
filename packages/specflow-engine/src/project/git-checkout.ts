@@ -1,17 +1,20 @@
+import { realpath } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { join, resolve } from 'node:path';
 
+// This is a checkout-local bootstrap layout, NOT the canonical Project Home.
+// Linked Git worktrees intentionally return different roots until the T03 resolver lands.
 export const PROJECT_CONFIG_RELATIVE_PATH = '.nevo/config.yaml';
 export const LOCAL_CONFIG_RELATIVE_PATH = '.nevo/local/config.yaml';
 export const LOCAL_IGNORE_ENTRY = '.nevo/local/';
 
-export interface ProjectLayout {
+export interface GitCheckoutLayout {
   readonly root: string;
   readonly projectConfigPath: string;
   readonly localConfigPath: string;
 }
 
-export async function resolveProjectLayout(cwd: string): Promise<ProjectLayout> {
+export async function resolveGitCheckoutLayout(cwd: string): Promise<GitCheckoutLayout> {
   const result = await runGit(cwd, ['rev-parse', '--show-toplevel']);
   if (result.code !== 0) {
     throw new Error(
@@ -19,7 +22,7 @@ export async function resolveProjectLayout(cwd: string): Promise<ProjectLayout> 
     );
   }
 
-  const root = resolve(result.stdout.trim());
+  const root = await realpath(resolve(result.stdout.trim()));
   return {
     root,
     projectConfigPath: join(root, PROJECT_CONFIG_RELATIVE_PATH),
@@ -42,10 +45,14 @@ interface GitResult {
   readonly stderr: string;
 }
 
-function runGit(cwd: string, args: readonly string[]): Promise<GitResult> {
+/** Internal Git plumbing shared by checkout and Project Home discovery. */
+export function runGit(cwd: string, args: readonly string[]): Promise<GitResult> {
   return new Promise((resolvePromise, reject) => {
     const child = spawn('git', [...args], {
       cwd,
+      // Discover from the supplied directory, never an inherited Git context
+      // (GIT_DIR, GIT_WORK_TREE, GIT_COMMON_DIR or Git config injection).
+      env: gitDiscoveryEnvironment(),
       stdio: ['ignore', 'pipe', 'pipe'],
       windowsHide: true,
     });
@@ -69,4 +76,23 @@ function runGit(cwd: string, args: readonly string[]): Promise<GitResult> {
       });
     });
   });
+}
+
+/**
+ * Git's repository-discovery variables can point at a completely different
+ * checkout than `cwd`. These bootstrap reads must inspect the requested
+ * directory, even when invoked inside hooks, worktrees or another Git process.
+ *
+ * Preserve PATH/HOME and the rest of the process environment, but remove all
+ * Git-specific overrides, including GIT_CONFIG_COUNT and its GIT_CONFIG_KEY_N / GIT_CONFIG_VALUE_N entries.
+ * The filter is case-insensitive for Windows environment semantics.
+ */
+function gitDiscoveryEnvironment(): NodeJS.ProcessEnv {
+  const env = { ...process.env };
+  for (const key of Object.keys(env)) {
+    if (key.toUpperCase().startsWith('GIT_')) {
+      delete env[key];
+    }
+  }
+  return env;
 }

@@ -54,16 +54,16 @@ The operation must be **idempotent by evidence**. A record saying "stage complet
 
 ## Example crash outcomes
 
-| Crash | Next action |
-| --- | --- |
-| Before intent | No mutation happened; normal create can retry |
-| After reservation | Revalidate, continue or release reservation if unmodified |
-| After Git worktree creation, before manifest | Verify worktree membership and ownership then resume manifest |
-| After manifest write, before registry | Match specId and intent before binding; never silently create duplicate |
-| After registry write, before response | Return existing canonical result |
-| During locked JSON rewrite | Parse validated old/new state or fail with repair instruction |
-| After one workflow finish effect | Resume only uncompleted stages proven safe |
-| During worktree deletion | Keep cleanup intent; recheck existence/branch and do not accidentally remove a different path |
+| Crash                                        | Next action                                                                                   |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Before intent                                | No mutation happened; normal create can retry                                                 |
+| After reservation                            | Revalidate, continue or release reservation if unmodified                                     |
+| After Git worktree creation, before manifest | Verify worktree membership and ownership then resume manifest                                 |
+| After manifest write, before registry        | Match specId and intent before binding; never silently create duplicate                       |
+| After registry write, before response        | Return existing canonical result                                                              |
+| During locked JSON rewrite                   | Parse validated old/new state or fail with repair instruction                                 |
+| After one workflow finish effect             | Resume only uncompleted stages proven safe                                                    |
+| During worktree deletion                     | Keep cleanup intent; recheck existence/branch and do not accidentally remove a different path |
 
 Recovery should be driven by the next Engine operation/readiness reconciliation or explicit command; no permanent server is required. Runtime boot may trigger the same reconciliation but does not override the Engine.
 
@@ -94,3 +94,38 @@ Kill subprocess at each stage and start **a fresh process** to recover. Assert n
 Creation/rebind/workflow operations use Engine-owned durable journals. Runtime-managed provider invocation needs a **separate** durable dispatch intent and Turn lifecycle; the Engine claim and Runtime invocation may correlate, but neither journal replaces the other. If Runtime crashes after provider spawn and before correlation is stored, provider work is **unknown** and automatic replay is unsafe. Runtime may settle its Turn while Engine workflow remains unfinished; claim release requires its own proof. See [managed execution integration](managed-session-integration.md).
 
 For an external CLI writer, `recovery-required` should include proof requirements and an action plan: inspect claim and Git/current artifacts, reconcile idempotent stages, safely release verified terminal work, or escalate when the agent may still write. Never delete the only available worktree or forge successful human review to clear a blocked state. See [execution-scopes recovery](execution-scopes-and-recovery.md).
+
+## E2.T04 recovery procedure for local create
+
+The Engine's short Project Home control lock and its durable creation journal are
+separate evidence. Inspect both before an operator retries an interrupted create:
+
+1. Read the create record using `inspectCreateSpecification(engine, operationId)`
+   and the lock using `inspectProjectControlLock(context)`. Preserve the state
+   files in `.nevo/local/state/engine/operations/create/`, any `*.tmp` files,
+   and `.nevo/local/state/engine/control.lock` before manual repair.
+2. Identify the original writer and any descendant Git processes **independently**;
+   an absent PID or elapsed timeout alone cannot prove termination. If work may
+   still be running, do not release its lock or replay its operation.
+3. For `git-initiated`, prove process quiescence **and** inspect the expected Git
+   branch, path, worktree membership, base commit, and checkout identity. Only
+   then may an explicit trusted operator request a retry with
+   `confirmInterruptedGitSettled: true`. A partial ref, unexpected path or
+   substituted identity is a recovery conflict, not permission to recreate.
+4. A stranded `control.lock` or unpublished atomic `*.tmp` remains in place
+   until manual investigation. After independently proving there is no writer
+   and preserving the evidence, an operator may remove the verified orphan
+   lock and archive the abandoned temporary file **out of** the journal
+   directory. Never erase an authoritative published journal or override an
+   unknown lock. If evidence is inconclusive, stop and escalate.
+5. Reopen the Engine in a new process with the **same** `operationId` and
+   immutable input. It verifies stage effects against Git/FS/registry. Never
+   force-clean, reset, or prune an uncertain checkout to unblock creation.
+
+**Discovery admission policy (E2.T04):** create is deliberately blocked when
+any bound canonical Spec has `workspace_unavailable` or `manifest_missing`.
+The local registry currently stores `specId → workspaceId`, not a durable
+authoritative slug for every Spec. Allowing new creates while part of that
+namespace is unreadable would violate global slug uniqueness. A future narrower
+policy requires a validated, coordinated slug-ownership record and recovery
+contract; this checkpoint does not silently infer it from stale primary copies.

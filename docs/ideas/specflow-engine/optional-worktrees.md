@@ -74,6 +74,12 @@ Do **not** reuse legacy `git checkout main` in the spec's linked worktree: a bra
 
 If removal fails, keep registry/journal for repair and return an explicit reason. Disappearing directory must not cause silent spec rebinding to main.
 
+## Deferred multi-instance execution and worktrees
+
+The one-spec managed worktree policy does **not** imply one Session, Turn or step instance per worktree. Several instances of one user-defined step may access the same verified checkout. Only technically enforced read-only executions can safely share it without a long-lived exclusive writer claim; their CLI/MCP contribution submissions still use short Engine state coordination. Writer or external-effect steps require suitable isolation, serialization and admission. Creating a worktree per instance is not a default requirement.
+
+When a step requires comparable inputs, Git HEAD alone is insufficient: dirty/index/untracked content and external writers may change the material. Capture the requested baseline **after step activation**, then block or invalidate conflicting writes, rebind or cleanup. Other user-defined steps may have independent input policies. A registry claim cannot physically fence an external process with OS-level file access. This capability is outside Foundation A; see [multi-instance execution](multi-instance-execution.md).
+
 ## Move/delete outside SpecFlow
 
 A manually moved worktree or deleted directory becomes unavailable/needs repair. Runtime must retain already authorized historical Session/Turn views; a new Turn resolves and checks the updated workspace before dispatch/native provider resume. Reattach only after matching Git membership and validated identity; do not guess based on basename or slug. `git worktree prune` and worktree removal metadata need careful handling. A worktree may continue to exist while its local product registry binding is invalid; report both independently.

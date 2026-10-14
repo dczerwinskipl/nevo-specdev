@@ -1,0 +1,37 @@
+import { access, writeFile } from 'node:fs/promises';
+import { setTimeout as sleep } from 'node:timers/promises';
+
+import { it } from 'vitest';
+
+import {
+  createSpecification,
+  openSpecFlowEngine,
+  type CreateSpecificationInput,
+} from '../../src/index';
+
+it.skipIf(!process.env.NEVO_CREATE_WORKER)(
+  'independent durable Spec creator',
+  async () => {
+    const root = process.env.NEVO_CREATE_WORKER_HOME!;
+    const ready = process.env.NEVO_CREATE_WORKER_READY!;
+    const start = process.env.NEVO_CREATE_WORKER_START!;
+    const input = JSON.parse(process.env.NEVO_CREATE_WORKER_INPUT!) as CreateSpecificationInput;
+    const engine = await openSpecFlowEngine({ cwd: root });
+    await writeFile(ready, 'ready');
+
+    const deadline = Date.now() + 30000;
+    while (true) {
+      try {
+        await access(start);
+        break;
+      } catch {
+        if (Date.now() > deadline) throw new Error('Create worker barrier timed out.');
+        await sleep(25);
+      }
+    }
+    const result = await createSpecification(engine, input);
+    if (!result.specId)
+      throw new Error('Create did not produce a canonical specification identity.');
+  },
+  120000,
+);

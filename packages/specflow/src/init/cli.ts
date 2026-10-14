@@ -1,13 +1,17 @@
 import { relative } from 'node:path';
 
 import {
+  bootstrapProjectHome,
+  assertPrimaryGitCheckout,
+  resolveGitCheckoutLayout,
+  type GitCheckoutLayout,
+} from '@nevo/specflow-engine';
+import {
   initRuntime,
   type RuntimeInitContribution,
   type RuntimeSetupUi,
 } from '@nevo/specflow-runtime';
 import { Command } from 'commander';
-
-import { resolveProjectLayout, type ProjectLayout } from '../project/layout';
 
 import {
   assertProjectCanInitialize,
@@ -20,7 +24,7 @@ export interface ProjectInitCommandContext {
   readonly cwd: string;
   readonly stdout: (line: string) => void;
   readonly ui?: RuntimeSetupUi;
-  readonly resolveLayout?: (cwd: string) => Promise<ProjectLayout>;
+  readonly resolveLayout?: (cwd: string) => Promise<GitCheckoutLayout>;
   readonly initRuntime?: (options: { ui: RuntimeSetupUi }) => Promise<RuntimeInitContribution>;
   readonly initialize?: (options: InitializeProjectOptions) => Promise<InitializeProjectResult>;
 }
@@ -34,7 +38,9 @@ export function createProjectInitCommand(context: ProjectInitCommandContext): Co
         throw new Error('Interactive project initialization is not available in this CLI context.');
       }
 
-      const layout = await (context.resolveLayout ?? resolveProjectLayout)(context.cwd);
+      const layout = await (context.resolveLayout ?? resolveGitCheckoutLayout)(context.cwd);
+      // Reject linked worktrees before asking questions or mutating configuration.
+      await assertPrimaryGitCheckout(layout.root);
       await assertProjectCanInitialize(layout);
 
       const runtime = await (context.initRuntime ?? initRuntime)({ ui });
@@ -64,6 +70,10 @@ export function createProjectInitCommand(context: ProjectInitCommandContext): Co
         layout,
         contribution,
       });
+
+      // Config is published before home designation. On failure, keep any
+      // persisted marker/registry for explicit recovery; never reset identity.
+      await bootstrapProjectHome(result.root);
 
       context.stdout('Initialized Nevo SpecFlow.');
       context.stdout(`Project config: ${relative(result.root, result.projectConfigPath)}`);

@@ -8,13 +8,30 @@
 // root (which carries `packageManager`) so Corepack never downloads "latest".
 
 import { execFileSync, spawn } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { basename, delimiter, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import {
+  addWorkspace,
+  provisionLinkedWorkspaceIdentity,
+  readWorkspaceRegistry,
+  resolveProjectHome,
+  updateWorkspaceRegistry,
+  workspaceRegistryPath,
+} from '../../specflow-engine/src/index';
 import crossSpawn from 'cross-spawn';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -99,9 +116,9 @@ interface Run {
   stdout: string;
 }
 /** Invoke the installed `nevo-specflow` shim from the isolated prefix's .bin/PATH. */
-function nevoSpec(args: string[], input?: string): Run {
+function nevoSpec(args: string[], input?: string, cwd = prefix): Run {
   const result = crossSpawn.sync('nevo-specflow', args, {
-    cwd: prefix,
+    cwd,
     env: runEnv,
     encoding: 'utf8',
     input,
@@ -274,6 +291,12 @@ describe('packaged @nevo/specflow — isolated tarball install', () => {
       'utf8',
     );
 
+    // New product starts require explicit Project Home designation.
+    // The packaged bootstrap exercises the same offline Engine as Runtime.
+    writeFileSync(join(prefix, '.gitignore'), '.nevo/local/\n', 'utf8');
+    const bootstrap = nevoSpec(['project', 'bootstrap']);
+    expect(bootstrap.code, bootstrap.stdout).toBe(0);
+
     const installedBin = join(prefix, 'node_modules', '@nevo', 'specflow', 'dist', 'bin.js');
     const child =
       process.platform === 'win32'
@@ -371,6 +394,172 @@ describe('packaged @nevo/specflow — isolated tarball install', () => {
       }
     }
   }, 30_000);
+
+  it('G. installed CLI shares home across linked worktrees', async () => {
+    // Two genuine installed CLI processes, no Runtime listener. Different
+    // checked-out project configs must not select different operational policy.
+    const home = realpathSync(prefix);
+    execFileSync('git', ['add', '.gitignore', '.nevo/config.yaml'], { cwd: home });
+    execFileSync(
+      'git',
+      [
+        '-c',
+        'user.name=SpecFlow Test',
+        '-c',
+        'user.email=specflow@example.invalid',
+        'commit',
+        '-qm',
+        'packaged bootstrap',
+      ],
+      { cwd: home },
+    );
+    const linked = realpathSync(mkdtempSync(join(tmpdir(), 'specflow-installed-linked-Ż ')));
+    const clone = realpathSync(mkdtempSync(join(tmpdir(), 'specflow-independent-clone-Ż ')));
+    try {
+      execFileSync('git', ['worktree', 'add', '-q', '-b', 'packaged-linked', linked], {
+        cwd: home,
+      });
+      const context = await resolveProjectHome({ cwd: home });
+      const linkedRoot = (await resolveProjectHome({ cwd: linked })).workspace.root;
+      const registration = await provisionLinkedWorkspaceIdentity(
+        context,
+        linkedRoot,
+        randomUUID(),
+        true,
+      );
+      await updateWorkspaceRegistry(context, (current) => addWorkspace(current, registration));
+      writeFileSync(join(linked, '.nevo/config.yaml'), 'runtime:\n  server:\n    port: 9999\n');
+
+      const primaryResult = nevoSpec(['project', 'inspect', '--json'], undefined, home);
+      const linkedResult = nevoSpec(['project', 'inspect', '--json'], undefined, linked);
+      expect(primaryResult.code, primaryResult.stdout).toBe(0);
+      expect(linkedResult.code, linkedResult.stdout).toBe(0);
+      const primary = JSON.parse(primaryResult.stdout) as Record<string, string>;
+      const secondary = JSON.parse(linkedResult.stdout) as Record<string, string>;
+      expect(secondary.projectId).toBe(primary.projectId);
+      // Windows can expose the same physical root as long and 8.3 paths.
+      // The invariant is consistent Project Home identity between CLI processes.
+      expect(secondary.homeRoot).toBe(primary.homeRoot);
+      expect(secondary.stateRoot).toBe(primary.stateRoot);
+      expect(secondary.projectConfigPath).toBe(primary.projectConfigPath);
+      expect(secondary.workspaceId).toBe(registration.workspaceId);
+      expect(secondary.workspaceId).not.toBe(primary.workspaceId);
+      expect(readFileSync(secondary.projectConfigPath!, 'utf8')).not.toContain('9999');
+
+      const original = readFileSync(workspaceRegistryPath(context), 'utf8');
+      // A foreign clone of the same Git repository is not a registered workspace.
+      execFileSync('git', ['clone', '-q', home, clone], { cwd: home });
+      const independent = nevoSpec(['project', 'inspect', '--json'], undefined, clone);
+      expect(independent.code).not.toBe(0);
+      const badOverride = nevoSpec(
+        ['project', 'inspect', '--json', '--project-root', clone],
+        undefined,
+        linked,
+      );
+      expect(badOverride.code).not.toBe(0);
+      expect(readFileSync(workspaceRegistryPath(context), 'utf8')).toBe(original);
+
+      const markerPath = join(home, '.nevo/local/state/project-home.json');
+      const marker = readFileSync(markerPath, 'utf8');
+      try {
+        writeFileSync(markerPath, '{broken');
+        const failure = nevoSpec(['project', 'inspect', '--json'], undefined, linked);
+        expect(failure.code).not.toBe(0);
+      } finally {
+        writeFileSync(markerPath, marker);
+      }
+
+      const registryPath = workspaceRegistryPath(context);
+      try {
+        writeFileSync(registryPath, '{broken');
+        const failure = nevoSpec(['project', 'inspect', '--json'], undefined, linked);
+        expect(failure.code).not.toBe(0);
+      } finally {
+        writeFileSync(registryPath, original);
+      }
+
+      expect((await readWorkspaceRegistry(context)).revision).toBe(1);
+    } finally {
+      try {
+        execFileSync('git', ['worktree', 'remove', '--force', linked], { cwd: home });
+      } catch {
+        // Always clear temporary paths, including after a failed Git assertion.
+      }
+      rmSync(linked, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+      rmSync(clone, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+    }
+  }, 50_000);
+
+  it('H. two independent installed CLI processes cannot bootstrap competing Project Homes', async () => {
+    const root = realpathSync(mkdtempSync(join(tmpdir(), 'specflow-bootstrap-race-Ż ')));
+    try {
+      execFileSync('git', ['init', '-q'], { cwd: root });
+      mkdirSync(join(root, '.nevo'), { recursive: true });
+      writeFileSync(join(root, '.gitignore'), '.nevo/local/\n', 'utf8');
+      writeFileSync(join(root, '.nevo/config.yaml'), 'runtime: {}\n', 'utf8');
+
+      const runBootstrap = (): Promise<{ code: number; output: string }> =>
+        new Promise((resolve, reject) => {
+          const child = crossSpawn('nevo-specflow', ['project', 'bootstrap'], {
+            cwd: root,
+            env: runEnv,
+            windowsHide: true,
+          });
+          let output = '';
+          child.stdout?.on('data', (chunk: Buffer) => {
+            output += chunk.toString('utf8');
+          });
+          child.stderr?.on('data', (chunk: Buffer) => {
+            output += chunk.toString('utf8');
+          });
+          child.once('error', reject);
+          child.once('close', (code) => resolve({ code: code ?? 1, output }));
+        });
+
+      const results = await Promise.all([runBootstrap(), runBootstrap()]);
+      expect(
+        results.filter((result) => result.code === 0),
+        JSON.stringify(results),
+      ).toHaveLength(1);
+      expect(
+        results.filter((result) => result.code !== 0),
+        JSON.stringify(results),
+      ).toHaveLength(1);
+
+      const inspection = nevoSpec(['project', 'inspect', '--json'], undefined, root);
+      expect(inspection.code, inspection.stdout).toBe(0);
+      const info = JSON.parse(inspection.stdout) as { projectId: string; workspaceId: string };
+      const markerPath = join(root, '.nevo/local/state/project-home.json');
+      const registryPath = join(root, '.nevo/local/state/workspaces.json');
+      const originalMarker = readFileSync(markerPath, 'utf8');
+      const originalRegistry = readFileSync(registryPath, 'utf8');
+      const marker = JSON.parse(originalMarker) as {
+        projectId: string;
+        primaryWorkspaceId: string;
+        registryBootstrap: string;
+      };
+      const registry = JSON.parse(originalRegistry) as {
+        projectId: string;
+        primaryWorkspaceId: string;
+        revision: number;
+        workspaces: unknown[];
+      };
+      expect(marker.registryBootstrap).toBe('claimed');
+      expect(marker.projectId).toBe(info.projectId);
+      expect(registry.projectId).toBe(info.projectId);
+      expect(marker.primaryWorkspaceId).toBe(info.workspaceId);
+      expect(registry.primaryWorkspaceId).toBe(info.workspaceId);
+      expect(registry.revision).toBe(0);
+      expect(registry.workspaces).toHaveLength(1);
+
+      const repeat = nevoSpec(['project', 'bootstrap'], undefined, root);
+      expect(repeat.code).not.toBe(0);
+      expect(readFileSync(markerPath, 'utf8')).toBe(originalMarker);
+      expect(readFileSync(registryPath, 'utf8')).toBe(originalRegistry);
+    } finally {
+      rmSync(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+    }
+  }, 50_000);
 
   it('an unknown command still exits non-zero after install', () => {
     expect(nevoSpec(['definitely-not-a-command']).code).not.toBe(0);

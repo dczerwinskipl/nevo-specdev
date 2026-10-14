@@ -8,8 +8,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   isGitIgnored,
   LOCAL_CONFIG_RELATIVE_PATH,
-  resolveProjectLayout,
-} from '../src/project/layout';
+  resolveGitCheckoutLayout,
+} from '@nevo/specflow-engine';
 
 const dirs: string[] = [];
 
@@ -30,7 +30,7 @@ describe('project layout', () => {
     const nested = join(root, 'packages', 'demo');
     await mkdir(nested, { recursive: true });
 
-    const layout = await resolveProjectLayout(nested);
+    const layout = await resolveGitCheckoutLayout(nested);
 
     expect(layout.root).toBe(root);
     expect(layout.projectConfigPath).toBe(join(root, '.nevo', 'config.yaml'));

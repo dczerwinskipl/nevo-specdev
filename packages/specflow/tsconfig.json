@@ -8,6 +8,7 @@
       "@nevo/authorization": ["../authorization/src/index.ts"],
       "@nevo/specflow-contracts": ["../specflow-contracts/src/index.ts"],
       "@nevo/specflow-contracts/authorization": ["../specflow-contracts/src/authorization.ts"],
+      "@nevo/specflow-engine": ["../specflow-engine/src/index.ts"],
       "@nevo/specflow-runtime": ["../specflow-runtime/src/index.ts"],
       "@nevo/specflow-runtime/cli": ["../specflow-runtime/src/cli/command.ts"]
     }

@@ -63,16 +63,22 @@ Define consistent hierarchy (project registry reservation -> specific workspace 
 
 ## Failure matrix
 
-| Condition | Required behavior |
-| --- | --- |
-| Two concurrent `specs create` requests choose same slug/branch | One wins, one explicit conflict; no overwrite |
-| Runtime write collides with external CLI claim | Fail/queue according to contract, never silently execute |
-| Two independent worktrees are claimed | Both can proceed unless shared project operation conflicts |
-| CLI terminates after `step start` | Claim stays until proven settled or recovered |
-| Lock file corrupt/unreadable | Fail closed with diagnostic; no destructive reset |
-| Process crashes while writing an operation | Recovery journal decides replay, no blind duplicate |
-| Claim expiry without proof of end | State becomes uncertain, not automatically free |
-| Two claim-release attempts race | CAS/owner check means only real owner wins |
+| Condition                                                      | Required behavior                                          |
+| -------------------------------------------------------------- | ---------------------------------------------------------- |
+| Two concurrent `specs create` requests choose same slug/branch | One wins, one explicit conflict; no overwrite              |
+| Runtime write collides with external CLI claim                 | Fail/queue according to contract, never silently execute   |
+| Two independent worktrees are claimed                          | Both can proceed unless shared project operation conflicts |
+| CLI terminates after `step start`                              | Claim stays until proven settled or recovered              |
+| Lock file corrupt/unreadable                                   | Fail closed with diagnostic; no destructive reset          |
+| Process crashes while writing an operation                     | Recovery journal decides replay, no blind duplicate        |
+| Claim expiry without proof of end                              | State becomes uncertain, not automatically free            |
+| Two claim-release attempts race                                | CAS/owner check means only real owner wins                 |
+
+## Deferred multi-instance effects and admission
+
+Several instances of one **user-defined step** need independent run identity, but do not automatically imply either an exclusive writer claim or read-only access. Effects govern admission: enforced readers may share a verified workspace; writers require physical coordination or isolated workspaces; Git refs and external effects need separate checks. A writable provider does not become read-only through a prompt or flag.
+
+Instance allocation, submission, finalization and operator intervention still mutate Engine control-plane records under short cross-process locks/CAS. If a step requires shared input, pin the baseline **after activation** and enforce a source-change/rebind/cleanup policy. Verification gates may generate files and cannot bypass the effect policy. This capability remains deferred; see [multi-instance execution](multi-instance-execution.md).
 
 ## Admission versus authorization
 

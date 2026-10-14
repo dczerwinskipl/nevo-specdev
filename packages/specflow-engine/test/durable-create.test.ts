@@ -1,0 +1,322 @@
+import { randomUUID } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
+
+import { afterEach, describe, expect, it } from 'vitest';
+
+import {
+  bootstrapProjectHome,
+  createSpecification,
+  discoverSpecifications,
+  inspectCreateSpecification,
+  openSpecFlowEngine,
+  workspaceRegistryPath,
+  type CreateSpecificationInput,
+  type SpecFlowEngine,
+} from '../src/index';
+
+const roots: string[] = [];
+
+afterEach(async () => {
+  await Promise.all(roots.splice(0).map((path) => rm(path, { recursive: true, force: true })));
+});
+
+function git(root: string, ...args: string[]): string {
+  return execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
+}
+
+async function project(enabled = true): Promise<{ root: string; engine: SpecFlowEngine }> {
+  const root = await realpath(await mkdtemp(join(tmpdir(), 'specflow-create-Ż space ')));
+  roots.push(root);
+  git(root, 'init', '-q');
+  await mkdir(join(root, '.nevo'), { recursive: true });
+  await writeFile(join(root, '.gitignore'), '.nevo/local/\n');
+  await writeFile(
+    join(root, '.nevo/config.yaml'),
+    'runtime: {}\ngit:\n  enabled: ' + String(enabled) + '\n',
+  );
+  git(root, 'add', '.gitignore', '.nevo/config.yaml');
+  git(
+    root,
+    '-c',
+    'user.name=SpecFlow Test',
+    '-c',
+    'user.email=specflow@example.invalid',
+    'commit',
+    '-qm',
+    'initial',
+  );
+  return { root, engine: await bootstrapProjectHome(root) };
+}
+
+function existing(engine: SpecFlowEngine, title = 'Create durable spec'): CreateSpecificationInput {
+  return {
+    operationId: randomUUID(),
+    title,
+    created: '2026-10-14',
+    target: { kind: 'existing', workspaceId: engine.workspace.workspaceId },
+  };
+}
+
+function linked(title = 'Create linked spec'): CreateSpecificationInput {
+  return {
+    operationId: randomUUID(),
+    title,
+    created: '2026-10-14',
+    target: { kind: 'new-worktree', baseRef: 'HEAD' },
+  };
+}
+
+describe('E2.T04 — durable Spec creation on actual Git', () => {
+  it('creates a Spec in primary and retries the same operation without new records', async () => {
+    const { root, engine } = await project(false);
+    const input = existing(engine);
+    const originalRevision = (await engine.readRegistry()).revision;
+    const first = await createSpecification(engine, input);
+    expect(first.workspaceRoot).toBe(root);
+    expect((await inspectCreateSpecification(engine, input.operationId))?.stage).toBe('completed');
+    const registryBefore = await readFile(workspaceRegistryPath(engine.context), 'utf8');
+    const repeated = await createSpecification(engine, input);
+    expect(repeated).toEqual(first);
+    expect(await readFile(workspaceRegistryPath(engine.context), 'utf8')).toBe(registryBefore);
+    expect((await engine.readRegistry()).revision).toBe(originalRevision + 1);
+    expect(await discoverSpecifications(engine)).toMatchObject([
+      { status: 'available', specId: first.specId, workspaceId: first.workspaceId },
+    ]);
+    expect((await readFile(join(root, first.relativeManifestPath), 'utf8')).length).toBeGreaterThan(
+      0,
+    );
+    await expect(
+      createSpecification(engine, { ...input, title: 'Unrelated retry' }),
+    ).rejects.toMatchObject({ code: 'CREATE_CONFLICT' });
+  }, 90000);
+
+  it('creates a linked Git worktree while preserving primary HEAD and project root', async () => {
+    const { root, engine } = await project();
+    const headBefore = git(root, 'rev-parse', 'HEAD');
+    const input = linked();
+    const output = await createSpecification(engine, input);
+    roots.push(dirname(output.workspaceRoot));
+    expect(output.workspaceRoot).not.toBe(root);
+    expect(git(root, 'rev-parse', 'HEAD')).toBe(headBefore);
+    expect(git(output.workspaceRoot, 'rev-parse', 'HEAD')).toBe(headBefore);
+    expect((await engine.readRegistry()).workspaces).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          workspaceId: output.workspaceId,
+          kind: 'linked',
+          managed: true,
+        }),
+      ]),
+    );
+    expect(await discoverSpecifications(engine)).toMatchObject([
+      { status: 'available', specId: output.specId, workspaceId: output.workspaceId },
+    ]);
+    const restarted = await openSpecFlowEngine({ cwd: root });
+    expect(await createSpecification(restarted, input)).toEqual(output);
+    expect(git(root, 'worktree', 'list', '--porcelain').match(/worktree /gu)).toHaveLength(2);
+  }, 90000);
+
+  it('retries completed linked create after a normal commit without side effects', async () => {
+    const { root, engine } = await project();
+    const input = linked('Committed linked specification');
+    const first = await createSpecification(engine, input);
+    roots.push(dirname(first.workspaceRoot));
+
+    const checkout = first.workspaceRoot;
+    const branchBefore = git(checkout, 'symbolic-ref', 'HEAD');
+    const baseHead = git(checkout, 'rev-parse', 'HEAD');
+    const manifestPath = join(checkout, first.relativeManifestPath);
+    const originalManifest = await readFile(manifestPath, 'utf8');
+    expect(originalManifest).toContain('status: draft');
+    await writeFile(manifestPath, originalManifest.replace('status: draft', 'status: approved'));
+    git(checkout, 'add', '--', first.relativeManifestPath);
+    git(
+      checkout,
+      '-c',
+      'user.name=SpecFlow Test',
+      '-c',
+      'user.email=specflow@example.invalid',
+      'commit',
+      '-qm',
+      'normal specification update',
+    );
+    const advancedHead = git(checkout, 'rev-parse', 'HEAD');
+    expect(advancedHead).not.toBe(baseHead);
+
+    const committedManifest = await readFile(manifestPath, 'utf8');
+    const registryBefore = await readFile(workspaceRegistryPath(engine.context), 'utf8');
+    const worktreesBefore = git(root, 'worktree', 'list', '--porcelain');
+    const refsBefore = git(root, 'for-each-ref', '--format=%(refname) %(objectname)', 'refs/heads');
+    const journalBefore = await inspectCreateSpecification(engine, input.operationId);
+
+    const restarted = await openSpecFlowEngine({ cwd: root });
+    const retried = await createSpecification(restarted, input);
+    expect(retried).toEqual(first);
+    expect((await inspectCreateSpecification(restarted, input.operationId))?.stage).toBe(
+      'completed',
+    );
+    expect(await inspectCreateSpecification(restarted, input.operationId)).toEqual(journalBefore);
+    expect(await readFile(workspaceRegistryPath(engine.context), 'utf8')).toBe(registryBefore);
+    expect(git(checkout, 'rev-parse', 'HEAD')).toBe(advancedHead);
+    expect(git(checkout, 'symbolic-ref', 'HEAD')).toBe(branchBefore);
+    expect(git(root, 'worktree', 'list', '--porcelain')).toBe(worktreesBefore);
+    expect(git(root, 'for-each-ref', '--format=%(refname) %(objectname)', 'refs/heads')).toBe(
+      refsBefore,
+    );
+    expect(await readFile(manifestPath, 'utf8')).toBe(committedManifest);
+    expect(committedManifest).toContain('status: approved');
+  }, 90000);
+
+  it('does not replay a Git command after an interruption without explicit quiescence', async () => {
+    const { root, engine } = await project();
+    const input = linked('Interrupted Git');
+
+    await expect(
+      createSpecification(engine, input, {
+        afterEffect: (effect) =>
+          effect === 'git'
+            ? Promise.reject(new Error('Injected crash after Git effect'))
+            : Promise.resolve(),
+      }),
+    ).rejects.toThrow('Injected crash');
+    const journal = await inspectCreateSpecification(engine, input.operationId);
+    expect(journal?.stage).toBe('git-initiated');
+    const workspace = journal!.target.workspaceRoot;
+    roots.push(dirname(workspace));
+    await expect(createSpecification(engine, input)).rejects.toMatchObject({
+      code: 'CREATE_RECOVERY_REQUIRED',
+    });
+    const recovered = await createSpecification(engine, input, {
+      confirmInterruptedGitSettled: true,
+    });
+    expect(recovered.workspaceRoot).toBe(workspace);
+    expect(git(root, 'worktree', 'list', '--porcelain').match(/worktree /gu)).toHaveLength(2);
+    expect((await inspectCreateSpecification(engine, input.operationId))?.stage).toBe('completed');
+  }, 90000);
+
+  it('replays manifest-written effects without duplicating files or registry bindings', async () => {
+    const { root, engine } = await project(false);
+    const input = existing(engine, 'Restart after manifest');
+    await expect(
+      createSpecification(engine, input, {
+        afterEffect: (effect) =>
+          effect === 'manifest'
+            ? Promise.reject(new Error('Injected crash after scaffold'))
+            : Promise.resolve(),
+      }),
+    ).rejects.toThrow('Injected crash');
+    expect((await inspectCreateSpecification(engine, input.operationId))?.stage).toBe(
+      'manifest-writing',
+    );
+    const output = await createSpecification(engine, input);
+    expect(await discoverSpecifications(engine)).toHaveLength(1);
+    expect((await engine.readRegistry()).specBindings).toHaveLength(1);
+    expect(await readFile(join(root, output.relativeManifestPath), 'utf8')).toContain(
+      output.specId,
+    );
+  }, 90000);
+
+  it('recovers after registry CAS publication without a second registry mutation', async () => {
+    const { engine } = await project(false);
+    const input = existing(engine, 'Restart after registry');
+    await expect(
+      createSpecification(engine, input, {
+        afterEffect: (effect) =>
+          effect === 'registry'
+            ? Promise.reject(new Error('Injected crash after registry'))
+            : Promise.resolve(),
+      }),
+    ).rejects.toThrow('Injected crash');
+    expect((await inspectCreateSpecification(engine, input.operationId))?.stage).toBe(
+      'registry-writing',
+    );
+    const previous = await readFile(workspaceRegistryPath(engine.context), 'utf8');
+    const output = await createSpecification(engine, input);
+    expect(output.specId).toBe((await engine.readRegistry()).specBindings[0]?.specId);
+    expect(await readFile(workspaceRegistryPath(engine.context), 'utf8')).toBe(previous);
+  }, 90000);
+
+  it('rejects a tampered scaffold on retry instead of overwriting unrelated edits', async () => {
+    const { root, engine } = await project(false);
+    const input = existing(engine, 'Tampered manifest');
+    await expect(
+      createSpecification(engine, input, {
+        afterEffect: (effect) =>
+          effect === 'manifest'
+            ? Promise.reject(new Error('Injected crash after scaffold'))
+            : Promise.resolve(),
+      }),
+    ).rejects.toThrow('Injected crash');
+    const journal = (await inspectCreateSpecification(engine, input.operationId))!;
+    const path = join(root, journal.files[0]!.relativePath);
+    await writeFile(path, 'malicious: different\n');
+    await expect(createSpecification(engine, input)).rejects.toMatchObject({
+      code: 'CREATE_RECOVERY_REQUIRED',
+    });
+    expect(await readFile(path, 'utf8')).toBe('malicious: different\n');
+  }, 90000);
+
+  it('rejects disabled Git automation before any journal, branch or registry write', async () => {
+    const { root, engine } = await project(false);
+    const input = linked('Disabled Git');
+    const registryBefore = await readFile(workspaceRegistryPath(engine.context), 'utf8');
+    const branchesBefore = git(root, 'branch', '--list');
+    await expect(createSpecification(engine, input)).rejects.toMatchObject({
+      code: 'GIT_DISABLED',
+    });
+    expect(await inspectCreateSpecification(engine, input.operationId)).toBeUndefined();
+    expect(await readFile(workspaceRegistryPath(engine.context), 'utf8')).toBe(registryBefore);
+    expect(git(root, 'branch', '--list')).toBe(branchesBefore);
+  }, 90000);
+
+  it('rejects an invalid base config blob before journal and Git side effects', async () => {
+    const { root, engine } = await project();
+    await writeFile(join(root, '.nevo/config.yaml'), 'runtime: false\ngit:\n  enabled: true\n');
+    git(root, 'add', '.nevo/config.yaml');
+    git(
+      root,
+      '-c',
+      'user.name=SpecFlow Test',
+      '-c',
+      'user.email=specflow@example.invalid',
+      'commit',
+      '-qm',
+      'invalid config',
+    );
+    await writeFile(join(root, '.nevo/config.yaml'), 'runtime: {}\ngit:\n  enabled: true\n');
+    const input = linked('Invalid base');
+    await expect(createSpecification(engine, input)).rejects.toMatchObject({
+      code: 'GIT_BASE_CONFIG_MISSING',
+    });
+    expect(await inspectCreateSpecification(engine, input.operationId)).toBeUndefined();
+  }, 90000);
+
+  it('serializes same-slug create attempts without losing committed registry state', async () => {
+    const { engine } = await project(false);
+    const [a, b] = await Promise.allSettled([
+      createSpecification(engine, existing(engine, 'Competing slug')),
+      createSpecification(engine, existing(engine, 'Competing slug')),
+    ]);
+    expect([a.status, b.status].sort()).toEqual(['fulfilled', 'rejected']);
+    const rejected: unknown =
+      a.status === 'rejected' ? a.reason : b.status === 'rejected' ? b.reason : undefined;
+    expect(rejected).toMatchObject({ code: 'CREATE_CONFLICT' });
+    expect((await engine.readRegistry()).specBindings).toHaveLength(1);
+  }, 90000);
+
+  it('persists distinct concurrent creations without losing registry updates', async () => {
+    const { engine } = await project(false);
+    const a = existing(engine, 'First parallel');
+    const b = existing(engine, 'Second parallel');
+    const results = await Promise.all([
+      createSpecification(engine, a),
+      createSpecification(engine, b),
+    ]);
+    expect(new Set(results.map((item) => item.specId)).size).toBe(2);
+    expect((await engine.readRegistry()).specBindings).toHaveLength(2);
+    expect(await discoverSpecifications(engine)).toHaveLength(2);
+  }, 90000);
+});

@@ -38,12 +38,12 @@ Candidate representation:
 ```ts
 type ProjectContext = {
   projectId: string;
-  projectRoot: string;  // known local coordination home
-  stateRoot: string;    // explicit ignored state location
+  projectRoot: string; // known local coordination home
+  stateRoot: string; // explicit ignored state location
 };
 type WorkspaceContext = {
   workspaceId: string;
-  root: string;         // verified absolute canonical filesystem root
+  root: string; // verified absolute canonical filesystem root
   kind: 'primary' | 'linked';
   git?: { commonDir: string; branch?: string };
 };
@@ -60,7 +60,7 @@ Avoid injecting this entire object into every small function. Resolve once at th
 4. Resolve the central local registry and `workspaceId`; ensure recorded roots still refer to the same Git repository, not a symlink/substitution to an unrelated location.
 5. Fail clearly when zero or multiple candidate homes exist. Never silently treat an arbitrary linked checkout as a second independent project.
 
-Git's `git rev-parse --show-toplevel` alone returns the *current checkout*, not the project's coordination home. This is a concrete limitation of `packages/specflow/src/project/layout.ts` on main.
+Git's `git rev-parse --show-toplevel` alone returns the _current checkout_, not the project's coordination home. This is a concrete limitation of `packages/specflow/src/project/layout.ts` on main.
 
 ## Open design: home discovery and moves
 
