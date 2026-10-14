@@ -197,8 +197,9 @@ describe('VC05 — atomic v2 writer with legacy v1 retry', () => {
         target: { kind: 'new-worktree', baseRef: 'HEAD' },
       }),
     ).toEqual(result);
-    expect((await restarted.readRegistry()).specBindings.filter((x) => x.specId === specId))
-      .toHaveLength(1);
+    expect(
+      (await restarted.readRegistry()).specBindings.filter((x) => x.specId === specId),
+    ).toHaveLength(1);
   }, 120000);
 
   it('round-trips a structural v1 journal fixture without changing its representation', async () => {
