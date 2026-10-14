@@ -29,9 +29,8 @@ export function planFromCreateJournal(engine: SpecFlowEngine, record: CreateJour
     !target.branch ||
     !target.baseCommit ||
     (record.version === 2 &&
-      (!record.gitPlan ||
-        record.gitPlan.projectRoot !== engine.context.project.homeRoot ||
-        record.gitPlan.gitInstanceId !== engine.context.project.gitInstanceId))
+      (record.gitPlan?.projectRoot !== engine.context.project.homeRoot ||
+        record.gitPlan?.gitInstanceId !== engine.context.project.gitInstanceId))
   ) {
     throw recovery('Create journal has no valid pinned Git worktree plan.');
   }
@@ -158,7 +157,9 @@ export async function requireTargetIdentity(
       // After successful create, legitimate agents may advance HEAD. Validate
       // membership and the original branch, but not the provisioning commit.
       // Physical checkout incarnation remains verified below.
-      await openVersionControl(engine).worktrees.inspectCreated(planFromCreateJournal(engine, record));
+      await openVersionControl(engine).worktrees.inspectCreated(
+        planFromCreateJournal(engine, record),
+      );
     } else if ((await inspectPlannedGitEffect(engine, record)) !== 'present') {
       // Before terminal completion, exact base HEAD is still critical evidence
       // that this is the worktree produced by the planned Git mutation.

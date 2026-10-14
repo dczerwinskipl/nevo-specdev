@@ -290,8 +290,7 @@ async function reserve(
         slug: scaffold.slug,
         shortId: specId.slice(0, 8),
         baseRefOverride: input.target.baseRef,
-        branchOverride:
-          input.target.branch ?? 'spec/' + scaffold.slug + '-' + specId.slice(0, 8),
+        branchOverride: input.target.branch ?? 'spec/' + scaffold.slug + '-' + specId.slice(0, 8),
       });
       if (
         operations.some(

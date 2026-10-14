@@ -49,25 +49,8 @@ jobs:
 
       # The same canonical script contributors run locally: format:check, lint,
       # docs validation/index freshness, and the version.json transition gate.
-      # Temporary VC04 formatter capture; restored in the very next commit.
-      - name: Quality gate (VC04 formatting capture)
-        shell: bash
-        run: |
-          pnpm exec prettier --write             packages/specflow-engine/src/specs/create-git.ts             packages/specflow-engine/src/specs/durable-create.ts             packages/specflow-engine/test/durable-create.test.ts
-          node --input-type=module <<'NODE'
-          import fs from 'node:fs';
-          const paths = [
-            'packages/specflow-engine/src/specs/create-git.ts',
-            'packages/specflow-engine/src/specs/durable-create.ts',
-            'packages/specflow-engine/test/durable-create.test.ts',
-          ];
-          const payload = JSON.stringify(paths.map((path) => ({ path, content: fs.readFileSync(path, 'utf8') })));
-          const chunkSize = 1800;
-          for (let i = 0; i < payload.length; i += chunkSize) {
-            console.log('VC04FMT:' + (i / chunkSize) + ':' + payload.slice(i, i + chunkSize));
-          }
-          NODE
-          pnpm check:quality
+      - name: Quality gate
+        run: pnpm check:quality
 
       - name: Resolved version
         run: pnpm version:print

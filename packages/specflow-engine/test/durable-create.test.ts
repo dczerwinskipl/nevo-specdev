@@ -136,7 +136,9 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
     const journal = await inspectCreateSpecification(engine, input.operationId);
     expect(journal?.version).toBe(1);
     expect(journal?.stage).toBe('reserved');
-    expect(journal?.target.branch).toBe('spec/pinned-git-reservation-' + journal!.specId.slice(0, 8));
+    expect(journal?.target.branch).toBe(
+      'spec/pinned-git-reservation-' + journal!.specId.slice(0, 8),
+    );
     expect(journal?.target.baseCommit).toBe(originalHead);
     const configPath = join(root, '.nevo/config.yaml');
     await writeFile(
@@ -183,7 +185,9 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
     await writeFile(configPath, 'runtime: {}\ngit:\n  enabled: false\n');
     const restarted = await openSpecFlowEngine({ cwd: root });
     expect(await createSpecification(restarted, input)).toEqual(created);
-    expect((await inspectCreateSpecification(restarted, input.operationId))?.stage).toBe('completed');
+    expect((await inspectCreateSpecification(restarted, input.operationId))?.stage).toBe(
+      'completed',
+    );
   }, 90000);
 
   it('retries completed linked create after a normal commit without side effects', async () => {
