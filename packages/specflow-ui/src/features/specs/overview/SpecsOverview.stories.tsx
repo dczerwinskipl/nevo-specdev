@@ -264,6 +264,45 @@ const meta = {
 } satisfies Meta<typeof OverviewFixture>;
 export default meta;
 type Story = StoryObj<typeof meta>;
+const pullRequestContractPlay: NonNullable<Story['play']> = async ({
+  canvas,
+  canvasElement,
+  userEvent,
+}) => {
+  const pr = canvas.getAllByRole('link', { name: /Open pull request/ })[0]!;
+  let activated = 0;
+  pr.addEventListener(
+    'click',
+    (event) => {
+      event.preventDefault();
+      activated++;
+    },
+    { once: true },
+  );
+  if (matchMedia('(pointer:coarse)').matches) {
+    const rect = pr.getBoundingClientRect();
+    if (rect.width < 44 || rect.height < 44)
+      throw new Error('PR touch target must be at least44×44');
+    const hit = canvasElement.ownerDocument.elementFromPoint(rect.right - 1, rect.bottom - 1);
+    if (hit?.closest('a') !== pr)
+      throw new Error('Near-edge PR target must not activate the stretched Specification link');
+    await userEvent.click(hit);
+  } else await userEvent.click(pr);
+  if (
+    activated !== 1 ||
+    canvas.getByLabelText('Fixture interaction result').textContent?.includes('"target":')
+  )
+    throw new Error('PR activation must remain independent');
+};
+export const CurrentPullRequestContract: Story = {
+  tags: ['contract', '!autodocs'],
+  play: pullRequestContractPlay,
+};
+export const ArchivePullRequestContract: Story = {
+  args: { state: { ...loaded, collection: 'archive', projection: createSpecsFixture('archive') } },
+  tags: ['contract', '!autodocs'],
+  play: pullRequestContractPlay,
+};
 
 export const Current: Story = {
   tags: ['visual'],

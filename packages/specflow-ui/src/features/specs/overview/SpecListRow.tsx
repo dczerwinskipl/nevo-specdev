@@ -41,7 +41,10 @@ export function SpecListRow({
   const pullRequests =
     pr?.kind === 'single' ? (
       <Link
-        className="pointer-events-auto relative z-10 inline-flex min-h-6 items-center rounded-control-inline"
+        className={cn(
+          'pointer-events-auto relative z-10 inline-flex min-h-6 items-center rounded-control-inline [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11 [@media(pointer:coarse)]:items-start [@media(pointer:coarse)]:rounded-none',
+          item.collection === 'archive' && '[@media(pointer:coarse)]:pt-1',
+        )}
         href={pr.href}
         aria-label={t('specifications.openPullRequest', { number: pr.number, title: item.title })}
       >
@@ -138,7 +141,12 @@ export function SpecListRow({
               <Typography
                 as="div"
                 variant="body-sm"
-                className="mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 text-content-secondary [overflow-wrap:anywhere]"
+                className={cn(
+                  'mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 text-content-secondary [overflow-wrap:anywhere]',
+                  item.collection === 'current' &&
+                    pr?.kind === 'single' &&
+                    '[@media(pointer:coarse)]:items-start',
+                )}
                 data-spec-metadata
               >
                 {facts.map((fact, index) => (

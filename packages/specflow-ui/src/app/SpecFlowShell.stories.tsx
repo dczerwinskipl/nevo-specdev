@@ -2,7 +2,9 @@ import type { AuthSessionResponse } from '@nevo/specflow-contracts/authenticatio
 import { DesignCaptureProvider } from '@nevo/figma-capture/metadata';
 import { RouterProvider, createMemoryHistory } from '@tanstack/react-router';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
+import { useCachedQueryState } from './navigation/useCachedQueryState';
+import type { SpecsOverview as Catalogue } from '../features/specs/overview/model';
 import { HttpClientError, createHttpClient } from '@nevo/http-client';
 
 import type { AppLocale } from '../i18n';
@@ -45,6 +47,7 @@ export function RoutedApplication({
   integrationDto = false,
   navigationScenario,
   cancelNavigation = false,
+  catalogueFailure,
 }: {
   authMode?: AuthMode;
   locale?: AppLocale;
@@ -54,7 +57,9 @@ export function RoutedApplication({
   navigationScenario?:
     'attention' | 'partial' | 'stale' | 'unavailable' | 'long' | 'identity' | 'revoked';
   cancelNavigation?: boolean;
+  catalogueFailure?: 'wrong-collection' | 'invalid-progress';
 }) {
+  const catalogueRequests = useRef(0);
   const queryClient = useMemo(() => {
     const query = createSpecFlowQueryClient();
     query.setQueryDefaults(specificationKeys.all, { staleTime: Infinity });
@@ -198,7 +203,25 @@ export function RoutedApplication({
               new HttpClientError('Status fixture', { kind: 'http', status: specsStatus }),
             ),
         }
-      : createFixtureSpecsOverviewApi();
+      : catalogueFailure
+        ? {
+            getOverview: () => {
+              catalogueRequests.current++;
+              const data = createSpecsFixture();
+              return Promise.resolve(
+                catalogueFailure === 'wrong-collection'
+                  ? { ...data, collection: 'archive' as const }
+                  : {
+                      ...data,
+                      items: data.items.map((item) => ({
+                        ...item,
+                        progress: { completed: 1, total: 0 },
+                      })),
+                    },
+              );
+            },
+          }
+        : createFixtureSpecsOverviewApi();
 
     const http = createHttpClient();
     if (specsStatus === 401) {
@@ -225,7 +248,7 @@ export function RoutedApplication({
           }
         : {}),
     });
-  }, [auth, specsStatus, integrationDto]);
+  }, [auth, specsStatus, integrationDto, catalogueFailure]);
 
   const router = useMemo(() => {
     const history = createMemoryHistory({ initialEntries: [path] });
@@ -238,9 +261,26 @@ export function RoutedApplication({
       <UiModulesProvider modules={builtInUiModuleRegistry}>
         <StoryLocalization locale={locale}>
           <RouterProvider router={router} />
+          {catalogueFailure ? (
+            <CatalogueCacheProbe requestCount={() => catalogueRequests.current} />
+          ) : null}
         </StoryLocalization>
       </UiModulesProvider>
     </QueryClientProvider>
+  );
+}
+
+function CatalogueCacheProbe({ requestCount }: { requestCount: () => number }) {
+  const state = useCachedQueryState<Catalogue>(specsOverviewKeys.collection('current'));
+  return (
+    <output
+      className="sr-only"
+      aria-label="Catalogue fetch attempts"
+      data-catalogue-status={state?.status}
+      data-catalogue-present={Boolean(state?.data)}
+    >
+      {requestCount()}
+    </output>
   );
 }
 
@@ -252,6 +292,49 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
+const pickerFirstFailurePlay: NonNullable<Story['play']> = async ({
+  canvas,
+  canvasElement,
+  userEvent,
+}) => {
+  await userEvent.click(await canvas.findByRole('button', { name: /Change specification:/ }));
+  const doc = canvasElement.ownerDocument;
+  await waitFor(
+    () =>
+      doc
+        .querySelector('.popover-content')
+        ?.textContent?.includes('Specification catalogue unavailable') ?? false,
+    'Picker must reject malformed catalogue',
+  );
+  if (doc.querySelectorAll('[role="option"]').length !== 1)
+    throw new Error('Only independently permitted current identity may remain in failed picker');
+  const probe = canvas.getByLabelText('Catalogue fetch attempts');
+  if (
+    probe.getAttribute('data-catalogue-present') !== 'false' ||
+    probe.getAttribute('data-catalogue-status') !== 'error'
+  )
+    throw new Error('Malformed response must never be successful cache data');
+  const browse = doc.querySelector<HTMLAnchorElement>(
+    '.popover-content a[href="/?collection=current"]',
+  );
+  if (!browse) throw new Error('Browse all destination missing');
+  await userEvent.click(browse);
+  await canvas.findByRole('alert');
+  if (probe.textContent !== '1' || canvasElement.querySelector('[data-spec-id]'))
+    throw new Error(
+      'List must preserve protection when entering shared failed cache without refetch',
+    );
+};
+export const PickerFirstWrongCollection: Story = {
+  args: { path: '/specs/admission?collection=current', catalogueFailure: 'wrong-collection' },
+  tags: ['integration'],
+  play: pickerFirstFailurePlay,
+};
+export const PickerFirstInvalidProgress: Story = {
+  args: { path: '/specs/admission?collection=current', catalogueFailure: 'invalid-progress' },
+  tags: ['integration'],
+  play: pickerFirstFailurePlay,
+};
 
 export const Specs: Story = {
   tags: ['visual'],

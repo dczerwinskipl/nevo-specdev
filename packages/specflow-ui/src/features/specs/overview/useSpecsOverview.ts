@@ -1,34 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { isHttpClientError } from '@nevo/http-client';
 
-import type { SpecsOverview } from '@nevo/specflow-contracts/specs/overview';
 import type { SpecsCollection, SpecsOverviewState } from './model';
 import type { SpecsOverviewApi } from './api';
-import { specsOverviewKeys } from './queries';
+import { specsOverviewQueryOptions } from './queries';
 
 export function useSpecsOverview(api: SpecsOverviewApi, collection: SpecsCollection) {
-  const query = useQuery({
-    queryKey: specsOverviewKeys.collection(collection),
-    queryFn: async ({ signal }): Promise<SpecsOverview> => {
-      const projection = await api.getOverview(collection, signal);
-      if (projection.collection !== collection) {
-        throw new Error('Specs projection scope mismatch.');
-      }
-      if (
-        projection.items.some(
-          ({ progress }) =>
-            !Number.isSafeInteger(progress.total) ||
-            progress.total < 0 ||
-            !Number.isSafeInteger(progress.completed) ||
-            progress.completed < 0 ||
-            progress.completed > progress.total,
-        )
-      ) {
-        throw new Error('Invalid Specs progress aggregate.');
-      }
-      return projection;
-    },
-  });
+  const query = useQuery(specsOverviewQueryOptions(api, collection));
 
   const state: SpecsOverviewState = {
     collection,

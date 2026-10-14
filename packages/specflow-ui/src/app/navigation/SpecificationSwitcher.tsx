@@ -13,7 +13,7 @@ import {
 } from '@nevo/ui';
 import { useTranslation } from 'react-i18next';
 import { useAppServices } from '../useAppServices';
-import { specsOverviewKeys } from '../../features/specs/overview/queries';
+import { specsOverviewQueryOptions } from '../../features/specs/overview/queries';
 import type { SpecsCollection, SpecOverviewItem } from '../../features/specs/overview/model';
 import { useNavigationTransition } from './NavigationTransition';
 export function pickerEntries(
@@ -58,8 +58,7 @@ export function SpecificationSwitcher({
   const committed = useRef(false);
   const [layer, setLayer] = useState<HTMLElement | null>(null);
   const query = useQuery({
-    queryKey: specsOverviewKeys.collection(collection),
-    queryFn: ({ signal }) => specsOverviewApi.getOverview(collection, signal),
+    ...specsOverviewQueryOptions(specsOverviewApi, collection),
     enabled: open,
   });
   const denied =
