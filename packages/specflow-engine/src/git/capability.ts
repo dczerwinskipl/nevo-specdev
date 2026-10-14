@@ -137,8 +137,7 @@ export function openGitCapability(engine: SpecFlowEngine): GitCapability {
     },
     listWorktrees: list,
     async planNewWorktree(input) {
-      // Check policy FIRST. Disabled automation must not reserve branch/path or
-      // invoke any mutating Git operation.
+      // Policy is checked before looking at refs or reservable filesystem paths.
       if (!(await isEnabled())) {
         throw new GitCapabilityError('GIT_DISABLED', 'Git worktree automation is disabled.');
       }
@@ -147,124 +146,16 @@ export function openGitCapability(engine: SpecFlowEngine): GitCapability {
       }
       const slug = validateSpecificationSlug(input.slug);
       const branch = input.branch ?? 'spec/' + slug + '-' + input.specId.slice(0, 8);
-      if (
-        !branch.startsWith('spec/') ||
-        !/^spec\/[a-z0-9][a-z0-9._/-]*$/u.test(branch) ||
-        branch.includes('..') ||
-        branch.endsWith('.') ||
-        branch.includes('//')
-      ) {
-        throw new GitCapabilityError('GIT_OPERATION_FAILED', 'Unsupported Git branch name.');
-      }
-      const branchCheck = await executeGit(home, ['check-ref-format', '--branch', branch]);
-      if (branchCheck.exitCode !== 0) {
-        throw new GitCapabilityError('GIT_OPERATION_FAILED', 'Invalid Git branch name.');
-      }
+      await validateBranchName(home, branch);
 
-      const root = dirname(home);
-      const parent = join(root, basename(home) + '-worktrees');
-      const targetPath = input.targetPath ?? join(parent, slug);
-      if (
-        !isAbsolute(targetPath) ||
-        resolve(targetPath) !== targetPath ||
-        pathKey(targetPath) !== pathKey(join(parent, slug))
-      ) {
-        throw new GitCapabilityError(
-          'WORKTREE_PATH_CONFLICT',
-          'New worktree must be a direct child of the project-owned worktree directory.',
-        );
-      }
-
-      // Inspect existing filesystem ancestors without creating missing dirs.
+      const targetPath = resolveTargetPath(home, slug, input.targetPath);
       await assertSafeNewTarget(targetPath);
       const worktrees = await list();
-      if (worktrees.some((item) => pathKey(item.root) === pathKey(targetPath))) {
-        throw new GitCapabilityError(
-          'WORKTREE_PATH_CONFLICT',
-          'Worktree path is already registered.',
-        );
-      }
-      if (worktrees.some((item) => item.branch === 'refs/heads/' + branch)) {
-        throw new GitCapabilityError(
-          'BRANCH_ALREADY_CHECKED_OUT',
-          'Requested branch is checked out in another Git worktree.',
-        );
-      }
+      assertNoWorktreeCollision(worktrees, targetPath, branch);
+      await assertNoBranchCollision(home, branch);
 
-      // Ref collisions are invalid even when not checked out. Use Git-native
-      // validation and conservatively reject case-only differences on POSIX.
-      const branches = await executeGit(home, [
-        'for-each-ref',
-        '--format=%(refname)',
-        'refs/heads',
-      ]);
-      if (branches.exitCode !== 0) {
-        throw new GitCapabilityError('GIT_OPERATION_FAILED', 'Cannot inspect local Git branches.');
-      }
-      const requestedRef = 'refs/heads/' + branch;
-      if (branches.stdout.split('\n').some((ref) => gitRefsConflict(ref, requestedRef))) {
-        throw new GitCapabilityError(
-          'BRANCH_ALREADY_EXISTS',
-          'Requested branch conflicts with an existing Git ref.',
-        );
-      }
-
-      const baseRef = input.baseRef;
-      if (
-        baseRef !== 'HEAD' &&
-        !/^refs\/(?:heads|tags)\/[a-zA-Z0-9][a-zA-Z0-9._/-]*$/u.test(baseRef) &&
-        !/^[a-f0-9]{40}(?:[a-f0-9]{24})?$/iu.test(baseRef)
-      ) {
-        throw new GitCapabilityError('BASE_REF_NOT_FOUND', 'Unsupported Git base reference.');
-      }
-      const verified = await executeGit(home, [
-        'rev-parse',
-        '--verify',
-        '--end-of-options',
-        baseRef + '^{commit}',
-      ]);
-      const baseCommit = verified.stdout.trim();
-      if (verified.exitCode !== 0 || !/^[a-f0-9]{40}(?:[a-f0-9]{24})?$/iu.test(baseCommit)) {
-        throw new GitCapabilityError('BASE_REF_NOT_FOUND', 'Base reference is not a Git commit.');
-      }
-      // A Git symlink is also a blob (mode 120000); cat-file -t alone
-      // cannot establish a regular file. Reject Git links/submodules before
-      // checking YAML so a checkout on another OS cannot redirect config.
-      const tree = await executeGit(home, ['ls-tree', '-z', baseCommit, '--', '.nevo/config.yaml']);
-      if (
-        tree.exitCode !== 0 ||
-        !/^(?:100644|100755) blob [a-f0-9]{40}(?:[a-f0-9]{24})?\t\.nevo\/config\.yaml\0$/u.test(
-          tree.stdout,
-        )
-      ) {
-        throw new GitCapabilityError(
-          'GIT_BASE_CONFIG_MISSING',
-          'Base commit must contain a regular, non-symlink SpecFlow configuration file.',
-        );
-      }
-      const configContent = await executeGit(home, ['show', baseCommit + ':.nevo/config.yaml']);
-      if (configContent.exitCode !== 0) {
-        throw new GitCapabilityError(
-          'GIT_BASE_CONFIG_MISSING',
-          'Base commit configuration could not be read.',
-        );
-      }
-      let baseConfig: unknown;
-      try {
-        baseConfig = parseYaml(configContent.stdout) as unknown;
-      } catch {
-        throw new GitCapabilityError(
-          'GIT_BASE_CONFIG_MISSING',
-          'Base commit project configuration is not valid YAML.',
-        );
-      }
-      if (!isRecord(baseConfig) || !isRecord(baseConfig.runtime)) {
-        throw new GitCapabilityError(
-          'GIT_BASE_CONFIG_MISSING',
-          'Base commit must contain a valid project config with a runtime object.',
-        );
-      }
-
+      const baseCommit = await resolveBaseCommit(home, input.baseRef);
+      await verifyBaseProjectConfig(home, baseCommit);
       return {
         projectId: engine.context.project.projectId,
         gitInstanceId: engine.context.project.gitInstanceId,
@@ -276,6 +167,120 @@ export function openGitCapability(engine: SpecFlowEngine): GitCapability {
       };
     },
   };
+}
+
+/** Keep each preflight rule separate; all checks are read-only and ordered. */
+async function validateBranchName(home: string, branch: string): Promise<void> {
+  if (
+    !branch.startsWith('spec/') ||
+    !/^spec\/[a-z0-9][a-z0-9._/-]*$/u.test(branch) ||
+    branch.includes('..') ||
+    branch.endsWith('.') ||
+    branch.includes('//')
+  ) {
+    throw new GitCapabilityError('GIT_OPERATION_FAILED', 'Unsupported Git branch name.');
+  }
+  const branchCheck = await executeGit(home, ['check-ref-format', '--branch', branch]);
+  if (branchCheck.exitCode !== 0) {
+    throw new GitCapabilityError('GIT_OPERATION_FAILED', 'Invalid Git branch name.');
+  }
+}
+
+function resolveTargetPath(home: string, slug: string, requested?: string): string {
+  const parent = join(dirname(home), basename(home) + '-worktrees');
+  const targetPath = requested ?? join(parent, slug);
+  if (
+    !isAbsolute(targetPath) ||
+    resolve(targetPath) !== targetPath ||
+    pathKey(targetPath) !== pathKey(join(parent, slug))
+  ) {
+    throw new GitCapabilityError(
+      'WORKTREE_PATH_CONFLICT',
+      'New worktree must be a direct child of the project-owned worktree directory.',
+    );
+  }
+  return targetPath;
+}
+
+function assertNoWorktreeCollision(
+  worktrees: readonly GitWorktreeFacts[],
+  targetPath: string,
+  branch: string,
+): void {
+  if (worktrees.some((item) => pathKey(item.root) === pathKey(targetPath))) {
+    throw new GitCapabilityError('WORKTREE_PATH_CONFLICT', 'Worktree path is already registered.');
+  }
+  if (worktrees.some((item) => item.branch === 'refs/heads/' + branch)) {
+    throw new GitCapabilityError(
+      'BRANCH_ALREADY_CHECKED_OUT',
+      'Requested branch is checked out in another Git worktree.',
+    );
+  }
+}
+
+async function assertNoBranchCollision(home: string, branch: string): Promise<void> {
+  // Git refs are hierarchical; also reject case-only collisions on POSIX.
+  const branches = await executeGit(home, ['for-each-ref', '--format=%(refname)', 'refs/heads']);
+  if (branches.exitCode !== 0) {
+    throw new GitCapabilityError('GIT_OPERATION_FAILED', 'Cannot inspect local Git branches.');
+  }
+  const requestedRef = 'refs/heads/' + branch;
+  if (branches.stdout.split('\n').some((ref) => gitRefsConflict(ref, requestedRef))) {
+    throw new GitCapabilityError('BRANCH_ALREADY_EXISTS', 'Requested branch conflicts with an existing Git ref.');
+  }
+}
+
+async function resolveBaseCommit(home: string, baseRef: string): Promise<string> {
+  if (
+    baseRef !== 'HEAD' &&
+    !/^refs\/(?:heads|tags)\/[a-zA-Z0-9][a-zA-Z0-9._/-]*$/u.test(baseRef) &&
+    !/^[a-f0-9]{40}(?:[a-f0-9]{24})?$/iu.test(baseRef)
+  ) {
+    throw new GitCapabilityError('BASE_REF_NOT_FOUND', 'Unsupported Git base reference.');
+  }
+  const verified = await executeGit(home, [
+    'rev-parse',
+    '--verify',
+    '--end-of-options',
+    baseRef + '^{commit}',
+  ]);
+  const baseCommit = verified.stdout.trim();
+  if (verified.exitCode !== 0 || !/^[a-f0-9]{40}(?:[a-f0-9]{24})?$/iu.test(baseCommit)) {
+    throw new GitCapabilityError('BASE_REF_NOT_FOUND', 'Base reference is not a Git commit.');
+  }
+  return baseCommit;
+}
+
+async function verifyBaseProjectConfig(home: string, baseCommit: string): Promise<void> {
+  // Git symlinks are blobs too; require regular file mode in the tree.
+  const tree = await executeGit(home, ['ls-tree', '-z', baseCommit, '--', '.nevo/config.yaml']);
+  if (
+    tree.exitCode !== 0 ||
+    !/^(?:100644|100755) blob [a-f0-9]{40}(?:[a-f0-9]{24})?\t\.nevo\/config\.yaml\0$/u.test(
+      tree.stdout,
+    )
+  ) {
+    throw new GitCapabilityError(
+      'GIT_BASE_CONFIG_MISSING',
+      'Base commit must contain a regular, non-symlink SpecFlow configuration file.',
+    );
+  }
+  const configContent = await executeGit(home, ['show', baseCommit + ':.nevo/config.yaml']);
+  if (configContent.exitCode !== 0) {
+    throw new GitCapabilityError('GIT_BASE_CONFIG_MISSING', 'Base commit configuration could not be read.');
+  }
+  let baseConfig: unknown;
+  try {
+    baseConfig = parseYaml(configContent.stdout) as unknown;
+  } catch {
+    throw new GitCapabilityError('GIT_BASE_CONFIG_MISSING', 'Base commit project configuration is not valid YAML.');
+  }
+  if (!isRecord(baseConfig) || !isRecord(baseConfig.runtime)) {
+    throw new GitCapabilityError(
+      'GIT_BASE_CONFIG_MISSING',
+      'Base commit must contain a valid project config with a runtime object.',
+    );
+  }
 }
 
 function parseWorktreeList(source: string, current: string): readonly GitWorktreeFacts[] {
