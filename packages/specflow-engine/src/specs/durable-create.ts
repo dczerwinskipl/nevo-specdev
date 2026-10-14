@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { setTimeout as sleep } from 'node:timers/promises';
 import type { SpecFlowEngine } from '../application';
 import { openVersionControl } from '../version-control';
 import {
@@ -113,10 +114,25 @@ export async function createSpecificationWithIntent(
   options: CreateSpecificationOptions = {},
 ): Promise<CreatedSpecification> {
   validateOperationId(operationId);
-  let record = await reserve(engine, intent, operationId, creationDate);
+  const reservation = await reserve(engine, intent, operationId, creationDate);
+  let record = reservation.record;
   // The journal intent is durable at this point. A test process can now be
   // terminated without any later mutation having started.
   await options.afterEffect?.('reservation');
+
+  if (reservation.existing && record.version === 2 && record.stage !== 'completed') {
+    // A second process with the same immutable v2 intent is a follower, not
+    // another writer. Wait for the already reserved operation to complete
+    // instead of competing for its CAS transitions or repeating Git effects.
+    // A stranded reservation is still recoverable after a bounded wait; an
+    // uncertain git-initiated stage retains the explicit recovery gate.
+    const observed = await followExistingOperation(engine, record.operationId);
+    if (observed.stage === 'completed') {
+      await verifyResult(engine, observed);
+      return resultOf(observed);
+    }
+    record = observed;
+  }
 
   // Each transition is CAS under the short Project Home control lock.
   // The Git command itself does not hold that lock. A durable git-initiated
@@ -280,7 +296,7 @@ async function reserve(
   intent: CreateClientIntent,
   operationId: string,
   creationDate: () => string,
-): Promise<CreateJournal> {
+): Promise<{ readonly record: CreateJournal; readonly existing: boolean }> {
   return withCreateJournalLock(engine.context, async () => {
     const operations = await listCreateJournals(engine.context);
     const previous = operations.find((item) => item.operationId === operationId);
@@ -295,7 +311,7 @@ async function reserve(
           'OperationId was already used with different immutable inputs.',
         );
       }
-      return previous;
+      return { record: previous, existing: true };
     }
 
     // Date generated once under Project Home lock, after checking no journal.
@@ -396,8 +412,24 @@ async function reserve(
       files: scaffold.files.map(({ relativePath, sha256 }) => ({ relativePath, sha256 })),
     };
     await publishCreateJournal(engine.context, record);
-    return record;
+    return { record, existing: false };
   });
+}
+
+async function followExistingOperation(
+  engine: SpecFlowEngine,
+  operationId: string,
+): Promise<CreateJournal> {
+  const deadline = Date.now() + 18000;
+  let record = await readCreateJournal(engine.context, operationId);
+  if (!record) throw recovery('Create journal disappeared during a concurrent operation.');
+  while (record.stage !== 'completed' && record.stage !== 'recovery-required' && Date.now() < deadline) {
+    await sleep(100);
+    const current = await readCreateJournal(engine.context, operationId);
+    if (!current) throw recovery('Create journal disappeared during a concurrent operation.');
+    record = current;
+  }
+  return record;
 }
 
 async function transition(

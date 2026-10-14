@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { bootstrapProjectHome } from '../src/index';
+import { fingerprintCreateClientIntent, normalizeCreateClientIntent } from '../src/specs/create-intent';
 import {
   createJournalPath,
   listCreateJournals,
@@ -49,11 +50,17 @@ async function fixture() {
 
 function intent(projectId: string, workspaceId: string, root: string): CreateJournal {
   const operationId = randomUUID();
+  const title = 'Journal proof';
+  const requestIntent = normalizeCreateClientIntent({
+    title,
+    target: { kind: 'existing', workspaceId },
+  });
   return {
-    version: 1,
+    version: 2,
     projectId,
     operationId,
-    inputFingerprint: 'a'.repeat(64),
+    requestIntent,
+    inputFingerprint: fingerprintCreateClientIntent(requestIntent),
     specId: randomUUID(),
     slug: 'journal-proof',
     title: 'Journal proof',
