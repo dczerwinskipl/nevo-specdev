@@ -1,0 +1,137 @@
+import { GitCapabilityError } from '../../git/errors';
+
+/** Project Home is the only authority for operational Git policy. */
+export interface GitWorktreePolicy {
+  readonly enabled: boolean;
+  readonly branchPattern: string;
+  readonly baseRef: string;
+}
+
+export const DEFAULT_BRANCH_PATTERN = 'spec/{slug}-{shortId}';
+export const DEFAULT_BASE_REF = 'HEAD';
+
+const SUPPORTED_TEMPLATE_FIELDS = ['slug', 'shortId'] as const;
+const COMMIT = /^[a-f0-9]{40}(?:[a-f0-9]{24})?$/iu;
+const LOCAL_BRANCH = /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/u;
+
+/** Pure parser. Call with Project Home config, never the linked checkout config. */
+export function parseGitWorktreePolicy(
+  projectConfig: unknown,
+  localConfig?: unknown,
+): GitWorktreePolicy {
+  if (!isRecord(projectConfig)) throw invalid('Project configuration must be an object.');
+  if (isRecord(localConfig) && localConfig.git !== undefined) {
+    throw invalid('Git policy cannot be overridden by workstation-local configuration.');
+  }
+
+  const value = projectConfig.git;
+  if (value === undefined) {
+    return { enabled: false, branchPattern: DEFAULT_BRANCH_PATTERN, baseRef: DEFAULT_BASE_REF };
+  }
+  if (!isRecord(value) || typeof value.enabled !== 'boolean') {
+    throw invalid('Project git.enabled must be a boolean.');
+  }
+  if (Object.keys(value).some((key) => key !== 'enabled' && key !== 'worktrees')) {
+    throw invalid('Unsupported Git policy key.');
+  }
+  const worktrees = value.worktrees;
+  if (worktrees !== undefined && !isRecord(worktrees)) {
+    throw invalid('git.worktrees must be an object.');
+  }
+  if (
+    worktrees !== undefined &&
+    Object.keys(worktrees).some((key) => key !== 'branchPattern' && key !== 'baseRef')
+  ) {
+    throw invalid('Unsupported git.worktrees policy key.');
+  }
+  const branchPattern = worktrees?.branchPattern ?? DEFAULT_BRANCH_PATTERN;
+  const baseRef = worktrees?.baseRef ?? DEFAULT_BASE_REF;
+  if (typeof branchPattern !== 'string' || typeof baseRef !== 'string') {
+    throw invalid('Git worktree policy values must be strings.');
+  }
+  validateBranchPattern(branchPattern);
+  validateBaseRef(baseRef);
+  return { enabled: value.enabled, branchPattern, baseRef };
+}
+
+/** Only two placeholders are supported; a stable shortId is mandatory. */
+export function validateBranchPattern(pattern: string): void {
+  if (!pattern || pattern.length > 200) throw invalid('Invalid Git worktree branch pattern.');
+  const tokens = [...pattern.matchAll(/\{([^{}]*)\}/gu)].map((match) => match[1]);
+  if (
+    tokens.some((token) => !SUPPORTED_TEMPLATE_FIELDS.some((field) => field === token)) ||
+    tokens.filter((token) => token === 'shortId').length !== 1 ||
+    tokens.filter((token) => token === 'slug').length > 1
+  ) {
+    throw invalid('Branch pattern requires one {shortId}; only {slug} is also supported.');
+  }
+  // Detect unmatched braces and hidden template expressions.
+  const withoutTokens = pattern.replace(/\{(?:slug|shortId)\}/gu, '');
+  if (/[{}]/u.test(withoutTokens)) throw invalid('Malformed Git branch template.');
+  validateBranchName(
+    pattern.replaceAll('{slug}', 'example').replaceAll('{shortId}', '12345678'),
+  );
+}
+
+export function resolveWorktreeBranch(
+  policy: GitWorktreePolicy,
+  slug: string,
+  shortId: string,
+  override?: string,
+): string {
+  if (!/^[a-z0-9][a-z0-9-]*$/u.test(slug) || !/^[a-f0-9]{8}$/iu.test(shortId)) {
+    throw invalid('Invalid worktree naming token.');
+  }
+  const branch =
+    override ??
+    policy.branchPattern.replaceAll('{slug}', slug).replaceAll('{shortId}', shortId);
+  validateBranchName(branch);
+  return branch;
+}
+
+/** Pure conservative subset, followed by Git check-ref-format inside the adapter. */
+export function validateBranchName(branch: string): void {
+  if (
+    branch.length < 1 ||
+    branch.length > 240 ||
+    !/^[a-zA-Z0-9][a-zA-Z0-9._/-]*$/u.test(branch) ||
+    branch.startsWith('-') ||
+    branch.includes('//') ||
+    branch.includes('..') ||
+    branch.endsWith('/') ||
+    branch.endsWith('.') ||
+    branch.split('/').some((part) => part.startsWith('.') || part.endsWith('.lock'))
+  ) {
+    throw invalid('Invalid or unsafe Git branch name.');
+  }
+}
+
+/** HEAD is relative to Project Home; simple names designate local branches, never remotes. */
+export function validateBaseRef(baseRef: string): void {
+  if (
+    baseRef === 'HEAD' ||
+    COMMIT.test(baseRef) ||
+    /^refs\/(?:heads|tags)\/[a-zA-Z0-9][a-zA-Z0-9._/-]*$/u.test(baseRef)
+  ) {
+    if (baseRef.startsWith('refs/')) validateBranchName(baseRef.slice(baseRef.indexOf('/', 5) + 1));
+    return;
+  }
+  if (!LOCAL_BRANCH.test(baseRef) || baseRef.includes('..') || baseRef.endsWith('.lock')) {
+    throw invalid('Unsupported Git worktree base ref.');
+  }
+}
+
+export function normalizeBaseRef(baseRef: string): string {
+  validateBaseRef(baseRef);
+  return baseRef === 'HEAD' || COMMIT.test(baseRef) || baseRef.startsWith('refs/')
+    ? baseRef
+    : 'refs/heads/' + baseRef;
+}
+
+function invalid(message: string): GitCapabilityError {
+  return new GitCapabilityError('GIT_POLICY_INVALID', message);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
