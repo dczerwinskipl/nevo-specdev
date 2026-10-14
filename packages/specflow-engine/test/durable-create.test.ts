@@ -287,7 +287,7 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
     ).rejects.toMatchObject({ code: 'CREATE_CONFLICT' });
   }, 120000);
 
-  it('VC05: a reserved omitted policy stays pinned across naming, ref and enablement changes', async () => {
+  it('VC05: reserved omitted defaults survive config changes', async () => {
     const { root, engine } = await project();
     const config = join(root, '.nevo/config.yaml');
     const head = git(root, 'rev-parse', 'HEAD');
