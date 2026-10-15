@@ -86,13 +86,9 @@ describe('Current Specs Overview classification', () => {
 
   it('does not interpret unknown execution evidence as draft or ready', () => {
     expect(
-      classifyCurrentSpec(
-        spec({ readyForWork: null, signals: null, currentExecutions: null }),
-      ),
+      classifyCurrentSpec(spec({ readyForWork: null, signals: null, currentExecutions: null })),
     ).toEqual({ section: 'unknown' });
-    expect(classifyCurrentSpec(spec({ currentExecutions: null }))).toEqual({
-      section: 'unknown',
-    });
+    expect(classifyCurrentSpec(spec({ currentExecutions: null }))).toEqual({ section: 'unknown' });
   });
 
   it.each([
