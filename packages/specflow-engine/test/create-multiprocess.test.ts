@@ -1,9 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { spawn, execFileSync } from 'node:child_process';
-import { access, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { access, readFile, rm, writeFile } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
+
+import { createGitTestProject } from './support/git-project';
 import { fileURLToPath } from 'node:url';
 
 import { afterEach, describe, expect, it } from 'vitest';
@@ -21,26 +22,11 @@ afterEach(async () => {
 });
 
 async function project() {
-  const root = await realpath(await mkdtemp(join(tmpdir(), 'specflow-create-process-Ż ')));
-  roots.push(root);
-  execFileSync('git', ['init', '-q'], { cwd: root });
-  await mkdir(join(root, '.nevo'));
-  await writeFile(join(root, '.gitignore'), '.nevo/local/\n');
-  await writeFile(join(root, '.nevo/config.yaml'), 'runtime: {}\ngit:\n  enabled: false\n');
-  execFileSync('git', ['add', '.gitignore', '.nevo/config.yaml'], { cwd: root });
-  execFileSync(
-    'git',
-    [
-      '-c',
-      'user.name=SpecFlow Test',
-      '-c',
-      'user.email=specflow@example.invalid',
-      'commit',
-      '-qm',
-      'initial',
-    ],
-    { cwd: root },
+  const root = await createGitTestProject(
+    'specflow-create-process-Ż ',
+    'runtime: {}\ngit:\n  enabled: false\n',
   );
+  roots.push(root);
   return { root, engine: await bootstrapProjectHome(root) };
 }
 
