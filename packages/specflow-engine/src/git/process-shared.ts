@@ -1,6 +1,9 @@
 import { spawn } from 'node:child_process';
+import { channel } from 'node:diagnostics_channel';
 
 import { GitOutputDecoder } from './output-decoder';
+
+const gitProcessChannel = channel('nevo.specflow.engine.git-process');
 
 /** Sanitizes Git discovery/config overrides for every Engine process. */
 export function spawnLocalGit(cwd: string, args: readonly string[]) {
@@ -8,13 +11,21 @@ export function spawnLocalGit(cwd: string, args: readonly string[]) {
   for (const name of Object.keys(env)) {
     if (name.toUpperCase().startsWith('GIT_')) delete env[name];
   }
-  return spawn('git', [...args], {
+  const child = spawn('git', [...args], {
     cwd,
     env,
     shell: false,
     windowsHide: true,
     stdio: ['ignore', 'pipe', 'pipe'],
   });
+  if (gitProcessChannel.hasSubscribers) {
+    try {
+      gitProcessChannel.publish({ cwd, args: [...args] });
+    } catch {
+      // Profiling subscribers must never change Git process execution.
+    }
+  }
+  return child;
 }
 
 /** Shared bounded, incremental UTF-8 output handling; cancellation stays with each policy. */
