@@ -128,7 +128,9 @@ describe('E2.T05 — offline CLI Specs capability', () => {
       randomUUID(),
       false,
     );
-    await updateWorkspaceRegistry(engine.context, (registry) => addWorkspace(registry, registration));
+    await updateWorkspaceRegistry(engine.context, (registry) =>
+      addWorkspace(registry, registration),
+    );
     const cli = command(linked);
     await cli.run(['create', '--title', 'Linked target', '--json']);
     const result = JSON.parse(cli.output[0]!) as {
