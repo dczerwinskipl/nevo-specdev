@@ -16,7 +16,9 @@ import type { SpecsOverviewRepository } from './read-repository';
  * Live Overview projection of Engine-verified canonical manifests.
  * Never reads generated indexes, primary fallbacks or demonstration records.
  */
-export function createEngineSpecsOverviewRepository(engine: SpecFlowEngine): SpecsOverviewRepository {
+export function createEngineSpecsOverviewRepository(
+  engine: SpecFlowEngine,
+): SpecsOverviewRepository {
   async function read() {
     const discovered = await discoverSpecifications(engine);
     // The existing Overview DTO cannot represent unavailable canonical rows.
@@ -40,9 +42,7 @@ export function createEngineSpecsOverviewRepository(engine: SpecFlowEngine): Spe
         item.status === 'available',
     );
     const projected = await Promise.all(available.map(project));
-    const revision = createHash('sha256')
-      .update(JSON.stringify(projected))
-      .digest('hex');
+    const revision = createHash('sha256').update(JSON.stringify(projected)).digest('hex');
     return { revision, items: projected };
   }
 

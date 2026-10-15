@@ -61,15 +61,15 @@ export const specsOverviewEndpoint: FastifyPluginCallback<SpecsOverviewEndpointO
       }
       try {
         return await (request.query.collection === 'archive'
-        ? getArchiveOverview({
-            authorization: request.authz,
-            repository: options.repository,
-          })
-        : getCurrentOverview({
-            authorization: request.authz,
-            repository: options.repository,
-            sections: options.currentSections,
-          }));
+          ? getArchiveOverview({
+              authorization: request.authz,
+              repository: options.repository,
+            })
+          : getCurrentOverview({
+              authorization: request.authz,
+              repository: options.repository,
+              sections: options.currentSections,
+            }));
       } catch (error) {
         const code = readErrorCode(error);
         if (!code) throw error;

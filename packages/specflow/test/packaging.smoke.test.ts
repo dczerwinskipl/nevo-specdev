@@ -367,8 +367,9 @@ describe('packaged @nevo/specflow — isolated tarball install', () => {
       expect(specs.status).toBe(200);
       expect(specs.headers.get('cache-control')).toBe('no-store');
       expect(await specs.json()).toMatchObject({
-        revision: 'backend-sample-current-1',
+        revision: expect.stringMatching(/^[a-f0-9]{64}$/u),
         collection: 'current',
+        items: [],
       });
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toEqual({

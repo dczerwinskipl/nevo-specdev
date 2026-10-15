@@ -13,11 +13,19 @@ import {
   updateWorkspaceRegistry,
 } from '@nevo/specflow-engine';
 import { afterEach, describe, expect, it } from 'vitest';
-import type { ArchiveSpecsOverview, CurrentSpecsOverview } from '@nevo/specflow-contracts/specs/overview';
+import type {
+  ArchiveSpecsOverview,
+  CurrentSpecsOverview,
+} from '@nevo/specflow-contracts/specs/overview';
 
 import { createEngineSpecsReadRepository } from '../../src/features/specs/read/engine-repository';
 import { createRuntimeApp } from '../../src/server/app';
-import { noAuthConfig } from '../auth/support/config';
+import { passwordConfig } from '../auth/support/config';
+
+function trustedLocalConfig() {
+  const config = passwordConfig();
+  return { ...config, authentication: { ...config.authentication, mode: 'none' as const } };
+}
 
 const roots: string[] = [];
 
@@ -52,7 +60,7 @@ async function fixture() {
 
 describe('E2.T06 — production Engine-backed specification reads', () => {
   it('returns unavailable instead of sample data when no Engine or repository was configured', async () => {
-    const app = await createRuntimeApp(noAuthConfig());
+    const app = await createRuntimeApp(trustedLocalConfig());
     try {
       for (const collection of ['current', 'archive']) {
         const result = await app.inject('/api/specs/overview?collection=' + collection);
@@ -68,7 +76,7 @@ describe('E2.T06 — production Engine-backed specification reads', () => {
 
   it('reads live canonical manifests, revisions, archive and document/task ports', async () => {
     const { root, engine } = await fixture();
-    const app = await createRuntimeApp(noAuthConfig(), { specs: { engine } });
+    const app = await createRuntimeApp(trustedLocalConfig(), { specs: { engine } });
     const reads = createEngineSpecsReadRepository(engine);
     try {
       const empty = await app.inject('/api/specs/overview');
@@ -145,7 +153,7 @@ describe('E2.T06 — production Engine-backed specification reads', () => {
       bindSpecToWorkspace(registry, missingSpecId, engine.workspace.workspaceId),
     );
     expect(await reads.readWorkspace(missingSpecId)).toEqual({ status: 'manifest_missing' });
-    const app = await createRuntimeApp(noAuthConfig(), { specs: { engine } });
+    const app = await createRuntimeApp(trustedLocalConfig(), { specs: { engine } });
     try {
       const response = await app.inject('/api/specs/overview');
       expect(response.statusCode, response.body).toBe(503);
@@ -176,7 +184,7 @@ describe('E2.T06 — production Engine-backed specification reads', () => {
     expect(await reads.readWorkspace(specId)).toMatchObject({
       status: 'workspace_unavailable',
     });
-    const app = await createRuntimeApp(noAuthConfig(), { specs: { engine } });
+    const app = await createRuntimeApp(trustedLocalConfig(), { specs: { engine } });
     try {
       const response = await app.inject('/api/specs/overview');
       expect(response.statusCode, response.body).toBe(503);
