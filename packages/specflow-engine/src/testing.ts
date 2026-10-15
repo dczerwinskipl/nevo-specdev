@@ -51,5 +51,11 @@ export {
   readWorkspaceSpecification,
   type WorkspaceSpecification,
 } from './specs/repository';
+export {
+  createSpecification,
+  type CreateSpecificationInput,
+  type CreateSpecificationOptions,
+  type CreateSpecificationTarget,
+} from './specs/durable-create';
 export { CREATE_JOURNAL_RELATIVE_DIR } from './specs/create-journal';
 export { createSpecificationForTesting, type TestCreateOptions } from './specs/create-test-support';
