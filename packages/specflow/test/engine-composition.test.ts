@@ -16,7 +16,7 @@ import {
   resolveProjectHome,
   updateWorkspaceRegistry,
   workspaceRegistryPath,
-} from '@nevo/specflow-engine';
+} from '@nevo/specflow-engine/testing';
 import type { RuntimeStartOptions, RuntimeWebApp } from '@nevo/specflow-runtime';
 import { afterEach, describe, expect, it } from 'vitest';
 
