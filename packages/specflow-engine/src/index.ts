@@ -24,7 +24,6 @@ export {
 } from './project/workspace-registry';
 
 export { ProjectControlLockError, type ProjectControlLockErrorCode } from './project/control-lock';
-export type { RegistryUpdateOptions } from './project/registry-store';
 
 export { openSpecFlowEngine, type SpecFlowEngine } from './application';
 export { bootstrapProjectHome, assertPrimaryGitCheckout } from './project/bootstrap';
