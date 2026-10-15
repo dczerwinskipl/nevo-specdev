@@ -176,6 +176,24 @@ async function launchTogether(workers: readonly Worker[]): Promise<void> {
 }
 
 describe('E1.T05 independent OS-process coordination', () => {
+  it('does not advance registry revision when snapshot keys are reordered', async () => {
+    const { context } = await fixture();
+    const path = workspaceRegistryPath(context);
+    const before = await readFile(path, 'utf8');
+    const original = await readWorkspaceRegistry(context);
+    const result = await updateWorkspaceRegistry(context, (current) => ({
+      specBindings: current.specBindings,
+      workspaces: current.workspaces,
+      primaryWorkspaceId: current.primaryWorkspaceId,
+      revision: current.revision,
+      projectId: current.projectId,
+      version: current.version,
+    }));
+    expect(result).toEqual(original);
+    expect(result.revision).toBe(0);
+    expect(await readFile(path, 'utf8')).toBe(before);
+  });
+
   it('does not lose two simultaneous registry updates', async () => {
     const { root, context } = await fixture();
     const left = randomUUID();
