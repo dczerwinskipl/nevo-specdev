@@ -4,7 +4,8 @@ import type { CreateJournal } from './journal-model';
 
 /** Translate durable create intent into the canonical linked-workspace registration. */
 export function registrationOf(record: CreateJournal): WorkspaceRegistration {
-  if (!record.target.instanceId) {
+  const target = record.target;
+  if (target.kind !== 'new-worktree' || !target.instanceId) {
     throw new CreateOperationError(
       'CREATE_RECOVERY_REQUIRED',
       'Linked worktree has no durable identity evidence.',
@@ -13,8 +14,8 @@ export function registrationOf(record: CreateJournal): WorkspaceRegistration {
   return {
     kind: 'linked',
     managed: true,
-    workspaceId: record.target.workspaceId,
-    root: record.target.workspaceRoot,
-    instanceId: record.target.instanceId,
+    workspaceId: target.workspaceId,
+    root: target.workspaceRoot,
+    instanceId: target.instanceId,
   };
 }
