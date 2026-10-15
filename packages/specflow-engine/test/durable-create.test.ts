@@ -1,10 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { execFileSync } from 'node:child_process';
-import { lstat, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { lstat, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
 import { createJournalPath } from '../src/specs/create-journal';
+import { createGitTestProject, git } from './support/git-project';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -25,31 +24,12 @@ afterEach(async () => {
   await Promise.all(roots.splice(0).map((path) => rm(path, { recursive: true, force: true })));
 });
 
-function git(root: string, ...args: string[]): string {
-  return execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
-}
-
 async function project(enabled = true): Promise<{ root: string; engine: SpecFlowEngine }> {
-  const root = await realpath(await mkdtemp(join(tmpdir(), 'specflow-create-Ż space ')));
-  roots.push(root);
-  git(root, 'init', '-q');
-  await mkdir(join(root, '.nevo'), { recursive: true });
-  await writeFile(join(root, '.gitignore'), '.nevo/local/\n');
-  await writeFile(
-    join(root, '.nevo/config.yaml'),
+  const root = await createGitTestProject(
+    'specflow-create-Ż space ',
     'runtime: {}\ngit:\n  enabled: ' + String(enabled) + '\n',
   );
-  git(root, 'add', '.gitignore', '.nevo/config.yaml');
-  git(
-    root,
-    '-c',
-    'user.name=SpecFlow Test',
-    '-c',
-    'user.email=specflow@example.invalid',
-    'commit',
-    '-qm',
-    'initial',
-  );
+  roots.push(root);
   return { root, engine: await bootstrapProjectHome(root) };
 }
 
