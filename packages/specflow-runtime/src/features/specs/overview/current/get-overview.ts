@@ -23,14 +23,22 @@ export async function getCurrentOverview(
     canViewSpec(dependencies.authorization, specId),
   );
   const visible = filterAuthorizedSpecs(dependencies.authorization, snapshot.items);
-  const items = visible
-    .map(toOverviewItem)
-    .filter((item) => dependencies.sections.includes(item.classification.section));
+  const candidates = visible.map(toOverviewItem);
+  // Unknown sources must never disappear merely because a legacy project
+  // configured the four pre-E2.T06 sections explicitly.
+  const sections: CurrentSpecSectionId[] = [...dependencies.sections];
+  if (
+    !sections.includes('unknown') &&
+    candidates.some((item) => item.classification.section === 'unknown')
+  ) {
+    sections.push('unknown');
+  }
+  const items = candidates.filter((item) => sections.includes(item.classification.section));
 
   return {
     revision: snapshot.revision,
     collection: 'current',
-    sections: [...dependencies.sections],
+    sections,
     items,
   };
 }

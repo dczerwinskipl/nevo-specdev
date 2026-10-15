@@ -160,6 +160,37 @@ describe('E2.T06 — production Engine-backed specification reads', () => {
     }
   }, 45000);
 
+  it('does not hide unknown canonical Specs when project settings list legacy sections', async () => {
+    const { engine } = await fixture();
+    const created = await createSpecificationFromRequest(engine, {
+      operationId: randomUUID(),
+      title: 'Legacy section config must not hide me',
+      target: { kind: 'existing', workspaceId: engine.workspace.workspaceId },
+    });
+    const config = trustedLocalConfig();
+    const app = await createRuntimeApp(
+      {
+        ...config,
+        specs: { overview: { current: { sections: ['draft', 'ready'] } } },
+      },
+      { specs: { engine } },
+    );
+    try {
+      const response = await app.inject('/api/specs/overview');
+      expect(response.statusCode, response.body).toBe(200);
+      expect(response.json<CurrentSpecsOverview>().sections).toEqual([
+        'draft',
+        'ready',
+        'unknown',
+      ]);
+      expect(response.json<CurrentSpecsOverview>().items.map((item) => item.id)).toEqual([
+        created.specId,
+      ]);
+    } finally {
+      await app.close();
+    }
+  }, 45000);
+
   it('filters ungranted unavailable sources before building a user-scoped Overview', async () => {
     const { engine } = await fixture();
     const visible = await createSpecificationFromRequest(engine, {
