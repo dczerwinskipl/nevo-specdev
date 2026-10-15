@@ -259,7 +259,7 @@ describe('E2.T06 — production Engine-backed specification reads', () => {
     const config = passwordConfig();
     const store = new InMemoryAuthenticationStore();
     const session = store.createSession({
-      userId: 'scoped-user',
+      userId: 'demo-user',
       authenticatedWith: { kind: 'password' },
     });
     const app = await createRuntimeApp(
@@ -267,7 +267,7 @@ describe('E2.T06 — production Engine-backed specification reads', () => {
         ...config,
         authorization: {
           assignments: [
-            { userId: 'scoped-user', role: 'viewer', scope: { specId: visible.specId } },
+            { userId: 'demo-user', role: 'viewer', scope: { specId: visible.specId } },
           ],
         },
       },
@@ -310,7 +310,7 @@ describe('E2.T06 — production Engine-backed specification reads', () => {
     const config = passwordConfig();
     const store = new InMemoryAuthenticationStore();
     const session = store.createSession({
-      userId: 'primary-scoped-user',
+      userId: 'demo-user',
       authenticatedWith: { kind: 'password' },
     });
     const app = await createRuntimeApp(
@@ -318,7 +318,7 @@ describe('E2.T06 — production Engine-backed specification reads', () => {
         ...config,
         authorization: {
           assignments: [
-            { userId: 'primary-scoped-user', role: 'viewer', scope: { specId: visible.specId } },
+            { userId: 'demo-user', role: 'viewer', scope: { specId: visible.specId } },
           ],
         },
       },
