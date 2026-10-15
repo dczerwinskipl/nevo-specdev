@@ -35,7 +35,11 @@ export function createEngineSpecsOverviewRepository(engine: SpecFlowEngine): Spe
         );
       }
     }
-    const projected = await Promise.all(discovered.map(project));
+    const available = discovered.filter(
+      (item): item is Extract<DiscoveredSpecification, { status: 'available' }> =>
+        item.status === 'available',
+    );
+    const projected = await Promise.all(available.map(project));
     const revision = createHash('sha256')
       .update(JSON.stringify(projected))
       .digest('hex');
