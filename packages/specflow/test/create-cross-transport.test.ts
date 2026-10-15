@@ -335,20 +335,25 @@ describe('E2.T07 — live canonical refresh', () => {
       expect(afterEdit.revision).not.toBe(afterCreate.revision);
 
       // A corrupt canonical source must never serve a stale cached 200 response.
+      const registryBeforeFailure = await readFile(workspaceRegistryPath(engine.context), 'utf8');
       await writeFile(manifestPath, 'title: [invalid');
       const unavailable = await fetch(url);
       expect(unavailable.status).toBe(503);
       expect(await unavailable.json()).toMatchObject({ code: 'SPEC_SOURCE_UNAVAILABLE' });
       expect(unavailable.headers.get('cache-control')).toBe('no-store');
+      expect(await readFile(workspaceRegistryPath(engine.context), 'utf8')).toBe(
+        registryBeforeFailure,
+      );
 
       await writeFile(manifestPath, editedManifest);
       const recovered = await fetch(url);
       expect(recovered.status).toBe(200);
       const recoveredValue = (await recovered.json()) as Overview;
-      expect(recoveredValue.revision).toBe(afterEdit.revision);
+      expect(recoveredValue.items[0]?.title).toBe('Updated canonical manifest');
+      // The HTTP revision also includes source mtime, which can change on recovery.
+      expect(recoveredValue.revision).not.toBe(before.revision);
     } finally {
       await runtime.close();
     }
   }, 150000);
-
 });
