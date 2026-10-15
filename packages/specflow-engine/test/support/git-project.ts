@@ -12,7 +12,7 @@ export async function createGitTestProject(prefix: string, configYaml: string): 
   const root = await realpath(await mkdtemp(join(tmpdir(), prefix)));
   git(root, 'init', '-q');
   await mkdir(join(root, '.nevo'), { recursive: true });
-  await writeFile(join(root, '.gitignore'), '.nevo/local/\\n');
+  await writeFile(join(root, '.gitignore'), '.nevo/local/\n');
   await writeFile(join(root, '.nevo/config.yaml'), configYaml);
   git(root, 'add', '.gitignore', '.nevo/config.yaml');
   git(
