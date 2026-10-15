@@ -324,12 +324,11 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
         operationId,
         normalizeCreateClientIntent(request),
         () => '2026-10-14',
-        {
-          afterEffect: (effect) =>
-            effect === 'reservation'
-              ? Promise.reject(new Error('Stop after frozen v2 reservation'))
-              : Promise.resolve(),
-        },
+        {},
+        (effect) =>
+          effect === 'reservation'
+            ? Promise.reject(new Error('Stop after frozen v2 reservation'))
+            : Promise.resolve(),
       ),
     ).rejects.toThrow('Stop after frozen v2 reservation');
 
