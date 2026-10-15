@@ -25,6 +25,7 @@ import {
   inspectProjectControlLock,
   projectControlLockPath,
   workspaceRegistryPath,
+  updateWorkspaceRegistry,
   addWorkspace,
   bindSpecToWorkspace,
   provisionLinkedWorkspaceIdentity,
@@ -299,7 +300,7 @@ describe('E2.T04 — actual process termination and fresh-process recovery', () 
       await mkdir(dirname(absolute), { recursive: true });
       await writeFile(absolute, file.content);
     }
-    await engine.updateRegistry((registry) =>
+    await updateWorkspaceRegistry(engine.context, (registry) =>
       bindSpecToWorkspace(addWorkspace(registry, linked), existingId, linked.workspaceId),
     );
     await rm(linkedRoot, { recursive: true, force: true });
