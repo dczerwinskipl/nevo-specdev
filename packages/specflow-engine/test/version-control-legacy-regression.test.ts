@@ -13,7 +13,7 @@ import {
   provisionLinkedWorkspaceIdentity,
   updateWorkspaceRegistry,
   workspaceRegistryPath,
-} from '../src/index';
+} from '../src/testing';
 import { openVersionControl } from '../src/version-control';
 import { createLocalGitClient } from '../src/version-control/git/client';
 
