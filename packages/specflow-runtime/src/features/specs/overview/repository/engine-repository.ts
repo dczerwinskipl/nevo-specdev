@@ -1,10 +1,7 @@
 import { createHash } from 'node:crypto';
-import { lstat } from 'node:fs/promises';
-import { join } from 'node:path';
-
 import {
-  discoverSpecifications,
-  type DiscoveredSpecification,
+  readCanonicalSpecSources,
+  type CanonicalSpecSource,
   type SpecFlowEngine,
 } from '@nevo/specflow-engine';
 
@@ -20,9 +17,7 @@ export function createEngineSpecsOverviewRepository(
   engine: SpecFlowEngine,
 ): SpecsOverviewRepository {
   async function read(isVisibleSpec?: (specId: string) => boolean) {
-    const discovered = (await discoverSpecifications(engine)).filter(
-      (item) => isVisibleSpec === undefined || isVisibleSpec(item.specId),
-    );
+    const discovered = await readCanonicalSpecSources(engine, isVisibleSpec);
     // The existing Overview DTO cannot represent unavailable canonical rows.
     // Fail closed with typed 503 instead of silently losing a bound Spec.
     for (const item of discovered) {
@@ -40,7 +35,7 @@ export function createEngineSpecsOverviewRepository(
       }
     }
     const available = discovered.filter(
-      (item): item is Extract<DiscoveredSpecification, { status: 'available' }> =>
+      (item): item is Extract<CanonicalSpecSource, { status: 'available' }> =>
         item.status === 'available',
     );
     const projected = await Promise.all(available.map(project));
@@ -72,22 +67,10 @@ export function createEngineSpecsOverviewRepository(
 
 async function project(item: Extract<DiscoveredSpecification, { status: 'available' }>) {
   const spec = item.specification;
-  const path = join(item.workspaceRoot, spec.relativeManifestPath);
-  let updatedAt: string;
-  try {
-    const file = await lstat(path);
-    if (!file.isFile() || file.isSymbolicLink()) {
-      throw new SpecsReadError('SPEC_SOURCE_UNAVAILABLE', 'Manifest is not a regular file.');
-    }
-    updatedAt = file.mtime.toISOString();
-  } catch (error) {
-    if (error instanceof SpecsReadError) throw error;
-    throw new SpecsReadError('SPEC_SOURCE_UNAVAILABLE', 'Canonical manifest metadata unavailable.');
-  }
   const common: SpecOverviewRecord = {
     id: item.specId,
     title: spec.title,
-    updatedAt,
+    updatedAt: item.sourceUpdatedAt,
     // Engine currently owns no verified task outcome/progress projection.
     progress: null,
   };
@@ -105,6 +88,11 @@ async function project(item: Extract<DiscoveredSpecification, { status: 'availab
     archive,
     // Canonical metadata changes must change revision even if DTO projection
     // cannot yet represent that property (e.g. status or priority).
-    evidence: { ...spec, workspaceId: item.workspaceId, binding: item.binding },
+    evidence: {
+      ...spec,
+      workspaceId: item.workspaceId,
+      binding: item.binding,
+      sourceRevision: item.sourceRevision,
+    },
   };
 }
