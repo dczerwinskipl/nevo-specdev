@@ -31,7 +31,7 @@ import {
   resolveProjectHome,
   updateWorkspaceRegistry,
   workspaceRegistryPath,
-} from '../../specflow-engine/src/index';
+} from '../../specflow-engine/src/testing';
 import crossSpawn from 'cross-spawn';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
