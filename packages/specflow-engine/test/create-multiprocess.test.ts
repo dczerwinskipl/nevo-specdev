@@ -69,6 +69,7 @@ function spawnCreateWorker(
   options: {
     readonly pauseEffect?: 'git' | 'manifest';
     readonly observeReservation?: boolean;
+    readonly confirmInterruptedGitSettled?: boolean;
   } = {},
 ): ProcessWorker {
   const token = randomUUID();
@@ -108,6 +109,7 @@ function spawnCreateWorker(
         NEVO_CREATE_WORKER_PAUSED: paused,
         NEVO_CREATE_WORKER_RELEASE: release,
         NEVO_CREATE_WORKER_OBSERVED: options.observeReservation ? observed : '',
+        NEVO_CREATE_WORKER_GIT_SETTLED: options.confirmInterruptedGitSettled ? '1' : '0',
         NEVO_CREATE_WORKER_RESULT: result,
       },
     },
@@ -189,9 +191,17 @@ describe('E2.T04 — cross-process durable create reservation and registry CAS',
     expect(await discoverSpecifications(engine)).toHaveLength(1);
   }, 180000);
 
-  for (const pausedAt of ['git', 'manifest'] as const) {
+  for (const scenario of [
+    { pausedAt: 'git', gitSettled: false },
+    { pausedAt: 'manifest', gitSettled: false },
+    { pausedAt: 'manifest', gitSettled: true },
+  ] as const) {
+    const { pausedAt, gitSettled } = scenario;
     it(
-      'VC05: second process joins live ' + pausedAt + ' checkpoint without repeating effects',
+      'VC05: second process joins live ' +
+        pausedAt +
+        (gitSettled ? ' with Git-only confirmation' : '') +
+        ' without repeating effects',
       async () => {
         const { engine, root } = await project();
         await writeFile(join(root, '.nevo/config.yaml'), 'runtime: {}\ngit:\n  enabled: true\n');
@@ -199,7 +209,7 @@ describe('E2.T04 — cross-process durable create reservation and registry CAS',
         const operationId = randomUUID();
         const original = {
           operationId,
-          title: 'Concurrent ' + pausedAt + ' join',
+          title: 'Concurrent ' + pausedAt + (gitSettled ? ' Git confirmed' : '') + ' join',
           created: '2026-10-14',
           target: { kind: 'new-worktree' as const, baseRef: 'HEAD' },
         };
@@ -214,7 +224,7 @@ describe('E2.T04 — cross-process durable create reservation and registry CAS',
         const follower = spawnCreateWorker(
           root,
           { ...original, created: '2026-10-15' },
-          { observeReservation: true },
+          { observeReservation: true, confirmInterruptedGitSettled: gitSettled },
         );
         await startTogether([follower]);
         // This signal is emitted AFTER reserve() has seen the existing journal.

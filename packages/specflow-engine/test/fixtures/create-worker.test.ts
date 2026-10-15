@@ -30,6 +30,7 @@ it.skipIf(!process.env.NEVO_CREATE_WORKER)(
       }
     }
     const result = await createSpecification(engine, input, {
+      confirmInterruptedGitSettled: process.env.NEVO_CREATE_WORKER_GIT_SETTLED === '1',
       afterEffect: async (effect) => {
         if (effect === 'reservation' && process.env.NEVO_CREATE_WORKER_OBSERVED) {
           await writeFile(process.env.NEVO_CREATE_WORKER_OBSERVED, 'reserved');

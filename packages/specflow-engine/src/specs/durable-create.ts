@@ -134,13 +134,13 @@ export async function createSpecificationWithIntent(
   // Its original writer may still be active inside an uncertain Git/FS stage,
   // even if the journal has not changed for a long time. Do not infer a lease
   // or quiescence from the persisted stage, and do not execute any side effect.
-  // A separately authorized, confirmed post-crash recovery can be the writer.
+  // Only resumeInterruptedOperation permits takeover of Create. The separate
+  // confirmInterruptedGitSettled flag cannot bypass this writer boundary.
   if (
     reservation.existing &&
     record.version === 2 &&
     record.stage !== 'completed' &&
-    !options.resumeInterruptedOperation &&
-    !options.confirmInterruptedGitSettled
+    !options.resumeInterruptedOperation
   ) {
     const observed = await followExistingOperation(engine, operationId);
     if (observed.stage !== 'completed') {
