@@ -1,7 +1,5 @@
-import { spawn } from 'node:child_process';
-
 import { GitCapabilityError } from './errors';
-import { GitOutputDecoder } from './output-decoder';
+import { BoundedGitOutput, spawnLocalGit } from './process-shared';
 import type { GitCommandResult } from './process';
 
 const MAX_OUTPUT_BYTES = 1024 * 1024;
@@ -20,21 +18,9 @@ export async function executeGitMutation(
   cwd: string,
   args: readonly string[],
 ): Promise<GitCommandResult> {
-  const env = { ...process.env };
-  for (const name of Object.keys(env)) {
-    if (name.toUpperCase().startsWith('GIT_')) delete env[name];
-  }
-
   return new Promise((resolve, reject) => {
-    const child = spawn('git', [...args], {
-      cwd,
-      env,
-      shell: false,
-      windowsHide: true,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    const output = new GitOutputDecoder();
-    let outputBytes = 0;
+    const child = spawnLocalGit(cwd, args);
+    const output = new BoundedGitOutput(MAX_OUTPUT_BYTES);
     let uncertain = false;
     let settled = false;
     let terminationTimer: NodeJS.Timeout | undefined;
@@ -66,12 +52,10 @@ export async function executeGitMutation(
     timeout.unref();
 
     const collect = (channel: 'stdout' | 'stderr', data: Buffer): void => {
-      outputBytes += data.byteLength;
-      if (outputBytes > MAX_OUTPUT_BYTES) {
+      if (!output.write(channel, data)) {
         terminate();
         return;
       }
-      output.write(channel, data);
     };
     child.stdout.on('data', (data: Buffer) => collect('stdout', data));
     child.stderr.on('data', (data: Buffer) => collect('stderr', data));

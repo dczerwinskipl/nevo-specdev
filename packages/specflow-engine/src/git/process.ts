@@ -1,6 +1,4 @@
-import { spawn } from 'node:child_process';
-
-import { GitOutputDecoder } from './output-decoder';
+import { BoundedGitOutput, spawnLocalGit } from './process-shared';
 
 import { GitCapabilityError } from './errors';
 
@@ -18,22 +16,10 @@ export interface GitCommandResult {
  * ambient Git context or provider/Runtime process adapters.
  */
 export async function executeGit(cwd: string, args: readonly string[]): Promise<GitCommandResult> {
-  const env = { ...process.env };
-  for (const name of Object.keys(env)) {
-    if (name.toUpperCase().startsWith('GIT_')) delete env[name];
-  }
-
   return new Promise((resolve, reject) => {
-    const child = spawn('git', [...args], {
-      cwd,
-      env,
-      shell: false,
-      windowsHide: true,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
+    const child = spawnLocalGit(cwd, args);
     let done = false;
-    const output = new GitOutputDecoder();
-    let bytes = 0;
+    const output = new BoundedGitOutput(MAX_OUTPUT_BYTES);
 
     const fail = (error: GitCapabilityError): void => {
       if (done) return;
@@ -49,12 +35,10 @@ export async function executeGit(cwd: string, args: readonly string[]): Promise<
     timeout.unref();
 
     const collect = (channel: 'stdout' | 'stderr', data: Buffer): void => {
-      bytes += data.byteLength;
-      if (bytes > MAX_OUTPUT_BYTES) {
+      if (!output.write(channel, data)) {
         fail(new GitCapabilityError('GIT_OPERATION_FAILED', 'Git output exceeds safety limit.'));
         return;
       }
-      output.write(channel, data);
     };
 
     child.stdout.on('data', (data: Buffer) => collect('stdout', data));
