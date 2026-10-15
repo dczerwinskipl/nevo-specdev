@@ -102,7 +102,7 @@ export async function ensureLinkedIdentity(
   engine: SpecFlowEngine,
   record: CreateJournal,
 ): Promise<CreateJournal> {
-  if (!record.target.instanceId) {
+  if (record.target.kind !== 'new-worktree' || !record.target.instanceId) {
     throw recovery('Managed checkout has no reserved physical identity.');
   }
   const path = join(record.target.workspaceRoot, WORKSPACE_IDENTITY_RELATIVE_PATH);
