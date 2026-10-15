@@ -165,9 +165,24 @@ export default tseslint.config(
   {
     files: ['packages/specflow-runtime/**/*.{ts,tsx,mts,cts}'],
     rules: {
+      'no-restricted-imports': productImportRestrictions(
+        {
+          regex: '^@nevo/(?:specflow|specflow-ui)(?:/|$)',
+          message: 'Runtime must not depend on the product composition root or UI.',
+        },
+        {
+          regex: '^@nevo/specflow-engine/testing(?:/|$)',
+          message: 'Production Runtime must use Engine application APIs, not the testing backdoor.',
+        },
+      ),
+    },
+  },
+  {
+    files: ['packages/specflow/src/**/*.{ts,tsx,mts,cts}'],
+    rules: {
       'no-restricted-imports': productImportRestrictions({
-        regex: '^@nevo/(?:specflow|specflow-ui)(?:/|$)',
-        message: 'Runtime must not depend on the product composition root or UI.',
+        regex: '^@nevo/specflow-engine/testing(?:/|$)',
+        message: 'Production CLI must use Engine application APIs, not the testing backdoor.',
       }),
     },
   },
