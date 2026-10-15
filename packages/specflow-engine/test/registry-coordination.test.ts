@@ -33,7 +33,7 @@ import {
   updateWorkspaceRegistry,
   withProjectControlLock,
   workspaceRegistryPath,
-} from '../src/index';
+} from '../src/testing';
 
 const roots: string[] = [];
 afterEach(async () => {
