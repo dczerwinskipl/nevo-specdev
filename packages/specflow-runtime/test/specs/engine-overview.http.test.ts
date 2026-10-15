@@ -229,6 +229,66 @@ describe('E2.T06 — production Engine-backed specification reads', () => {
     }
   }, 45000);
 
+  it('isolates a denied linked manifest error from an authorized scoped Overview', async () => {
+    const { root, engine } = await fixture();
+    const visible = await createSpecificationFromRequest(engine, {
+      operationId: randomUUID(),
+      title: 'Authorized primary specification',
+      target: { kind: 'existing', workspaceId: engine.workspace.workspaceId },
+    });
+    const linked = await realpath(await mkdtemp(join(tmpdir(), 'specflow-denied-linked-')));
+    roots.push(linked);
+    git(root, 'worktree', 'add', '-q', '-b', 'test/scoped-denied', linked, 'HEAD');
+    const registration = await provisionLinkedWorkspaceIdentity(
+      engine.context,
+      linked,
+      randomUUID(),
+      true,
+    );
+    const deniedSpecId = randomUUID();
+    await updateWorkspaceRegistry(engine.context, (registry) =>
+      bindSpecToWorkspace(addWorkspace(registry, registration), deniedSpecId, registration.workspaceId),
+    );
+    await mkdir(join(linked, 'specs/active/corrupt-linked'), { recursive: true });
+    await writeFile(join(linked, 'specs/active/corrupt-linked/change.yaml'), 'not: [valid\\n');
+
+    const config = passwordConfig();
+    const store = new InMemoryAuthenticationStore();
+    const session = store.createSession({
+      userId: 'scoped-user',
+      authenticatedWith: { kind: 'password' },
+    });
+    const app = await createRuntimeApp(
+      {
+        ...config,
+        authorization: {
+          assignments: [{ userId: 'scoped-user', role: 'viewer', scope: { specId: visible.specId } }],
+        },
+      },
+      { auth: { store }, specs: { engine } },
+    );
+    try {
+      const scoped = await app.inject({
+        url: '/api/specs/overview',
+        headers: { cookie: authCookieNames(config.server.port).session + '=' + session },
+      });
+      expect(scoped.statusCode, scoped.body).toBe(200);
+      expect(scoped.json<CurrentSpecsOverview>().items.map((item) => item.id)).toEqual([
+        visible.specId,
+      ]);
+    } finally {
+      await app.close();
+    }
+    const unrestricted = await createRuntimeApp(trustedLocalConfig(), { specs: { engine } });
+    try {
+      const result = await unrestricted.inject('/api/specs/overview');
+      expect(result.statusCode, result.body).toBe(503);
+      expect(result.json()).toMatchObject({ code: 'SPEC_SOURCE_UNAVAILABLE' });
+    } finally {
+      await unrestricted.close();
+    }
+  }, 45000);
+
   it('distinguishes genuinely absent Spec from a registered missing canonical manifest', async () => {
     const { engine } = await fixture();
     const missingSpecId = randomUUID();
