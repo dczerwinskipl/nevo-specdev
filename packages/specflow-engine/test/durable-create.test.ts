@@ -52,6 +52,21 @@ function linked(title = 'Create linked spec'): CreateSpecificationInput {
 }
 
 describe('E2.T04 — durable Spec creation on actual Git', () => {
+  it('accepts an unchanged journal CAS snapshot with reordered object keys', async () => {
+    const { engine } = await project(false);
+    const input = existing(engine, 'Reordered durable journal');
+    const created = await createSpecification(engine, input, {
+      afterEffect: async (effect) => {
+        if (effect !== 'reservation') return;
+        const path = createJournalPath(engine.context, input.operationId);
+        const journal = JSON.parse(await readFile(path, 'utf8')) as Record<string, unknown>;
+        await writeFile(path, JSON.stringify(Object.fromEntries(Object.entries(journal).reverse())));
+      },
+    });
+    expect(created.specId).toBeDefined();
+    expect((await inspectCreateSpecification(engine, input.operationId))?.stage).toBe('completed');
+  }, 90000);
+
   it('creates a Spec in primary and retries the same operation without new records', async () => {
     const { root, engine } = await project(false);
     const input = existing(engine);
