@@ -4,7 +4,6 @@ import { isAbsolute, join, resolve } from 'node:path';
 
 import {
   PROJECT_HOME_MARKER_RELATIVE_PATH,
-  resolveProjectHome,
   type ResolvedProjectHome,
 } from './project-home';
 import { verifyLinkedWorkspaceIdentity } from './workspace-identity';
