@@ -16,6 +16,7 @@ import {
   verifyLinkedWorkspaceIdentity,
 } from '../project/workspace-identity';
 import { CreateOperationError, type CreateJournal } from './create-journal';
+import { registrationOf } from './create/registration';
 
 /**
  * Reconstruct a fixed plan from durable evidence, never from the latest naming
@@ -181,18 +182,6 @@ export async function requireTargetIdentity(
     const registration = registrationOf(record);
     await verifyWorkspaceRoot(engine.context, registration.root, registration);
   }
-}
-
-export function registrationOf(record: CreateJournal): WorkspaceRegistration {
-  if (!record.target.instanceId)
-    throw recovery('Linked worktree has no durable identity evidence.');
-  return {
-    kind: 'linked',
-    managed: true,
-    workspaceId: record.target.workspaceId,
-    root: record.target.workspaceRoot,
-    instanceId: record.target.instanceId,
-  };
 }
 
 function recovery(message: string): CreateOperationError {
