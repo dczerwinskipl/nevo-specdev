@@ -60,7 +60,10 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
         if (effect !== 'reservation') return;
         const path = createJournalPath(engine.context, input.operationId);
         const journal = JSON.parse(await readFile(path, 'utf8')) as Record<string, unknown>;
-        await writeFile(path, JSON.stringify(Object.fromEntries(Object.entries(journal).reverse())));
+        await writeFile(
+          path,
+          JSON.stringify(Object.fromEntries(Object.entries(journal).reverse())),
+        );
       },
     });
     expect(created.specId).toBeDefined();
