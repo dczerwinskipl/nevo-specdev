@@ -138,7 +138,7 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
     expect(journal.version).toBe(2);
     expect(journal?.stage).toBe('reserved');
     expect(journal?.target.branch).toBe(
-      'spec/pinned-git-reservation-' + journal!.specId.slice(0, 8),
+      'spec/pinned-git-reservation-' + journal.specId.slice(0, 8),
     );
     expect(journal?.target.baseCommit).toBe(originalHead);
     const configPath = join(root, '.nevo/config.yaml');
@@ -282,7 +282,7 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
     if (reserved?.target.kind !== 'new-worktree') throw new Error('Expected linked reservation.');
     expect(reserved.version).toBe(2);
     expect(reserved.target.branch).toBe(
-      'feature/policy-picked-once-' + reserved!.specId.slice(0, 8),
+      'feature/policy-picked-once-' + reserved.specId.slice(0, 8),
     );
     expect(reserved?.target.baseCommit).toBe(head);
     await writeFile(config, 'runtime: {}\ngit:\n  enabled: false\n');
@@ -340,7 +340,7 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
     expect(reserved.stage).toBe('reserved');
     expect(reserved.created).toBe('2026-10-14');
     expect(reserved?.target.branch).toBe(
-      'feature/omitted-defaults-pinned-' + reserved!.specId.slice(0, 8),
+      'feature/omitted-defaults-pinned-' + reserved.specId.slice(0, 8),
     );
     expect(reserved?.target.baseCommit).toBe(head);
 
