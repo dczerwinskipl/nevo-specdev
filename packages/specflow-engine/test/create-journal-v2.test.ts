@@ -11,7 +11,7 @@ import {
   createSpecificationScaffold,
   createSpecificationFromRequest,
   openSpecFlowEngine,
-} from '../src';
+} from '../src/testing';
 import {
   fingerprintCreateClientIntent,
   normalizeCreateClientIntent,
