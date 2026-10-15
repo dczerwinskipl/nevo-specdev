@@ -17,6 +17,7 @@ import {
   provisionLinkedWorkspaceIdentity,
   resolveSpecification,
   workspaceRegistryPath,
+  updateWorkspaceRegistry,
   type SpecFlowEngine,
   type SpecificationScaffold,
 } from '../src/testing';
@@ -48,7 +49,7 @@ async function linkedWorkspace(engine: SpecFlowEngine, branch = 'spec/discovery'
     randomUUID(),
     false,
   );
-  await engine.updateRegistry((registry) => addWorkspace(registry, registration));
+  await updateWorkspaceRegistry(engine.context, (registry) => addWorkspace(registry, registration));
   return registration;
 }
 
@@ -75,7 +76,7 @@ describe('E2.T03 — canonical Specification binding and discovery (real Git)', 
     const linkedManifestPath = await persist(linked.root, source);
     const linkedContent = await readFile(linkedManifestPath, 'utf8');
     await writeFile(linkedManifestPath, linkedContent.replace('status: draft', 'status: approved'));
-    await engine.updateRegistry((registry) =>
+    await updateWorkspaceRegistry(engine.context, (registry) =>
       bindSpecToWorkspace(registry, specId, linked.workspaceId),
     );
 
@@ -100,7 +101,7 @@ describe('E2.T03 — canonical Specification binding and discovery (real Git)', 
     const specId = randomUUID();
     await persist(root, scaffold(specId, 'Stale primary duplicate'));
     await persist(linked.root, scaffold(specId, 'Authoritative linked'));
-    await engine.updateRegistry((registry) =>
+    await updateWorkspaceRegistry(engine.context, (registry) =>
       bindSpecToWorkspace(registry, specId, linked.workspaceId),
     );
     const registryBefore = await readFile(workspaceRegistryPath(engine.context), 'utf8');
@@ -122,7 +123,7 @@ describe('E2.T03 — canonical Specification binding and discovery (real Git)', 
     const linked = await linkedWorkspace(engine);
     const specId = randomUUID();
     await persist(root, scaffold(specId, 'Primary copy retained'));
-    await engine.updateRegistry((registry) =>
+    await updateWorkspaceRegistry(engine.context, (registry) =>
       bindSpecToWorkspace(registry, specId, linked.workspaceId),
     );
 
@@ -177,7 +178,7 @@ describe('E2.T03 — canonical Specification binding and discovery (real Git)', 
     const linked = await linkedWorkspace(engine);
     const specId = randomUUID();
     await persist(root, scaffold(specId, 'Original'));
-    await engine.updateRegistry((registry) =>
+    await updateWorkspaceRegistry(engine.context, (registry) =>
       bindSpecToWorkspace(registry, specId, linked.workspaceId),
     );
     const path = workspaceRegistryPath(engine.context);
@@ -205,7 +206,7 @@ describe('E2.T03 — canonical Specification binding and discovery (real Git)', 
     const secondId = randomUUID();
     await persist(root, scaffold(firstId, 'Shared slug'));
     await persist(linked.root, scaffold(secondId, 'Shared slug'));
-    await engine.updateRegistry((registry) =>
+    await updateWorkspaceRegistry(engine.context, (registry) =>
       bindSpecToWorkspace(registry, secondId, linked.workspaceId),
     );
     await expect(discoverSpecifications(engine)).rejects.toMatchObject({
@@ -218,7 +219,7 @@ describe('E2.T03 — canonical Specification binding and discovery (real Git)', 
     const linked = await linkedWorkspace(engine);
     const specId = randomUUID();
     await persist(linked.root, scaffold(specId, 'Protected source'));
-    await engine.updateRegistry((registry) =>
+    await updateWorkspaceRegistry(engine.context, (registry) =>
       bindSpecToWorkspace(registry, specId, linked.workspaceId),
     );
     await writeFile(join(linked.root, '.nevo/local/state/workspace-identity.json'), '{}\n');
