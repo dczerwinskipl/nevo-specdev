@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { lstat, readFile, realpath } from 'node:fs/promises';
+import { lstat, open, realpath } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { parse } from 'yaml';
@@ -129,13 +129,24 @@ async function readPhysicalDocument(
     if (!stat.isFile() || stat.isSymbolicLink() || (await realpath(path)) !== path) {
       throw new SpecificationError('SPEC_SOURCE_INVALID', 'Canonical document is redirected.');
     }
-    const content = await readFile(path, 'utf8');
-    return {
-      relativePath,
-      content,
-      updatedAt: stat.mtime.toISOString(),
-      revision: createHash('sha256').update(content, 'utf8').digest('hex'),
-    };
+    // Metadata and bytes must come from the same opened file, not two paths
+    // that could refer to different files during a concurrent atomic replace.
+    const handle = await open(path, 'r');
+    try {
+      const openedStat = await handle.stat();
+      if (!openedStat.isFile()) {
+        throw new SpecificationError('SPEC_SOURCE_INVALID', 'Canonical document is not a file.');
+      }
+      const content = await handle.readFile('utf8');
+      return {
+        relativePath,
+        content,
+        updatedAt: openedStat.mtime.toISOString(),
+        revision: createHash('sha256').update(content, 'utf8').digest('hex'),
+      };
+    } finally {
+      await handle.close();
+    }
   } catch (error) {
     if (isMissing(error)) return undefined;
     if (error instanceof SpecificationError) throw error;
