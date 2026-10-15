@@ -11,6 +11,6 @@ export interface ArchiveSpecsSnapshot {
 }
 
 export interface SpecsOverviewRepository {
-  readCurrent(): Promise<CurrentSpecsSnapshot>;
-  readArchive(): Promise<ArchiveSpecsSnapshot>;
+  readCurrent(isVisibleSpec?: (specId: string) => boolean): Promise<CurrentSpecsSnapshot>;
+  readArchive(isVisibleSpec?: (specId: string) => boolean): Promise<ArchiveSpecsSnapshot>;
 }

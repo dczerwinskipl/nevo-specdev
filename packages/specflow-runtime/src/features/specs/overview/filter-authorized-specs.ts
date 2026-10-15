@@ -16,3 +16,12 @@ export function filterAuthorizedSpecs<T extends AuthorizableSpec>(
     scope: (item) => ({ specId: item.id }),
   });
 }
+
+/** Per-row admission to source projection; the repository stays authorization-agnostic. */
+export function canViewSpec(authorization: RequestAuthorization, specId: string): boolean {
+  return authorization.can({
+    resource: SpecCapabilities,
+    capability: SpecCapabilities.capabilities.View,
+    scope: { specId },
+  });
+}

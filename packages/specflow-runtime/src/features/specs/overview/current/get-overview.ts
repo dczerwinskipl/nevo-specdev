@@ -7,7 +7,7 @@ import type {
 import type { RequestAuthorization } from '../../../auth';
 import type { SpecsOverviewRepository } from '../repository/read-repository';
 import type { CurrentSpecRecord } from '../repository/model';
-import { filterAuthorizedSpecs } from '../filter-authorized-specs';
+import { canViewSpec, filterAuthorizedSpecs } from '../filter-authorized-specs';
 import { classifyCurrentSpec } from './classify-spec';
 
 export interface GetCurrentOverviewDependencies {
@@ -19,7 +19,9 @@ export interface GetCurrentOverviewDependencies {
 export async function getCurrentOverview(
   dependencies: GetCurrentOverviewDependencies,
 ): Promise<CurrentSpecsOverview> {
-  const snapshot = await dependencies.repository.readCurrent();
+  const snapshot = await dependencies.repository.readCurrent((specId) =>
+    canViewSpec(dependencies.authorization, specId),
+  );
   const visible = filterAuthorizedSpecs(dependencies.authorization, snapshot.items);
   const items = visible
     .map(toOverviewItem)

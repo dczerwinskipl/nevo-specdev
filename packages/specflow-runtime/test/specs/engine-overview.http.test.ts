@@ -19,6 +19,8 @@ import type {
 } from '@nevo/specflow-contracts/specs/overview';
 
 import { createEngineSpecsReadRepository } from '../../src/features/specs/read/engine-repository';
+import { InMemoryAuthenticationStore } from '../../src/features/auth/authentication/store/in-memory-store';
+import { authCookieNames } from '../../src/features/auth/authentication/http/cookies';
 import { createRuntimeApp } from '../../src/server/app';
 import { passwordConfig } from '../auth/support/config';
 
@@ -137,6 +139,51 @@ describe('E2.T06 — production Engine-backed specification reads', () => {
       const nowCurrent = await app.inject('/api/specs/overview');
       expect(nowCurrent.json<CurrentSpecsOverview>().items).toEqual([]);
       expect((await reads.readDocument(created.specId, 'overview')).status).toBe('available');
+    } finally {
+      await app.close();
+    }
+  }, 45000);
+
+  it('filters ungranted unavailable sources before building a user-scoped Overview', async () => {
+    const { engine } = await fixture();
+    const visible = await createSpecificationFromRequest(engine, {
+      operationId: randomUUID(),
+      title: 'Granted canonical Spec',
+      target: { kind: 'existing', workspaceId: engine.workspace.workspaceId },
+    });
+    await updateWorkspaceRegistry(engine.context, (registry) =>
+      bindSpecToWorkspace(registry, randomUUID(), engine.workspace.workspaceId),
+    );
+
+    const config = passwordConfig();
+    const store = new InMemoryAuthenticationStore();
+    const session = store.createSession({
+      userId: 'demo-user',
+      authenticatedWith: { kind: 'password' },
+    });
+    const app = await createRuntimeApp(
+      {
+        ...config,
+        authorization: {
+          assignments: [
+            { userId: 'demo-user', role: 'viewer', scope: { specId: visible.specId } },
+          ],
+        },
+      },
+      { auth: { store }, specs: { engine } },
+    );
+    try {
+      expect((await app.inject('/api/specs/overview')).statusCode).toBe(401);
+      const response = await app.inject({
+        url: '/api/specs/overview',
+        headers: {
+          cookie: authCookieNames(config.server.port).session + '=' + session,
+        },
+      });
+      expect(response.statusCode, response.body).toBe(200);
+      expect(response.json<CurrentSpecsOverview>().items.map((item) => item.id)).toEqual([
+        visible.specId,
+      ]);
     } finally {
       await app.close();
     }

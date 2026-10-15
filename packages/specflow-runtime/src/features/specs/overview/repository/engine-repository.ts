@@ -19,8 +19,10 @@ import type { SpecsOverviewRepository } from './read-repository';
 export function createEngineSpecsOverviewRepository(
   engine: SpecFlowEngine,
 ): SpecsOverviewRepository {
-  async function read() {
-    const discovered = await discoverSpecifications(engine);
+  async function read(isVisibleSpec?: (specId: string) => boolean) {
+    const discovered = (await discoverSpecifications(engine)).filter(
+      (item) => isVisibleSpec === undefined || isVisibleSpec(item.specId),
+    );
     // The existing Overview DTO cannot represent unavailable canonical rows.
     // Fail closed with typed 503 instead of silently losing a bound Spec.
     for (const item of discovered) {
@@ -47,8 +49,8 @@ export function createEngineSpecsOverviewRepository(
   }
 
   return {
-    async readCurrent() {
-      const snapshot = await read();
+    async readCurrent(isVisibleSpec) {
+      const snapshot = await read(isVisibleSpec);
       return {
         revision: snapshot.revision,
         items: snapshot.items
@@ -56,8 +58,8 @@ export function createEngineSpecsOverviewRepository(
           .map((item) => item.current),
       };
     },
-    async readArchive() {
-      const snapshot = await read();
+    async readArchive(isVisibleSpec) {
+      const snapshot = await read(isVisibleSpec);
       return {
         revision: snapshot.revision,
         items: snapshot.items
