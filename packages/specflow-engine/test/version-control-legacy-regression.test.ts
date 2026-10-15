@@ -93,7 +93,6 @@ describe('VC06 legacy real-Git regression coverage through WorktreePort', () => 
     });
   });
 
-
   it('plans safely when an unrelated Git worktree is detached and locked', async () => {
     const { root, engine, worktrees } = await fixture();
     const linked = await realpath(await mkdtemp(join(tmpdir(), 'specflow-git-detached-')));
