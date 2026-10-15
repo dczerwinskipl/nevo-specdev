@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { spawn, execFileSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import {
   access,
   mkdir,
@@ -34,34 +34,19 @@ import {
 } from '../src/index';
 import { withProjectControlLock } from '../src/project/control-lock';
 import { CREATE_JOURNAL_RELATIVE_DIR } from '../src/specs/create-journal';
+import { createGitTestProject, git } from './support/git-project';
 
 const roots: string[] = [];
 afterEach(async () => {
   await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
 });
 
-function git(root: string, ...args: string[]): string {
-  return execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
-}
-
 async function project(gitEnabled = false): Promise<{ root: string; engine: SpecFlowEngine }> {
-  const root = await realpath(await mkdtemp(join(tmpdir(), 'specflow-crash-Ż space ')));
-  roots.push(root);
-  git(root, 'init', '-q');
-  await mkdir(join(root, '.nevo'));
-  await writeFile(join(root, '.gitignore'), '.nevo/local/\n');
-  await writeFile(join(root, '.nevo/config.yaml'), `runtime: {}\ngit:\n  enabled: ${gitEnabled}\n`);
-  git(root, 'add', '.gitignore', '.nevo/config.yaml');
-  git(
-    root,
-    '-c',
-    'user.name=SpecFlow Test',
-    '-c',
-    'user.email=specflow@example.invalid',
-    'commit',
-    '-qm',
-    'initial',
+  const root = await createGitTestProject(
+    'specflow-crash-Ż space ',
+    'runtime: {}\ngit:\n  enabled: ' + String(gitEnabled) + '\n',
   );
+  roots.push(root);
   if (gitEnabled) roots.push(root + '-worktrees');
   return { root, engine: await bootstrapProjectHome(root) };
 }
