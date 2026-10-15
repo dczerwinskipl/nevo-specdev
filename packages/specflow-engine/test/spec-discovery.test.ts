@@ -1,10 +1,11 @@
 import { randomUUID } from 'node:crypto';
-import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { createGitTestProject, git } from './support/git-project';
 
 import {
   addWorkspace,
@@ -31,28 +32,9 @@ afterEach(async () => {
   await Promise.all(roots.splice(0).map((path) => rm(path, { recursive: true, force: true })));
 });
 
-function git(root: string, ...args: string[]): string {
-  return execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
-}
-
 async function project(): Promise<{ root: string; engine: SpecFlowEngine }> {
-  const root = await realpath(await mkdtemp(join(tmpdir(), 'specflow-discovery-Ż space ')));
+  const root = await createGitTestProject('specflow-discovery-Ż space ', 'runtime: {}\n');
   roots.push(root);
-  git(root, 'init', '-q');
-  await mkdir(join(root, '.nevo'), { recursive: true });
-  await writeFile(join(root, '.gitignore'), '.nevo/local/\n');
-  await writeFile(join(root, '.nevo/config.yaml'), 'runtime: {}\n');
-  git(root, 'add', '.gitignore', '.nevo/config.yaml');
-  git(
-    root,
-    '-c',
-    'user.name=SpecFlow Test',
-    '-c',
-    'user.email=specflow@example.invalid',
-    'commit',
-    '-qm',
-    'initial',
-  );
   return { root, engine: await bootstrapProjectHome(root) };
 }
 
