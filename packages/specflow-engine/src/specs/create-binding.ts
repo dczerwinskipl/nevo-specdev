@@ -1,4 +1,5 @@
 import type { SpecFlowEngine } from '../application';
+import { updateWorkspaceRegistry } from '../project/registry-store';
 import { addWorkspace, bindSpecToWorkspace } from '../project/workspace-registry';
 import { registrationOf } from './create/registration';
 import { CreateOperationError, type CreateJournal } from './create-journal';
@@ -25,7 +26,7 @@ export async function commitBinding(engine: SpecFlowEngine, record: CreateJourna
   }
   if (existingBinding && (record.target.kind === 'existing' || existingWorkspace)) return;
 
-  await engine.updateRegistry((current) => {
+  await updateWorkspaceRegistry(engine.context, (current) => {
     let updated = current;
     if (record.target.kind === 'new-worktree') {
       const workspace = current.workspaces.find(
