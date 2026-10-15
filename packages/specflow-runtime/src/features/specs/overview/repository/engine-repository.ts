@@ -38,7 +38,7 @@ export function createEngineSpecsOverviewRepository(
       (item): item is Extract<CanonicalSpecSource, { status: 'available' }> =>
         item.status === 'available',
     );
-    const projected = await Promise.all(available.map(project));
+    const projected = available.map(project);
     const revision = createHash('sha256').update(JSON.stringify(projected)).digest('hex');
     return { revision, items: projected };
   }
@@ -65,7 +65,7 @@ export function createEngineSpecsOverviewRepository(
   };
 }
 
-async function project(item: Extract<DiscoveredSpecification, { status: 'available' }>) {
+function project(item: Extract<CanonicalSpecSource, { status: 'available' }>) {
   const spec = item.specification;
   const common: SpecOverviewRecord = {
     id: item.specId,
