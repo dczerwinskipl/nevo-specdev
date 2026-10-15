@@ -10,17 +10,12 @@ import {
   type WorkspaceRegistration,
   type WorkspaceRegistry,
 } from './project/workspace-registry';
-import { updateWorkspaceRegistry, type RegistryUpdateOptions } from './project/registry-store';
 
 /** Offline application boundary shared by product CLI and Runtime. */
 export interface SpecFlowEngine {
   readonly context: ResolvedProjectHome;
   readonly workspace: WorkspaceRegistration;
   readRegistry(): Promise<WorkspaceRegistry>;
-  updateRegistry(
-    mutate: (current: WorkspaceRegistry) => WorkspaceRegistry,
-    options?: RegistryUpdateOptions,
-  ): Promise<WorkspaceRegistry>;
 }
 
 /** Read-only admission: never initialize or replace Project Home state implicitly. */
@@ -57,7 +52,5 @@ export async function openSpecFlowEngine(
       await verifyWorkspaceRoot(context, registered.root, registered);
       return latest;
     },
-    updateRegistry: (mutate, updateOptions) =>
-      updateWorkspaceRegistry(context, mutate, updateOptions),
   };
 }
