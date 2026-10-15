@@ -8,7 +8,7 @@ import {
   bootstrapProjectHome,
   discoverSpecifications,
   workspaceRegistryPath,
-} from '@nevo/specflow-engine';
+} from '@nevo/specflow-engine/testing';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { createProgram } from '../src/program';
