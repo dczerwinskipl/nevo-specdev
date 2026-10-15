@@ -94,6 +94,15 @@ function cli(cwd: string) {
   return { run, lines };
 }
 
+interface Created {
+  readonly specId: string;
+  readonly slug: string;
+  readonly workspaceId: string;
+  readonly workspaceRoot: string;
+  readonly relativeManifestPath: string;
+  readonly operationId: string;
+}
+
 /**
  * Execute the real Specs Commander adapter in a separate Node/Vitest process.
  * The test worker uses source imports so this test does not depend on a previously
@@ -102,10 +111,20 @@ function cli(cwd: string) {
 async function createWithIndependentCli(root: string, title: string): Promise<Created> {
   const resultPath = join(root, '.nevo/local', 'live-refresh-' + randomUUID() + '.json');
   const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-  const vitestEntry = resolve(dirname(fileURLToPath(import.meta.resolve('vitest'))), '..', 'vitest.mjs');
+  const vitestEntry = resolve(
+    dirname(fileURLToPath(import.meta.resolve('vitest'))),
+    '..',
+    'vitest.mjs',
+  );
   const child = spawn(
     process.execPath,
-    [vitestEntry, 'run', 'test/fixtures/live-refresh-cli-worker.test.ts', '--maxWorkers=1', '--testTimeout=120000'],
+    [
+      vitestEntry,
+      'run',
+      'test/fixtures/live-refresh-cli-worker.test.ts',
+      '--maxWorkers=1',
+      '--testTimeout=120000',
+    ],
     {
       cwd: packageRoot,
       windowsHide: true,
@@ -133,15 +152,6 @@ async function createWithIndependentCli(root: string, title: string): Promise<Cr
     throw new Error('Independent CLI process failed (' + exitCode + '): ' + log);
   }
   return JSON.parse(await readFile(resultPath, 'utf8')) as Created;
-}
-
-interface Created {
-  readonly specId: string;
-  readonly slug: string;
-  readonly workspaceId: string;
-  readonly workspaceRoot: string;
-  readonly relativeManifestPath: string;
-  readonly operationId: string;
 }
 
 describe('E2.T05 — real HTTP and offline CLI share one Engine authority', () => {
@@ -272,6 +282,7 @@ describe('E2.T05 — real HTTP and offline CLI share one Engine authority', () =
     expect((await engine.readRegistry()).specBindings).toHaveLength(1);
     expect(await discoverSpecifications(engine)).toHaveLength(1);
   }, 60000);
+
   it('H03: a warm live HTTP read refreshes after a separate CLI process writes canonical state', async () => {
     const port = await freePort();
     const { root, engine } = await fixture(false, port);
@@ -299,9 +310,9 @@ describe('E2.T05 — real HTTP and offline CLI share one Engine authority', () =
       const afterCreateResponse = await fetch(url);
       expect(afterCreateResponse.status).toBe(200);
       const afterCreate = (await afterCreateResponse.json()) as Overview;
-      expect(afterCreate.items).toEqual([
+      expect(afterCreate.items).toMatchObject([
         { id: created.specId, title: 'Created by independent CLI' },
-      ].map(({ id, title }) => expect.objectContaining({ id, title })));
+      ]);
       expect(afterCreate.revision).not.toBe(before.revision);
 
       // Until an edit command exists, the canonical manifest is edited on disk.
@@ -321,7 +332,7 @@ describe('E2.T05 — real HTTP and offline CLI share one Engine authority', () =
       expect(afterEdit.revision).not.toBe(afterCreate.revision);
 
       // A corrupt canonical source must never serve a stale cached 200 response.
-      await writeFile(manifestPath, 'title: [invalid\\n');
+      await writeFile(manifestPath, 'title: [invalid');
       const unavailable = await fetch(url);
       expect(unavailable.status).toBe(503);
       expect(await unavailable.json()).toMatchObject({ code: 'SPEC_SOURCE_UNAVAILABLE' });
@@ -330,7 +341,8 @@ describe('E2.T05 — real HTTP and offline CLI share one Engine authority', () =
       await writeFile(manifestPath, editedManifest);
       const recovered = await fetch(url);
       expect(recovered.status).toBe(200);
-      expect((await recovered.json() as Overview).revision).toBe(afterEdit.revision);
+      const recoveredValue = (await recovered.json()) as Overview;
+      expect(recoveredValue.revision).toBe(afterEdit.revision);
     } finally {
       await runtime.close();
     }
