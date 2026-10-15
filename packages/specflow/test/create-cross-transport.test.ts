@@ -283,6 +283,9 @@ describe('E2.T05 — real HTTP and offline CLI share one Engine authority', () =
     expect(await discoverSpecifications(engine)).toHaveLength(1);
   }, 60000);
 
+});
+
+describe('E2.T07 — live canonical refresh', () => {
   it('H03: a warm live HTTP read refreshes after a separate CLI process writes canonical state', async () => {
     const port = await freePort();
     const { root, engine } = await fixture(false, port);
