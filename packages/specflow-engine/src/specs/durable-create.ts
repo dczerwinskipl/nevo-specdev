@@ -33,6 +33,7 @@ import {
   validateOperationId,
   withCreateJournalLock,
   type CreateJournal,
+  type CreateJournalV2,
   type CreateStage,
 } from './create-journal';
 
@@ -374,7 +375,7 @@ async function reserve(
       throw new CreateOperationError('CREATE_CONFLICT', 'Specification slug is already reserved.');
     }
 
-    let target: CreateJournal['target'];
+    let target: CreateJournalV2['target'];
     let gitPlan: { readonly projectRoot: string; readonly gitInstanceId: string } | undefined;
     if (intent.target.kind === 'existing') {
       if (!isValidSpecificationId(intent.target.workspaceId)) {
@@ -479,7 +480,6 @@ async function transition(
   engine: SpecFlowEngine,
   record: CreateJournal,
   stage: CreateStage,
-  target = record.target,
 ): Promise<CreateJournal> {
   return withCreateJournalLock(engine.context, async () => {
     const current = await readCreateJournal(engine.context, record.operationId);
@@ -489,7 +489,7 @@ async function transition(
         'Create journal changed concurrently; restart from the latest durable state.',
       );
     }
-    const next: CreateJournal = { ...current, target, stage };
+    const next: CreateJournal = { ...current, stage };
     await publishCreateJournal(engine.context, next);
     return next;
   });
