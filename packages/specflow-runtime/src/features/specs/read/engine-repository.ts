@@ -69,4 +69,3 @@ function unavailable(
     ? { status: 'workspace_unavailable', reason: found.reason }
     : { status: 'manifest_missing' };
 }
-
