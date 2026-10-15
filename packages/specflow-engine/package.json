@@ -17,7 +17,9 @@
   "scripts": {
     "build": "node ../../tools/build-package.mjs",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "vitest run --testTimeout=20000"
+    "test": "vitest run --testTimeout=20000",
+    "test:filesystem:smoke": "vitest run --testTimeout=20000 --maxWorkers=1 --no-file-parallelism test/project-home.test.ts test/version-control-adapter.test.ts test/version-control-legacy-regression.test.ts test/platform-filesystem-contract.test.ts",
+    "test:filesystem:full": "vitest run --testTimeout=20000 --maxWorkers=1 --no-file-parallelism"
   },
   "dependencies": {
     "yaml": "2.9.1"
