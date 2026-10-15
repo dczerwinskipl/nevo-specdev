@@ -409,7 +409,7 @@ async function reserve(
         operations.some(
           (item) =>
             item.target.kind === 'new-worktree' &&
-            (branchesOverlap(item.target.branch!, plan.branch) ||
+            (branchesOverlap(item.target.branch, plan.branch) ||
               item.target.workspaceRoot.toLowerCase() === plan.targetPath.toLowerCase()),
         )
       ) {

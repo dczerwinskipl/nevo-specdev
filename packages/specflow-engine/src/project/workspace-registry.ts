@@ -8,6 +8,7 @@ import {
   type ResolvedProjectHome,
 } from './project-home';
 import { verifyLinkedWorkspaceIdentity } from './workspace-identity';
+import { verifyWorkspaceMembership } from './workspace-membership';
 import { verifyGitInstance } from './git-instance';
 
 import {
@@ -154,50 +155,7 @@ export async function verifyWorkspaceRoot(
   root: string,
   registration?: WorkspaceRegistration,
 ): Promise<string> {
-  if (!isAbsolute(root)) {
-    throw new WorkspaceRegistryError(
-      'REGISTRY_WORKSPACE_MISMATCH',
-      'Workspace root must be absolute.',
-    );
-  }
-  let canonical: string;
-  try {
-    canonical = await realpath(root);
-  } catch (error) {
-    if (!isMissing(error)) throw error;
-    throw new WorkspaceRegistryError(
-      'REGISTRY_WORKSPACE_UNAVAILABLE',
-      'Registered workspace path is unavailable; binding is retained.',
-    );
-  }
-  if (canonical !== root) {
-    throw new WorkspaceRegistryError(
-      'REGISTRY_WORKSPACE_MISMATCH',
-      'Workspace root changed identity, moved or points through a symlink.',
-    );
-  }
-  try {
-    const verified = await resolveProjectHome({
-      cwd: canonical,
-      projectRoot: context.project.homeRoot,
-    });
-    if (
-      verified.project.projectId !== context.project.projectId ||
-      verified.project.gitCommonDir !== context.project.gitCommonDir ||
-      verified.workspace.root !== canonical
-    ) {
-      throw new WorkspaceRegistryError(
-        'REGISTRY_WORKSPACE_MISMATCH',
-        'Workspace belongs to a different Project Home or Git repository.',
-      );
-    }
-  } catch (error) {
-    if (error instanceof WorkspaceRegistryError) throw error;
-    throw new WorkspaceRegistryError(
-      'REGISTRY_WORKSPACE_MISMATCH',
-      'Workspace Git/Project Home identity could not be verified.',
-    );
-  }
+  const canonical = await verifyWorkspaceMembership(context, root);
   if (registration?.kind === 'linked') {
     await verifyLinkedWorkspaceIdentity(context, registration);
   }

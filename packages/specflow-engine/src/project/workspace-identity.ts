@@ -6,9 +6,9 @@ import { isGitIgnored } from './git-checkout';
 import type { ResolvedProjectHome } from './project-home';
 import {
   WorkspaceRegistryError,
-  verifyWorkspaceRoot,
   type WorkspaceRegistration,
-} from './workspace-registry';
+} from './workspace-registry-types';
+import { verifyWorkspaceMembership } from './workspace-membership';
 
 export const WORKSPACE_IDENTITY_RELATIVE_PATH = '.nevo/local/state/workspace-identity.json';
 
@@ -45,7 +45,7 @@ export async function provisionLinkedWorkspaceIdentity(
       'A linked checkout requires a distinct root and valid workspace identity.',
     );
   }
-  await verifyWorkspaceRoot(context, root);
+  await verifyWorkspaceMembership(context, root);
   if (!(await isGitIgnored(root, WORKSPACE_IDENTITY_RELATIVE_PATH))) {
     throw new WorkspaceRegistryError(
       'REGISTRY_WORKSPACE_MISMATCH',

@@ -10,6 +10,7 @@ import {
   runGit,
 } from './git-checkout';
 import { verifyGitInstance } from './git-instance';
+import { ProjectHomeError } from './project-home-error';
 
 /**
  * Workstation-owned home designation. This is deliberately not committed:
@@ -19,21 +20,7 @@ import { verifyGitInstance } from './git-instance';
 export const PROJECT_HOME_MARKER_RELATIVE_PATH = '.nevo/local/state/project-home.json';
 export const PROJECT_STATE_RELATIVE_PATH = '.nevo/local/state';
 
-export type ProjectHomeErrorCode =
-  | 'PROJECT_HOME_NOT_FOUND'
-  | 'PROJECT_HOME_AMBIGUOUS'
-  | 'PROJECT_HOME_INVALID'
-  | 'PROJECT_HOME_MISMATCH';
-
-export class ProjectHomeError extends Error {
-  readonly code: ProjectHomeErrorCode;
-
-  constructor(code: ProjectHomeErrorCode, message: string) {
-    super(message);
-    this.name = 'ProjectHomeError';
-    this.code = code;
-  }
-}
+export { ProjectHomeError, type ProjectHomeErrorCode } from './project-home-error';
 
 export interface ResolveProjectHomeOptions {
   readonly cwd: string;

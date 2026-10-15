@@ -29,21 +29,35 @@ export const CREATE_STAGES = [
 
 export type CreateStage = (typeof CREATE_STAGES)[number];
 
-export interface CreateJournalTarget {
-  readonly kind: 'existing' | 'new-worktree';
+export interface ExistingJournalTarget {
+  readonly kind: 'existing';
   readonly workspaceId: string;
   readonly workspaceRoot: string;
-  readonly branch?: string;
-  readonly baseCommit?: string;
+}
+
+export interface NewWorktreeJournalTarget {
+  readonly kind: 'new-worktree';
+  readonly workspaceId: string;
+  readonly workspaceRoot: string;
+  readonly branch: string;
+  readonly baseCommit: string;
+  /** v1 journals may predate physical workspace identity markers. */
   readonly instanceId?: string;
 }
+
+export type CreateJournalTarget = ExistingJournalTarget | NewWorktreeJournalTarget;
+
+/** v2 reservations pin the physical checkout identity before publication. */
+export type CreateJournalV2Target =
+  | ExistingJournalTarget
+  | (NewWorktreeJournalTarget & { readonly instanceId: string });
 
 export interface CreateJournalFile {
   readonly relativePath: string;
   readonly sha256: string;
 }
 
-export interface CreateJournalFields {
+export interface CreateJournalFields<TTarget extends CreateJournalTarget = CreateJournalTarget> {
   readonly projectId: string;
   readonly operationId: string;
   readonly inputFingerprint: string;
@@ -53,7 +67,7 @@ export interface CreateJournalFields {
   readonly created: string;
   readonly goal?: string;
   readonly stage: CreateStage;
-  readonly target: CreateJournalTarget;
+  readonly target: TTarget;
   readonly files: readonly CreateJournalFile[];
   readonly reason?: string;
 }
@@ -62,7 +76,7 @@ export interface CreateJournalV1 extends CreateJournalFields {
   readonly version: 1;
 }
 
-export interface CreateJournalV2 extends CreateJournalFields {
+export interface CreateJournalV2 extends CreateJournalFields<CreateJournalV2Target> {
   readonly version: 2;
   readonly requestIntent: CreateClientIntent;
   readonly gitPlan?: { readonly projectRoot: string; readonly gitInstanceId: string };
@@ -190,7 +204,7 @@ function parseJournal(
   if (
     !isRecord(value) ||
     !isValidJournalIdentity(context, value, operationId) ||
-    !isValidJournalTarget(value.target) ||
+    !isValidJournalTarget(value.target, value.version) ||
     !isValidJournalFiles(value.files, value.slug) ||
     (value.version === 2 && !isValidV2Journal(context, value))
   ) {
@@ -227,7 +241,7 @@ function isCreateStage(value: unknown): value is CreateStage {
   return typeof value === 'string' && CREATE_STAGES.some((stage) => stage === value);
 }
 
-function isValidJournalTarget(value: unknown): boolean {
+function isValidJournalTarget(value: unknown, version: unknown): boolean {
   if (!isRecord(value)) return false;
   if (value.kind !== 'existing' && value.kind !== 'new-worktree') return false;
   if (
@@ -241,6 +255,7 @@ function isValidJournalTarget(value: unknown): boolean {
   }
   if (value.kind === 'existing') return true;
   return (
+    (version !== 2 || (typeof value.instanceId === 'string' && UUID.test(value.instanceId))) &&
     typeof value.branch === 'string' &&
     typeof value.baseCommit === 'string' &&
     /^[a-f0-9]{40}(?:[a-f0-9]{24})?$/iu.test(value.baseCommit)

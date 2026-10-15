@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { lstat, open, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { ProjectHomeError } from './project-home';
+import { ProjectHomeError } from './project-home-error';
 
 /**
  * Only physical-Git-instance evidence lives inside Git metadata.

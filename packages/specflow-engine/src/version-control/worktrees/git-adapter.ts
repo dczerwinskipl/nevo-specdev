@@ -94,6 +94,14 @@ export function createGitWorktreePort(engine: SpecFlowEngine): WorktreePort {
     return stat ? 'conflict' : 'absent';
   };
 
+  const validateReservedPlan = async (plan: WorktreePlan): Promise<void> => {
+    await assertRepository();
+    assertPlanIdentity(plan);
+    await git.validateBranch(plan.branch);
+    await git.verifyBaseProjectConfig(plan.baseCommit);
+    await assertSafeTargetParents(plan.targetPath);
+  };
+
   return {
     async availability() {
       try {
@@ -136,7 +144,7 @@ export function createGitWorktreePort(engine: SpecFlowEngine): WorktreePort {
         branch,
         targetPath,
       };
-      await this.validateReservedPlan(result);
+      await validateReservedPlan(result);
       await git.validateBranch(branch);
       if ((await inspect(result)) !== 'absent') {
         throw new GitCapabilityError(
@@ -146,20 +154,14 @@ export function createGitWorktreePort(engine: SpecFlowEngine): WorktreePort {
       }
       return result;
     },
-    async validateReservedPlan(plan) {
-      await assertRepository();
-      assertPlanIdentity(plan);
-      await git.validateBranch(plan.branch);
-      await git.verifyBaseProjectConfig(plan.baseCommit);
-      await assertSafeTargetParents(plan.targetPath);
-    },
+    validateReservedPlan,
     inspectEffect: inspect,
     async create(plan) {
       const policy = await loadGitWorktreePolicy(engine.context);
       if (!policy.enabled) {
         throw new GitCapabilityError('GIT_DISABLED', 'Managed worktree creation is disabled.');
       }
-      await this.validateReservedPlan(plan);
+      await validateReservedPlan(plan);
       if ((await inspect(plan)) !== 'absent') {
         throw new GitCapabilityError(
           'GIT_OPERATION_UNCERTAIN',
