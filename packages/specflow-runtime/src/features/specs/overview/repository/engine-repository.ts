@@ -88,15 +88,15 @@ async function project(item: Extract<DiscoveredSpecification, { status: 'availab
     id: item.specId,
     title: spec.title,
     updatedAt,
-    // Task completion, signals and active sessions are not yet authoritative
-    // Engine facts. Do not guess completed task counts or invent attention.
-    progress: { completed: 0, total: spec.tasks.length },
+    // Engine currently owns no verified task outcome/progress projection.
+    progress: null,
   };
   const current: CurrentSpecRecord = {
     ...common,
-    readyForWork: spec.status === 'ready',
-    signals: [],
-    currentExecutions: [],
+    // Manifest status is not proof of execution or human-attention state.
+    readyForWork: null,
+    signals: null,
+    currentExecutions: null,
   };
   const archive: ArchivedSpecRecord = common;
   return {

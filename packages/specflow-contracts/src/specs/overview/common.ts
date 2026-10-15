@@ -12,10 +12,14 @@ export const SpecOverviewItemSchema = Type.Object({
   ),
   tags: Type.Optional(Type.Array(Type.String())),
   updatedAt: Type.String(),
-  progress: Type.Object({
-    completed: Type.Integer({ minimum: 0 }),
-    total: Type.Integer({ minimum: 0 }),
-  }),
+  // Null means progress was not projected, not zero completed tasks.
+  progress: Type.Union([
+    Type.Object({
+      completed: Type.Integer({ minimum: 0 }),
+      total: Type.Integer({ minimum: 0 }),
+    }),
+    Type.Null(),
+  ]),
 });
 export type SpecOverviewItem = Static<typeof SpecOverviewItemSchema>;
 

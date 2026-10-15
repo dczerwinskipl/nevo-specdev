@@ -7,6 +7,7 @@ export const DEFAULT_CURRENT_SECTIONS: readonly CurrentSpecSectionId[] = [
   'active',
   'ready',
   'draft',
+  'unknown',
 ];
 
 export function parseCurrentOverviewSections(
@@ -33,7 +34,8 @@ function parseSection(value: unknown, path: string): CurrentSpecSectionId {
     value === 'requires-attention' ||
     value === 'active' ||
     value === 'ready' ||
-    value === 'draft'
+    value === 'draft' ||
+    value === 'unknown'
   ) {
     return value;
   }
