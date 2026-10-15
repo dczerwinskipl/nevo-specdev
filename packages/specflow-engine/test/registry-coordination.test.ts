@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { channel } from 'node:diagnostics_channel';
 import { spawn, execFileSync } from 'node:child_process';
 import {
   access,
@@ -176,6 +177,34 @@ async function launchTogether(workers: readonly Worker[]): Promise<void> {
 }
 
 describe('E1.T05 independent OS-process coordination', () => {
+  it('publishes lock profiling only after the coordinated action is released', async () => {
+    const { context } = await fixture();
+    const diagnostics = channel('nevo.specflow.engine.control-lock');
+    const samples: unknown[] = [];
+    const listener = (message: unknown): void => {
+      samples.push(message);
+    };
+    diagnostics.subscribe(listener);
+    let duringAction = -1;
+    try {
+      await withProjectControlLock(context, async () => {
+        duringAction = samples.length;
+      });
+    } finally {
+      diagnostics.unsubscribe(listener);
+    }
+
+    expect(duringAction).toBe(0);
+    expect(samples).toHaveLength(1);
+    expect(samples[0]).toMatchObject({
+      projectId: context.project.projectId,
+      released: true,
+    });
+    const sample = samples[0] as { waitMs: number; heldMs: number };
+    expect(sample.waitMs).toBeGreaterThanOrEqual(0);
+    expect(sample.heldMs).toBeGreaterThanOrEqual(0);
+  });
+
   it('does not advance registry revision when snapshot keys are reordered', async () => {
     const { context } = await fixture();
     const path = workspaceRegistryPath(context);
