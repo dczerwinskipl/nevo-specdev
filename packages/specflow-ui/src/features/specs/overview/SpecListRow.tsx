@@ -80,7 +80,11 @@ export function SpecListRow({ item, specificationHref, onOpenTarget }: SpecListR
               <span className="min-w-0 [overflow-wrap:anywhere]" data-spec-key>
                 {item.key}
               </span>
-              <span data-spec-progress>{t('specifications.progress', item.progress)}</span>
+              <span data-spec-progress>
+                {item.progress
+                  ? t('specifications.progress', item.progress)
+                  : t('specifications.progressUnknown')}
+              </span>
               <div className="col-span-2 min-w-0 @xl/spec-row:col-span-1" data-spec-summary>
                 <SpecRowSummary item={item} />
               </div>

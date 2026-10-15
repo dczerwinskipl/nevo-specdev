@@ -110,7 +110,8 @@
       "requiresAttention": "Requires attention",
       "active": "Active",
       "ready": "Ready",
-      "draft": "Draft"
+      "draft": "Draft",
+      "unknown": "Status unavailable"
     },
     "collapseSection": "Collapse {{label}} section",
     "expandSection": "Expand {{label}} section",
@@ -136,7 +137,8 @@
       "concurrent_other": "{{count}} sessions active",
       "concurrent_few": "{{count}} sessions active",
       "concurrent_many": "{{count}} sessions active",
-      "attention": "Human attention required"
+      "attention": "Human attention required",
+      "unknown": "Work status not available yet"
     },
     "history": {
       "completed": "Completed {{date}}",
@@ -146,6 +148,7 @@
     "forbidden": {
       "title": "Access denied",
       "description": "You do not have permission to view these specifications."
-    }
+    },
+    "progressUnknown": "Progress unavailable"
   }
 }

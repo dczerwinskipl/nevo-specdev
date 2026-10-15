@@ -110,7 +110,8 @@
       "requiresAttention": "Wymaga uwagi",
       "active": "W toku",
       "ready": "Gotowe",
-      "draft": "Szkice"
+      "draft": "Szkice",
+      "unknown": "Status nieustalony"
     },
     "collapseSection": "Zwiń sekcję {{label}}",
     "expandSection": "Rozwiń sekcję {{label}}",
@@ -136,7 +137,8 @@
       "concurrent_few": "{{count}} sesje w toku",
       "concurrent_many": "{{count}} sesji w toku",
       "concurrent_other": "{{count}} sesji w toku",
-      "attention": "Wymagana uwaga człowieka"
+      "attention": "Wymagana uwaga człowieka",
+      "unknown": "Stan pracy jeszcze nieustalony"
     },
     "history": {
       "completed": "Ukończono {{date}}",
@@ -146,6 +148,7 @@
     "forbidden": {
       "title": "Brak dostępu",
       "description": "Nie masz uprawnień do przeglądania tych specyfikacji."
-    }
+    },
+    "progressUnknown": "Postęp niedostępny"
   }
 }
