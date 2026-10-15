@@ -105,6 +105,28 @@ Feature-local ports and adapters stay with the capability that owns them. Do not
 technical buckets such as a generic `repositories/` folder when the port exists only for one
 sub-capability.
 
+### Canonical Specification discovery and read policy
+
+Engine's verified Project Home registry selects the authoritative checkout. The manifest in that
+checkout supplies canonical Specification metadata. Runtime only projects Engine reads and MUST
+NOT fall back to demo data or an unbound primary duplicate if a bound workspace is unavailable.
+For an authorized, scoped Overview, discovery skips manifest reads from explicitly bound linked
+worktrees outside the authorized Spec set. Primary still must be validated as a whole because
+unbound canonical Specs are discovered there and cannot be enumerated by registry bindings alone.
+Thus primary manifest corruption is a project-level integrity failure (HTTP 503), even for
+scoped reads. These are deliberately asymmetric behaviors, not permission to silently skip
+corrupt manifests.
+
+A read without a coordinated writer lock is not a transaction across files. It must use bytes
+and metadata from the same opened file, verify the authority registry revision before returning
+the projection, and fail explicitly if canonical selection changes during the read. On-demand
+HTTP re-read observes later CLI updates; there is no promise of an atomic multi-Spec filesystem
+snapshot or freshness beyond the final validation instant.
+
+Task/Workflow projections remain separate from unvalidated manifest `tasks` entries. The typed
+read contract follows the canonical workflow-state design in Plan 03; Runtime must not synthesize
+progress, completion or execution state from unknown Task payloads.
+
 ## One lifecycle owner
 
 Every process, server, timer, listener, stream, connection, registry entry, or other

@@ -23,7 +23,9 @@ related:
 
 ## Required implementation / outcome
 
-Implement **production** Engine-backed Overview/Workspace/Document/Task read repositories in `packages/specflow-runtime/src/features/specs/`, preserving existing DTOs, feature-scoped authorization, unavailable vs missing and current demo repositories **only** for explicit demo/test. No frontend fixtures in production.
+Implement **production** Engine-backed Overview/Workspace/Document reads in `packages/specflow-runtime/src/features/specs/`, preserving existing DTOs, feature-scoped authorization, unavailable vs missing and current demo repositories **only** for explicit demo/test. No frontend fixtures in production.
+
+**Architecture closure (15 October 2026): Task read is explicitly deferred, not silently implemented.** Engine's current `SpecificationManifest.tasks` is `readonly unknown[]`: its parser validates only the array shape. There is no accepted Task identity, readiness/transition schema or public Task read DTO. Exposing `readTasks(): Promise<unknown[]>` would leak an unvalidated storage detail. E3.T03 establishes canonical workflow/step state; E3.T09 owns the subsequent typed Task/Workflow Runtime read projection once that contract is approved. This does not block E2.T08, which must not claim Task read or workflow readiness evidence. See `packages/specflow-runtime/src/features/specs/read/engine-repository.ts` for the supported Workspace/Document ports.
 
 ## Prerequisites
 
