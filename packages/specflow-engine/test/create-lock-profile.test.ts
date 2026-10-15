@@ -19,7 +19,8 @@ import { createGitTestProject, git } from './support/git-project';
  * different canonical spec counts, journal counts and Git worktree counts.
  */
 describe('Create reservation lock profile (opt-in)', () => {
-  it.skipIf(process.env.NEVO_PROFILE_CREATE_LOCK !== '1')(
+  // Temporary Linux-only CI measurement. Restore the opt-in gate after recording results.
+  it.skipIf(process.env.NEVO_PROFILE_CREATE_LOCK !== '1' && process.platform !== 'linux')(
     'reports lock wait/hold durations and Git subprocess counts',
     async () => {
       for (const size of [0, 5, 20]) {
