@@ -4,9 +4,9 @@ import { it } from 'vitest';
 
 import {
   openSpecFlowEngine,
-  createSpecification,
+  createSpecificationForTesting as createSpecification,
   type CreateSpecificationInput,
-} from '../../src/index';
+} from '../../src/testing';
 import { writeJsonAtomically } from '../../src/project/atomic-json';
 import { withCreateJournalLock, createJournalPath } from '../../src/specs/create-journal';
 
