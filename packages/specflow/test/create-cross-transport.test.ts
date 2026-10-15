@@ -6,9 +6,12 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
 import {
+  addWorkspace,
   bootstrapProjectHome,
   discoverSpecifications,
   openSpecFlowEngine,
+  provisionLinkedWorkspaceIdentity,
+  updateWorkspaceRegistry,
   workspaceRegistryPath,
 } from '@nevo/specflow-engine';
 import { startRuntime } from '@nevo/specflow-runtime';
@@ -181,5 +184,50 @@ describe('E2.T05 — real HTTP and offline CLI share one Engine authority', () =
       workspaceRoot: created.workspaceRoot,
     });
     expect((await engine.readRegistry()).specBindings).toHaveLength(1);
+  }, 60000);
+
+  it('rejects cross-transport retry when HTTP and linked CLI select different defaults', async () => {
+    const port = await freePort();
+    const { root, engine } = await fixture(true, port);
+    const linked = await realpath(await mkdtemp(join(tmpdir(), 'specflow-selector-linked-')));
+    roots.push(linked);
+    git(root, 'worktree', 'add', '-q', '-b', 'spec/selector-checkout', linked);
+    const registered = await provisionLinkedWorkspaceIdentity(
+      engine.context,
+      linked,
+      randomUUID(),
+      false,
+    );
+    await updateWorkspaceRegistry(engine.context, (registry) => addWorkspace(registry, registered));
+
+    const runtime = await startRuntime({
+      projectRoot: root,
+      projectConfigPath: join(root, '.nevo/config.yaml'),
+      localConfigPath: join(root, '.nevo/local/config.yaml'),
+      dependencies: { specs: { engine } },
+    });
+    const operationId = randomUUID();
+    const title = 'Cross transport selector boundary';
+    try {
+      const response = await fetch('http://127.0.0.1:' + port + '/api/specs', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ title, operationId }),
+      });
+      expect(response.status).toBe(201);
+      const created = (await response.json()) as Created;
+      expect(created.workspaceId).toBe(engine.workspace.workspaceId);
+      expect(created.workspaceId).not.toBe(registered.workspaceId);
+    } finally {
+      await runtime.close();
+    }
+
+    const registryBefore = await readFile(workspaceRegistryPath(engine.context), 'utf8');
+    await expect(
+      cli(linked).run(['create', '--title', title, '--operation-id', operationId, '--json']),
+    ).rejects.toMatchObject({ code: 'CREATE_CONFLICT' });
+    expect(await readFile(workspaceRegistryPath(engine.context), 'utf8')).toBe(registryBefore);
+    expect((await engine.readRegistry()).specBindings).toHaveLength(1);
+    expect(await discoverSpecifications(engine)).toHaveLength(1);
   }, 60000);
 });

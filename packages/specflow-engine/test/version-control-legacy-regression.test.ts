@@ -232,7 +232,7 @@ describe('VC06 legacy real-Git regression coverage through WorktreePort', () => 
     await mkdir(dirname(input.targetPath));
     await mkdir(input.targetPath);
     await expect(worktrees.plan(input)).rejects.toMatchObject({
-      code: 'BRANCH_ALREADY_EXISTS',
+      code: 'WORKTREE_PATH_CONFLICT',
     });
 
     await rm(dirname(input.targetPath), { recursive: true });
