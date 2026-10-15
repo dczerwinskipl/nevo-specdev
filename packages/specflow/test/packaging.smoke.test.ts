@@ -366,11 +366,14 @@ describe('packaged @nevo/specflow — isolated tarball install', () => {
       const specs = await fetch(`http://127.0.0.1:${port}/api/specs/overview?collection=current`);
       expect(specs.status).toBe(200);
       expect(specs.headers.get('cache-control')).toBe('no-store');
-      expect(await specs.json()).toMatchObject({
-        revision: expect.stringMatching(/^[a-f0-9]{64}$/u),
-        collection: 'current',
-        items: [],
-      });
+      const overview = (await specs.json()) as {
+        readonly revision: string;
+        readonly collection: string;
+        readonly items: unknown[];
+      };
+      expect(overview.revision).toMatch(/^[a-f0-9]{64}$/u);
+      expect(overview.collection).toBe('current');
+      expect(overview.items).toEqual([]);
       expect(response.status).toBe(200);
       await expect(response.json()).resolves.toEqual({
         authenticationRequired: false,
