@@ -41,8 +41,11 @@ export async function readCanonicalSpecSources(
   engine: SpecFlowEngine,
   isIncluded?: (specId: string) => boolean,
 ): Promise<readonly CanonicalSpecSource[]> {
+  // Discovery validates a registry snapshot, but files are opened afterwards.
+  // Detect a new binding/registration published during that second stage.
+  const revision = (await engine.readRegistry()).revision;
   const discovered = await discoverSpecifications(engine, isIncluded);
-  return Promise.all(
+  const sources = await Promise.all(
     discovered.map(async (item): Promise<CanonicalSpecSource> => {
       if (item.status !== 'available') return item;
       const source = await readPhysicalDocument(item, 'manifest');
@@ -83,6 +86,8 @@ export async function readCanonicalSpecSources(
       };
     }),
   );
+  await assertRegistryRevision(engine, revision);
+  return sources;
 }
 
 /** Authorized callers select specId; filesystem paths never cross into Runtime. */
@@ -91,21 +96,58 @@ export async function readCanonicalSpecDocument(
   specId: string,
   kind: 'manifest' | 'overview',
 ): Promise<CanonicalDocumentRead> {
+  const revision = (await engine.readRegistry()).revision;
   const found = await resolveSpecification(engine, specId);
+  let result: CanonicalDocumentRead;
   if (found.status === 'workspace_unavailable') {
-    return { status: 'workspace_unavailable', reason: found.reason };
+    result = { status: 'workspace_unavailable', reason: found.reason };
+  } else if (found.status === 'manifest_missing') {
+    result = { status: 'manifest_missing' };
+  } else {
+    const source = await readPhysicalDocument(found, kind);
+    if (!source) {
+      result = kind === 'manifest' ? { status: 'manifest_missing' } : { status: 'document_missing' };
+    } else {
+      if (kind === 'manifest') {
+        let current;
+        try {
+          current = parseSpecificationManifest(
+            parse(source.content) as unknown,
+            found.specification.slug,
+            found.specification.location,
+          );
+        } catch {
+          throw new SpecificationError(
+            'SPEC_SOURCE_INVALID',
+            'Canonical manifest became invalid during document read.',
+          );
+        }
+        if (current.specId !== specId) {
+          throw new SpecificationError(
+            'SPEC_SOURCE_INVALID',
+            'Canonical manifest identity changed during document read.',
+          );
+        }
+      }
+      result = {
+        status: 'available',
+        relativePath: source.relativePath,
+        content: source.content,
+        sourceRevision: source.revision,
+      };
+    }
   }
-  if (found.status === 'manifest_missing') return { status: 'manifest_missing' };
-  const source = await readPhysicalDocument(found, kind);
-  if (!source) {
-    return kind === 'manifest' ? { status: 'manifest_missing' } : { status: 'document_missing' };
+  await assertRegistryRevision(engine, revision);
+  return result;
+}
+
+async function assertRegistryRevision(engine: SpecFlowEngine, revision: number): Promise<void> {
+  if ((await engine.readRegistry()).revision !== revision) {
+    throw new SpecificationError(
+      'SPEC_CONFLICT',
+      'Canonical Specification binding changed during read. Re-read the source.',
+    );
   }
-  return {
-    status: 'available',
-    relativePath: source.relativePath,
-    content: source.content,
-    sourceRevision: source.revision,
-  };
 }
 
 interface PhysicalSource {
