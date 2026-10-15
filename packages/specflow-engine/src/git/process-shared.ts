@@ -21,8 +21,11 @@ export function spawnLocalGit(cwd: string, args: readonly string[]) {
 export class BoundedGitOutput {
   private readonly decoder = new GitOutputDecoder();
   private bytes = 0;
+  private readonly maxBytes: number;
 
-  constructor(private readonly maxBytes: number) {}
+  constructor(maxBytes: number) {
+    this.maxBytes = maxBytes;
+  }
 
   write(channel: 'stdout' | 'stderr', data: Buffer): boolean {
     this.bytes += data.byteLength;
