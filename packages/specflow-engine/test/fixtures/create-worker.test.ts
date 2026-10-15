@@ -4,10 +4,10 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { it } from 'vitest';
 
 import {
-  createSpecification,
+  createSpecificationForTesting as createSpecification,
   openSpecFlowEngine,
   type CreateSpecificationInput,
-} from '../../src/index';
+} from '../../src/testing';
 
 it.skipIf(!process.env.NEVO_CREATE_WORKER)(
   'independent durable Spec creator',
