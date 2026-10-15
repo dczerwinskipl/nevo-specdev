@@ -77,7 +77,6 @@ export function createEngineSpecsReadRepository(engine: SpecFlowEngine): EngineS
         throw error;
       }
     },
-
   };
 }
 
