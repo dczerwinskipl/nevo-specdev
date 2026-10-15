@@ -42,11 +42,13 @@ export interface CurrentSpecSignalRecord {
 export interface CurrentSpecRecord extends SpecOverviewRecord {
   readonly readyForWork: boolean | null;
   readonly signals: readonly CurrentSpecSignalRecord[] | null;
-  readonly currentExecutions: readonly {
-    readonly sessionId: string;
-    readonly agentRole: string;
-    readonly taskIds: readonly string[];
-  }[] | null;
+  readonly currentExecutions:
+    | readonly {
+        readonly sessionId: string;
+        readonly agentRole: string;
+        readonly taskIds: readonly string[];
+      }[]
+    | null;
 }
 
 export interface ArchivedSpecRecord extends SpecOverviewRecord {
