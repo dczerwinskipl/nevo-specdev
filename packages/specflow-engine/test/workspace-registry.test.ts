@@ -21,7 +21,7 @@ import {
   validateWorkspaceRegistry,
   verifyWorkspaceRoot,
   workspaceRegistryPath,
-} from '../src/index';
+} from '../src/testing';
 
 const roots: string[] = [];
 afterEach(async () => {
