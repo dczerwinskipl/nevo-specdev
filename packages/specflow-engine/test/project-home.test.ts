@@ -11,7 +11,7 @@ import {
   GIT_INSTANCE_SENTINEL_FILE,
   ProjectHomeError,
   resolveProjectHome,
-} from '../src/index';
+} from '../src/testing';
 
 const temporaryRoots: string[] = [];
 
