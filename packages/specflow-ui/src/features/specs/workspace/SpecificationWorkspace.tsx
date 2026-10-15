@@ -4,6 +4,7 @@ import {
 } from '../../../app/navigation/ApplicationLocation';
 import { WorkspaceRouteLeaveGuard } from '../../../app/navigation/WorkspaceRouteLeaveGuard';
 import { useCallback, useMemo, type ReactNode } from 'react';
+import { SpecificationStandaloneBack } from './SpecificationStandaloneBack';
 import {
   Alert,
   AppContent,
@@ -72,6 +73,9 @@ function SpecificationWorkspaceInner({
   specId,
   data,
   collection = 'current',
+  overviewHref,
+  renderBackLink,
+  onBack,
   onOpenDocuments,
   onOpenSessions,
   onOpenRepository,
@@ -264,6 +268,11 @@ function SpecificationWorkspaceInner({
 
                   {/* Specification Overview contributions. Primary destinations belong to Router. */}
                   <div>
+                    <SpecificationStandaloneBack
+                      overviewHref={overviewHref}
+                      renderBackLink={renderBackLink}
+                      onBack={onBack}
+                    />
                     <ApplicationContextLine specId={specId} view="overview" />
                     <WorkView specId={specId} data={data} />
                   </div>

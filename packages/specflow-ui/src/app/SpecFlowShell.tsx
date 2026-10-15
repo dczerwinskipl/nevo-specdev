@@ -1,4 +1,5 @@
-import { useState, type PropsWithChildren } from 'react';
+import { useSessionDisclosurePreferences } from './navigation/useSessionDisclosure';
+import { type PropsWithChildren } from 'react';
 import { designSlot, useDesignMetadata } from '@nevo/figma-capture/metadata';
 import { AppShell } from '@nevo/ui';
 import { useRouter } from '@tanstack/react-router';
@@ -10,9 +11,7 @@ import { NavigationTransitionProvider } from './navigation/NavigationTransition'
 export function SpecFlowShell({ auth, children }: PropsWithChildren<{ readonly auth: AuthStore }>) {
   const { t } = useTranslation();
   const router = useRouter();
-  const [sessionPreferences, setSessionPreferences] = useState<ReadonlyMap<string, boolean>>(
-    () => new Map(),
-  );
+  const sessionDisclosure = useSessionDisclosurePreferences();
   const capture = useDesignMetadata('SpecFlowApplicationShell', { viewport: 'desktop' });
 
   const signOut = async () => {
@@ -46,10 +45,7 @@ export function SpecFlowShell({ auth, children }: PropsWithChildren<{ readonly a
               <ProductNavigation
                 auth={auth}
                 onSignOut={signOut}
-                preferences={sessionPreferences}
-                onPreference={(id, expanded) =>
-                  setSessionPreferences((previous) => new Map(previous).set(id, expanded))
-                }
+                sessionDisclosure={sessionDisclosure}
               />
             }
           >

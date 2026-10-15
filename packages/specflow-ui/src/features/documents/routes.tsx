@@ -1,5 +1,5 @@
 import { createRoute } from '@tanstack/react-router';
-import { useCachedQueryState } from '../../app/navigation/useCachedQueryState';
+import { useCachedQueryState } from '../../app/useCachedQueryState';
 import { documentKeys } from './queries';
 import type { SpecificationDocumentResponse } from '@nevo/specflow-contracts/specs/workspace';
 import {

@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useCachedQueryState } from '../../../app/navigation/useCachedQueryState';
+import { useCachedQueryState } from '../../../app/useCachedQueryState';
 import { specificationKeys } from '../../specs/queries';
 import { getHttpErrorStatus } from '../../specs/httpErrorStatus';
 import type { SpecificationWorkspaceData, SessionSummary } from '../../specs/workspace/model';

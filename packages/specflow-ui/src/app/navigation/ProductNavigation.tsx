@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore } from 'react';
+import { useSyncExternalStore } from 'react';
 import {
   APP_NAVIGATION_INLINE_PADDING,
   NavigationRow,
@@ -6,19 +6,13 @@ import {
   Separator,
   Typography,
   useAppNavigation,
-  type IconGlyph,
 } from '@nevo/ui';
-import { Link, useMatch, useRouter, useRouterState } from '@tanstack/react-router';
+import { Link, useMatch, useRouterState } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
-import {
-  FileText,
-  Home,
-  MessagesSquare,
-  ListChecks,
-  Files,
-  GitCompare,
-  FolderGit2,
-} from 'lucide-react';
+import { FileText } from 'lucide-react';
+import { productNavigationItems } from './productNavigationModel';
+import { useSessionDisclosure, type SessionDisclosurePreferences } from './useSessionDisclosure';
+import { useNavigationFocus } from './useNavigationFocus';
 import { designLayerMetadata } from '@nevo/figma-capture/metadata';
 import type { AuthStore } from '../../auth/store';
 import { AccountMenu } from '../AccountMenu';
@@ -31,16 +25,13 @@ import { SessionNavigationPreview } from '../../features/sessions/navigation/Ses
 export function ProductNavigation({
   auth,
   onSignOut,
-  preferences,
-  onPreference,
+  sessionDisclosure,
 }: {
   auth: AuthStore;
   onSignOut: () => void | Promise<void>;
-  preferences: ReadonlyMap<string, boolean>;
-  onPreference: (id: string, expanded: boolean) => void;
+  sessionDisclosure: SessionDisclosurePreferences;
 }) {
   const { t } = useTranslation();
-  const router = useRouter();
   const { closeNavigation } = useAppNavigation();
   const location = useRouterState({ select: (state) => state.location });
   const collection =
@@ -53,72 +44,19 @@ export function ProductNavigation({
     }) ?? null;
   const identity = useSpecificationNavigationMetadata(specId, collection);
   const summary = useSessionNavigationSummary(specId);
-  const expanded = Boolean(
-    specId && (preferences.get(specId) ?? (summary.state === 'available' && summary.attention)),
-  );
-  useEffect(() => {
-    if (specId && !preferences.has(specId) && summary.state === 'available')
-      onPreference(specId, summary.attention);
-  }, [
+  const expanded = useSessionDisclosure(
     specId,
-    preferences,
-    onPreference,
-    summary.state,
-    'attention' in summary ? summary.attention : false,
-  ]);
-  useEffect(
-    () =>
-      router.subscribe('onResolved', () => {
-        const focus = () =>
-          document.querySelector<HTMLElement>('[data-workspace-active="true"] h1');
-        closeNavigation(focus);
-        requestAnimationFrame(() => focus()?.focus());
-      }),
-    [router, closeNavigation],
+    summary,
+    sessionDisclosure.preferences,
+    sessionDisclosure.setExpanded,
   );
+  useNavigationFocus();
   const state = useSyncExternalStore(
     (listener) => auth.subscribe(listener),
     () => auth.getState(),
     () => auth.getState(),
   );
-  const selected = (view: string) =>
-    specId &&
-    (view === 'overview'
-      ? location.pathname === `/specs/${encodeURIComponent(specId)}`
-      : location.pathname.startsWith(`/specs/${encodeURIComponent(specId)}/${view}`));
-  const viewLabels = {
-    overview: 'specification.viewOverview',
-    sessions: 'specification.viewSessions',
-    tasks: 'specification.viewTasks',
-    documents: 'specification.viewDocuments',
-    changes: 'specification.changesHeading',
-    repository: 'specification.viewRepository',
-  } as const;
-  const views: {
-    id: 'overview' | 'sessions' | 'tasks' | 'documents' | 'changes' | 'repository';
-    icon: IconGlyph;
-  }[] = [
-    { id: 'overview', icon: Home },
-    { id: 'sessions', icon: MessagesSquare },
-    { id: 'tasks', icon: ListChecks },
-    { id: 'documents', icon: Files },
-    ...(identity?.hasGit === false
-      ? []
-      : [
-          { id: 'changes' as const, icon: GitCompare },
-          { id: 'repository' as const, icon: FolderGit2 },
-        ]),
-  ];
-  const target = (view: (typeof views)[number]['id']) =>
-    view === 'overview'
-      ? '/specs/$specId'
-      : view === 'sessions'
-        ? '/specs/$specId/sessions'
-        : view === 'documents'
-          ? '/specs/$specId/documents'
-          : view === 'changes'
-            ? '/specs/$specId/changes'
-            : '/specs/$specId/repository';
+  const views = productNavigationItems(specId, location.pathname, identity?.hasGit);
   return (
     <div
       className="flex min-h-0 flex-1 flex-col"
@@ -196,10 +134,10 @@ export function ProductNavigation({
                   selectionTreatment="surface"
                   key={view.id}
                   icon={view.icon}
-                  label={t(viewLabels[view.id])}
-                  active={view.id !== 'tasks' && Boolean(selected(view.id))}
+                  label={t(view.labelKey)}
+                  active={view.active}
                   renderLink={(children, className) =>
-                    view.id === 'tasks' ? (
+                    view.to === null ? (
                       <span
                         aria-disabled="true"
                         className={className}
@@ -209,7 +147,7 @@ export function ProductNavigation({
                       </span>
                     ) : (
                       <Link
-                        to={target(view.id)}
+                        to={view.to}
                         params={{ specId }}
                         search={
                           view.id === 'changes' ? { collection, source: 'base' } : { collection }
@@ -235,7 +173,7 @@ export function ProductNavigation({
                               ? 'applicationNavigation.collapseSessions'
                               : 'applicationNavigation.expandSessions',
                           ),
-                          onToggle: () => onPreference(specId, !expanded),
+                          onToggle: () => sessionDisclosure.setExpanded(specId, !expanded),
                           content: (
                             <SessionNavigationPreview entries={summary.entries}>
                               <Link

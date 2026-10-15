@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { pickerEntries } from './SpecificationSwitcher';
+import { pickerEntries } from './pickerEntries';
 import { createSpecsFixture } from '../../../test-support/specs/overview/fixtures';
 describe('Specification picker projection', () => {
   const items = createSpecsFixture().items;

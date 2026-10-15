@@ -43,10 +43,12 @@ export function useAppWorkspace() {
 }
 
 interface AppNavigationContextValue {
+  navigationOpen: boolean;
   closeNavigation: (focusTarget?: () => HTMLElement | null) => void;
 }
 
 const AppNavigationContext = createContext<AppNavigationContextValue>({
+  navigationOpen: false,
   closeNavigation: () => undefined,
 });
 
@@ -167,7 +169,10 @@ export function AppShell({
     navigationOpenRef.current = false;
     setNavigationOpen(false);
   }, []);
-  const navigationContext = useMemo(() => ({ closeNavigation }), [closeNavigation]);
+  const navigationContext = useMemo(
+    () => ({ closeNavigation, navigationOpen }),
+    [closeNavigation, navigationOpen],
+  );
   const workspaceContext = useMemo<AppWorkspaceContextValue>(
     () => ({ availableWidth, navigationMode }),
     [availableWidth, navigationMode],

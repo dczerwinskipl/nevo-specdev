@@ -3,7 +3,7 @@ import { specificationKeys } from '../queries';
 import type { SpecificationWorkspaceData } from '../workspace/model';
 import type { SpecsCollection, SpecsOverview } from './model';
 import { specsOverviewKeys } from './queries';
-import { useCachedQueryState } from '../../../app/navigation/useCachedQueryState';
+import { useCachedQueryState } from '../../../app/useCachedQueryState';
 export interface SpecificationNavigationMetadata {
   readonly title: string;
   readonly key?: string;

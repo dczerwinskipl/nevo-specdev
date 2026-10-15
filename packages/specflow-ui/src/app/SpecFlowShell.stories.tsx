@@ -3,7 +3,7 @@ import { DesignCaptureProvider } from '@nevo/figma-capture/metadata';
 import { RouterProvider, createMemoryHistory } from '@tanstack/react-router';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useMemo, useRef } from 'react';
-import { useCachedQueryState } from './navigation/useCachedQueryState';
+import { useCachedQueryState } from './useCachedQueryState';
 import type { SpecsOverview as Catalogue } from '../features/specs/overview/model';
 import { HttpClientError, createHttpClient } from '@nevo/http-client';
 
@@ -48,6 +48,7 @@ export function RoutedApplication({
   navigationScenario,
   cancelNavigation = false,
   catalogueFailure,
+  navigationFailure = false,
 }: {
   authMode?: AuthMode;
   locale?: AppLocale;
@@ -58,6 +59,7 @@ export function RoutedApplication({
     'attention' | 'partial' | 'stale' | 'unavailable' | 'long' | 'identity' | 'revoked';
   cancelNavigation?: boolean;
   catalogueFailure?: 'wrong-collection' | 'invalid-progress';
+  navigationFailure?: boolean;
 }) {
   const catalogueRequests = useRef(0);
   const queryClient = useMemo(() => {
@@ -253,8 +255,10 @@ export function RoutedApplication({
   const router = useMemo(() => {
     const history = createMemoryHistory({ initialEntries: [path] });
     if (cancelNavigation) history.block({ blockerFn: () => true, enableBeforeUnload: false });
-    return createSpecFlowRouter(history, services);
-  }, [path, services, cancelNavigation]);
+    const result = createSpecFlowRouter(history, services);
+    if (navigationFailure) result.navigate = () => Promise.reject(new Error('Navigation failed'));
+    return result;
+  }, [path, services, cancelNavigation, navigationFailure]);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -746,11 +750,106 @@ export const NavigationCancelled: Story = {
       () => !doc.querySelector('.popover-content') || null,
       'Picker must close independently',
     );
-    if (doc.activeElement !== trigger) throw new Error('Picker dismissal must restore its trigger');
+    await waitFor(
+      () => (doc.activeElement === trigger ? trigger : null),
+      'Picker dismissal must restore its trigger',
+    );
     await userEvent.keyboard('{Escape}');
     await waitFor(() => !doc.querySelector('.drawer-panel') || null, 'Drawer must dismiss');
-    if (doc.activeElement !== opener)
-      throw new Error('Drawer dismissal must restore its actual opener');
+    await waitFor(
+      () => (doc.activeElement === opener ? opener : null),
+      'Drawer dismissal must restore its actual opener',
+    );
+  },
+};
+
+export const QueryNavigationPreservesFocus: Story = {
+  args: { path: '/?collection=current' },
+  tags: ['integration'],
+  play: async ({ canvas, canvasElement, userEvent }) => {
+    const archive = await canvas.findByRole('radio', { name: 'Archive' });
+    await userEvent.click(archive);
+    await waitFor(
+      () => (archive.getAttribute('aria-checked') === 'true' ? archive : null),
+      'Archive query must commit',
+    );
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+    );
+    if (canvasElement.ownerDocument.activeElement !== archive)
+      throw new Error('Query-only navigation must preserve the collection control focus');
+  },
+};
+
+export const CurrentPickerKeepsView: Story = {
+  args: { path: '/specs/admission/documents?collection=archive' },
+  tags: ['integration'],
+  play: async ({ canvas, canvasElement, userEvent }) => {
+    const trigger = await canvas.findByRole('button', { name: /Change specification:/ });
+    await userEvent.click(trigger);
+    const doc = canvasElement.ownerDocument;
+    const selected = await waitFor(
+      () => doc.querySelector<HTMLButtonElement>('[role="option"][aria-selected="true"]'),
+      'Current specification must be selected',
+    );
+    await userEvent.click(selected);
+    await waitFor(
+      () =>
+        !doc.querySelector('.popover-content') && doc.activeElement === trigger ? trigger : null,
+      'Selecting current identity dismisses and restores trigger',
+    );
+    await canvas.findByRole('heading', { name: 'Documents', level: 1 });
+    if (!canvas.queryByRole('link', { name: 'Specifications' }))
+      throw new Error('Routed breadcrumb must remain available');
+  },
+};
+
+export const PickerFailureResetsOnOpen: Story = {
+  args: { path: '/specs/admission?collection=current', navigationFailure: true },
+  tags: ['integration'],
+  play: async ({ canvas, canvasElement, userEvent }) => {
+    const trigger = await canvas.findByRole('button', { name: /Change specification:/ });
+    await userEvent.click(trigger);
+    const doc = canvasElement.ownerDocument;
+    const alternative = await waitFor(
+      () => doc.querySelector<HTMLButtonElement>('[role="option"][aria-selected="false"]'),
+      'Picker alternatives must load',
+    );
+    await userEvent.click(alternative);
+    await waitFor(() => doc.querySelector('[role="alert"]'), 'Failed navigation must be announced');
+    await userEvent.keyboard('{Escape}');
+    await waitFor(
+      () => (!doc.querySelector('.popover-content') ? true : null),
+      'Picker closes after failure',
+    );
+    await userEvent.click(trigger);
+    await waitFor(() => (doc.querySelector('.popover-content') ? true : null), 'Picker reopens');
+    if (doc.querySelector('.popover-content [role="alert"]'))
+      throw new Error('Previous navigation failure must reset on open');
+    await userEvent.keyboard('{Escape}');
+  },
+};
+
+export const DrawerRouteCommitFocus: Story = {
+  args: { path: '/specs/admission?collection=current' },
+  globals: { viewport: { value: 'mobile1', isRotated: false } },
+  tags: ['integration'],
+  play: async ({ canvas, canvasElement, userEvent }) => {
+    await userEvent.click(await canvas.findByRole('button', { name: 'Open navigation' }));
+    const doc = canvasElement.ownerDocument;
+    const link = await waitFor(
+      () =>
+        doc.querySelector<HTMLAnchorElement>(
+          'nav a[href="/specs/admission/documents?collection=current"]',
+        ),
+      'Drawer Documents destination must exist',
+    );
+    await userEvent.click(link);
+    const heading = await canvas.findByRole('heading', { name: 'Documents', level: 1 });
+    await waitFor(
+      () => (!doc.querySelector('.drawer-panel') && doc.activeElement === heading ? heading : null),
+      'Committed Drawer navigation must close and focus view H1',
+    );
   },
 };
 

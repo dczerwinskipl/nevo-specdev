@@ -120,3 +120,29 @@ function currentSummary(item: CurrentSpecOverviewItem): CurrentSummary {
       return { kind: 'draft' };
   }
 }
+
+export function rowProgress(progress: RowIdentity['progress']): 'invalid' | 'empty' | 'ready' {
+  return !Number.isSafeInteger(progress.total) ||
+    progress.total < 0 ||
+    !Number.isSafeInteger(progress.completed) ||
+    progress.completed < 0 ||
+    progress.completed > progress.total
+    ? 'invalid'
+    : progress.total === 0
+      ? 'empty'
+      : 'ready';
+}
+type RowMetadataFact =
+  { id: string; kind: 'key' | 'tag' | 'omitted'; value: string } | { id: 'pr'; kind: 'pr' };
+export function rowMetadata(item: SpecRowModel): readonly RowMetadataFact[] {
+  return [
+    ...(item.key ? [{ id: 'key', kind: 'key' as const, value: item.key }] : []),
+    ...item.tags.map((tag, index) => ({ id: `tag-${index}`, kind: 'tag' as const, value: tag })),
+    ...(item.omittedTags
+      ? [{ id: 'omitted', kind: 'omitted' as const, value: `+${item.omittedTags}` }]
+      : []),
+    ...(item.collection === 'current' && item.pullRequests
+      ? [{ id: 'pr' as const, kind: 'pr' as const }]
+      : []),
+  ];
+}

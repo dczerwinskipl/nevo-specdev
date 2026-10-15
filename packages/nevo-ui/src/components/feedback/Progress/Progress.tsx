@@ -57,28 +57,28 @@ export function normalizeProgressValue(value: number, max: number) {
   };
 }
 
-export const Progress = forwardRef<HTMLDivElement, ProgressProps>(function Progress(
-  {
+export const Progress = forwardRef<HTMLDivElement, ProgressProps>(function Progress(input, ref) {
+  const {
     className,
-    max = 100,
-    value,
     variant = 'continuous',
-    completed,
-    total,
     size = 'default',
     style,
+    completed: _completed,
+    total: _total,
+    value: _value,
+    max: _max,
     ...props
-  },
-  ref,
-) {
+  } = input;
   const element = useRef<HTMLDivElement | null>(null);
   const [width, setWidth] = useState(0);
-  const segmented = variant === 'segmented';
-  const valid = !segmented || validProgressCounts(completed!, total!);
-  const normalized = normalizeProgressValue(
-    segmented ? completed! : value!,
-    segmented ? total! : max,
-  );
+  const counts =
+    input.variant === 'segmented' ? { completed: input.completed, total: input.total } : undefined;
+  const segmented = Boolean(counts);
+  const valid = !counts || validProgressCounts(counts.completed, counts.total);
+  const normalized =
+    input.variant === 'segmented'
+      ? normalizeProgressValue(input.completed, input.total)
+      : normalizeProgressValue(input.value, input.max ?? 100);
   useEffect(() => {
     if (!segmented || !element.current) return;
     const node = element.current;
@@ -90,7 +90,7 @@ export const Progress = forwardRef<HTMLDivElement, ProgressProps>(function Progr
   }, [segmented, valid]);
   const capture = useDesignMetadata('Progress', { size, variant });
   if (!valid) return null;
-  const showSegments = segmented && fitsProgressSegments(width, total!);
+  const showSegments = counts && fitsProgressSegments(width, counts.total);
 
   return (
     <div
@@ -114,15 +114,15 @@ export const Progress = forwardRef<HTMLDivElement, ProgressProps>(function Progr
       {...capture}
     >
       {showSegments ? (
-        Array.from({ length: total! }, (_, index) => (
+        Array.from({ length: counts.total }, (_, index) => (
           <div
             key={index}
             aria-hidden="true"
             data-progress-segment
-            data-completed={index < completed! ? 'true' : 'false'}
+            data-completed={index < counts.completed ? 'true' : 'false'}
             className={cn(
               'h-full min-w-0 flex-1 rounded-[2px]',
-              index < completed! ? 'bg-progress-fill' : 'bg-surface-control',
+              index < counts.completed ? 'bg-progress-fill' : 'bg-surface-control',
             )}
           />
         ))

@@ -131,7 +131,10 @@ export const InteractionContract: Story = {
       () => document.querySelector('[role="dialog"]') === null,
       'Escape should close the Drawer.',
     );
-    assert(document.activeElement === trigger, 'Escape should restore focus to the trigger.');
+    await waitFor(
+      () => (document.activeElement === trigger ? trigger : null),
+      'Escape should restore focus to the trigger.',
+    );
 
     await userEvent.keyboard('{Enter}');
     const closeAction = await waitFor(

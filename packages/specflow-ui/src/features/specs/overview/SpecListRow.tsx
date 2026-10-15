@@ -10,7 +10,13 @@ import {
 } from '@nevo/ui';
 import { useTranslation } from 'react-i18next';
 import type { ReactNode } from 'react';
-import type { SpecRowModel } from './presentation';
+import {
+  rowMetadata,
+  rowProgress,
+  type SpecRowModel,
+  type CurrentSpecRowModel,
+  type ArchiveSpecRowModel,
+} from './presentation';
 import type { CurrentSpecTarget } from './model';
 import { SpecRowSummary } from './SpecRowSummary';
 
@@ -90,27 +96,6 @@ export function SpecListRow({
     ) : (
       item.title
     ));
-  const facts: ReactNode[] = [
-    ...(item.key
-      ? [
-          <span key="key" className="font-mono" data-spec-key>
-            {item.key}
-          </span>,
-        ]
-      : []),
-    ...item.tags.map((tag) => <span key={`tag-${tag}`}>{tag}</span>),
-    ...(item.omittedTags ? [<span key="more">+{item.omittedTags}</span>] : []),
-    ...(item.collection === 'current' && pullRequests
-      ? [<span key="pr">{pullRequests}</span>]
-      : []),
-  ];
-  const count = t('specifications.progress', item.progress);
-  const valid =
-    Number.isSafeInteger(item.progress.total) &&
-    item.progress.total >= 0 &&
-    Number.isSafeInteger(item.progress.completed) &&
-    item.progress.completed >= 0 &&
-    item.progress.completed <= item.progress.total;
   return (
     <InformationList.Item
       interactive={
@@ -128,122 +113,179 @@ export function SpecListRow({
               : 'grid min-w-0 gap-x-6 gap-y-2 @min-[48rem]/collection:grid-cols-[minmax(0,1fr)_12rem_6rem]'
           }
         >
-          <div className="min-w-0">
-            <Typography
-              as={item.collection === 'current' ? 'h3' : 'h2'}
-              variant="title-sm"
-              className="min-w-0 text-content-primary"
-              data-spec-title
-            >
-              {primary}
-            </Typography>
-            {facts.length ? (
-              <Typography
-                as="div"
-                variant="body-sm"
-                className={cn(
-                  'mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 text-content-secondary [overflow-wrap:anywhere]',
-                  item.collection === 'current' &&
-                    pr?.kind === 'single' &&
-                    '[@media(pointer:coarse)]:items-start',
-                )}
-                data-spec-metadata
-              >
-                {facts.map((fact, index) => (
-                  <span key={index} className="contents">
-                    {index ? <span aria-hidden="true">·</span> : null}
-                    {fact}
-                  </span>
-                ))}
-              </Typography>
-            ) : null}
-          </div>
+          <SpecRowIdentity item={item} primary={primary} pullRequests={pullRequests} />
           {item.collection === 'current' ? (
-            <>
-              <Typography
-                as="div"
-                variant="body-sm"
-                className="flex min-w-0 items-center gap-2 text-content-secondary @min-[48rem]/collection:col-start-3 @min-[48rem]/collection:row-start-1 @min-[48rem]/collection:flex-col @min-[48rem]/collection:items-start"
-                data-spec-progress
-              >
-                {!valid ? (
-                  t('specifications.invalidProgress')
-                ) : item.progress.total === 0 ? (
-                  t('specifications.noTasks')
-                ) : (
-                  <>
-                    <div className="w-28 shrink-0">
-                      <Progress
-                        variant="segmented"
-                        size="compact"
-                        completed={item.progress.completed}
-                        total={item.progress.total}
-                        aria-label={t('specifications.progressLabel', { title: item.title })}
-                        aria-valuetext={count}
-                      />
-                    </div>
-                    <span>{count}</span>
-                  </>
-                )}
-              </Typography>
-              <Typography
-                as="div"
-                variant="body-sm"
-                className="min-w-0 @min-[48rem]/collection:col-start-2 @min-[48rem]/collection:row-start-1"
-                data-spec-summary
-              >
-                <SpecRowSummary item={item} />
-              </Typography>
-            </>
+            <CurrentSpecRowContent item={item} />
           ) : (
-            <>
-              <Typography
-                as="div"
-                variant="body-sm"
-                className="min-w-0 text-content-secondary"
-                data-spec-summary
-              >
-                <SpecRowSummary item={item} />
-              </Typography>
-              <Typography
-                as="div"
-                variant="body-sm"
-                className={cn(
-                  'min-w-0 text-content-secondary',
-                  !pullRequests && 'hidden @min-[48rem]/collection:block',
-                )}
-              >
-                {pullRequests}
-              </Typography>
-            </>
+            <ArchivedSpecRowContent item={item} pullRequests={pullRequests} />
           )}
         </div>
       </InformationList.Content>
-      <InformationList.Trailing>
-        <OverflowMenu
-          className="min-h-11 min-w-11 @min-[48rem]/collection:min-h-control-height-default @min-[48rem]/collection:min-w-control-height-default"
-          label={item.key ?? item.title}
-          triggerLabel={t('specifications.rowActions', { title: item.title })}
-        >
-          <MenuItem
-            leadingIcon="file"
-            disabled={!onOpenTarget && !specificationHref}
-            onSelect={() => {
-              if (onOpenTarget) onOpenTarget(target);
-              else if (specificationHref) window.location.assign(specificationHref);
-            }}
-          >
-            {t('specifications.openDetails')}
-          </MenuItem>
-          <MenuSeparator />
-          <MenuItem disabled leadingIcon="archive">
-            {t('specifications.archiveUnavailable')}
-          </MenuItem>
-          <MenuItem disabled leadingIcon="trash" tone="danger">
-            {t('specifications.deleteUnavailable')}
-          </MenuItem>
-        </OverflowMenu>
-      </InformationList.Trailing>
+      <SpecRowActions
+        item={item}
+        specificationHref={specificationHref}
+        onOpenTarget={onOpenTarget}
+      />
     </InformationList.Item>
+  );
+}
+
+function SpecRowIdentity({
+  item,
+  primary,
+  pullRequests,
+}: {
+  item: SpecRowModel;
+  primary: ReactNode;
+  pullRequests: ReactNode;
+}) {
+  const facts = rowMetadata(item);
+  return (
+    <div className="min-w-0">
+      <Typography
+        as={item.collection === 'current' ? 'h3' : 'h2'}
+        variant="title-sm"
+        className="min-w-0 text-content-primary"
+        data-spec-title
+      >
+        {primary}
+      </Typography>
+      {facts.length ? (
+        <Typography
+          as="div"
+          variant="body-sm"
+          className={cn(
+            'mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 text-content-secondary [overflow-wrap:anywhere]',
+            item.collection === 'current' &&
+              item.pullRequests?.kind === 'single' &&
+              '[@media(pointer:coarse)]:items-start',
+          )}
+          data-spec-metadata
+        >
+          {facts.map((fact, index) => (
+            <span key={fact.id} className="contents">
+              {index ? <span aria-hidden="true">·</span> : null}
+              {fact.kind === 'key' ? (
+                <span className="font-mono" data-spec-key>
+                  {fact.value}
+                </span>
+              ) : fact.kind === 'pr' ? (
+                <span>{pullRequests}</span>
+              ) : (
+                <span>{fact.value}</span>
+              )}
+            </span>
+          ))}
+        </Typography>
+      ) : null}
+    </div>
+  );
+}
+function CurrentSpecRowContent({ item }: { item: CurrentSpecRowModel }) {
+  const { t } = useTranslation();
+  const count = t('specifications.progress', item.progress);
+  const progress = rowProgress(item.progress);
+  return (
+    <>
+      <Typography
+        as="div"
+        variant="body-sm"
+        className="flex min-w-0 items-center gap-2 text-content-secondary @min-[48rem]/collection:col-start-3 @min-[48rem]/collection:row-start-1 @min-[48rem]/collection:flex-col @min-[48rem]/collection:items-start"
+        data-spec-progress
+      >
+        {progress === 'invalid' ? (
+          t('specifications.invalidProgress')
+        ) : progress === 'empty' ? (
+          t('specifications.noTasks')
+        ) : (
+          <>
+            <div className="w-28 shrink-0">
+              <Progress
+                variant="segmented"
+                size="compact"
+                completed={item.progress.completed}
+                total={item.progress.total}
+                aria-label={t('specifications.progressLabel', { title: item.title })}
+                aria-valuetext={count}
+              />
+            </div>
+            <span>{count}</span>
+          </>
+        )}
+      </Typography>
+      <Typography
+        as="div"
+        variant="body-sm"
+        className="min-w-0 @min-[48rem]/collection:col-start-2 @min-[48rem]/collection:row-start-1"
+        data-spec-summary
+      >
+        <SpecRowSummary item={item} />
+      </Typography>
+    </>
+  );
+}
+function ArchivedSpecRowContent({
+  item,
+  pullRequests,
+}: {
+  item: ArchiveSpecRowModel;
+  pullRequests: ReactNode;
+}) {
+  return (
+    <>
+      <Typography
+        as="div"
+        variant="body-sm"
+        className="min-w-0 text-content-secondary"
+        data-spec-summary
+      >
+        <SpecRowSummary item={item} />
+      </Typography>
+      <Typography
+        as="div"
+        variant="body-sm"
+        className={cn(
+          'min-w-0 text-content-secondary',
+          !pullRequests && 'hidden @min-[48rem]/collection:block',
+        )}
+      >
+        {pullRequests}
+      </Typography>
+    </>
+  );
+}
+function SpecRowActions({
+  item,
+  specificationHref,
+  onOpenTarget,
+}: Pick<SpecListRowProps, 'item' | 'specificationHref' | 'onOpenTarget'>) {
+  const { t } = useTranslation();
+  const target: CurrentSpecTarget = { kind: 'specification', specId: item.id };
+  return (
+    <InformationList.Trailing>
+      <OverflowMenu
+        className="min-h-11 min-w-11 @min-[48rem]/collection:min-h-control-height-default @min-[48rem]/collection:min-w-control-height-default"
+        label={item.key ?? item.title}
+        triggerLabel={t('specifications.rowActions', { title: item.title })}
+      >
+        <MenuItem
+          leadingIcon="file"
+          disabled={!onOpenTarget && !specificationHref}
+          onSelect={() => {
+            if (onOpenTarget) onOpenTarget(target);
+            else if (specificationHref) window.location.assign(specificationHref);
+          }}
+        >
+          {t('specifications.openDetails')}
+        </MenuItem>
+        <MenuSeparator />
+        <MenuItem disabled leadingIcon="archive">
+          {t('specifications.archiveUnavailable')}
+        </MenuItem>
+        <MenuItem disabled leadingIcon="trash" tone="danger">
+          {t('specifications.deleteUnavailable')}
+        </MenuItem>
+      </OverflowMenu>
+    </InformationList.Trailing>
   );
 }

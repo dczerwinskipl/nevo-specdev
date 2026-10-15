@@ -21,6 +21,7 @@ import { invalidateSpecificationWorkspace } from './queries';
 
 import type { SpecificationWorkspaceData } from './workspace/model';
 import { SpecificationWorkspace } from './workspace/SpecificationWorkspace';
+import { SpecificationStandaloneBack } from './workspace/SpecificationStandaloneBack';
 import { useSpecificationWorkspace } from './useSpecificationWorkspace';
 
 export interface SpecificationSurfaceProps {
@@ -107,6 +108,11 @@ function SpecificationSurfaceConnected({
               <AppContentContainer align="start" size="full" className="grid gap-6">
                 <div>
                   <ApplicationContextLine specId={specId} view="overview" />
+                  <SpecificationStandaloneBack
+                    overviewHref={overviewHref}
+                    renderBackLink={renderBackLink}
+                    onBack={onBack}
+                  />
                   <ViewPageTitle className="mb-0">{t('specification.title')}</ViewPageTitle>
                 </div>
                 <Alert
@@ -175,6 +181,11 @@ function SpecificationSurfaceConnected({
                 size="full"
                 className="flex flex-col items-center justify-center gap-4 text-center"
               >
+                <SpecificationStandaloneBack
+                  overviewHref={overviewHref}
+                  renderBackLink={renderBackLink}
+                  onBack={onBack}
+                />
                 <ViewPageTitle>{t('specification.title')}</ViewPageTitle>
                 <Spinner size="md" aria-label={t('common.loading')} />
                 <Typography variant="body-sm" className="text-content-muted">

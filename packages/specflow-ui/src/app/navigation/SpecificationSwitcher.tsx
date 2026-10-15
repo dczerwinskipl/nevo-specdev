@@ -1,7 +1,6 @@
 import { useId, useRef, useState } from 'react';
 import { ChevronsUpDown } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { useRouter, useRouterState, Link } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import {
   Popover,
   PopoverTrigger,
@@ -12,23 +11,8 @@ import {
   Button,
 } from '@nevo/ui';
 import { useTranslation } from 'react-i18next';
-import { useAppServices } from '../useAppServices';
-import { specsOverviewQueryOptions } from '../../features/specs/overview/queries';
-import type { SpecsCollection, SpecOverviewItem } from '../../features/specs/overview/model';
-import { useNavigationTransition } from './NavigationTransition';
-export function pickerEntries(
-  items: readonly SpecOverviewItem[],
-  current: { id: string; title: string; key?: string } | undefined,
-  term: string,
-) {
-  const query = term.trim().toLocaleLowerCase();
-  const matches = (item: { title: string; key?: string }) =>
-    [item.title, item.key ?? ''].some((value) => value.toLocaleLowerCase().includes(query));
-  return [
-    ...(current && matches(current) ? [current] : []),
-    ...items.filter((item) => item.id !== current?.id && matches(item)).slice(0, 5),
-  ];
-}
+import type { SpecsCollection } from '../../features/specs/overview/model';
+import { useSpecificationSwitcher } from './useSpecificationSwitcher';
 export function SpecificationSwitcher({
   specId,
   title,
@@ -43,64 +27,21 @@ export function SpecificationSwitcher({
   identityAvailable: boolean;
 }) {
   const { t } = useTranslation();
-  const router = useRouter();
-  const { specsOverviewApi } = useAppServices();
-  const [open, setOpen] = useState(false);
-  const [term, setTerm] = useState('');
-  const routePending = useRouterState({ select: (state) => state.status === 'pending' });
-  const { guardPending } = useNavigationTransition();
-  const pending = routePending || guardPending;
-  const [failure, setFailure] = useState(false);
+  const { open, term, setTerm, pending, failure, query, entries, choose, committed, onOpenChange } =
+    useSpecificationSwitcher({ specId, title, displayKey, collection, identityAvailable });
   const trigger = useRef<HTMLButtonElement>(null);
   const search = useRef<HTMLInputElement>(null);
   const panel = useRef<HTMLDivElement>(null);
   const listId = useId();
-  const committed = useRef(false);
   const [layer, setLayer] = useState<HTMLElement | null>(null);
-  const query = useQuery({
-    ...specsOverviewQueryOptions(specsOverviewApi, collection),
-    enabled: open,
-  });
-  const denied =
-    query.error && 'status' in query.error && [401, 403, 404].includes(Number(query.error.status));
-  const entries = pickerEntries(
-    denied ? [] : (query.data?.items ?? []),
-    identityAvailable ? { id: specId, title, key: displayKey } : undefined,
-    term,
-  );
-  const choose = async (id: string) => {
-    if (pending) return;
-    if (id === specId) {
-      setOpen(false);
-      return;
-    }
-    setFailure(false);
-    try {
-      await router.navigate({
-        to: '/specs/$specId',
-        params: { specId: id },
-        search: { collection },
-      });
-      if (router.state.location.pathname === `/specs/${encodeURIComponent(id)}`) {
-        committed.current = true;
-        setOpen(false);
-      }
-    } catch {
-      setFailure(true);
-    }
-  };
   const focusOption = (index: number) =>
     panel.current?.querySelectorAll<HTMLButtonElement>('[role="option"]')[index]?.focus();
   return (
     <Popover
       open={open}
       onOpenChange={(value) => {
-        if (value) {
-          committed.current = false;
-          setLayer(trigger.current?.closest<HTMLElement>('[role="dialog"]') ?? null);
-          setTerm('');
-        }
-        setOpen(value);
+        if (value) setLayer(trigger.current?.closest<HTMLElement>('[role="dialog"]') ?? null);
+        onOpenChange(value);
       }}
     >
       <PopoverTrigger asChild>

@@ -20,6 +20,15 @@ import {
   type ApplicationView,
 } from '../../../app/navigation/ApplicationLocation';
 
+const sectionViews = {
+  tasks: 'tasks',
+  documents: 'documents',
+  sessions: 'sessions',
+  activity: 'overview',
+  repository: 'repository',
+  changes: 'changes',
+} as const satisfies Record<SpecificationSectionId, ApplicationView>;
+
 /**
  * Temporary aggregate adapter for routed feature lists that do not yet have
  * independent Runtime list endpoints. Never use this for a resource Detail page.
@@ -74,7 +83,7 @@ export function SpecificationAggregatePage({
               <ApplicationLocationIdentity
                 title={title}
                 specId={specId}
-                view={section as ApplicationView}
+                view={sectionViews[section ?? 'activity']}
               />
             }
           />
@@ -83,7 +92,7 @@ export function SpecificationAggregatePage({
         <AppContent className="w-content-xwide max-w-full">
           <AppWorkspaceBody className="py-6">
             <AppContentContainer align="start" size="full">
-              <ApplicationContextLine specId={specId} view={section as ApplicationView} />
+              <ApplicationContextLine specId={specId} view={sectionViews[section ?? 'activity']} />
               <ViewPageTitle>{title}</ViewPageTitle>
               {query.isPending ? (
                 <Spinner label={t('specification.loadingWorkspace', { id: specId })} />
