@@ -13,7 +13,7 @@ import {
   provisionLinkedWorkspaceIdentity,
   updateWorkspaceRegistry,
   workspaceRegistryPath,
-} from '@nevo/specflow-engine';
+} from '@nevo/specflow-engine/testing';
 import { startRuntime } from '@nevo/specflow-runtime';
 import { afterEach, describe, expect, it } from 'vitest';
 
