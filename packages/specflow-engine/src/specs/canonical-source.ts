@@ -106,7 +106,8 @@ export async function readCanonicalSpecDocument(
   } else {
     const source = await readPhysicalDocument(found, kind);
     if (!source) {
-      result = kind === 'manifest' ? { status: 'manifest_missing' } : { status: 'document_missing' };
+      result =
+        kind === 'manifest' ? { status: 'manifest_missing' } : { status: 'document_missing' };
     } else {
       if (kind === 'manifest') {
         let current;
