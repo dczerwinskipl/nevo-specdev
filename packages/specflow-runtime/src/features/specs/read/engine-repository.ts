@@ -37,7 +37,6 @@ export interface EngineSpecsReadRepository {
     specId: string,
     kind: 'manifest' | 'overview',
   ): Promise<CanonicalSpecRead<CanonicalDocument>>;
-  readTasks(specId: string): Promise<CanonicalSpecRead<readonly unknown[]>>;
 }
 
 export function createEngineSpecsReadRepository(engine: SpecFlowEngine): EngineSpecsReadRepository {
@@ -78,13 +77,7 @@ export function createEngineSpecsReadRepository(engine: SpecFlowEngine): EngineS
         throw error;
       }
     },
-    async readTasks(specId) {
-      const found = await resolve(specId);
-      if (found.status !== 'available') return unavailable(found);
-      // Retain the canonical manifest representation; task transport DTOs
-      // must be introduced separately, not guessed from arbitrary YAML shapes.
-      return { status: 'available', value: [...found.specification.tasks] };
-    },
+
   };
 }
 
