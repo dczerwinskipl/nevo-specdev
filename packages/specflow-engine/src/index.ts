@@ -1,6 +1,5 @@
 // Public Engine boundary: dependency-free of CLI, Runtime, HTTP, providers and UI.
-// This first capability exposes checkout-local bootstrap semantics only.
-// Canonical Project Home and durable coordination belong to subsequent tasks.
+// Worktree mutation and raw Git commands remain internal to Engine.
 export {
   isGitIgnored,
   LOCAL_CONFIG_RELATIVE_PATH,
@@ -92,13 +91,6 @@ export {
   type WorkspaceSpecification,
 } from './specs/repository';
 
-export {
-  openGitCapability,
-  type GitCapability,
-  type GitWorktreeFacts,
-  type GitWorktreePlan,
-  type NewWorktreeRequest,
-} from './git/capability';
 export { GitCapabilityError, type GitCapabilityErrorCode } from './git/errors';
 
 export {
