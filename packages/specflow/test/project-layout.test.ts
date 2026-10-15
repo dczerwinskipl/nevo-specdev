@@ -9,7 +9,7 @@ import {
   isGitIgnored,
   LOCAL_CONFIG_RELATIVE_PATH,
   resolveGitCheckoutLayout,
-} from '@nevo/specflow-engine';
+} from '@nevo/specflow-engine/testing';
 
 const dirs: string[] = [];
 
