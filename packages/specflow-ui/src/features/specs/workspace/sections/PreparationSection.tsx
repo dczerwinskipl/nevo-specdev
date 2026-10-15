@@ -16,7 +16,7 @@ export function PreparationSection() {
           <Icon name="chat" size="sm" />
         </span>
         <Typography
-          as="h3"
+          as="h2"
           variant="section-label"
           id="preparation-heading"
           className="font-semibold text-content-primary"

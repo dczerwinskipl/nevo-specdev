@@ -5,12 +5,14 @@ import { describe, expect, it, vi } from 'vitest';
 import { createSpecificationWorkspaceFixture } from '../../../../test-support/specs/workspace/fixtures';
 import { specificationKeys } from '../queries';
 import { useSpecificationNavigationMetadata } from './useSpecificationNavigationMetadata';
+import { specsOverviewKeys } from './queries';
+import { createSpecsFixture } from '../../../../test-support/specs/overview/fixtures';
 
 function renderNavigation(queryClient: QueryClient, specId: string | null): string {
   function NavigationProbe() {
     const metadata = useSpecificationNavigationMetadata(specId);
     return (
-      <span>
+      <span data-stale={metadata?.stale} data-display-key={metadata?.key}>
         {metadata
           ? `${metadata.title}|${metadata.documentCount}|${String(metadata.hasGit)}`
           : 'unknown'}
@@ -25,6 +27,24 @@ function renderNavigation(queryClient: QueryClient, specId: string | null): stri
 }
 
 describe('Specification navigation metadata', () => {
+  it('marks retained catalogue keys stale even when the Workspace title is fresh', () => {
+    const client = new QueryClient();
+    const catalogue = createSpecsFixture();
+    const item = catalogue.items[0]!;
+    client.setQueryData(
+      specificationKeys.detail(item.id),
+      createSpecificationWorkspaceFixture('working', item.id),
+    );
+    const key = specsOverviewKeys.collection('current');
+    client.setQueryData(key, catalogue);
+    client
+      .getQueryCache()
+      .find({ queryKey: key, exact: true })!
+      .setState({ status: 'error', error: new Error('Catalogue refresh failed') });
+    expect(renderNavigation(client, item.id)).toContain('data-stale="true"');
+    expect(renderNavigation(client, item.id)).toContain(`data-display-key="${item.key}"`);
+    client.clear();
+  });
   it('does not fetch Workspace for a directly opened Task or Document', () => {
     const queryClient = new QueryClient();
     const getWorkspace = vi.fn().mockRejectedValue(new Error('Workspace unavailable'));
@@ -34,7 +54,7 @@ describe('Specification navigation metadata', () => {
 
     expect(renderNavigation(queryClient, 's')).toContain('unknown');
     expect(getWorkspace).not.toHaveBeenCalled();
-    expect(queryClient.getQueryState(specificationKeys.detail('s'))?.fetchStatus).toBe('idle');
+    expect(queryClient.getQueryState(specificationKeys.detail('s'))).toBeUndefined();
   });
 
   it('reuses cached Workspace navigation metadata without copying its server state', () => {

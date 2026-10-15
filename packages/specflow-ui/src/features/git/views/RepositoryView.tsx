@@ -3,11 +3,16 @@ import { useTranslation } from 'react-i18next';
 import type { RepoContext } from '../../specs/workspace/model';
 
 export interface RepositoryViewProps {
+  readonly showHeading?: boolean;
   readonly repoContext?: RepoContext;
   readonly onGoToChanges: () => void;
 }
 
-export function RepositoryView({ repoContext, onGoToChanges }: RepositoryViewProps) {
+export function RepositoryView({
+  repoContext,
+  onGoToChanges,
+  showHeading = true,
+}: RepositoryViewProps) {
   const { t } = useTranslation();
 
   const facts: [string, string][] = [
@@ -50,9 +55,11 @@ export function RepositoryView({ repoContext, onGoToChanges }: RepositoryViewPro
 
   return (
     <div className="grid max-w-content-standard gap-6 py-2">
-      <Typography as="h2" variant="title-md" className="font-semibold text-content-primary">
-        {t('specification.repositoryHeading')}
-      </Typography>
+      {showHeading ? (
+        <Typography as="h2" variant="title-md" className="font-semibold text-content-primary">
+          {t('specification.repositoryHeading')}
+        </Typography>
+      ) : null}
 
       <div className="divide-y divide-border-subtle">
         {facts.map(([label, value], index) => (

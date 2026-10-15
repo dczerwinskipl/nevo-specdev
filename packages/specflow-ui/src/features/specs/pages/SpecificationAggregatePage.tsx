@@ -13,6 +13,21 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useSpecificationWorkspace } from '../useSpecificationWorkspace';
 import type { SpecificationSectionId, SpecificationWorkspaceData } from '../workspace/model';
+import {
+  ApplicationLocationIdentity,
+  ApplicationContextLine,
+  ViewPageTitle,
+  type ApplicationView,
+} from '../../../app/navigation/ApplicationLocation';
+
+const sectionViews = {
+  tasks: 'tasks',
+  documents: 'documents',
+  sessions: 'sessions',
+  activity: 'overview',
+  repository: 'repository',
+  changes: 'changes',
+} as const satisfies Record<SpecificationSectionId, ApplicationView>;
 
 /**
  * Temporary aggregate adapter for routed feature lists that do not yet have
@@ -59,10 +74,26 @@ export function SpecificationAggregatePage({
   const sectionCopy = sectionDenied ? deniedCopy : unavailableCopy;
   return (
     <AppWorkspace split="primary">
-      <AppWorkspace.Primary header={<WorkspaceHeader title={title} />}>
+      <AppWorkspace.Primary
+        header={
+          <WorkspaceHeader
+            title={title}
+            as="span"
+            identityContent={
+              <ApplicationLocationIdentity
+                title={title}
+                specId={specId}
+                view={sectionViews[section ?? 'activity']}
+              />
+            }
+          />
+        }
+      >
         <AppContent className="w-content-xwide max-w-full">
           <AppWorkspaceBody className="py-6">
             <AppContentContainer align="start" size="full">
+              <ApplicationContextLine specId={specId} view={sectionViews[section ?? 'activity']} />
+              <ViewPageTitle>{title}</ViewPageTitle>
               {query.isPending ? (
                 <Spinner label={t('specification.loadingWorkspace', { id: specId })} />
               ) : mustShowError ? (

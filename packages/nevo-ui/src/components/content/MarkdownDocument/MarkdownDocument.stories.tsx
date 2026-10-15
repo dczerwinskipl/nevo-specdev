@@ -74,3 +74,7 @@ export const ProductLinkRenderer: Story = {
       ) : undefined,
   },
 };
+
+export const EmbeddedUnderViewTitle: Story = {
+  args: { source: '# Section below a view title\n\n## Subsection', headingOffset: 1 },
+};

@@ -82,10 +82,23 @@ export function archiveRow(item: ArchivedSpecOverviewItem): ArchiveSpecRowModel 
   return {
     ...identity(item),
     collection: 'archive',
-    history: item.completedAt
-      ? { kind: 'completed', timestamp: item.completedAt }
-      : { kind: 'archived', timestamp: item.archivedAt },
+    history:
+      item.completedAt !== undefined
+        ? { kind: 'completed', timestamp: item.completedAt }
+        : { kind: 'archived', timestamp: item.archivedAt },
   };
+}
+
+export function sortArchiveItems(items: readonly ArchivedSpecOverviewItem[]) {
+  const milestone = (item: ArchivedSpecOverviewItem) => {
+    const value = Date.parse(item.completedAt ?? item.archivedAt ?? '');
+    return Number.isFinite(value) ? value : -Infinity;
+  };
+  return [...items].sort((a, b) => {
+    const left = milestone(a);
+    const right = milestone(b);
+    return left === right ? a.id.localeCompare(b.id) : right > left ? 1 : -1;
+  });
 }
 
 function currentSummary(item: CurrentSpecOverviewItem): CurrentSummary {
@@ -106,4 +119,30 @@ function currentSummary(item: CurrentSpecOverviewItem): CurrentSummary {
     case 'draft':
       return { kind: 'draft' };
   }
+}
+
+export function rowProgress(progress: RowIdentity['progress']): 'invalid' | 'empty' | 'ready' {
+  return !Number.isSafeInteger(progress.total) ||
+    progress.total < 0 ||
+    !Number.isSafeInteger(progress.completed) ||
+    progress.completed < 0 ||
+    progress.completed > progress.total
+    ? 'invalid'
+    : progress.total === 0
+      ? 'empty'
+      : 'ready';
+}
+type RowMetadataFact =
+  { id: string; kind: 'key' | 'tag' | 'omitted'; value: string } | { id: 'pr'; kind: 'pr' };
+export function rowMetadata(item: SpecRowModel): readonly RowMetadataFact[] {
+  return [
+    ...(item.key ? [{ id: 'key', kind: 'key' as const, value: item.key }] : []),
+    ...item.tags.map((tag, index) => ({ id: `tag-${index}`, kind: 'tag' as const, value: tag })),
+    ...(item.omittedTags
+      ? [{ id: 'omitted', kind: 'omitted' as const, value: `+${item.omittedTags}` }]
+      : []),
+    ...(item.collection === 'current' && item.pullRequests
+      ? [{ id: 'pr' as const, kind: 'pr' as const }]
+      : []),
+  ];
 }

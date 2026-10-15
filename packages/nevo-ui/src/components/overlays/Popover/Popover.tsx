@@ -11,13 +11,14 @@ export const PopoverClose = PopoverPrimitive.Close;
 
 export type PopoverContentProps = ComponentPropsWithoutRef<typeof PopoverPrimitive.Content> & {
   container?: HTMLElement | null;
+  motion?: 'default' | 'navigation';
 };
 
 export const PopoverContent = forwardRef<
   ComponentRef<typeof PopoverPrimitive.Content>,
   PopoverContentProps
 >(function PopoverContent(
-  { align = 'start', children, className, container, sideOffset = 8, ...props },
+  { align = 'start', children, className, container, motion = 'default', sideOffset = 8, ...props },
   ref,
 ) {
   const capture = useDesignMetadata('Popover');
@@ -29,6 +30,7 @@ export const PopoverContent = forwardRef<
         align={align}
         className={cn('popover-content', floatingSurfaceClassName, className)}
         sideOffset={sideOffset}
+        data-motion={motion}
         {...props}
         {...capture}
       >

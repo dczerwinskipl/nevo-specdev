@@ -4,13 +4,20 @@ import { useTranslation } from 'react-i18next';
 import type { SpecificationChangesData } from '../../specs/workspace/model';
 
 export interface ChangesViewProps {
+  readonly showHeading?: boolean;
   readonly currentSource: 'base' | 'uncommitted' | 'mr';
   readonly changes?: SpecificationChangesData;
   readonly onSourceChange: (source: 'base' | 'uncommitted' | 'mr') => void;
   readonly onDiff?: (file: string) => void;
 }
 
-export function ChangesView({ currentSource, changes, onSourceChange, onDiff }: ChangesViewProps) {
+export function ChangesView({
+  currentSource,
+  changes,
+  onSourceChange,
+  onDiff,
+  showHeading = true,
+}: ChangesViewProps) {
   const { t } = useTranslation();
 
   const files = (changes ? changes[currentSource] : undefined) ?? [];
@@ -18,9 +25,11 @@ export function ChangesView({ currentSource, changes, onSourceChange, onDiff }: 
   return (
     <div className="grid max-w-content-standard gap-6 py-2">
       <div>
-        <Typography as="h2" variant="title-md" className="font-semibold text-content-primary">
-          {t('specification.changesHeading')}
-        </Typography>
+        {showHeading ? (
+          <Typography as="h2" variant="title-md" className="font-semibold text-content-primary">
+            {t('specification.changesHeading')}
+          </Typography>
+        ) : null}
         <Typography variant="body-sm" className="mt-1 text-content-muted">
           {t('specification.changesWorktreeContext')}
         </Typography>

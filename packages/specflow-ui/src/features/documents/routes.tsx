@@ -1,4 +1,12 @@
-import { createRoute, Link, useRouterState } from '@tanstack/react-router';
+import { createRoute } from '@tanstack/react-router';
+import { useCachedQueryState } from '../../app/useCachedQueryState';
+import { documentKeys } from './queries';
+import type { SpecificationDocumentResponse } from '@nevo/specflow-contracts/specs/workspace';
+import {
+  ApplicationLocationIdentity,
+  ApplicationContextLine,
+  ViewPageTitle,
+} from '../../app/navigation/ApplicationLocation';
 import { useTranslation } from 'react-i18next';
 import {
   AppContent,
@@ -44,6 +52,7 @@ function DocumentsRouteScreen() {
     >
       {(data) => (
         <DocumentsView
+          showHeading={false}
           documents={data.documents}
           onOpenDocument={(documentId) => {
             void navigate({
@@ -61,36 +70,46 @@ function DocumentsRouteScreen() {
 
 function DocumentDetailRouteScreen() {
   const { specId, documentId } = documentDetailRoute.useParams();
-  const { collection } = documentDetailRoute.useSearch();
   const { t } = useTranslation();
-  const from = useRouterState({ select: (state) => state.location.state.specflowDocumentReturnTo });
+  const document = useCachedQueryState<SpecificationDocumentResponse>(
+    documentKeys.detail(specId, documentId),
+  );
+  const title =
+    document?.status === 'error'
+      ? t('specification.viewDocuments')
+      : (document?.data?.title ?? t('specification.viewDocuments'));
   return (
     <AppWorkspace split="primary">
-      <AppWorkspace.Primary header={<WorkspaceHeader title={documentId} />}>
+      <AppWorkspace.Primary
+        header={
+          <WorkspaceHeader
+            title={t('specification.viewDocuments')}
+            as="span"
+            identityContent={
+              <ApplicationLocationIdentity
+                title={t('specification.viewDocuments')}
+                view="document"
+                specId={specId}
+                detailLabel={title}
+              />
+            }
+          />
+        }
+      >
         <AppContent className="w-content-xwide max-w-full">
           <AppWorkspaceBody className="py-6">
             <AppContentContainer align="start" size="full">
               <div className="grid max-w-content-standard gap-6">
-                {from === 'overview' ? (
-                  <Link
-                    to="/specs/$specId"
-                    params={{ specId }}
-                    search={{ collection }}
-                    className="w-fit text-body-sm font-medium text-accent-primary"
-                  >
-                    {t('specification.backToSpecification')}
-                  </Link>
-                ) : (
-                  <Link
-                    to="/specs/$specId/documents"
-                    params={{ specId }}
-                    search={{ collection }}
-                    className="w-fit text-body-sm font-medium text-accent-primary"
-                  >
-                    {t('specification.backToDocuments')}
-                  </Link>
-                )}
-                <DocumentContent specId={specId} documentId={documentId} />
+                <div>
+                  <ApplicationContextLine specId={specId} view="document" />
+                  <ViewPageTitle className="mb-0">{title}</ViewPageTitle>
+                </div>
+                <DocumentContent
+                  specId={specId}
+                  documentId={documentId}
+                  omitTitle={document?.data?.title}
+                  headingOffset={1}
+                />
               </div>
             </AppContentContainer>
           </AppWorkspaceBody>

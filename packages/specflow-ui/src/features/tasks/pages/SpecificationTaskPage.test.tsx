@@ -77,11 +77,11 @@ describe('direct Full Task page', () => {
     expect(mapped).not.toHaveProperty('group');
   });
 
-  it('shows Task content without a seeded Workspace query and keeps archive return context', () => {
+  it('shows an independent Task with one view-owned Primary title', () => {
     const markup = renderTask();
     expect(markup).toContain('Independently readable Task');
     expect(markup).toContain('Available without a Workspace collection');
-    expect(markup).toContain('/specs/admission?collection=archive');
+    expect(markup.match(/<h1\b/g)).toHaveLength(1);
     expect(markup).not.toContain('Task not found');
   });
 

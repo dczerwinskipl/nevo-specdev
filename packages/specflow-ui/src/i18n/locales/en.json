@@ -229,7 +229,8 @@
     "taskStatusBlocked": "Blocked",
     "sessionStatusActive": "Active",
     "sessionStatusAttention": "Requires attention",
-    "attentionViewTask": "View task"
+    "attentionViewTask": "View task",
+    "viewTasks": "Tasks"
   },
   "playground": {
     "title": "UI Playground",
@@ -273,6 +274,19 @@
     "openSignal": "{{label}} — {{title}}",
     "more_one": "+{{count}} more",
     "more_other": "+{{count}} more",
+    "noTasks": "No tasks",
+    "invalidProgress": "Progress unavailable",
+    "progressLabel": "Task completion for {{title}}",
+    "specificationColumn": "Specification",
+    "situationColumn": "Situation",
+    "progressColumn": "Progress",
+    "milestoneColumn": "Milestone",
+    "newestMilestoneFirst": "Newest milestone first",
+    "dateUnavailable": "Date unavailable",
+    "milestone": {
+      "completed": "Completed",
+      "archived": "Archived"
+    },
     "progress": "{{completed}} / {{total}} Tasks",
     "execution_one": "{{role}} · {{count}} Task",
     "execution_few": "{{role}} · {{count}} Tasks",
@@ -452,5 +466,35 @@
     "readerUnavailable": "No reader is available for this material.",
     "materialForbidden": "Access restricted",
     "restrictedMaterial": "Restricted material"
+  },
+  "applicationNavigation": {
+    "location": "Application location",
+    "allSpecifications": "All specifications",
+    "specificationOverview": "Specification overview",
+    "currentSpecification": "Current specification",
+    "changeSpecification": "Change specification",
+    "searchSpecifications": "Search title or ID",
+    "specifications": "Specifications",
+    "catalogueUnavailable": "Specification catalogue unavailable",
+    "noMatches": "No matching specifications",
+    "navigationFailed": "Unable to open specification. Please try again.",
+    "browseSpecifications": "Browse all specifications",
+    "selected": "Selected",
+    "active": "Active",
+    "activeCount_one": "1 active",
+    "activeCount_other": "{{count}} active",
+    "collapseSessions": "Collapse active sessions",
+    "expandSessions": "Expand active sessions",
+    "needsAttention": "Needs your attention",
+    "allSessions": "View all sessions",
+    "checkingActivity": "Checking activity",
+    "activityUnavailable": "Activity unavailable",
+    "staleActivity": "Activity may be stale",
+    "partialActivity": "Activity is partially available",
+    "tasksUnavailable": "Task list is not available yet",
+    "staleContext": "Context may be stale",
+    "contextUnavailable": "Context unavailable",
+    "activeCount_few": "{{count}} active",
+    "activeCount_many": "{{count}} active"
   }
 }

@@ -6,6 +6,7 @@ import {
   WorkspaceHeaderFrame,
   WorkspaceHeaderIdentity,
   resolveWorkspaceHeaderActions,
+  getWorkspaceHeaderActions,
   type WorkspaceHeaderAction,
 } from './WorkspaceHeader';
 
@@ -30,6 +31,25 @@ const actions: WorkspaceHeaderAction[] = [
 ];
 
 describe('WorkspaceHeader actions', () => {
+  it('keeps structured location outside heading semantics while retaining compact actions', () => {
+    const header = (
+      <WorkspaceHeader
+        title="Overview"
+        as="span"
+        identityContent={
+          <nav aria-label="Location">
+            <span aria-current="page">Overview</span>
+          </nav>
+        }
+        actions={actions}
+      />
+    );
+    expect(getWorkspaceHeaderActions(header)).toEqual(actions);
+    const html = renderToStaticMarkup(header);
+    expect(html).toContain('aria-label="Location"');
+    expect(html).not.toMatch(/<h[1-6]/);
+    expect(html).toContain('New customer');
+  });
   it('automatically renders declared actions beside custom identity exactly once', () => {
     const markup = renderToStaticMarkup(
       <WorkspaceHeaderFrame

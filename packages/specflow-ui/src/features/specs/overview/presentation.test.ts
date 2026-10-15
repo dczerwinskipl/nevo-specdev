@@ -6,9 +6,48 @@ import {
   createSpecsFixture,
 } from '../../../../test-support/specs/overview/fixtures';
 import { sectionTranslationKey } from './model';
-import { archiveRow, currentRow } from './presentation';
+import { archiveRow, currentRow, sortArchiveItems, rowMetadata, rowProgress } from './presentation';
 
 describe('Specs Overview presentation boundary', () => {
+  it('keeps identity facts ordered beneath the title and limits PR metadata to Current', () => {
+    const source = createSpecItem({
+      key: 'UI-1234',
+      tags: ['UI', 'Navigation', 'Extra'],
+      pullRequests: [{ number: 62, url: 'https://example.test/pull/62' }],
+    });
+    const current = currentRow(source);
+    expect(rowMetadata(current)).toEqual([
+      { id: 'key', kind: 'key', value: 'UI-1234' },
+      { id: 'tag-0', kind: 'tag', value: 'UI' },
+      { id: 'tag-1', kind: 'tag', value: 'Navigation' },
+      { id: 'omitted', kind: 'omitted', value: '+1' },
+      { id: 'pr', kind: 'pr' },
+    ]);
+    expect(
+      rowMetadata(archiveRow(createArchiveItem(source))).some((fact) => fact.kind === 'pr'),
+    ).toBe(false);
+  });
+  it('projects empty, valid and malformed progress independently of row composition', () => {
+    expect(rowProgress({ completed: 0, total: 0 })).toBe('empty');
+    expect(rowProgress({ completed: 50, total: 100 })).toBe('ready');
+    for (const progress of [
+      { completed: 1, total: 0 },
+      { completed: 1.5, total: 3 },
+      { completed: 0, total: Infinity },
+      { completed: -1, total: 3 },
+    ])
+      expect(rowProgress(progress)).toBe('invalid');
+  });
+  it('sorts the displayed milestone using completion precedence, invalid dates last and stable identity ties', () => {
+    const items = [
+      createArchiveItem({ id: 'invalid', completedAt: 'broken', archivedAt: '2099-01-01' }),
+      createArchiveItem({ id: 'older', completedAt: '2026-01-01', archivedAt: '2099-01-01' }),
+      createArchiveItem({ id: 'b', archivedAt: '2026-09-01' }),
+      createArchiveItem({ id: 'a', archivedAt: '2026-09-01' }),
+    ];
+    expect(sortArchiveItems(items).map((item) => item.id)).toEqual(['a', 'b', 'older', 'invalid']);
+    expect(items[0]!.id).toBe('invalid');
+  });
   it('derives row summary and concurrent qualifier from the simplified Current model', () => {
     const source = createSpecsFixture().items[0]!;
     const row = currentRow(source);
@@ -118,6 +157,10 @@ describe('Specs Overview presentation boundary', () => {
       { kind: 'completed', timestamp: '2026-09-22T14:00:00Z' },
     ],
     [{}, { kind: 'archived', timestamp: undefined }],
+    [
+      { completedAt: '', archivedAt: '2026-09-25T09:00:00Z' },
+      { kind: 'completed', timestamp: '' },
+    ],
   ])('uses only authoritative Archive lifecycle data: %j', (timestamps, history) => {
     const row = archiveRow(createArchiveItem({ ...timestamps, updatedAt: '2099-01-01T00:00:00Z' }));
 

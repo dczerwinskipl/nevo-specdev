@@ -5,12 +5,17 @@ import { OperationalRow } from '../../specs/shared/OperationalList';
 import type { DocumentItem } from '../../specs/workspace/model';
 
 export interface DocumentsViewProps {
+  readonly showHeading?: boolean;
   readonly documents: readonly DocumentItem[];
   readonly onOpenDocument: (id: string) => void;
 }
 
 /** Documents List is a routable Primary; selection goes to a Full Document route. */
-export function DocumentsView({ documents, onOpenDocument }: DocumentsViewProps) {
+export function DocumentsView({
+  documents,
+  onOpenDocument,
+  showHeading = true,
+}: DocumentsViewProps) {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -21,9 +26,11 @@ export function DocumentsView({ documents, onOpenDocument }: DocumentsViewProps)
   return (
     <div className="grid max-w-content-standard gap-6 py-2">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <Typography as="h2" variant="title-md" className="font-semibold text-content-primary">
-          {t('specification.documentsHeading')}
-        </Typography>
+        {showHeading ? (
+          <Typography as="h2" variant="title-md" className="font-semibold text-content-primary">
+            {t('specification.documentsHeading')}
+          </Typography>
+        ) : null}
         <TextInput
           placeholder={t('specification.searchDocumentPlaceholder')}
           value={searchTerm}
@@ -43,7 +50,7 @@ export function DocumentsView({ documents, onOpenDocument }: DocumentsViewProps)
         {filtered.map((doc) => (
           <OperationalRow
             key={doc.id}
-            titleAs="h3"
+            titleAs={showHeading ? 'h3' : 'h2'}
             primary={doc.title}
             onPrimaryClick={() => onOpenDocument(doc.id)}
             compactFacts={[`${doc.kind} · Markdown`]}

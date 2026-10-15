@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { createElement, type ReactNode } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { cn } from '../../../lib';
@@ -15,6 +15,8 @@ export interface MarkdownDocumentProps {
   source: string;
   className?: string;
   labels?: Partial<MarkdownDocumentLabels>;
+  /** Semantic offset when embedded below a view title; visual styles remain unchanged. */
+  headingOffset?: 0 | 1 | 2 | 3 | 4 | 5;
   /**
    * Product-owned link/reference renderer. Return null/undefined to keep the shared default link.
    * Use it to turn workspace-relative references into contextual navigation without reimplementing
@@ -44,16 +46,23 @@ function DefaultMarkdownLink({ children, href, title }: MarkdownDocumentLinkProp
 function markdownComponents(
   labels: MarkdownDocumentLabels,
   renderLink?: (props: MarkdownDocumentLinkProps) => ReactNode,
+  headingOffset = 0,
 ): Components {
+  const heading = (level: number) =>
+    `h${Math.min(6, level + headingOffset)}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
   return {
     h1: ({ children }) => (
-      <Typography as="h1" className="mb-3 mt-8 text-content-primary first:mt-0" variant="title-lg">
+      <Typography
+        as={heading(1)}
+        className="mb-3 mt-8 text-content-primary first:mt-0"
+        variant="title-lg"
+      >
         {children}
       </Typography>
     ),
     h2: ({ children }) => (
       <Typography
-        as="h2"
+        as={heading(2)}
         className="mb-3 mt-6 border-b border-divider pb-2 text-content-primary first:mt-0"
         variant="title-md"
       >
@@ -61,15 +70,25 @@ function markdownComponents(
       </Typography>
     ),
     h3: ({ children }) => (
-      <Typography as="h3" className="mb-2 mt-5 text-content-primary first:mt-0" variant="title-sm">
+      <Typography
+        as={heading(3)}
+        className="mb-2 mt-5 text-content-primary first:mt-0"
+        variant="title-sm"
+      >
         {children}
       </Typography>
     ),
     h4: ({ children }) => (
-      <Typography as="h4" className="mb-2 mt-4 text-content-primary first:mt-0" variant="label-md">
+      <Typography
+        as={heading(4)}
+        className="mb-2 mt-4 text-content-primary first:mt-0"
+        variant="label-md"
+      >
         {children}
       </Typography>
     ),
+    h5: ({ children }) => createElement(heading(5), undefined, children),
+    h6: ({ children }) => createElement(heading(6), undefined, children),
     p: ({ children }) => (
       <Typography
         as="p"
@@ -171,12 +190,13 @@ export function MarkdownDocument({
   labels: labelsProp,
   renderLink,
   source,
+  headingOffset = 0,
 }: MarkdownDocumentProps) {
   const labels = { ...defaultMarkdownDocumentLabels, ...labelsProp };
   return (
     <div className={cn('w-full min-w-0 max-w-full [overflow-wrap:anywhere]', className)}>
       <ReactMarkdown
-        components={markdownComponents(labels, renderLink)}
+        components={markdownComponents(labels, renderLink, headingOffset)}
         remarkPlugins={[remarkGfm]}
       >
         {source}

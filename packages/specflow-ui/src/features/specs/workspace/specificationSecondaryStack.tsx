@@ -454,6 +454,7 @@ export function ActivityHistoryScreen({
     <AppContent className="w-content-standard max-w-full">
       <AppWorkspaceBody padding="none">
         <ActivityHistory
+          showHeading={false}
           events={data.events}
           isExplicit={true}
           onOpenTask={(taskId) => {

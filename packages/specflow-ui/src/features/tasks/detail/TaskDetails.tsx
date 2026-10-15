@@ -124,9 +124,11 @@ export function TaskDetails({
     >
       <div className="pb-4 @min-[40rem]/task:pb-5">
         <Typography
-          as={preview ? 'h3' : 'h2'}
+          as={preview ? 'h3' : 'h1'}
+          tabIndex={preview ? undefined : -1}
+          data-page-title={preview ? undefined : true}
           variant={preview ? 'title-sm' : 'title-lg'}
-          className="text-content-primary [overflow-wrap:anywhere]"
+          className="text-content-primary outline-none [overflow-wrap:anywhere]"
         >
           {task.title}
         </Typography>
@@ -180,6 +182,7 @@ export function TaskDetails({
         aria-labelledby={`${id}-work`}
       >
         <WorkspaceSection.Header
+          headingTag={preview ? 'h4' : 'h2'}
           id={`${id}-work`}
           title={currentTitle}
           actions={
@@ -249,6 +252,7 @@ export function TaskDetails({
         {requirements.length ? (
           <AccentBlock>
             <WorkspaceSection.Header
+              headingTag={preview ? 'h4' : 'h2'}
               title={t('specification.requiresAttention')}
               count={requirements.length}
             />
@@ -327,6 +331,7 @@ export function TaskDetails({
       {resourceSource?.state !== 'available' || total > 0 ? (
         <WorkspaceSection className={boundaries} aria-labelledby={`${id}-resources`}>
           <WorkspaceSection.Header
+            headingTag={preview ? 'h4' : 'h2'}
             id={`${id}-resources`}
             title={t('taskDetails.resources')}
             count={resourceSource?.state === 'available' ? total : undefined}
@@ -402,14 +407,20 @@ export function TaskDetails({
       ) : null}
       {snapshot?.sections.recovery.state === 'available' && snapshot.sections.recovery.data ? (
         <WorkspaceSection className={boundaries}>
-          <WorkspaceSection.Header title={t('taskDetails.recovery')} />
+          <WorkspaceSection.Header
+            headingTag={preview ? 'h4' : 'h2'}
+            title={t('taskDetails.recovery')}
+          />
           <Typography variant="body-sm">{snapshot.sections.recovery.data.summary}</Typography>
         </WorkspaceSection>
       ) : null}
       {snapshot?.sections.dependencies.state === 'available' &&
       snapshot.sections.dependencies.data.items.length ? (
         <WorkspaceSection className={boundaries}>
-          <WorkspaceSection.Header title={t('taskDetails.dependencies')} />
+          <WorkspaceSection.Header
+            headingTag={preview ? 'h4' : 'h2'}
+            title={t('taskDetails.dependencies')}
+          />
           <InformationList>
             {snapshot.sections.dependencies.data.items.map((dependency) => (
               <OperationalRow

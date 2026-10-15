@@ -1,10 +1,24 @@
-import { Badge, Icon, Link, MenuItem, MenuSeparator, OverflowMenu } from '@nevo/ui';
+import {
+  InformationList,
+  Link,
+  MenuItem,
+  MenuSeparator,
+  OverflowMenu,
+  Progress,
+  Typography,
+  cn,
+} from '@nevo/ui';
 import { useTranslation } from 'react-i18next';
-import type { SpecRowModel } from './presentation';
+import type { ReactNode } from 'react';
+import {
+  rowMetadata,
+  rowProgress,
+  type SpecRowModel,
+  type CurrentSpecRowModel,
+  type ArchiveSpecRowModel,
+} from './presentation';
 import type { CurrentSpecTarget } from './model';
 import { SpecRowSummary } from './SpecRowSummary';
-import { OperationalRow } from '../shared/OperationalList';
-import type { ReactNode } from 'react';
 
 export interface SpecListRowProps {
   readonly item: SpecRowModel;
@@ -17,6 +31,9 @@ export interface SpecListRowProps {
   ) => ReactNode;
 }
 
+export const specPrimaryLinkClassName =
+  'pointer-events-auto static cursor-pointer whitespace-normal [overflow-wrap:anywhere] outline-none after:absolute after:inset-0 after:rounded-control focus-visible:after:outline-2 focus-visible:after:outline-focus-ring hover:text-accent-primary';
+
 export function SpecListRow({
   item,
   specificationHref,
@@ -25,117 +42,250 @@ export function SpecListRow({
 }: SpecListRowProps) {
   const { t } = useTranslation();
   const target: CurrentSpecTarget = { kind: 'specification', specId: item.id };
+  const label = t('specifications.openSpec', { title: item.title });
   const pr = item.pullRequests;
-
-  const metadata =
-    pr || item.tags.length > 0 ? (
-      <div
-        className="flex min-w-0 max-w-full shrink-0 flex-wrap items-center gap-x-2 gap-y-1 text-body-sm text-content-secondary"
-        data-spec-metadata
+  const pullRequests =
+    pr?.kind === 'single' ? (
+      <Link
+        className={cn(
+          'pointer-events-auto relative z-10 inline-flex min-h-6 items-center rounded-control-inline [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11 [@media(pointer:coarse)]:items-start [@media(pointer:coarse)]:rounded-none',
+          item.collection === 'archive' && '[@media(pointer:coarse)]:pt-1',
+        )}
+        href={pr.href}
+        aria-label={t('specifications.openPullRequest', { number: pr.number, title: item.title })}
       >
-        {pr?.kind === 'single' ? (
-          <Link
-            className="pointer-events-auto relative z-10 inline-flex min-h-6 items-center rounded-control-inline"
-            href={pr.href}
-            aria-label={t('specifications.openPullRequest', {
-              number: pr.number,
-              title: item.title,
-            })}
-          >
-            <span className="inline-flex items-center gap-1 underline decoration-current/50">
-              <Icon name="branch" size="sm" />
-              PR #{pr.number}
-            </span>
-          </Link>
-        ) : pr?.kind === 'multiple' ? (
-          <span className="inline-flex min-h-6 items-center">
-            {t('specifications.pullRequests', { count: pr.count })}
-          </span>
-        ) : null}
-        {item.tags.map((tag) => (
-          <Badge className="min-h-6 max-w-32 [&>span]:truncate" title={tag} key={tag}>
-            {tag}
-          </Badge>
-        ))}
-        {item.omittedTags ? (
-          <span className="inline-flex min-h-6 items-center">+{item.omittedTags}</span>
-        ) : null}
-      </div>
-    ) : undefined;
-
-  const trailing = (
-    <OverflowMenu
-      label={item.key ?? item.title}
-      triggerLabel={t('specifications.rowActions', { title: item.title })}
-    >
-      <MenuItem
-        leadingIcon="file"
-        disabled={!onOpenTarget && !specificationHref}
-        onSelect={() => {
-          if (onOpenTarget) onOpenTarget(target);
-          else if (specificationHref) window.location.assign(specificationHref);
+        PR #{pr.number}
+      </Link>
+    ) : pr?.kind === 'multiple' ? (
+      <span>{t('specifications.pullRequests', { count: pr.count })}</span>
+    ) : null;
+  const primary =
+    renderSpecificationLink?.(item.id, item.title, label) ??
+    (specificationHref ? (
+      <a
+        href={specificationHref}
+        className={specPrimaryLinkClassName}
+        data-focus-ring="delegated"
+        aria-label={label}
+        onClick={(event) => {
+          if (
+            !onOpenTarget ||
+            event.button !== 0 ||
+            event.metaKey ||
+            event.ctrlKey ||
+            event.shiftKey ||
+            event.altKey
+          )
+            return;
+          event.preventDefault();
+          onOpenTarget(target);
         }}
       >
-        {t('specifications.openDetails')}
-      </MenuItem>
-      <MenuSeparator />
-      <MenuItem disabled leadingIcon="archive">
-        {t('specifications.archiveUnavailable')}
-      </MenuItem>
-      <MenuItem disabled leadingIcon="trash" tone="danger">
-        {t('specifications.deleteUnavailable')}
-      </MenuItem>
-    </OverflowMenu>
-  );
-
+        {item.title}
+      </a>
+    ) : onOpenTarget ? (
+      <button
+        type="button"
+        className={`${specPrimaryLinkClassName} text-left`}
+        data-focus-ring="delegated"
+        aria-label={label}
+        onClick={() => onOpenTarget(target)}
+      >
+        {item.title}
+      </button>
+    ) : (
+      item.title
+    ));
   return (
-    <OperationalRow
-      primary={item.title}
-      primaryLink={renderSpecificationLink?.(
-        item.id,
-        item.title,
-        t('specifications.openSpec', { title: item.title }),
-      )}
-      primaryHref={renderSpecificationLink ? undefined : specificationHref}
-      onPrimaryClick={
-        !renderSpecificationLink && onOpenTarget
-          ? (event) => {
-              if (specificationHref) {
-                if (
-                  event.button !== 0 ||
-                  event.metaKey ||
-                  event.ctrlKey ||
-                  event.shiftKey ||
-                  event.altKey
-                ) {
-                  return;
-                }
-                event.preventDefault();
-              }
-              onOpenTarget(target);
-            }
-          : undefined
+    <InformationList.Item
+      interactive={
+        Boolean(specificationHref) || Boolean(onOpenTarget) || Boolean(renderSpecificationLink)
       }
-      primaryAriaLabel={t('specifications.openSpec', { title: item.title })}
-      compactFacts={[
-        { text: item.key ?? '', mono: true, dataAttributes: { 'data-spec-key': 'true' } },
-        {
-          text: t('specifications.progress', item.progress),
-          dataAttributes: { 'data-spec-progress': 'true' },
-        },
-      ]}
-      supporting={
-        <div className="min-w-0" data-spec-summary>
-          <SpecRowSummary item={item} />
+      className="py-3"
+      data-spec-id={item.id}
+      data-spec-key={item.key}
+    >
+      <InformationList.Content>
+        <div
+          className={
+            item.collection === 'current'
+              ? 'grid min-w-0 gap-x-6 gap-y-2 @min-[48rem]/collection:grid-cols-[minmax(0,1fr)_15rem_7rem]'
+              : 'grid min-w-0 gap-x-6 gap-y-2 @min-[48rem]/collection:grid-cols-[minmax(0,1fr)_12rem_6rem]'
+          }
+        >
+          <SpecRowIdentity item={item} primary={primary} pullRequests={pullRequests} />
+          {item.collection === 'current' ? (
+            <CurrentSpecRowContent item={item} />
+          ) : (
+            <ArchivedSpecRowContent item={item} pullRequests={pullRequests} />
+          )}
         </div>
-      }
-      metadata={metadata}
-      trailing={trailing}
-      titleAs={item.collection === 'archive' ? 'h2' : 'h3'}
-      dataAttributes={{
-        'data-spec-id': item.id,
-        'data-spec-key': item.key,
-      }}
-    />
+      </InformationList.Content>
+      <SpecRowActions
+        item={item}
+        specificationHref={specificationHref}
+        onOpenTarget={onOpenTarget}
+      />
+    </InformationList.Item>
+  );
+}
+
+function SpecRowIdentity({
+  item,
+  primary,
+  pullRequests,
+}: {
+  item: SpecRowModel;
+  primary: ReactNode;
+  pullRequests: ReactNode;
+}) {
+  const facts = rowMetadata(item);
+  return (
+    <div className="min-w-0">
+      <Typography
+        as={item.collection === 'current' ? 'h3' : 'h2'}
+        variant="title-sm"
+        className="min-w-0 text-content-primary"
+        data-spec-title
+      >
+        {primary}
+      </Typography>
+      {facts.length ? (
+        <Typography
+          as="div"
+          variant="body-sm"
+          className={cn(
+            'mt-1 flex min-w-0 flex-wrap items-center gap-x-1.5 text-content-secondary [overflow-wrap:anywhere]',
+            item.collection === 'current' &&
+              item.pullRequests?.kind === 'single' &&
+              '[@media(pointer:coarse)]:items-start',
+          )}
+          data-spec-metadata
+        >
+          {facts.map((fact, index) => (
+            <span key={fact.id} className="contents">
+              {index ? <span aria-hidden="true">·</span> : null}
+              {fact.kind === 'key' ? (
+                <span className="font-mono" data-spec-key>
+                  {fact.value}
+                </span>
+              ) : fact.kind === 'pr' ? (
+                <span>{pullRequests}</span>
+              ) : (
+                <span>{fact.value}</span>
+              )}
+            </span>
+          ))}
+        </Typography>
+      ) : null}
+    </div>
+  );
+}
+function CurrentSpecRowContent({ item }: { item: CurrentSpecRowModel }) {
+  const { t } = useTranslation();
+  const count = t('specifications.progress', item.progress);
+  const progress = rowProgress(item.progress);
+  return (
+    <>
+      <Typography
+        as="div"
+        variant="body-sm"
+        className="flex min-w-0 items-center gap-2 text-content-secondary @min-[48rem]/collection:col-start-3 @min-[48rem]/collection:row-start-1 @min-[48rem]/collection:flex-col @min-[48rem]/collection:items-start"
+        data-spec-progress
+      >
+        {progress === 'invalid' ? (
+          t('specifications.invalidProgress')
+        ) : progress === 'empty' ? (
+          t('specifications.noTasks')
+        ) : (
+          <>
+            <div className="w-28 shrink-0">
+              <Progress
+                variant="segmented"
+                size="compact"
+                completed={item.progress.completed}
+                total={item.progress.total}
+                aria-label={t('specifications.progressLabel', { title: item.title })}
+                aria-valuetext={count}
+              />
+            </div>
+            <span>{count}</span>
+          </>
+        )}
+      </Typography>
+      <Typography
+        as="div"
+        variant="body-sm"
+        className="min-w-0 @min-[48rem]/collection:col-start-2 @min-[48rem]/collection:row-start-1"
+        data-spec-summary
+      >
+        <SpecRowSummary item={item} />
+      </Typography>
+    </>
+  );
+}
+function ArchivedSpecRowContent({
+  item,
+  pullRequests,
+}: {
+  item: ArchiveSpecRowModel;
+  pullRequests: ReactNode;
+}) {
+  return (
+    <>
+      <Typography
+        as="div"
+        variant="body-sm"
+        className="min-w-0 text-content-secondary"
+        data-spec-summary
+      >
+        <SpecRowSummary item={item} />
+      </Typography>
+      <Typography
+        as="div"
+        variant="body-sm"
+        className={cn(
+          'min-w-0 text-content-secondary',
+          !pullRequests && 'hidden @min-[48rem]/collection:block',
+        )}
+      >
+        {pullRequests}
+      </Typography>
+    </>
+  );
+}
+function SpecRowActions({
+  item,
+  specificationHref,
+  onOpenTarget,
+}: Pick<SpecListRowProps, 'item' | 'specificationHref' | 'onOpenTarget'>) {
+  const { t } = useTranslation();
+  const target: CurrentSpecTarget = { kind: 'specification', specId: item.id };
+  return (
+    <InformationList.Trailing>
+      <OverflowMenu
+        className="min-h-11 min-w-11 @min-[48rem]/collection:min-h-control-height-default @min-[48rem]/collection:min-w-control-height-default"
+        label={item.key ?? item.title}
+        triggerLabel={t('specifications.rowActions', { title: item.title })}
+      >
+        <MenuItem
+          leadingIcon="file"
+          disabled={!onOpenTarget && !specificationHref}
+          onSelect={() => {
+            if (onOpenTarget) onOpenTarget(target);
+            else if (specificationHref) window.location.assign(specificationHref);
+          }}
+        >
+          {t('specifications.openDetails')}
+        </MenuItem>
+        <MenuSeparator />
+        <MenuItem disabled leadingIcon="archive">
+          {t('specifications.archiveUnavailable')}
+        </MenuItem>
+        <MenuItem disabled leadingIcon="trash" tone="danger">
+          {t('specifications.deleteUnavailable')}
+        </MenuItem>
+      </OverflowMenu>
+    </InformationList.Trailing>
   );
 }

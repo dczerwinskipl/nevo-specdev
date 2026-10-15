@@ -229,7 +229,8 @@
     "taskStatusBlocked": "Zablokowane",
     "sessionStatusActive": "Aktywna",
     "sessionStatusAttention": "Wymaga uwagi",
-    "attentionViewTask": "Zobacz task"
+    "attentionViewTask": "Zobacz task",
+    "viewTasks": "Zadania"
   },
   "playground": {
     "title": "UI Playground",
@@ -273,6 +274,19 @@
     "openSignal": "{{label}} — {{title}}",
     "more_one": "+{{count}} więcej",
     "more_other": "+{{count}} więcej",
+    "noTasks": "Brak zadań",
+    "invalidProgress": "Postęp niedostępny",
+    "progressLabel": "Ukończenie zadań dla {{title}}",
+    "specificationColumn": "Specyfikacja",
+    "situationColumn": "Sytuacja",
+    "progressColumn": "Postęp",
+    "milestoneColumn": "Etap",
+    "newestMilestoneFirst": "Najnowszy etap najpierw",
+    "dateUnavailable": "Data niedostępna",
+    "milestone": {
+      "completed": "Ukończono",
+      "archived": "Zarchiwizowano"
+    },
     "progress": "{{completed}} / {{total}} zadań",
     "execution_one": "{{role}} · {{count}} zadanie",
     "execution_few": "{{role}} · {{count}} zadania",
@@ -452,5 +466,35 @@
     "readerUnavailable": "Brak czytnika tego materiału.",
     "materialForbidden": "Dostęp ograniczony",
     "restrictedMaterial": "Materiał chroniony"
+  },
+  "applicationNavigation": {
+    "location": "Lokalizacja w aplikacji",
+    "allSpecifications": "Wszystkie specyfikacje",
+    "specificationOverview": "Przegląd specyfikacji",
+    "currentSpecification": "Bieżąca specyfikacja",
+    "changeSpecification": "Zmień specyfikację",
+    "searchSpecifications": "Szukaj po tytule lub ID",
+    "specifications": "Specyfikacje",
+    "catalogueUnavailable": "Katalog specyfikacji jest niedostępny",
+    "noMatches": "Brak pasujących specyfikacji",
+    "navigationFailed": "Nie można otworzyć specyfikacji. Spróbuj ponownie.",
+    "browseSpecifications": "Przeglądaj wszystkie specyfikacje",
+    "selected": "Wybrana",
+    "active": "Aktywna",
+    "activeCount_one": "1 aktywna",
+    "activeCount_few": "{{count}} aktywne",
+    "activeCount_many": "{{count}} aktywnych",
+    "activeCount_other": "{{count}} aktywnych",
+    "collapseSessions": "Zwiń aktywne sesje",
+    "expandSessions": "Rozwiń aktywne sesje",
+    "needsAttention": "Wymaga Twojej uwagi",
+    "allSessions": "Wszystkie sesje",
+    "checkingActivity": "Sprawdzanie aktywności",
+    "activityUnavailable": "Aktywność jest niedostępna",
+    "staleActivity": "Aktywność może być nieaktualna",
+    "partialActivity": "Aktywność jest częściowo dostępna",
+    "tasksUnavailable": "Lista zadań nie jest jeszcze dostępna",
+    "staleContext": "Kontekst może być nieaktualny",
+    "contextUnavailable": "Kontekst jest niedostępny"
   }
 }

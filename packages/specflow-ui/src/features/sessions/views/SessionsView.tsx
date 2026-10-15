@@ -5,20 +5,28 @@ import { sessionActivityLabel } from '../../specs/workspace/status-labels';
 import { OperationalRow } from '../../specs/shared/OperationalList';
 
 export interface SessionsViewProps {
+  readonly showHeading?: boolean;
   readonly sessions: readonly SessionSummary[];
   readonly onOpenSession?: (id: string) => void;
   readonly onNewConversation?: () => void;
 }
 
-export function SessionsView({ sessions, onOpenSession, onNewConversation }: SessionsViewProps) {
+export function SessionsView({
+  sessions,
+  onOpenSession,
+  onNewConversation,
+  showHeading = true,
+}: SessionsViewProps) {
   const { t } = useTranslation();
 
   return (
     <div className="grid max-w-content-standard gap-6 py-2">
       <div className="flex items-center justify-between gap-4">
-        <Typography as="h2" variant="title-md" className="font-semibold text-content-primary">
-          {t('specification.sessionsOfThisSpec')}
-        </Typography>
+        {showHeading ? (
+          <Typography as="h2" variant="title-md" className="font-semibold text-content-primary">
+            {t('specification.sessionsOfThisSpec')}
+          </Typography>
+        ) : null}
 
         <Button
           leadingIcon="chat-plus"

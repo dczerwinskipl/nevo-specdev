@@ -1,3 +1,8 @@
+import {
+  ApplicationLocationIdentity,
+  ApplicationContextLine,
+  ViewPageTitle,
+} from '../../app/navigation/ApplicationLocation';
 import type { ReactNode } from 'react';
 import {
   Alert,
@@ -6,8 +11,6 @@ import {
   AppWorkspace,
   AppWorkspaceBody,
   Button,
-  Icon,
-  Link,
   Spinner,
   Typography,
   WorkspaceHeader,
@@ -18,6 +21,7 @@ import { invalidateSpecificationWorkspace } from './queries';
 
 import type { SpecificationWorkspaceData } from './workspace/model';
 import { SpecificationWorkspace } from './workspace/SpecificationWorkspace';
+import { SpecificationStandaloneBack } from './workspace/SpecificationStandaloneBack';
 import { useSpecificationWorkspace } from './useSpecificationWorkspace';
 
 export interface SpecificationSurfaceProps {
@@ -84,27 +88,33 @@ function SpecificationSurfaceConnected({
           openNavigation: t('navigation.open'),
         }}
       >
-        <AppWorkspace.Primary header={<WorkspaceHeader title={t('specification.title')} />}>
+        <AppWorkspace.Primary
+          header={
+            <WorkspaceHeader
+              title={t('specification.viewOverview')}
+              as="span"
+              identityContent={
+                <ApplicationLocationIdentity
+                  title={t('specification.viewOverview')}
+                  view="overview"
+                  specId={specId}
+                />
+              }
+            />
+          }
+        >
           <AppContent className="w-content-xwide max-w-full">
             <AppWorkspaceBody className="py-8">
               <AppContentContainer align="start" size="full" className="grid gap-6">
-                {renderBackLink ? (
-                  renderBackLink(
-                    <>
-                      <Icon name="arrow-right" size="sm" className="rotate-180" />
-                      <span data-spec-back-label>{t('specification.backToSpecifications')}</span>
-                    </>,
-                    'w-fit inline-flex items-center gap-2 text-body-sm font-medium',
-                  )
-                ) : overviewHref ? (
-                  <Link href={overviewHref} className="w-fit">
-                    <span className="inline-flex items-center gap-2 text-body-sm font-medium">
-                      <Icon name="arrow-right" size="sm" className="rotate-180" />
-                      <span data-spec-back-label>{t('specification.backToSpecifications')}</span>
-                    </span>
-                  </Link>
-                ) : null}
-
+                <div>
+                  <ApplicationContextLine specId={specId} view="overview" />
+                  <SpecificationStandaloneBack
+                    overviewHref={overviewHref}
+                    renderBackLink={renderBackLink}
+                    onBack={onBack}
+                  />
+                  <ViewPageTitle className="mb-0">{t('specification.title')}</ViewPageTitle>
+                </div>
                 <Alert
                   role="alert"
                   tone="attention"
@@ -129,11 +139,6 @@ function SpecificationSurfaceConnected({
                     <Button variant="secondary" size="sm" onClick={() => void refetch()}>
                       {t('common.retry')}
                     </Button>
-                    {onBack ? (
-                      <Button variant="ghost" size="sm" onClick={onBack}>
-                        {t('specification.backToSpecifications')}
-                      </Button>
-                    ) : null}
                   </div>
                 </Alert>
               </AppContentContainer>
@@ -154,7 +159,21 @@ function SpecificationSurfaceConnected({
           openNavigation: t('navigation.open'),
         }}
       >
-        <AppWorkspace.Primary header={<WorkspaceHeader title={t('specification.title')} />}>
+        <AppWorkspace.Primary
+          header={
+            <WorkspaceHeader
+              title={t('specification.viewOverview')}
+              as="span"
+              identityContent={
+                <ApplicationLocationIdentity
+                  title={t('specification.viewOverview')}
+                  view="overview"
+                  specId={specId}
+                />
+              }
+            />
+          }
+        >
           <AppContent className="w-content-xwide max-w-full">
             <AppWorkspaceBody className="py-12">
               <AppContentContainer
@@ -162,6 +181,12 @@ function SpecificationSurfaceConnected({
                 size="full"
                 className="flex flex-col items-center justify-center gap-4 text-center"
               >
+                <SpecificationStandaloneBack
+                  overviewHref={overviewHref}
+                  renderBackLink={renderBackLink}
+                  onBack={onBack}
+                />
+                <ViewPageTitle>{t('specification.title')}</ViewPageTitle>
                 <Spinner size="md" aria-label={t('common.loading')} />
                 <Typography variant="body-sm" className="text-content-muted">
                   {t('specification.loadingWorkspace', { id: specId })}

@@ -43,10 +43,12 @@ export function useAppWorkspace() {
 }
 
 interface AppNavigationContextValue {
-  closeNavigation: () => void;
+  navigationOpen: boolean;
+  closeNavigation: (focusTarget?: () => HTMLElement | null) => void;
 }
 
 const AppNavigationContext = createContext<AppNavigationContextValue>({
+  navigationOpen: false,
   closeNavigation: () => undefined,
 });
 
@@ -145,6 +147,9 @@ export function AppShell({
   ...props
 }: AppShellProps) {
   const [navigationOpen, setNavigationOpen] = useState(false);
+  const navigationOpenRef = useRef(false);
+  const navigationOpener = useRef<HTMLElement | null>(null);
+  const navigationFocusTarget = useRef<(() => HTMLElement | null) | undefined>(undefined);
   const { ref: shellRef, width: shellWidth } = useElementWidth<HTMLDivElement>();
   const { availableWidth, navigationMode, workspaceMaterialOwner, wide } =
     resolveAppShellLayout(shellWidth);
@@ -159,8 +164,15 @@ export function AppShell({
     availableWidth !== undefined &&
     workspaceWidth !== undefined &&
     workspaceWidth < availableWidth - 1;
-  const closeNavigation = useCallback(() => setNavigationOpen(false), []);
-  const navigationContext = useMemo(() => ({ closeNavigation }), [closeNavigation]);
+  const closeNavigation = useCallback((focusTarget?: () => HTMLElement | null) => {
+    if (navigationOpenRef.current) navigationFocusTarget.current = focusTarget;
+    navigationOpenRef.current = false;
+    setNavigationOpen(false);
+  }, []);
+  const navigationContext = useMemo(
+    () => ({ closeNavigation, navigationOpen }),
+    [closeNavigation, navigationOpen],
+  );
   const workspaceContext = useMemo<AppWorkspaceContextValue>(
     () => ({ availableWidth, navigationMode }),
     [availableWidth, navigationMode],
@@ -173,7 +185,11 @@ export function AppShell({
   } as CSSProperties;
 
   useLayoutEffect(() => {
-    if (wide) setNavigationOpen(false);
+    if (wide) {
+      navigationOpenRef.current = false;
+      navigationFocusTarget.current = undefined;
+      setNavigationOpen(false);
+    }
   }, [wide]);
 
   return (
@@ -191,7 +207,18 @@ export function AppShell({
             {...props}
             {...capture}
           >
-            <Drawer open={navigationOpen} onOpenChange={setNavigationOpen}>
+            <Drawer
+              open={navigationOpen}
+              onOpenChange={(open) => {
+                navigationOpenRef.current = open;
+                if (open) {
+                  navigationFocusTarget.current = undefined;
+                  navigationOpener.current =
+                    document.activeElement instanceof HTMLElement ? document.activeElement : null;
+                }
+                setNavigationOpen(open);
+              }}
+            >
               {wide ? (
                 <aside
                   key="persistent-navigation"
@@ -235,6 +262,14 @@ export function AppShell({
                   className="max-w-[min(20rem,85vw)]"
                   closeLabel={labels.closeNavigation}
                   side="left"
+                  onCloseAutoFocus={(event) => {
+                    const target = navigationFocusTarget.current?.() ?? navigationOpener.current;
+                    navigationFocusTarget.current = undefined;
+                    if (target) {
+                      event.preventDefault();
+                      target.focus();
+                    }
+                  }}
                 >
                   <DrawerTitle className="sr-only">{labels.navigationTitle}</DrawerTitle>
                   {navigation}

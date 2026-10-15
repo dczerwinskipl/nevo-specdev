@@ -1,4 +1,10 @@
+import {
+  ApplicationLocationIdentity,
+  ApplicationContextLine,
+} from '../../../app/navigation/ApplicationLocation';
+import { WorkspaceRouteLeaveGuard } from '../../../app/navigation/WorkspaceRouteLeaveGuard';
 import { useCallback, useMemo, type ReactNode } from 'react';
+import { SpecificationStandaloneBack } from './SpecificationStandaloneBack';
 import {
   Alert,
   AppContent,
@@ -6,8 +12,6 @@ import {
   AppWorkspace,
   AppWorkspaceBody,
   AppWorkspaceProvider,
-  Icon,
-  Link,
   useSecondaryNavigation,
   useWorkspaceCapabilities,
   WorkspaceHeader,
@@ -57,6 +61,7 @@ export interface SpecificationWorkspaceProps {
 export function SpecificationWorkspace(props: SpecificationWorkspaceProps) {
   return (
     <AppWorkspaceProvider scopeKey={props.specId}>
+      <WorkspaceRouteLeaveGuard />
       <TaskViewStateProvider key={props.specId}>
         <SpecificationWorkspaceInner {...props} />
       </TaskViewStateProvider>
@@ -70,6 +75,7 @@ function SpecificationWorkspaceInner({
   collection = 'current',
   overviewHref,
   renderBackLink,
+  onBack,
   onOpenDocuments,
   onOpenSessions,
   onOpenRepository,
@@ -210,7 +216,15 @@ function SpecificationWorkspaceInner({
           <AppWorkspace.Primary
             header={
               <WorkspaceHeader
-                title={t('specification.title')}
+                title={t('specification.viewOverview')}
+                as="span"
+                identityContent={
+                  <ApplicationLocationIdentity
+                    title={t('specification.viewOverview')}
+                    view="overview"
+                    specId={specId}
+                  />
+                }
                 icon="file"
                 actions={[
                   ...(!supportsSplit
@@ -242,49 +256,6 @@ function SpecificationWorkspaceInner({
             <AppContent className="w-content-xwide max-w-full">
               <AppWorkspaceBody className="py-6">
                 <AppContentContainer align="start" size="full" className="grid gap-6">
-                  {/* Eyebrow: Spec / ${specId} with back link */}
-                  <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex items-center gap-1.5 text-body-sm text-content-muted">
-                      {renderBackLink ? (
-                        renderBackLink(
-                          <>
-                            <Icon name="arrow-right" size="sm" className="rotate-180" />
-                            <span data-spec-back-label>
-                              {t('specification.backToSpecifications')}
-                            </span>
-                          </>,
-                          'w-fit inline-flex items-center gap-1.5 font-medium text-content-secondary hover:text-content-primary',
-                        )
-                      ) : overviewHref ? (
-                        <Link
-                          href={overviewHref}
-                          className="w-fit inline-flex items-center gap-1.5 font-medium text-content-secondary hover:text-content-primary"
-                        >
-                          <Icon name="arrow-right" size="sm" className="rotate-180" />
-                          <span data-spec-back-label>
-                            {t('specification.backToSpecifications')}
-                          </span>
-                        </Link>
-                      ) : (
-                        <span className="font-medium text-content-secondary">
-                          <span data-spec-back-label>
-                            {t('specification.backToSpecifications')}
-                          </span>
-                        </span>
-                      )}
-
-                      <span aria-hidden="true" className="text-content-muted">
-                        /
-                      </span>
-                      <span
-                        data-spec-identity
-                        className="font-mono text-body-xs text-content-muted"
-                      >
-                        {t('specification.identity', { id: specId })}
-                      </span>
-                    </div>
-                  </div>
-
                   {refreshFailed ? (
                     <Alert
                       tone="attention"
@@ -296,7 +267,15 @@ function SpecificationWorkspaceInner({
                   ) : null}
 
                   {/* Specification Overview contributions. Primary destinations belong to Router. */}
-                  <WorkView specId={specId} data={data} />
+                  <div>
+                    <SpecificationStandaloneBack
+                      overviewHref={overviewHref}
+                      renderBackLink={renderBackLink}
+                      onBack={onBack}
+                    />
+                    <ApplicationContextLine specId={specId} view="overview" />
+                    <WorkView specId={specId} data={data} />
+                  </div>
                 </AppContentContainer>
               </AppWorkspaceBody>
             </AppContent>
@@ -308,6 +287,7 @@ function SpecificationWorkspaceInner({
           >
             <AppContent>
               <ActivityHistory
+                showHeading={false}
                 events={data.activityEvents}
                 onOpenTask={handlePreviewTask}
                 onOpenSession={onOpenSession}

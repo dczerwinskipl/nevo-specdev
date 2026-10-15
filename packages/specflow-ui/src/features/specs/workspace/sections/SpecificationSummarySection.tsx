@@ -20,16 +20,20 @@ export function SpecificationSummarySection({
   return (
     <div>
       <Typography
-        as="h2"
+        as="h1"
+        tabIndex={-1}
+        data-page-title
         variant="title-lg"
-        className="font-semibold text-content-primary [overflow-wrap:anywhere]"
+        className="font-semibold text-content-primary outline-none [overflow-wrap:anywhere]"
       >
         {title}
       </Typography>
       {!isEmpty ? (
         <DocumentDescription
           key={`${specId}:${mainDocumentId}`}
-          intro={intro ? markdownIntro(intro, title).intro : undefined}
+          intro={
+            intro && intro.trim() !== title.trim() ? markdownIntro(intro, title).intro : undefined
+          }
           hasMore={Boolean(mainDocumentId && specId)}
           renderDocument={
             mainDocumentId && specId

@@ -14,7 +14,10 @@ type Story = StoryObj<typeof meta>;
 
 export const Working: Story = {
   play: async ({ canvas, userEvent }) => {
-    await canvas.findByText('Specification ID: admission', {}, { timeout: 5000 });
+    await canvas.findByRole('heading', {
+      name: 'Deterministic admission and execution boundaries',
+      level: 1,
+    });
     const checkboxes = await canvas.findAllByRole('checkbox');
     const firstCheckbox = checkboxes[0];
     if (firstCheckbox) {
@@ -28,7 +31,10 @@ export const Working: Story = {
 export const TaskPreviewFlow: Story = {
   args: { path: '/specs/admission?collection=current' },
   play: async ({ canvas, userEvent }) => {
-    await canvas.findByText('Specification ID: admission', {}, { timeout: 10000 });
+    await canvas.findByRole('heading', {
+      name: 'Deterministic admission and execution boundaries',
+      level: 1,
+    });
 
     const taskElement = await canvas.findByText(
       /Obsługa odświeżania uprawnień w długotrwałej sesji użytkownika/i,
@@ -48,7 +54,10 @@ export const TaskPreviewFlow: Story = {
 export const NestedHistoryTaskPreviewFlow: Story = {
   args: { path: '/specs/admission?collection=current' },
   play: async ({ canvas, userEvent }) => {
-    await canvas.findByText('Specification ID: admission', {}, { timeout: 10000 });
+    await canvas.findByRole('heading', {
+      name: 'Deterministic admission and execution boundaries',
+      level: 1,
+    });
 
     // Click task in activity history (TASK-04 event)
     const historyTaskEvent = await canvas.findByRole('button', {
@@ -65,14 +74,17 @@ export const NestedHistoryTaskPreviewFlow: Story = {
     await userEvent.click(backBtn);
 
     // Confirm Activity History is restored
-    await canvas.findByText(/This specification/i, {}, { timeout: 5000 });
+    await canvas.findByRole('heading', { name: 'Activity history', level: 2 });
   },
 };
 
 export const FullTaskPromotionFlow: Story = {
   args: { path: '/specs/admission?collection=current' },
   play: async ({ canvas, canvasElement, userEvent }) => {
-    await canvas.findByText('Specification ID: admission', {}, { timeout: 10000 });
+    await canvas.findByRole('heading', {
+      name: 'Deterministic admission and execution boundaries',
+      level: 1,
+    });
 
     const taskElement = await canvas.findByText(
       /Obsługa odświeżania uprawnień w długotrwałej sesji użytkownika/i,
@@ -90,23 +102,34 @@ export const FullTaskPromotionFlow: Story = {
     });
     await userEvent.click(fullTaskAction);
 
-    await canvas.findByRole('heading', { name: /Task \/ TASK-03/i }, { timeout: 5000 });
+    await canvas.findByRole(
+      'heading',
+      { name: 'Obsługa odświeżania uprawnień w długotrwałej sesji użytkownika', level: 1 },
+      { timeout: 5000 },
+    );
 
     const backBtn = await canvas.findByRole('link', {
-      name: /Back to specification|Wróć do specyfikacji/i,
+      name: 'Deterministic admission and execution boundaries',
     });
     await userEvent.click(backBtn);
 
-    await canvas.findByText('Specification ID: admission', {}, { timeout: 5000 });
+    await canvas.findByRole('heading', {
+      name: 'Deterministic admission and execution boundaries',
+      level: 1,
+    });
   },
 };
 
 export const Current: Story = {
+  globals: { viewport: { value: 'mobile1', isRotated: false } },
   play: async ({ canvas }) => {
-    await canvas.findByText('Specification ID: admission', {}, { timeout: 5000 });
-    const back = canvas.getByRole('link', { name: 'Back to Specifications' });
+    await canvas.findByRole('heading', {
+      name: 'Deterministic admission and execution boundaries',
+      level: 1,
+    });
+    const back = canvas.getByRole('link', { name: 'All specifications' });
     const icon = back.querySelector('svg')?.getBoundingClientRect();
-    const label = back.querySelector('[data-spec-back-label]')?.getBoundingClientRect();
+    const label = back.querySelector('span')?.getBoundingClientRect();
     if (!icon || !label || Math.abs(icon.y + icon.height / 2 - label.y - label.height / 2) > 1)
       throw new Error('Back icon and label must share the same vertical center.');
   },
@@ -115,8 +138,11 @@ export const Current: Story = {
 export const Archive: Story = {
   args: { path: '/specs/archive-0?collection=archive' },
   play: async ({ canvas }) => {
-    await canvas.findByText('Specification ID: archive-0', {}, { timeout: 5000 });
-    canvas.getByRole('link', { name: 'Back to Specifications' });
+    await canvas.findByRole('heading', {
+      name: 'Canonical Session, Turn and Work model',
+      level: 1,
+    });
+    canvas.getByRole('link', { name: 'All specifications' });
   },
 };
 
@@ -147,12 +173,21 @@ export const Documents: Story = {
 export const DocumentReturnNavigation: Story = {
   args: { path: '/specs/docs-spec?collection=current' },
   play: async ({ canvas, userEvent }) => {
-    await canvas.findByText('Specification ID: docs-spec', {}, { timeout: 10000 });
+    await canvas.findByRole('heading', {
+      name: 'Odświeżanie sesji i zachowanie kontekstu użytkownika',
+      level: 1,
+    });
     await userEvent.click(await canvas.findByRole('button', { name: 'Obszar: uwierzytelnianie' }));
     await userEvent.click(await canvas.findByRole('button', { name: 'Open full document' }));
-    await canvas.findByRole('link', { name: /Back to specification/i });
-    await userEvent.click(await canvas.findByRole('link', { name: /Back to specification/i }));
-    await canvas.findByText('Specification ID: docs-spec', {}, { timeout: 5000 });
+    await userEvent.click(
+      await canvas.findByRole('link', {
+        name: 'Odświeżanie sesji i zachowanie kontekstu użytkownika',
+      }),
+    );
+    await canvas.findByRole('heading', {
+      name: 'Odświeżanie sesji i zachowanie kontekstu użytkownika',
+      level: 1,
+    });
   },
 };
 
@@ -160,27 +195,45 @@ export const DocumentReturnNavigation: Story = {
 export const DocumentBackFromList: Story = {
   args: { path: '/specs/docs-spec/documents?collection=archive' },
   play: async ({ canvas, userEvent }) => {
-    await canvas.findByRole('heading', { name: 'Documents', level: 2 });
+    await canvas.findByRole('heading', { name: 'Documents', level: 1 });
     const read = await canvas.findAllByRole('button', { name: 'Read' });
     if (!read[0]) throw new Error('Expected an actionable document in the list.');
     await userEvent.click(read[0]);
-    const back = await canvas.findByRole('link', { name: 'Back to documents' });
+    const back = within(canvas.getByRole('navigation', { name: 'Application location' })).getByRole(
+      'link',
+      {
+        name: 'Documents',
+      },
+    );
     if (back.getAttribute('href') !== '/specs/docs-spec/documents?collection=archive')
       throw new Error('Document list return must retain Archive context.');
     await userEvent.click(back);
-    await canvas.findByRole('heading', { name: 'Documents', level: 2 });
+    await canvas.findByRole('heading', { name: 'Documents', level: 1 });
   },
 };
 
 /** Direct links have no ephemeral origin and must fall back to the Documents List. */
 export const DocumentBackFromDirectLink: Story = {
+  globals: { viewport: { value: 'mobile1', isRotated: false } },
   args: { path: '/specs/docs-spec/documents/spec?collection=current' },
   play: async ({ canvas, userEvent }) => {
-    const back = await canvas.findByRole('link', { name: 'Back to documents' });
+    const back = await canvas.findByRole('link', { name: 'Documents' });
     if (back.getAttribute('href') !== '/specs/docs-spec/documents?collection=current')
       throw new Error('Direct document link must have a stable list fallback.');
     await userEvent.click(back);
-    await canvas.findByRole('heading', { name: 'Documents', level: 2 });
+    await canvas.findByRole('heading', { name: 'Documents', level: 1 });
+  },
+};
+
+export const ArchivedDocumentBackFromDirectLink: Story = {
+  ...DocumentBackFromDirectLink,
+  args: { path: '/specs/docs-spec/documents/spec?collection=archive' },
+  play: async ({ canvas, userEvent }) => {
+    const back = await canvas.findByRole('link', { name: 'Documents' });
+    if (back.getAttribute('href') !== '/specs/docs-spec/documents?collection=archive')
+      throw new Error('Mobile deep links must preserve Archive context.');
+    await userEvent.click(back);
+    await canvas.findByRole('heading', { name: 'Documents', level: 1 });
   },
 };
 
@@ -191,21 +244,29 @@ export const RepositoryNavigation: Story = {
       name: /Go to changes|Przejdź do zmian/i,
     });
     await userEvent.click(toChanges);
-    await canvas.findByRole('heading', { name: /Changes|Zmiany/i, level: 2 }, { timeout: 5000 });
+    await canvas.findByRole('heading', { name: /Changes|Zmiany/i, level: 1 }, { timeout: 5000 });
   },
 };
 
 export const LegacyFullTaskLink: Story = {
   args: { path: '/specs/admission?collection=archive&view=task&task=TASK-03' },
   play: async ({ canvas }) => {
-    await canvas.findByRole('heading', { name: /Task \/ TASK-03/i }, { timeout: 5000 });
+    await canvas.findByRole(
+      'heading',
+      { name: 'Obsługa odświeżania uprawnień w długotrwałej sesji użytkownika', level: 1 },
+      { timeout: 5000 },
+    );
   },
 };
 
 export const FullTask: Story = {
   args: { path: '/specs/admission/tasks/TASK-03?collection=current' },
   play: async ({ canvas }) => {
-    await canvas.findByRole('heading', { name: /Task \/ TASK-03/i }, { timeout: 5000 });
+    await canvas.findByRole(
+      'heading',
+      { name: 'Obsługa odświeżania uprawnień w długotrwałej sesji użytkownika', level: 1 },
+      { timeout: 5000 },
+    );
     await canvas.findByText('TASK-03 · admission', {}, { timeout: 5000 });
     await canvas.findByText(
       /Obsługa odświeżania uprawnień w długotrwałej sesji użytkownika/i,
@@ -224,7 +285,10 @@ export const MobileTaskPreviewFlow: Story = {
   args: { path: '/specs/admission?collection=current' },
   globals: { viewport: { value: 'mobile1', isRotated: false } },
   play: async ({ canvas, userEvent }) => {
-    await canvas.findByText('Specification ID: admission', {}, { timeout: 10000 });
+    await canvas.findByRole('heading', {
+      name: 'Deterministic admission and execution boundaries',
+      level: 1,
+    });
 
     const taskElement = await canvas.findByText(
       /Obsługa odświeżania uprawnień w długotrwałej sesji użytkownika/i,
@@ -238,7 +302,10 @@ export const MobileTaskPreviewFlow: Story = {
     await userEvent.click(backBtn);
 
     // After back, primary is restored
-    await canvas.findByText('Specification ID: admission', {}, { timeout: 5000 });
+    await canvas.findByRole('heading', {
+      name: 'Deterministic admission and execution boundaries',
+      level: 1,
+    });
   },
 };
 
@@ -251,7 +318,11 @@ export const Polish: Story = { args: { locale: 'pl' } };
 export const ApiDtoToTaskScreen: Story = {
   args: { path: '/specs/api-integration/tasks/TASK-01', integrationDto: true },
   play: async ({ canvas }) => {
-    await canvas.findByRole('heading', { name: 'Task / TASK-01' }, { timeout: 10000 });
+    await canvas.findByRole(
+      'heading',
+      { name: 'Fresh task detail from Runtime API', level: 1 },
+      { timeout: 10000 },
+    );
     await canvas.findByRole(
       'heading',
       { name: 'Fresh task detail from Runtime API' },
@@ -268,7 +339,7 @@ export const ApiDtoToTaskScreen: Story = {
 export const ApiDtoToDocumentScreen: Story = {
   args: { path: '/specs/api-integration/documents', integrationDto: true },
   play: async ({ canvas, userEvent }) => {
-    await canvas.findByRole('heading', { name: 'Documents', level: 2 }, { timeout: 10000 });
+    await canvas.findByRole('heading', { name: 'Documents', level: 1 }, { timeout: 10000 });
     const button = await canvas.findByRole('button', { name: 'Read' }, { timeout: 10000 });
     await userEvent.click(button);
     await canvas.findByRole(

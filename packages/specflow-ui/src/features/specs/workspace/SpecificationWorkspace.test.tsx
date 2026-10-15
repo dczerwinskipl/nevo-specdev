@@ -33,7 +33,7 @@ describe('SpecificationWorkspace', () => {
 
     // Body title and identity
     expect(markup).toContain('Odświeżanie sesji i zachowanie kontekstu użytkownika');
-    expect(markup).toContain('ID specyfikacji: UI-1234');
+    expect(markup).not.toContain('ID specyfikacji: UI-1234');
 
     // Attention section
     expect(markup).toContain('Wymaga Twojej uwagi');
@@ -49,7 +49,7 @@ describe('SpecificationWorkspace', () => {
 
     // Primary content is rendered in SSR
     expect(markup).toContain('Odświeżanie sesji i zachowanie kontekstu użytkownika');
-    expect(markup).toContain('ID specyfikacji: UI-1234');
+    expect(markup.match(/<h1\b/g)).toHaveLength(1);
   });
 
   it('renders repository context when git is enabled', () => {
@@ -67,11 +67,10 @@ describe('SpecificationWorkspace', () => {
 
     // h1 page identity
     expect(markup).toContain('<h1');
-    expect(markup).toContain('Specyfikacja');
+    expect(markup).toContain('data-page-title');
 
-    // h2 concrete specification title with text-title-lg
-    expect(markup).toContain(
-      '<h2 class="font-sans text-title-lg font-semibold text-content-primary [overflow-wrap:anywhere]">Odświeżanie sesji i zachowanie kontekstu użytkownika</h2>',
+    expect(markup).toMatch(
+      /<h1[^>]*text-title-lg[^>]*>Odświeżanie sesji i zachowanie kontekstu użytkownika<\/h1>/,
     );
 
     // h3 major workspace sections
@@ -198,12 +197,12 @@ describe('SpecificationWorkspace', () => {
     expect(markup).toContain('Taski');
   });
 
-  it('renders Specification header eyebrow with back link and specification identity', () => {
+  it('does not manufacture a technical-id eyebrow or duplicate content Back', () => {
     const markup = renderWorkspaceMarkup();
 
-    expect(markup).toContain('data-spec-back-label');
-    expect(markup).toContain('data-spec-identity');
-    expect(markup).toContain('ID specyfikacji: UI-1234');
+    expect(markup).not.toContain('data-spec-back-label');
+    expect(markup).not.toContain('data-spec-identity');
+    expect(markup.match(/<h1\b/g)).toHaveLength(1);
   });
 
   it('renders honest capabilities: disabled conversation action when onNewConversation is not provided', () => {
