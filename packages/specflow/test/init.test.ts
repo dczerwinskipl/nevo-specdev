@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { GitCheckoutLayout } from '@nevo/specflow-engine';
+import type { GitCheckoutLayout } from '@nevo/specflow-engine/testing';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
