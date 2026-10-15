@@ -187,8 +187,9 @@ describe('E1.T05 independent OS-process coordination', () => {
     diagnostics.subscribe(listener);
     let duringAction = -1;
     try {
-      await withProjectControlLock(context, async () => {
+      await withProjectControlLock(context, () => {
         duringAction = samples.length;
+        return Promise.resolve();
       });
     } finally {
       diagnostics.unsubscribe(listener);
