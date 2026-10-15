@@ -33,16 +33,18 @@ export interface NewWorktreeJournalTarget {
 export type CreateJournalTarget = ExistingJournalTarget | NewWorktreeJournalTarget;
 
 /** v2 reservations pin the physical checkout identity before publication. */
-export type CreateJournalV2Target =
-  | ExistingJournalTarget
-  | (NewWorktreeJournalTarget & { readonly instanceId: string });
+export interface PersistedNewWorktreeJournalTarget extends NewWorktreeJournalTarget {
+  readonly instanceId: string;
+}
+
+export type CreateJournalV2Target = ExistingJournalTarget | PersistedNewWorktreeJournalTarget;
 
 export interface CreateJournalFile {
   readonly relativePath: string;
   readonly sha256: string;
 }
 
-export interface CreateJournalFields<TTarget extends CreateJournalTarget = CreateJournalTarget> {
+export interface CreateJournalFields<TTarget extends CreateJournalTarget> {
   readonly projectId: string;
   readonly operationId: string;
   readonly inputFingerprint: string;
@@ -57,7 +59,7 @@ export interface CreateJournalFields<TTarget extends CreateJournalTarget = Creat
   readonly reason?: string;
 }
 
-export interface CreateJournalV1 extends CreateJournalFields {
+export interface CreateJournalV1 extends CreateJournalFields<CreateJournalTarget> {
   readonly version: 1;
 }
 
