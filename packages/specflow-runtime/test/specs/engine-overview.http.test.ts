@@ -247,7 +247,11 @@ describe('E2.T06 — production Engine-backed specification reads', () => {
     );
     const deniedSpecId = randomUUID();
     await updateWorkspaceRegistry(engine.context, (registry) =>
-      bindSpecToWorkspace(addWorkspace(registry, registration), deniedSpecId, registration.workspaceId),
+      bindSpecToWorkspace(
+        addWorkspace(registry, registration),
+        deniedSpecId,
+        registration.workspaceId,
+      ),
     );
     await mkdir(join(linked, 'specs/active/corrupt-linked'), { recursive: true });
     await writeFile(join(linked, 'specs/active/corrupt-linked/change.yaml'), 'not: [valid\\n');
@@ -262,7 +266,9 @@ describe('E2.T06 — production Engine-backed specification reads', () => {
       {
         ...config,
         authorization: {
-          assignments: [{ userId: 'scoped-user', role: 'viewer', scope: { specId: visible.specId } }],
+          assignments: [
+            { userId: 'scoped-user', role: 'viewer', scope: { specId: visible.specId } },
+          ],
         },
       },
       { auth: { store }, specs: { engine } },
