@@ -5,7 +5,11 @@ import { join } from 'node:path';
 import { parse } from 'yaml';
 
 import type { SpecFlowEngine } from '../application';
-import { discoverSpecifications, resolveSpecification, type DiscoveredSpecification } from './discovery';
+import {
+  discoverSpecifications,
+  resolveSpecification,
+  type DiscoveredSpecification,
+} from './discovery';
 import { parseSpecificationManifest, SpecificationError } from './model';
 
 type AvailableSpec = Extract<DiscoveredSpecification, { readonly status: 'available' }>;
@@ -18,7 +22,12 @@ export type CanonicalSpecSource =
     });
 
 export type CanonicalDocumentRead =
-  | { readonly status: 'available'; readonly relativePath: string; readonly content: string; readonly sourceRevision: string }
+  | {
+      readonly status: 'available';
+      readonly relativePath: string;
+      readonly content: string;
+      readonly sourceRevision: string;
+    }
   | { readonly status: 'workspace_unavailable'; readonly reason: string }
   | { readonly status: 'manifest_missing' }
   | { readonly status: 'document_missing' };
@@ -38,7 +47,10 @@ export async function readCanonicalSpecSources(
       if (item.status !== 'available') return item;
       const source = await readPhysicalDocument(item, 'manifest');
       if (!source) {
-        throw new SpecificationError('SPEC_SOURCE_INVALID', 'Canonical manifest disappeared during read.');
+        throw new SpecificationError(
+          'SPEC_SOURCE_INVALID',
+          'Canonical manifest disappeared during read.',
+        );
       }
       let latest;
       try {
@@ -48,14 +60,24 @@ export async function readCanonicalSpecSources(
           item.specification.location,
         );
       } catch {
-        throw new SpecificationError('SPEC_SOURCE_INVALID', 'Canonical manifest changed or became invalid during read.');
+        throw new SpecificationError(
+          'SPEC_SOURCE_INVALID',
+          'Canonical manifest changed or became invalid during read.',
+        );
       }
       if (latest.specId !== item.specId) {
-        throw new SpecificationError('SPEC_SOURCE_INVALID', 'Canonical manifest identity changed during read.');
+        throw new SpecificationError(
+          'SPEC_SOURCE_INVALID',
+          'Canonical manifest identity changed during read.',
+        );
       }
       return {
         ...item,
-        specification: { ...latest, relativeManifestPath: item.specification.relativeManifestPath, relativeOverviewPath: item.specification.relativeOverviewPath },
+        specification: {
+          ...latest,
+          relativeManifestPath: item.specification.relativeManifestPath,
+          relativeOverviewPath: item.specification.relativeOverviewPath,
+        },
         sourceUpdatedAt: source.updatedAt,
         sourceRevision: source.revision,
       };
@@ -86,13 +108,21 @@ export async function readCanonicalSpecDocument(
   };
 }
 
+interface PhysicalSource {
+  readonly relativePath: string;
+  readonly content: string;
+  readonly updatedAt: string;
+  readonly revision: string;
+}
+
 async function readPhysicalDocument(
   found: AvailableSpec,
   kind: 'manifest' | 'overview',
-): Promise<{ readonly relativePath: string; readonly content: string; readonly updatedAt: string; readonly revision: string } | undefined> {
-  const relativePath = kind === 'manifest'
-    ? found.specification.relativeManifestPath
-    : found.specification.relativeOverviewPath;
+): Promise<PhysicalSource | undefined> {
+  const relativePath =
+    kind === 'manifest'
+      ? found.specification.relativeManifestPath
+      : found.specification.relativeOverviewPath;
   const path = join(found.workspaceRoot, relativePath);
   try {
     const stat = await lstat(path);
@@ -109,7 +139,10 @@ async function readPhysicalDocument(
   } catch (error) {
     if (isMissing(error)) return undefined;
     if (error instanceof SpecificationError) throw error;
-    throw new SpecificationError('SPEC_SOURCE_INVALID', 'Canonical document source is unavailable.');
+    throw new SpecificationError(
+      'SPEC_SOURCE_INVALID',
+      'Canonical document source is unavailable.',
+    );
   }
 }
 
