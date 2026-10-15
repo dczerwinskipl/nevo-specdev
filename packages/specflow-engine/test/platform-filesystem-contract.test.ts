@@ -6,7 +6,7 @@ import { join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { bootstrapProjectHome } from '../src/index';
+import { bootstrapProjectHome } from '../src/testing';
 import { writeJsonAtomically } from '../src/project/atomic-json';
 import { projectControlLockPath, withProjectControlLock } from '../src/project/control-lock';
 
