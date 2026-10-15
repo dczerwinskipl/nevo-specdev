@@ -14,7 +14,7 @@ import {
   readWorkspaceSpecification,
   validateSpecificationSlug,
   type SpecificationScaffold,
-} from '../src/index';
+} from '../src/testing';
 
 const roots: string[] = [];
 
