@@ -165,9 +165,7 @@ describe('E2.T06 — production Engine-backed specification reads', () => {
       {
         ...config,
         authorization: {
-          assignments: [
-            { userId: 'demo-user', role: 'viewer', scope: { specId: visible.specId } },
-          ],
+          assignments: [{ userId: 'demo-user', role: 'viewer', scope: { specId: visible.specId } }],
         },
       },
       { auth: { store }, specs: { engine } },
