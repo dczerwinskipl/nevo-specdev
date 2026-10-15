@@ -66,9 +66,12 @@ export interface CreateSpecificationOptions {
    * Neither recovery assertion is available to CLI/HTTP requests.
    */
   readonly resumeInterruptedOperation?: boolean;
-  /** Internal test hook only; adapters must never expose this to HTTP callers. */
-  readonly afterEffect?: (effect: 'reservation' | 'git' | 'manifest' | 'registry') => Promise<void>;
 }
+
+/** Internal fault-injection seam, deliberately absent from CreateSpecificationOptions. */
+export type CreateEffectHook = (
+  effect: 'reservation' | 'git' | 'manifest' | 'registry',
+) => Promise<void>;
 
 export async function inspectCreateSpecification(
   engine: SpecFlowEngine,
@@ -110,13 +113,14 @@ export async function createSpecificationWithIntent(
   intent: CreateClientIntent,
   creationDate: () => string,
   options: CreateSpecificationOptions = {},
+  afterEffect?: CreateEffectHook,
 ): Promise<CreatedSpecification> {
   validateOperationId(operationId);
   const reservation = await reserveCreateOperation(engine, intent, operationId, creationDate);
   let record = reservation.record;
   // The journal intent is durable at this point. A test process can now be
   // terminated without any later mutation having started.
-  await options.afterEffect?.('reservation');
+  await afterEffect?.('reservation');
 
   // A normal retry of an already-reserved v2 operation is *only* a reader.
   // Its original writer may still be active inside an uncertain Git/FS stage,
@@ -181,7 +185,7 @@ export async function createSpecificationWithIntent(
             // WorktreePort owns every filesystem/Git side effect. The durable
             // git-initiated transition was committed above, before this call.
             await createPlannedGitWorktree(engine, record);
-            await options.afterEffect?.('git');
+            await afterEffect?.('git');
             if ((await inspectPlannedGitEffect(engine, record)) !== 'present') {
               throw recovery('Created Git worktree does not match the recorded intent.');
             }
@@ -208,7 +212,7 @@ export async function createSpecificationWithIntent(
         case 'manifest-writing': {
           await requireTargetIdentity(engine, record);
           await writeScaffoldWithEvidence(record);
-          await options.afterEffect?.('manifest');
+          await afterEffect?.('manifest');
           record = await transition(engine, record, 'manifest-written');
           continue;
         }
@@ -223,7 +227,7 @@ export async function createSpecificationWithIntent(
           await requireTargetIdentity(engine, record);
           await verifyScaffold(record);
           await commitBinding(engine, record);
-          await options.afterEffect?.('registry');
+          await afterEffect?.('registry');
           record = await transition(engine, record, 'registry-linked');
           continue;
         }
