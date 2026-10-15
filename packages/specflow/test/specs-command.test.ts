@@ -8,6 +8,7 @@ import {
   bootstrapProjectHome,
   discoverSpecifications,
   workspaceRegistryPath,
+  updateWorkspaceRegistry,
 } from '@nevo/specflow-engine/testing';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -127,7 +128,7 @@ describe('E2.T05 — offline CLI Specs capability', () => {
       randomUUID(),
       false,
     );
-    await engine.updateRegistry((registry) => addWorkspace(registry, registration));
+    await updateWorkspaceRegistry(engine.context, (registry) => addWorkspace(registry, registration));
     const cli = command(linked);
     await cli.run(['create', '--title', 'Linked target', '--json']);
     const result = JSON.parse(cli.output[0]!) as {
