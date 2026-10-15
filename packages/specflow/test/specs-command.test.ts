@@ -120,7 +120,7 @@ describe('E2.T05 — offline CLI Specs capability', () => {
     roots.push(linked);
     git(root, 'worktree', 'add', '-q', '-b', 'cli-linked', linked);
     const { provisionLinkedWorkspaceIdentity, addWorkspace, openSpecFlowEngine } =
-      await import('@nevo/specflow-engine');
+      await import('@nevo/specflow-engine/testing');
     const registration = await provisionLinkedWorkspaceIdentity(
       engine.context,
       linked,
