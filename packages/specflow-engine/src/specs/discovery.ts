@@ -43,6 +43,7 @@ export type DiscoveredSpecification =
  */
 export async function discoverSpecifications(
   engine: SpecFlowEngine,
+  isIncluded?: (specId: string) => boolean,
 ): Promise<readonly DiscoveredSpecification[]> {
   const registry = await engine.readRegistry();
   const primary = await inspectRegisteredWorkspace(
@@ -93,6 +94,10 @@ export async function discoverSpecifications(
       );
     }
 
+    // An excluded explicit binding cannot make an authorized, unrelated spec unavailable.
+    // The primary checkout is still scanned globally: unbound IDs have no separate index.
+    if (isIncluded && !isIncluded(binding.specId)) continue;
+
     let inspection = inspected.get(binding.workspaceId);
     if (!inspection) {
       inspection = await inspectRegisteredWorkspace(engine.context, registry, binding.workspaceId);
@@ -138,7 +143,9 @@ export async function discoverSpecifications(
 
   assertCanonicalSlugs(found);
   await ensureBindingRevisionUnchanged(engine, registry);
-  return [...found.values()].sort((left, right) => left.specId.localeCompare(right.specId));
+  return [...found.values()]
+    .filter((item) => !isIncluded || isIncluded(item.specId))
+    .sort((left, right) => left.specId.localeCompare(right.specId));
 }
 
 /**
