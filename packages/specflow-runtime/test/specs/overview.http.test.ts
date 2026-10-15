@@ -41,7 +41,13 @@ describe('Specs overview HTTP integration', () => {
       const overview = response.json<CurrentSpecsOverview>();
       expect(overview.collection).toBe('current');
       expect(overview.items).toHaveLength(6);
-      expect(overview.sections).toEqual(['requires-attention', 'active', 'ready', 'draft', 'unknown']);
+      expect(overview.sections).toEqual([
+        'requires-attention',
+        'active',
+        'ready',
+        'draft',
+        'unknown',
+      ]);
     } finally {
       await app.close();
     }
