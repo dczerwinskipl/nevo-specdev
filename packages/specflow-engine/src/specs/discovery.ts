@@ -159,7 +159,9 @@ export async function resolveSpecification(
   if (!isValidSpecificationId(specId)) {
     throw new SpecificationError('SPEC_VALIDATION_ERROR', 'Invalid specification identity.');
   }
-  const items = await discoverSpecifications(engine);
+  // Resolve only this identity. Other linked bindings cannot block a scoped read.
+  // Primary manifest corruption remains a project-level integrity error.
+  const items = await discoverSpecifications(engine, (candidate) => candidate === specId);
   const selected = items.find((item) => item.specId === specId);
   if (!selected) {
     throw new SpecificationError('SPEC_NOT_FOUND', 'Specification does not exist in this project.');
