@@ -1,6 +1,6 @@
 import type { SpecFlowEngine } from '../application';
 import { addWorkspace, bindSpecToWorkspace } from '../project/workspace-registry';
-import { registrationOf } from './create-git';
+import { registrationOf } from './create/registration';
 import { CreateOperationError, type CreateJournal } from './create-journal';
 
 /** Registry publication is idempotent but never rebinds another workspace. */
