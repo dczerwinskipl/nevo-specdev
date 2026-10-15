@@ -174,8 +174,14 @@ function parseWorktrees(raw: string): readonly LocalWorktreeFacts[] {
       current.head = item.slice('HEAD '.length);
     } else if (item.startsWith('branch ') && current) {
       current.branch = item.slice('branch '.length);
-    } else if (item.startsWith('prunable ') && current) {
+    } else if ((item === 'prunable' || item.startsWith('prunable ')) && current) {
       current.prunable = true;
+    } else if (
+      current &&
+      (item === 'detached' || item === 'locked' || item.startsWith('locked '))
+    ) {
+      // Valid porcelain annotations, not branch/path identity or mutation authorization.
+      continue;
     } else {
       throw new GitCapabilityError('GIT_OPERATION_FAILED', 'Invalid Git worktree metadata.');
     }

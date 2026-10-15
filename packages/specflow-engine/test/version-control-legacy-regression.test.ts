@@ -93,6 +93,33 @@ describe('VC06 legacy real-Git regression coverage through WorktreePort', () => 
     });
   });
 
+
+  it('plans safely when an unrelated Git worktree is detached and locked', async () => {
+    const { root, engine, worktrees } = await fixture();
+    const linked = await realpath(await mkdtemp(join(tmpdir(), 'specflow-git-detached-')));
+    roots.push(linked);
+    git(root, 'worktree', 'add', '-q', '--detach', linked, 'HEAD');
+    git(root, 'worktree', 'lock', linked);
+    try {
+      const head = git(root, 'rev-parse', 'HEAD');
+      const before = git(root, 'worktree', 'list', '--porcelain');
+      const registryBefore = await readFile(workspaceRegistryPath(engine.context), 'utf8');
+      const facts = await createLocalGitClient(root).listWorktrees();
+      expect(facts.find((item) => item.root === linked)).toMatchObject({
+        root: linked,
+        head,
+        prunable: false,
+      });
+      expect(facts.find((item) => item.root === linked)?.branch).toBeUndefined();
+      expect((await worktrees.plan(request(root))).baseCommit).toBe(head);
+      expect(git(root, 'worktree', 'list', '--porcelain')).toBe(before);
+      expect(git(root, 'rev-parse', 'HEAD')).toBe(head);
+      expect(await readFile(workspaceRegistryPath(engine.context), 'utf8')).toBe(registryBefore);
+    } finally {
+      git(root, 'worktree', 'unlock', linked);
+    }
+  });
+
   it('rejects disabled worktrees before branch, path or registry mutation', async () => {
     const { root, engine, worktrees } = await fixture();
     await writeFile(join(root, '.nevo/config.yaml'), 'runtime: {}\ngit:\n  enabled: false\n');
