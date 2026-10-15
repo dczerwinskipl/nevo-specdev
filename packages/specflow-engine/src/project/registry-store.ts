@@ -1,4 +1,5 @@
 import { lstat, readFile } from 'node:fs/promises';
+import { isDeepStrictEqual } from 'node:util';
 
 import { writeJsonAtomically } from './atomic-json';
 import { withProjectControlLock, type ProjectControlLockOptions } from './control-lock';
@@ -136,10 +137,9 @@ export async function updateWorkspaceRegistry(
           'Registry CAS revision changed; re-read before retrying.',
         );
       }
-      const original = JSON.stringify(current);
-      // Prevent a callback from mutating our comparison snapshot in place.
+      // Freeze the CAS snapshot before invoking client code; ignore harmless object key order.
       const proposed = mutate(freezeRegistry(current));
-      if (JSON.stringify(proposed) === original) return current;
+      if (isDeepStrictEqual(proposed, current)) return current;
       if (proposed?.revision !== current.revision) {
         throw new WorkspaceRegistryError(
           'REGISTRY_CONFLICT',
