@@ -5,11 +5,11 @@ export type SpecsReadErrorCode =
   | 'SPEC_SOURCE_UNAVAILABLE';
 
 export class SpecsReadError extends Error {
-  constructor(
-    readonly code: SpecsReadErrorCode,
-    message: string,
-  ) {
+  readonly code: SpecsReadErrorCode;
+
+  constructor(code: SpecsReadErrorCode, message: string) {
     super(message);
     this.name = 'SpecsReadError';
+    this.code = code;
   }
 }
