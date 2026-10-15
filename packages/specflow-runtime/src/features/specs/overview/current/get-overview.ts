@@ -45,10 +45,11 @@ function toOverviewItem(spec: CurrentSpecRecord): CurrentSpecOverviewItem {
     updatedAt: spec.updatedAt,
     progress: spec.progress,
     classification: classifyCurrentSpec(spec),
-    signals: spec.signals.map((signal) => ({ ...signal })),
-    currentExecutions: spec.currentExecutions.map((execution) => ({
-      ...execution,
-      taskIds: [...execution.taskIds],
-    })),
+    signals: spec.signals?.map((signal) => ({ ...signal })) ?? null,
+    currentExecutions:
+      spec.currentExecutions?.map((execution) => ({
+        ...execution,
+        taskIds: [...execution.taskIds],
+      })) ?? null,
   };
 }
