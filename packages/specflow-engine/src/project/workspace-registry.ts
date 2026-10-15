@@ -2,10 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { lstat, readFile } from 'node:fs/promises';
 import { isAbsolute, join, resolve } from 'node:path';
 
-import {
-  PROJECT_HOME_MARKER_RELATIVE_PATH,
-  type ResolvedProjectHome,
-} from './project-home';
+import { PROJECT_HOME_MARKER_RELATIVE_PATH, type ResolvedProjectHome } from './project-home';
 import { verifyLinkedWorkspaceIdentity } from './workspace-identity';
 import { verifyWorkspaceMembership } from './workspace-membership';
 import { verifyGitInstance } from './git-instance';
