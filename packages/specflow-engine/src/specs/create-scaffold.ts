@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
 import { lstat, mkdir, open, readFile, realpath } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
@@ -15,9 +16,10 @@ function expectedScaffold(record: CreateJournal): SpecificationScaffold {
   });
   if (
     scaffold.slug !== record.slug ||
-    JSON.stringify(
-      scaffold.files.map((f) => ({ relativePath: f.relativePath, sha256: f.sha256 })),
-    ) !== JSON.stringify(record.files)
+    !isDeepStrictEqual(
+      scaffold.files.map((file) => ({ relativePath: file.relativePath, sha256: file.sha256 })),
+      record.files,
+    )
   ) {
     throw recovery('Scaffold evidence differs from immutable creation intent.');
   }
