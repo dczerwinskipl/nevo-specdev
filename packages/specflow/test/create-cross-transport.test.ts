@@ -282,7 +282,6 @@ describe('E2.T05 — real HTTP and offline CLI share one Engine authority', () =
     expect((await engine.readRegistry()).specBindings).toHaveLength(1);
     expect(await discoverSpecifications(engine)).toHaveLength(1);
   }, 60000);
-
 });
 
 describe('E2.T07 — live canonical refresh', () => {
