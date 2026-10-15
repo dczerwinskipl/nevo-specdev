@@ -44,10 +44,7 @@ export {
   type DiscoveredSpecification,
 } from './specs/discovery';
 
-export {
-  inspectCreateSpecification,
-  type CreatedSpecification,
-} from './specs/durable-create';
+export { inspectCreateSpecification, type CreatedSpecification } from './specs/durable-create';
 
 export {
   readCanonicalSpecDocument,
