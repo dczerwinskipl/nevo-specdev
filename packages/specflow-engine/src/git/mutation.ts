@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 
 import { GitCapabilityError } from './errors';
+import { GitOutputDecoder } from './output-decoder';
 import type { GitCommandResult } from './process';
 
 const MAX_OUTPUT_BYTES = 1024 * 1024;
@@ -32,8 +33,7 @@ export async function executeGitMutation(
       windowsHide: true,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
-    let stdout = '';
-    let stderr = '';
+    const output = new GitOutputDecoder();
     let outputBytes = 0;
     let uncertain = false;
     let settled = false;
@@ -71,8 +71,7 @@ export async function executeGitMutation(
         terminate();
         return;
       }
-      if (channel === 'stdout') stdout += data.toString('utf8');
-      else stderr += data.toString('utf8');
+      output.write(channel, data);
     };
     child.stdout.on('data', (data: Buffer) => collect('stdout', data));
     child.stderr.on('data', (data: Buffer) => collect('stderr', data));
@@ -93,7 +92,7 @@ export async function executeGitMutation(
           ),
         );
       } else {
-        settle({ exitCode: code ?? -1, stdout, stderr });
+        settle({ exitCode: code ?? -1, ...output.finish() });
       }
     });
   });

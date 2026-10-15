@@ -1,5 +1,7 @@
 import { spawn } from 'node:child_process';
 
+import { GitOutputDecoder } from './output-decoder';
+
 import { GitCapabilityError } from './errors';
 
 const MAX_OUTPUT_BYTES = 1024 * 1024;
@@ -30,8 +32,7 @@ export async function executeGit(cwd: string, args: readonly string[]): Promise<
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     let done = false;
-    let stdout = '';
-    let stderr = '';
+    const output = new GitOutputDecoder();
     let bytes = 0;
 
     const fail = (error: GitCapabilityError): void => {
@@ -53,8 +54,7 @@ export async function executeGit(cwd: string, args: readonly string[]): Promise<
         fail(new GitCapabilityError('GIT_OPERATION_FAILED', 'Git output exceeds safety limit.'));
         return;
       }
-      if (channel === 'stdout') stdout += data.toString('utf8');
-      else stderr += data.toString('utf8');
+      output.write(channel, data);
     };
 
     child.stdout.on('data', (data: Buffer) => collect('stdout', data));
@@ -66,7 +66,7 @@ export async function executeGit(cwd: string, args: readonly string[]): Promise<
       if (done) return;
       done = true;
       clearTimeout(timeout);
-      resolve({ exitCode: code ?? -1, stdout, stderr });
+      resolve({ exitCode: code ?? -1, ...output.finish() });
     });
   });
 }

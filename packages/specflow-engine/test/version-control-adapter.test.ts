@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { bootstrapProjectHome } from '../src';
 import { openVersionControl } from '../src/version-control';
+import { createLocalGitClient } from '../src/version-control/git/client';
 
 const roots: string[] = [];
 afterEach(async () => {
@@ -46,6 +47,19 @@ async function project() {
 }
 
 describe('internal Git worktree adapter (VC02)', () => {
+  it('preserves Polish characters in paths read from real Git worktree porcelain', async () => {
+    const { root } = await project();
+    const linked = await realpath(await mkdtemp(join(tmpdir(), 'vc-linked-Żółć ')));
+    roots.push(linked);
+    git(root, 'worktree', 'add', '-q', '--detach', linked, 'HEAD');
+
+    const worktrees = await createLocalGitClient(root).listWorktrees();
+    expect(worktrees.find((worktree) => worktree.root === linked)).toMatchObject({
+      root: linked,
+      prunable: false,
+    });
+  });
+
   it('rejects a different-case sibling directory on POSIX without Git or FS effects', async () => {
     if (process.platform === 'win32') return;
     const { root, worktrees } = await project();
