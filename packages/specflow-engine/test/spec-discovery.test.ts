@@ -327,11 +327,11 @@ describe('E2.T07 — canonical reads across concurrent source changes (real Git)
         return snapshot;
       },
     };
-    await expect(
-      readCanonicalSpecDocument(racingEngine, specId, 'manifest'),
-    ).rejects.toMatchObject({
-      code: 'SPEC_CONFLICT',
-    });
+    await expect(readCanonicalSpecDocument(racingEngine, specId, 'manifest')).rejects.toMatchObject(
+      {
+        code: 'SPEC_CONFLICT',
+      },
+    );
     expect(registryReads).toBe(4);
     expect(await readCanonicalSpecDocument(engine, specId, 'manifest')).toMatchObject({
       status: 'available',
@@ -392,11 +392,11 @@ describe('E2.T07 — canonical reads across concurrent source changes (real Git)
         return snapshot;
       },
     };
-    await expect(
-      readCanonicalSpecDocument(racingEngine, specId, 'manifest'),
-    ).rejects.toMatchObject({
-      code: 'SPEC_SOURCE_INVALID',
-    });
+    await expect(readCanonicalSpecDocument(racingEngine, specId, 'manifest')).rejects.toMatchObject(
+      {
+        code: 'SPEC_SOURCE_INVALID',
+      },
+    );
     expect(registryReads).toBe(3);
   });
 });
