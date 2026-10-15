@@ -1,13 +1,9 @@
-import { lstat, readFile, realpath } from 'node:fs/promises';
-import { join } from 'node:path';
-
 import {
+  readCanonicalSpecDocument,
   resolveSpecification,
   type DiscoveredSpecification,
   type SpecFlowEngine,
 } from '@nevo/specflow-engine';
-
-import { SpecsReadError } from './error';
 
 export type CanonicalSpecRead<T> =
   | { readonly status: 'available'; readonly value: T }
@@ -56,26 +52,12 @@ export function createEngineSpecsReadRepository(engine: SpecFlowEngine): EngineS
       };
     },
     async readDocument(specId, kind) {
-      const found = await resolve(specId);
-      if (found.status !== 'available') return unavailable(found);
-      const relativePath =
-        kind === 'manifest'
-          ? found.specification.relativeManifestPath
-          : found.specification.relativeOverviewPath;
-      const path = join(found.workspaceRoot, relativePath);
-      try {
-        const file = await lstat(path);
-        if (!file.isFile() || file.isSymbolicLink() || (await realpath(path)) !== path) {
-          throw new SpecsReadError('SPEC_SOURCE_UNAVAILABLE', 'Document source is redirected.');
-        }
-        return {
-          status: 'available',
-          value: { relativePath, content: await readFile(path, 'utf8') },
-        };
-      } catch (error) {
-        if (isMissing(error)) return { status: 'document_missing' };
-        throw error;
-      }
+      const source = await readCanonicalSpecDocument(engine, specId, kind);
+      if (source.status !== 'available') return source;
+      return {
+        status: 'available',
+        value: { relativePath: source.relativePath, content: source.content },
+      };
     },
   };
 }
@@ -88,6 +70,3 @@ function unavailable(
     : { status: 'manifest_missing' };
 }
 
-function isMissing(error: unknown): boolean {
-  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT';
-}
