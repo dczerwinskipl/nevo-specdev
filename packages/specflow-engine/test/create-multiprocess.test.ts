@@ -14,7 +14,7 @@ import {
   discoverSpecifications,
   workspaceRegistryPath,
   type CreateSpecificationInput,
-} from '../src/index';
+} from '../src/testing';
 
 const roots: string[] = [];
 afterEach(async () => {
