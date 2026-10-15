@@ -12,7 +12,7 @@ import {
   updateWorkspaceRegistry,
   withProjectControlLock,
   workspaceRegistryPath,
-} from '../../src/index';
+} from '../../src/testing';
 import { writeJsonAtomically } from '../../src/project/atomic-json';
 
 it.skipIf(!process.env.NEVO_REGISTRY_WORKER)('independent registry mutation process', async () => {
