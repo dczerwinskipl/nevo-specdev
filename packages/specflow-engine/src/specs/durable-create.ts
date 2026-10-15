@@ -1,3 +1,5 @@
+import { isDeepStrictEqual } from 'node:util';
+
 import type { SpecFlowEngine } from '../application';
 import { normalizeCreateClientIntent, type CreateClientIntent } from './create-intent';
 import { verifyScaffold, writeScaffoldWithEvidence } from './create-scaffold';
@@ -270,7 +272,7 @@ async function transition(
 ): Promise<CreateJournal> {
   return withCreateJournalLock(engine.context, async () => {
     const current = await readCreateJournal(engine.context, record.operationId);
-    if (!current || JSON.stringify(current) !== JSON.stringify(record)) {
+    if (!current || !isDeepStrictEqual(current, record)) {
       throw new CreateOperationError(
         'CREATE_CONFLICT',
         'Create journal changed concurrently; restart from the latest durable state.',
