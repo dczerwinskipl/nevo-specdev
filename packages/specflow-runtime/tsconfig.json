@@ -5,6 +5,7 @@
     "paths": {
       "@nevo/authorization": ["../authorization/src/index.ts"],
       "@nevo/specflow-engine": ["../specflow-engine/src/index.ts"],
+      "@nevo/specflow-engine/testing": ["../specflow-engine/src/testing.ts"],
       "@nevo/specflow-contracts": ["../specflow-contracts/src/index.ts"],
       "@nevo/specflow-contracts/specs": ["../specflow-contracts/src/specs/index.ts"],
       "@nevo/specflow-contracts/specs/overview": [
