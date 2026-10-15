@@ -5,7 +5,7 @@ import { join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { isGitIgnored, resolveGitCheckoutLayout } from '../src/index';
+import { isGitIgnored, resolveGitCheckoutLayout } from '../src/testing';
 
 const temporaryRoots: string[] = [];
 
