@@ -45,12 +45,8 @@ export {
 } from './specs/discovery';
 
 export {
-  createSpecification,
   inspectCreateSpecification,
   type CreatedSpecification,
-  type CreateSpecificationInput,
-  type CreateSpecificationOptions,
-  type CreateSpecificationTarget,
 } from './specs/durable-create';
 
 export {
