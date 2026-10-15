@@ -289,6 +289,47 @@ describe('E2.T06 — production Engine-backed specification reads', () => {
     }
   }, 45000);
 
+  it('keeps primary manifest corruption a project integrity failure for scoped reads', async () => {
+    const { root, engine } = await fixture();
+    const visible = await createSpecificationFromRequest(engine, {
+      operationId: randomUUID(),
+      title: 'Visible primary document',
+      target: { kind: 'existing', workspaceId: engine.workspace.workspaceId },
+    });
+    await mkdir(join(root, 'specs/active/unidentified-corruption'), { recursive: true });
+    await writeFile(
+      join(root, 'specs/active/unidentified-corruption/change.yaml'),
+      'invalid: [unclosed',
+    );
+    const config = passwordConfig();
+    const store = new InMemoryAuthenticationStore();
+    const session = store.createSession({
+      userId: 'primary-scoped-user',
+      authenticatedWith: { kind: 'password' },
+    });
+    const app = await createRuntimeApp(
+      {
+        ...config,
+        authorization: {
+          assignments: [
+            { userId: 'primary-scoped-user', role: 'viewer', scope: { specId: visible.specId } },
+          ],
+        },
+      },
+      { auth: { store }, specs: { engine } },
+    );
+    try {
+      const response = await app.inject({
+        url: '/api/specs/overview',
+        headers: { cookie: authCookieNames(config.server.port).session + '=' + session },
+      });
+      expect(response.statusCode, response.body).toBe(503);
+      expect(response.json()).toMatchObject({ code: 'SPEC_SOURCE_UNAVAILABLE' });
+    } finally {
+      await app.close();
+    }
+  }, 45000);
+
   it('distinguishes genuinely absent Spec from a registered missing canonical manifest', async () => {
     const { engine } = await fixture();
     const missingSpecId = randomUUID();
