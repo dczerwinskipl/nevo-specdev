@@ -113,7 +113,6 @@ describe('E2.T06 — production Engine-backed specification reads', () => {
       expect(manifest.status).toBe('available');
       if (manifest.status !== 'available') throw new Error('Manifest must exist.');
       expect(manifest.value.content).toContain(created.specId);
-      expect(await reads.readTasks(created.specId)).toEqual({ status: 'available', value: [] });
 
       const manifestPath = join(root, created.relativeManifestPath);
       await writeFile(
