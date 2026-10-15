@@ -1,5 +1,5 @@
-import { randomUUID } from 'node:crypto';
-import { mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
+import { createHash, randomUUID } from 'node:crypto';
+import { mkdir, mkdtemp, readFile, realpath, rename, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
@@ -13,6 +13,8 @@ import {
   bootstrapProjectHome,
   createSpecificationScaffold,
   discoverSpecifications,
+  readCanonicalSpecDocument,
+  readCanonicalSpecSources,
   openSpecFlowEngine,
   provisionLinkedWorkspaceIdentity,
   resolveSpecification,
@@ -254,5 +256,143 @@ describe('E2.T03 — canonical Specification binding and discovery (real Git)', 
       workspaceRoot: root,
       workspaceId: engine.workspace.workspaceId,
     });
+  });
+});
+
+describe('E2.T07 — canonical reads across concurrent source changes (real Git)', () => {
+  it('rejects a binding published after discovery rather than returning the previous source', async () => {
+    const { root, engine } = await project();
+    const linked = await linkedWorkspace(engine);
+    const specId = randomUUID();
+    const baseline = scaffold(specId, 'Authoritative source');
+    await persist(root, baseline);
+    const linkedManifest = await persist(linked.root, baseline);
+    await writeFile(
+      linkedManifest,
+      (await readFile(linkedManifest, 'utf8')).replace(
+        'title: Authoritative source',
+        'title: New linked authority',
+      ),
+    );
+
+    let registryReads = 0;
+    const racingEngine: SpecFlowEngine = {
+      ...engine,
+      async readRegistry() {
+        const snapshot = await engine.readRegistry();
+        registryReads++;
+        if (registryReads === 3) {
+          // Simulate the independent writer winning immediately after
+          // discovery's final registry check, before manifest bytes are read.
+          await updateWorkspaceRegistry(engine.context, (registry) =>
+            bindSpecToWorkspace(registry, specId, linked.workspaceId),
+          );
+        }
+        return snapshot;
+      },
+    };
+    await expect(readCanonicalSpecSources(racingEngine)).rejects.toMatchObject({
+      code: 'SPEC_CONFLICT',
+    });
+    expect(registryReads).toBe(4);
+    expect(await readCanonicalSpecSources(engine)).toMatchObject([
+      {
+        status: 'available',
+        workspaceId: linked.workspaceId,
+        binding: 'explicit',
+        specification: { title: 'New linked authority' },
+      },
+    ]);
+  });
+
+  it('rejects a document read if the canonical binding changes during resolution', async () => {
+    const { root, engine } = await project();
+    const linked = await linkedWorkspace(engine);
+    const specId = randomUUID();
+    const source = scaffold(specId, 'Document source');
+    await persist(root, source);
+    await persist(linked.root, source);
+
+    let registryReads = 0;
+    const racingEngine: SpecFlowEngine = {
+      ...engine,
+      async readRegistry() {
+        const snapshot = await engine.readRegistry();
+        registryReads++;
+        if (registryReads === 3) {
+          await updateWorkspaceRegistry(engine.context, (registry) =>
+            bindSpecToWorkspace(registry, specId, linked.workspaceId),
+          );
+        }
+        return snapshot;
+      },
+    };
+    await expect(readCanonicalSpecDocument(racingEngine, specId, 'manifest')).rejects.toMatchObject({
+      code: 'SPEC_CONFLICT',
+    });
+    expect(registryReads).toBe(4);
+    expect(await readCanonicalSpecDocument(engine, specId, 'manifest')).toMatchObject({
+      status: 'available',
+      relativePath: source.files[0]!.relativePath,
+    });
+  });
+
+  it('reads one coherent manifest revision after an atomic replacement between phases', async () => {
+    const { root, engine } = await project();
+    const specId = randomUUID();
+    const originalPath = await persist(root, scaffold(specId, 'Before atomic replacement'));
+    const prior = await readFile(originalPath, 'utf8');
+    const updated = prior
+      .replace('title: Before atomic replacement', 'title: After atomic replacement')
+      .replace('status: draft', 'status: approved');
+    const temporary = originalPath + '.replacement';
+    await writeFile(temporary, updated);
+
+    let registryReads = 0;
+    const racingEngine: SpecFlowEngine = {
+      ...engine,
+      async readRegistry() {
+        const snapshot = await engine.readRegistry();
+        registryReads++;
+        if (registryReads === 3) await rename(temporary, originalPath);
+        return snapshot;
+      },
+    };
+
+    const sources = await readCanonicalSpecSources(racingEngine);
+    expect(sources).toMatchObject([
+      {
+        status: 'available',
+        specification: { title: 'After atomic replacement', status: 'approved' },
+        sourceRevision: createHash('sha256').update(updated, 'utf8').digest('hex'),
+      },
+    ]);
+    expect(registryReads).toBe(4);
+  });
+
+  it('refuses a substituted manifest identity in a direct document read', async () => {
+    const { root, engine } = await project();
+    const specId = randomUUID();
+    const path = await persist(root, scaffold(specId, 'Identity check'));
+    const before = await readFile(path, 'utf8');
+    const substituted = before.replace(specId, randomUUID());
+    expect(substituted).not.toBe(before);
+    const temporary = path + '.replacement';
+    await writeFile(temporary, substituted);
+
+    let registryReads = 0;
+    const racingEngine: SpecFlowEngine = {
+      ...engine,
+      async readRegistry() {
+        const snapshot = await engine.readRegistry();
+        registryReads++;
+        if (registryReads === 3) await rename(temporary, path);
+        return snapshot;
+      },
+    };
+    await expect(readCanonicalSpecDocument(racingEngine, specId, 'manifest')).rejects.toMatchObject({
+      code: 'SPEC_SOURCE_INVALID',
+    });
+    expect(registryReads).toBe(3);
   });
 });
