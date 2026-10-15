@@ -6,7 +6,7 @@ import { join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { bootstrapProjectHome } from '../src/index';
+import { bootstrapProjectHome } from '../src/testing';
 import {
   fingerprintCreateClientIntent,
   normalizeCreateClientIntent,
