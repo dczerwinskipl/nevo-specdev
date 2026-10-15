@@ -5,6 +5,8 @@ import { normalizeCreateClientIntent, type CreateClientIntent } from './create-i
 import { verifyScaffold, writeScaffoldWithEvidence } from './create-scaffold';
 import { reserveCreateOperation } from './create/reservation';
 import { followExistingCreateOperation } from './create/observation';
+import type { CreateSpecificationInput } from './create/create-input';
+export type { CreateSpecificationInput, CreateSpecificationTarget } from './create/create-input';
 import { commitBinding } from './create-binding';
 import {
   createPlannedGitWorktree,
@@ -25,22 +27,6 @@ import {
   type CreateJournal,
   type CreateStage,
 } from './create-journal';
-
-export type CreateSpecificationTarget =
-  | { readonly kind: 'existing'; readonly workspaceId: string }
-  | {
-      readonly kind: 'new-worktree';
-      readonly baseRef: string;
-      readonly branch?: string;
-    };
-
-export interface CreateSpecificationInput {
-  readonly operationId: string;
-  readonly title: string;
-  readonly created: string;
-  readonly goal?: string;
-  readonly target: CreateSpecificationTarget;
-}
 
 export interface CreatedSpecification {
   readonly operationId: string;

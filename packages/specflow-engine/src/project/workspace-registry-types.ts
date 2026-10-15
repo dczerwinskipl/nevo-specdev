@@ -21,14 +21,23 @@ export class WorkspaceRegistryError extends Error {
   }
 }
 
-export interface WorkspaceRegistration {
-  readonly workspaceId: string;
-  readonly kind: 'primary' | 'linked';
-  readonly root: string;
-  readonly managed: boolean;
-  /** Physical checkout incarnation; required for linked workspaces. */
-  readonly instanceId?: string;
-}
+/** Primary has no separate incarnation marker and is never managed. */
+export type WorkspaceRegistration =
+  | {
+      readonly kind: 'primary';
+      readonly workspaceId: string;
+      readonly root: string;
+      readonly managed: false;
+      readonly instanceId?: never;
+    }
+  | {
+      readonly kind: 'linked';
+      readonly workspaceId: string;
+      readonly root: string;
+      readonly managed: boolean;
+      /** Physical checkout incarnation required for every linked workspace. */
+      readonly instanceId: string;
+    };
 
 export interface SpecWorkspaceBinding {
   readonly specId: string;

@@ -19,7 +19,7 @@ import {
   isValidSpecificationId,
   validateSpecificationScaffoldInput,
 } from '../model';
-import type { CreateSpecificationInput } from '../durable-create';
+import type { CreateSpecificationInput } from './create-input';
 
 function normalize(input: CreateSpecificationInput): Omit<CreateSpecificationInput, 'operationId'> {
   const title = input.title.replace(/\s+/gu, ' ').trim();

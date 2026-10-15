@@ -9,6 +9,15 @@ import { CREATE_STAGES, type CreateJournal, type CreateStage } from './journal-m
 
 export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 const SHA256 = /^[0-9a-f]{64}$/u;
+const V2_EXISTING_TARGET_FIELDS = new Set(['kind', 'workspaceId', 'workspaceRoot']);
+const V2_WORKTREE_TARGET_FIELDS = new Set([
+  'kind',
+  'workspaceId',
+  'workspaceRoot',
+  'branch',
+  'baseCommit',
+  'instanceId',
+]);
 
 export function parseCreateJournal(
   context: ResolvedProjectHome,
@@ -66,6 +75,13 @@ function isValidJournalTarget(value: unknown, version: unknown): boolean {
       (typeof value.instanceId !== 'string' || !UUID.test(value.instanceId)))
   ) {
     return false;
+  }
+  // V2 records must match the discriminated domain model exactly.
+  // Legacy V1 target shapes remain readable without normalization.
+  if (version === 2) {
+    const allowed =
+      value.kind === 'existing' ? V2_EXISTING_TARGET_FIELDS : V2_WORKTREE_TARGET_FIELDS;
+    if (Object.keys(value).some((key) => !allowed.has(key))) return false;
   }
   if (value.kind === 'existing') return true;
   return (

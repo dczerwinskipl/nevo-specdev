@@ -21,6 +21,7 @@ import {
   validateWorkspaceRegistry,
   verifyWorkspaceRoot,
   workspaceRegistryPath,
+  type WorkspaceRegistration,
 } from '../src/testing';
 
 const roots: string[] = [];
@@ -185,7 +186,18 @@ describe('Engine workspace registry model (E1.T04)', () => {
           kind: 'linked',
           root: second.workspaces[1]!.root,
           managed: false,
-        }),
+        } as unknown as WorkspaceRegistration),
+      'REGISTRY_CONFLICT',
+    );
+    // Bypass the static type deliberately to verify runtime rejection.
+    assertError(
+      () =>
+        addWorkspace(second, {
+          workspaceId: randomUUID(),
+          kind: 'linked',
+          root: join(registry.workspaces[0]!.root, 'another-unique'),
+          managed: false,
+        } as unknown as WorkspaceRegistration),
       'REGISTRY_CONFLICT',
     );
     const bound = bindSpecToWorkspace(second, 'spec-2', secondId);

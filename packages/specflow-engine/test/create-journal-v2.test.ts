@@ -245,6 +245,81 @@ describe('VC05 — atomic v2 writer with legacy v1 retry', () => {
     expect(await readCreateJournal(context, next.operationId)).toEqual(next);
   });
 
+  it('rejects extra fields in v2 journal targets while preserving v1 readability', async () => {
+    const context = await fixture();
+    const before = legacy(context);
+    const intent = normalizeCreateClientIntent({
+      title: before.title,
+      target: { kind: 'existing', workspaceId: before.target.workspaceId },
+    });
+    const record: CreateJournalV2 = {
+      ...before,
+      version: 2,
+      target: {
+        kind: 'existing',
+        workspaceId: before.target.workspaceId,
+        workspaceRoot: before.target.workspaceRoot,
+      },
+      requestIntent: intent,
+      inputFingerprint: fingerprintCreateClientIntent(intent),
+    };
+    await withCreateJournalLock(context, () => Promise.resolve());
+    const path = createJournalPath(context, record.operationId);
+    await writeFile(path, JSON.stringify(record) + '\n');
+    expect(await readCreateJournal(context, record.operationId)).toEqual(record);
+
+    for (const extra of [
+      { instanceId: randomUUID() },
+      { branch: 'unexpected' },
+      { baseCommit: 'a'.repeat(40) },
+      { unexpected: true },
+    ]) {
+      await writeFile(path, JSON.stringify({ ...record, target: { ...record.target, ...extra } }));
+      await expect(readCreateJournal(context, record.operationId)).rejects.toMatchObject({
+        code: 'CREATE_JOURNAL_CORRUPT',
+      });
+    }
+
+    const worktreeIntent = normalizeCreateClientIntent({
+      title: before.title,
+      target: { kind: 'new-worktree' },
+    });
+    const worktreeRecord: CreateJournalV2 = {
+      ...record,
+      requestIntent: worktreeIntent,
+      inputFingerprint: fingerprintCreateClientIntent(worktreeIntent),
+      target: {
+        kind: 'new-worktree',
+        workspaceId: randomUUID(),
+        workspaceRoot: join(dirname(context.project.homeRoot), 'reserved-worktree'),
+        branch: 'spec/reserved-12345678',
+        baseCommit: 'a'.repeat(40),
+        instanceId: randomUUID(),
+      },
+      gitPlan: {
+        projectRoot: context.project.homeRoot,
+        gitInstanceId: context.project.gitInstanceId,
+      },
+    };
+    await writeFile(
+      path,
+      JSON.stringify({ ...worktreeRecord, target: { ...worktreeRecord.target, unexpected: true } }),
+    );
+    await expect(readCreateJournal(context, record.operationId)).rejects.toMatchObject({
+      code: 'CREATE_JOURNAL_CORRUPT',
+    });
+
+    // Existing V1 journals may have legacy extra target properties.
+    await writeFile(
+      path,
+      JSON.stringify({ ...before, target: { ...before.target, branch: 'legacy-extra' } }),
+    );
+    await expect(readCreateJournal(context, before.operationId)).resolves.toMatchObject({
+      version: 1,
+      target: { branch: 'legacy-extra' },
+    });
+  });
+
   it('distinguishes omitted and explicit baseRef even when both would target HEAD', () => {
     const base = { title: 'Same intent' };
     const omitted = normalizeCreateClientIntent({ ...base, target: { kind: 'new-worktree' } });

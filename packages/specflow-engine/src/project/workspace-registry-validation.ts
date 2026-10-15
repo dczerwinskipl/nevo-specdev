@@ -81,16 +81,24 @@ function parseRegistration(value: unknown): WorkspaceRegistration {
     resolve(value.root) !== value.root ||
     typeof value.managed !== 'boolean' ||
     (value.kind === 'linked' && !isIdentifier(value.instanceId)) ||
-    (value.kind === 'primary' && value.instanceId !== undefined)
+    (value.kind === 'primary' && (value.managed !== false || value.instanceId !== undefined))
   ) {
     throw corrupt('Invalid workspace registration.');
   }
+  if (value.kind === 'linked') {
+    return {
+      kind: 'linked',
+      workspaceId: value.workspaceId,
+      root: value.root,
+      managed: value.managed,
+      instanceId: value.instanceId as string,
+    };
+  }
   return {
+    kind: 'primary',
     workspaceId: value.workspaceId,
-    kind: value.kind,
     root: value.root,
-    managed: value.managed,
-    ...(value.kind === 'linked' ? { instanceId: value.instanceId as string } : {}),
+    managed: false,
   };
 }
 
