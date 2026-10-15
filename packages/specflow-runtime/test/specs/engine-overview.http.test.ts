@@ -11,7 +11,7 @@ import {
   createSpecificationFromRequest,
   provisionLinkedWorkspaceIdentity,
   updateWorkspaceRegistry,
-} from '@nevo/specflow-engine';
+} from '@nevo/specflow-engine/testing';
 import { afterEach, describe, expect, it } from 'vitest';
 import type {
   ArchiveSpecsOverview,
