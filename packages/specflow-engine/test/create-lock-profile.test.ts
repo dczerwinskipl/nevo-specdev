@@ -59,9 +59,10 @@ describe('Create reservation lock profile (opt-in)', () => {
             };
             await expect(
               createSpecificationForTesting(engine, input, {
-                afterEffect: async (effect) => {
-                  if (effect === 'reservation') throw new Error('Profile checkpoint');
-                },
+                afterEffect: (effect) =>
+                  effect === 'reservation'
+                    ? Promise.reject(new Error('Profile checkpoint'))
+                    : Promise.resolve(),
               }),
             ).rejects.toThrow('Profile checkpoint');
           }
@@ -93,9 +94,10 @@ describe('Create reservation lock profile (opt-in)', () => {
             };
             await expect(
               createSpecificationForTesting(engine, input, {
-                afterEffect: async (effect) => {
-                  if (effect === 'reservation') throw new Error('Profile checkpoint');
-                },
+                afterEffect: (effect) =>
+                  effect === 'reservation'
+                    ? Promise.reject(new Error('Profile checkpoint'))
+                    : Promise.resolve(),
               }),
             ).rejects.toThrow('Profile checkpoint');
           } finally {
