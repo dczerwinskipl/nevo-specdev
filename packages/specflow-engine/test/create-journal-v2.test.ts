@@ -183,6 +183,7 @@ describe('VC05 — atomic v2 writer with legacy v1 retry', () => {
     roots.push(dirname(result.workspaceRoot));
     expect(result.specId).toBe(specId);
     expect(result.workspaceRoot).toBe(legacy.target.workspaceRoot);
+    if (legacy.target.kind !== 'new-worktree') throw new Error('Expected legacy worktree.');
     expect(
       execFileSync('git', ['symbolic-ref', '--short', 'HEAD'], {
         cwd: result.workspaceRoot,
@@ -225,6 +226,11 @@ describe('VC05 — atomic v2 writer with legacy v1 retry', () => {
     });
     const next: CreateJournalV2 = {
       ...prior,
+      target: {
+        kind: 'existing',
+        workspaceId: prior.target.workspaceId,
+        workspaceRoot: prior.target.workspaceRoot,
+      },
       version: 2,
       requestIntent: intent,
       inputFingerprint: fingerprintCreateClientIntent(intent),
