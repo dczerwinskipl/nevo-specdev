@@ -53,6 +53,13 @@ export {
   type CreateSpecificationTarget,
 } from './specs/durable-create';
 
+export {
+  readCanonicalSpecDocument,
+  readCanonicalSpecSources,
+  type CanonicalDocumentRead,
+  type CanonicalSpecSource,
+} from './specs/canonical-source';
+
 export { CreateOperationError, type CreateJournal, type CreateStage } from './specs/create-journal';
 
 export {
