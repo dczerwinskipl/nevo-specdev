@@ -19,7 +19,7 @@ import {
   workspaceRegistryPath,
   type SpecFlowEngine,
   type SpecificationScaffold,
-} from '../src/index';
+} from '../src/testing';
 
 // Real-Git and checkout-incarnation probes are disk-intensive on Windows,
 // especially when concurrent crash/multiprocess suites run in CI.
