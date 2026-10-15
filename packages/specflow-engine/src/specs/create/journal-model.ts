@@ -68,4 +68,3 @@ export interface CreateJournalV2 extends CreateJournalFields<CreateJournalV2Targ
 }
 
 export type CreateJournal = CreateJournalV1 | CreateJournalV2;
-

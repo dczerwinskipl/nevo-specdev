@@ -178,11 +178,7 @@ describe('E2.T06 — production Engine-backed specification reads', () => {
     try {
       const response = await app.inject('/api/specs/overview');
       expect(response.statusCode, response.body).toBe(200);
-      expect(response.json<CurrentSpecsOverview>().sections).toEqual([
-        'draft',
-        'ready',
-        'unknown',
-      ]);
+      expect(response.json<CurrentSpecsOverview>().sections).toEqual(['draft', 'ready', 'unknown']);
       expect(response.json<CurrentSpecsOverview>().items.map((item) => item.id)).toEqual([
         created.specId,
       ]);

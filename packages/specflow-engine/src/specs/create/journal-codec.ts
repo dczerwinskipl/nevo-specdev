@@ -1,4 +1,8 @@
-import { fingerprintCreateClientIntent, normalizeCreateClientIntent, type CreateClientIntent } from '../create-intent';
+import {
+  fingerprintCreateClientIntent,
+  normalizeCreateClientIntent,
+  type CreateClientIntent,
+} from '../create-intent';
 import { CreateOperationError } from '../create-error';
 import type { ResolvedProjectHome } from '../../project/project-home';
 import { CREATE_STAGES, type CreateJournal, type CreateStage } from './journal-model';

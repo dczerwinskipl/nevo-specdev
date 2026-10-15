@@ -1,8 +1,5 @@
 import type { SpecFlowEngine } from '../application';
-import {
-  normalizeCreateClientIntent,
-  type CreateClientIntent,
-} from './create-intent';
+import { normalizeCreateClientIntent, type CreateClientIntent } from './create-intent';
 import { verifyScaffold, writeScaffoldWithEvidence } from './create-scaffold';
 import { reserveCreateOperation } from './create/reservation';
 import { followExistingCreateOperation } from './create/observation';

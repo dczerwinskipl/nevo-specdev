@@ -4,10 +4,7 @@ import { join } from 'node:path';
 
 import { isGitIgnored } from './git-checkout';
 import type { ResolvedProjectHome } from './project-home';
-import {
-  WorkspaceRegistryError,
-  type WorkspaceRegistration,
-} from './workspace-registry-types';
+import { WorkspaceRegistryError, type WorkspaceRegistration } from './workspace-registry-types';
 import { verifyWorkspaceMembership } from './workspace-membership';
 
 export const WORKSPACE_IDENTITY_RELATIVE_PATH = '.nevo/local/state/workspace-identity.json';
