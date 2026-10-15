@@ -1,11 +1,16 @@
 import { randomUUID } from 'node:crypto';
+import { channel } from 'node:diagnostics_channel';
 import { lstat, mkdir, open, readFile, realpath, unlink } from 'node:fs/promises';
 import { join } from 'node:path';
+import { performance } from 'node:perf_hooks';
 import { setTimeout as sleep } from 'node:timers/promises';
 
 import { resolveProjectHome, type ResolvedProjectHome } from './project-home';
 
 export const PROJECT_CONTROL_LOCK_RELATIVE_PATH = 'engine/control.lock';
+
+// Subscribers can profile contention without modifying the coordinated operation.
+const lockTimingChannel = channel('nevo.specflow.engine.control-lock');
 
 export type ProjectControlLockErrorCode =
   | 'CONTROL_LOCK_BUSY'
@@ -112,10 +117,14 @@ export async function withProjectControlLock<T>(
     throw new ProjectControlLockError('CONTROL_LOCK_INVALID_HOME', 'Invalid lock wait settings.');
   }
   const deadline = Date.now() + waitMs;
+  const measuring = lockTimingChannel.hasSubscribers;
+  const startedAt = measuring ? performance.now() : 0;
+  let acquiredAt = 0;
   let file;
   while (true) {
     try {
       file = await open(path, 'wx', 0o600);
+      if (measuring) acquiredAt = performance.now();
       break;
     } catch (error) {
       // Windows may report EPERM instead of EEXIST while another process
@@ -161,6 +170,19 @@ export async function withProjectControlLock<T>(
       await releaseOwnedLock(path, token);
     } catch (error) {
       releaseFailure = error;
+    }
+    // Publish only after releasing the file; diagnostics must never break an operation.
+    if (measuring) {
+      try {
+        lockTimingChannel.publish({
+          projectId: context.project.projectId,
+          waitMs: acquiredAt - startedAt,
+          heldMs: performance.now() - acquiredAt,
+          released: releaseFailure === undefined,
+        });
+      } catch {
+        // Diagnostic subscribers are untrusted observers, not lock participants.
+      }
     }
     if (releaseFailure !== undefined) {
       if (!outcome.success) {
