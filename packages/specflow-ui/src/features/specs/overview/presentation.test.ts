@@ -25,6 +25,21 @@ describe('Specs Overview presentation boundary', () => {
     ).toBe('draft');
   });
 
+  it('keeps unknown status and progress explicit in the presentation model', () => {
+    const row = currentRow(
+      createSpecItem({
+        classification: { section: 'unknown' },
+        progress: null,
+        signals: null,
+        currentExecutions: null,
+      }),
+    );
+    expect(row.progress).toBeNull();
+    expect(row.sectionId).toBe('unknown');
+    expect(row.summary).toEqual({ kind: 'unknown' });
+    expect(row.qualifier).toBeUndefined();
+  });
+
   it('preserves Requires attention when its semantic reason is not classified yet', () => {
     expect(
       currentRow(
@@ -41,6 +56,7 @@ describe('Specs Overview presentation boundary', () => {
       active: 'specifications.sections.active',
       ready: 'specifications.sections.ready',
       draft: 'specifications.sections.draft',
+      unknown: 'specifications.sections.unknown',
     });
   });
 

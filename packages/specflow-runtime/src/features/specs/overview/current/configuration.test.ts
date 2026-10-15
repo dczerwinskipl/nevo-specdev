@@ -15,7 +15,7 @@ describe('Current Specs Overview section configuration', () => {
     ]);
   });
 
-  it.each(['ready', ['ready', 'ready'], ['unknown']])(
+  it.each(['ready', ['ready', 'ready'], ['invalid-section']])(
     'rejects invalid section configuration: %j',
     (value) => {
       expect(() => parseCurrentOverviewSections(value)).toThrow();

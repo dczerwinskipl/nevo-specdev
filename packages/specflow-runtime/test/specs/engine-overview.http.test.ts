@@ -97,10 +97,10 @@ describe('E2.T06 — production Engine-backed specification reads', () => {
       expect(value.items[0]).toMatchObject({
         id: created.specId,
         title: 'Actual canonical Spec',
-        progress: { completed: 0, total: 0 },
-        classification: { section: 'draft' },
-        signals: [],
-        currentExecutions: [],
+        progress: null,
+        classification: { section: 'unknown' },
+        signals: null,
+        currentExecutions: null,
       });
       expect(value.revision).not.toBe(empty.json<CurrentSpecsOverview>().revision);
 
@@ -127,6 +127,22 @@ describe('E2.T06 — production Engine-backed specification reads', () => {
       expect(updated.statusCode, updated.body).toBe(200);
       expect(updated.json<CurrentSpecsOverview>().items[0]?.title).toBe('Updated canonical Spec');
       expect(updated.json<CurrentSpecsOverview>().revision).not.toBe(value.revision);
+
+      // A populated non-draft manifest is NOT evidence of verified execution progress.
+      await writeFile(
+        manifestPath,
+        (await readFile(manifestPath, 'utf8'))
+          .replace('status: draft', 'status: impl-verified')
+          .replace('tasks: []', 'tasks:\n  - id: TASK-01\n    status: done'),
+      );
+      const populated = await app.inject('/api/specs/overview');
+      expect(populated.statusCode, populated.body).toBe(200);
+      expect(populated.json<CurrentSpecsOverview>().items[0]).toMatchObject({
+        progress: null,
+        classification: { section: 'unknown' },
+        signals: null,
+        currentExecutions: null,
+      });
 
       await mkdir(join(root, 'specs/archive'), { recursive: true });
       await rename(
