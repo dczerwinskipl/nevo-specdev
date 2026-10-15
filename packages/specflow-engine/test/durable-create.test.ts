@@ -9,14 +9,14 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   bootstrapProjectHome,
-  createSpecification,
+  createSpecificationForTesting as createSpecification,
   discoverSpecifications,
   inspectCreateSpecification,
   openSpecFlowEngine,
   workspaceRegistryPath,
   type CreateSpecificationInput,
   type SpecFlowEngine,
-} from '../src/index';
+} from '../src/testing';
 
 const roots: string[] = [];
 
