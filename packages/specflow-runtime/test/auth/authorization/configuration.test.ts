@@ -113,7 +113,7 @@ describe('SpecFlow authorization configuration', () => {
       join(cwd, '.nevo/config.yaml'),
       MINIMAL_PROJECT.replace(
         'role: developer',
-        'role: developer\\n        scope:\\n          workspaceId: workstation-local-id',
+        'role: developer\n        scope:\n          workspaceId: workstation-local-id',
       ),
       'utf8',
     );
