@@ -1,0 +1,31 @@
+name: Temporary exact Markdown Prettier capture
+
+on:
+  push:
+    branches: [feature/specflow-engine-foundation]
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - name: Generate formatted Markdown content
+        shell: bash
+        run: |
+          pnpm exec prettier --write "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/README.md" "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/tasks/T10-closure-contract-preflight-journal.md" "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/tasks/T11-git-integration-proof.md" "docs/ideas/specflow-engine/execution-plans/README.md" "docs/ideas/specflow-engine/specification-and-worktree-close-design.md" "docs/ideas/specflow-engine/specification-close-decisions.md" "docs/ideas/specflow-engine/optional-worktrees.md"
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          const paths = ["docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/README.md","docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/tasks/T10-closure-contract-preflight-journal.md","docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/tasks/T11-git-integration-proof.md","docs/ideas/specflow-engine/execution-plans/README.md","docs/ideas/specflow-engine/specification-and-worktree-close-design.md","docs/ideas/specflow-engine/specification-close-decisions.md","docs/ideas/specflow-engine/optional-worktrees.md"];
+          for (const path of paths) {
+            const encoded = Buffer.from(readFileSync(path, 'utf8')).toString('base64');
+            console.log('FORMAT_BEGIN ' + path);
+            for (let i = 0; i < encoded.length; i += 1024) {
+              console.log('FORMAT_DATA ' + encoded.slice(i, i + 1024));
+            }
+            console.log('FORMAT_END ' + path);
+          }
+          NODE
