@@ -89,3 +89,8 @@ HTTP receives selectors and resolves the authoritative spec/workspace through En
 - A managed active Turn prevents uncoordinated rebind; Turn history remains readable after relocation.
 - Missing worktree shows unavailable, not stale source or fabricated 404.
 - Different actor cannot rebind by supplying an authorized specId with an unauthorized destination.
+
+
+## Foundation A close extension (draft clarification, 2026-10-16)
+
+The original generic rebind/cleanup ideas list future writer-claims and Runtime Sessions. Those mechanisms are NOT installed today and must not become fictitious proof that no external writer exists. The restricted Plan 02 **Close Worktree** and **Close Specification** operations are designed separately in [closure proposal](specification-and-worktree-close-design.md), with explicit operator trust policy, fail-closed unknown states, exclusive managed-worktree requirement, real integration evidence, and CAS before disposal. An externally authored branch or inherited manifest is not a new registry binding. Plan 03 claim admission and managed Session rebind remain future strengthening; they are not needed to model Specification closure or a canonical linked-to-primary rebind under the stated limitations. This paragraph is candidate guidance, not a normative contract.

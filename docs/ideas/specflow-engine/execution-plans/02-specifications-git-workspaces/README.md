@@ -30,6 +30,9 @@ Runtime stopped -> CLI create spec B in optional new Git worktree
 Runtime running -> authenticated HTTP lists/reads A and B
 Runtime running -> separate CLI modifies B -> HTTP refresh reads new canonical data
 Runtime stopped -> CLI reads spec C created earlier via HTTP
+Commit B's authored changes -> CLI closes B worktree -> B remains active in primary
+CLI closes B Specification -> B is archived in primary
+CLI creates and closes D directly in primary -> archive with no merge
 ```
 
 A Spec is one canonical `specId`, with local binding to one verified workspace; duplicates across branches are not two Specs. Git enablement is independent of the existence of the Git repository. A bound missing worktree is unavailable, never silently replaced by stale main content.

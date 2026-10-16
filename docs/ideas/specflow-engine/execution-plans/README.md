@@ -23,7 +23,7 @@ related:
 
 # Temporary execution plans — implementation runbook
 
-**These documents are disposable, the implementation branch is not.** Use all five folders on `feature/specflow-engine-foundation` to develop and review actual code. Do not merge these 49 temporary plan/task/runbook Markdown files as permanent docs. Before final merge remove **this entire `execution-plans/` tree** and regenerate `docs/index.generated.{json,md}`; retain code, tests and accepted durable ADR/reference contracts.
+**These documents are disposable, the implementation branch is not.** Use all five folders on `feature/specflow-engine-foundation` to develop and review actual code. Do not merge any temporary plan/task/runbook Markdown files as permanent docs; the count can change as tasks are added. Before final merge remove **this entire `execution-plans/` tree** and regenerate `docs/index.generated.{json,md}`; retain code, tests and accepted durable ADR/reference contracts.
 
 **Design source:** [Engine Ideas](../README.md), [acceptance criteria](../acceptance-criteria.md), [test matrix](../test-plan.md), [PR #50](https://github.com/dczerwinskipl/nevo-specflow/pull/50). Ideas are draft; current normative documentation wins. Always inspect freshest base/merged features before implementation.
 
@@ -32,7 +32,7 @@ related:
 | Plan | Entry point                                                                   | Mandatory completion                                                       | Relative order                                             |
 | ---- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------- |
 | 01   | [Engine / Project Foundation](01-engine-project-foundation/README.md)         | Verified Project Home, Engine import boundary and cross-process state      | First                                                      |
-| 02   | [Specifications / Git Workspaces](02-specifications-git-workspaces/README.md) | Foundation A: FA01–FA12 including H03                                      | After 01                                                   |
+| 02   | [Specifications / Git Workspaces](02-specifications-git-workspaces/README.md) | FA01–FA12 (H03) plus independent lifecycle FL01–FL08                                      | After 01                                                   |
 | 03   | [Offline Workflow / Execution](03-offline-workflow-execution/README.md)       | Foundation B: FB01–FB09                                                    | After mandatory 02                                         |
 | 04   | [Managed Sessions Foundation](04-managed-sessions-foundation/README.md)       | Durable Session/Turn/Work with genuinely read-only mock                    | Can run alongside 02/03 after Plan 01 identities stabilize |
 | 05   | [Managed Execution Integration](05-managed-execution-integration/README.md)   | Real Engine coordinator + Runtime mock-provider dispatch/crash integration | Only after 03 and 04 pass                                  |

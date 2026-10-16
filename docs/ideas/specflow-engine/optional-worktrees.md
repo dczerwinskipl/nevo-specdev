@@ -96,3 +96,8 @@ A manually moved worktree or deleted directory becomes unavailable/needs repair.
 ## Unresolved and measurable
 
 Decide branch naming defaults, safe filesystem root, import/reattach policy, lifecycle retention after merge, and multi-spec checkout semantics. Validate the model on Windows and POSIX, especially worktrees with spaces in paths and mixed casing. See [test plan](test-plan.md).
+
+
+## Foundation A explicit close operations (draft extension, 2026-10-16)
+
+The earlier exclusion of automatic cleanup on Task/workflow completion remains in force. A separately authorized, user-initiated **Close Worktree** may perform guarded removal only AFTER full local Git integration proof and registry rebind; it keeps the Specification active. **Close Specification** may archive in primary directly or archive in a linked source before integration and managed cleanup. An existing managed linked checkout can be closed even if worktree creation is disabled by current policy, subject to an explicit close capability. See [closure proposal](specification-and-worktree-close-design.md) and owner decisions. No native provider Session migration is asserted, and arbitrary writers cannot be physically fenced by a clean tree alone.
