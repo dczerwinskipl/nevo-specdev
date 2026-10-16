@@ -51,6 +51,7 @@ related:
 - **Placement:** `specs/lifecycle/close-specification.ts` orchestrates and marks TODO before archive effects for future workflow-owned exit gates/actions. `specs/lifecycle/disposal.ts` marks TODO immediately before physical worktree disposal for future Workspace Execution/Session coordinator. Add actual typed ports/adapters ONLY with real counterpart implementation. Today real Git VersionControl capability, Specs archive, Project/registry CAS and durable lifecycle journal are implemented as appropriate.
 - **Supported scope:** real git/fs/index/ignore, Engine journals/locks, instance ID and registry checks continue; arbitrary OS writers are NOT physically fenced. No fabricated assertion of safe quiescence.
 - **Still requires technical review:** durable Create+Close overlapping-resource claims in T10; Git primary HEAD/index/worktree publication in T11; verified post-conflict settled state; implement T10 parser+existing-config migration BEFORE T11/T16; T16 project-wide integration auth and full-branch scope; recoverable conflicted-merge scratch + no stranded archived Spec; crash-safe clean-merge commit ownership/hook/signing; scoped archive commit verification and worktree one-spec eligibility. Shared/unmanaged automatic removal deferred.
+
 ## Review checks
 
 - Does the transition graph prohibit CAS before actual destination content verification?

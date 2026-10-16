@@ -100,6 +100,7 @@ For **linked Specification close**, three SETTLED results are allowed: `integrat
 Persist independently of Create under ignored Project Home state, e.g. engine/operations/spec-lifecycle/<operationId>.json. Typed discriminated kind = worktree-close | specification-close, schema version, project/git instance, specId, immutable normalized request fingerprint, source and target physical identities and HEADs, expected binding generation, source file manifest/fingerprint, original source HEAD, optional Engine archive-commit SHA (integrationSourceCommit), configured project target and config revision, integrateToTargetBranch, conflict/integration-checkout ownership evidence when used, ACTUAL archive/commit/integration effects, scope, evidence and stage. Foundation writes no fake gate-decision, writer-quiescence proof or placeholder workflow status.
 
 Suggested phases:
+
 - reserved (read-only preview completed, exclusive spec reservation published)
 - archive-initiated / archive-verified (specification-close only)
 - archive-commit-initiated / archive-committed (specification-close only)
@@ -132,6 +133,7 @@ Plan 02 has NO installed Specification exit-gate evaluator/action runner, manage
 3. Git integration is a REAL capability required today and uses the existing VersionControl boundary extended by a narrow typed port. Project/Workspace registry CAS remains Project-owned; archive/close orchestration stays Specs-owned. Neither CLI nor Runtime performs direct Git/archive side effects.
 
 These are comments/module ownership instructions only. Do not add new packages, registries, public result enums or interfaces until real feature owners and call sites exist. Later workflow/writer functionality receives its own implementation tasks and journal versioning when justified. Current tests assert real archive/commit, journal, identity, Git/data-loss safety and the ABSENCE of fake gate/writer request/response fields.
+
 ## Proposed Engine / adapter interface
 
 Transport-neutral application calls: previewCloseWorktree(specId); closeSpecificationWorktree(input: {specId, operationId?, expectedPreviewToken?}); previewCloseSpecification(specId); closeSpecification(input: {specId, operationId?, integrateToTargetBranch?: boolean}). No fake exit-gate override or external-writer acknowledgement fields.. Names are candidates.

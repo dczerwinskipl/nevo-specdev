@@ -109,7 +109,6 @@ No workflow start/finish, provider process, Session, full task planning, PR auto
 
 **Ready for Plan 03:** Specs/Workspaces are canonically resolved and locally durable, with independent CLI + HTTP consumption. This does not certify workflow execution or managed Sessions.
 
-
 ## Additional Plan 02 lifecycle extension gate (separate from accepted FA01–FA12)
 
 A passing original Foundation A does not establish closure. This additional gate covers the two distinct domain operations with real Git and SIGKILL evidence, CLI offline and authorized HTTP parity; see [design](../../specification-and-worktree-close-design.md), [pending decisions](../../specification-close-decisions.md), [self-review findings](../../specification-close-self-review.md) and LC01–LC40 in [test plan](../../test-plan.md). Owner must approve DC03, DC04, DC05, DC08, DC10 before implementing. Critical Git/OS-process LC cases must pass on **Windows AND POSIX**. No LC case is satisfied by mocks alone. Preserve accepted E2.T01–T08 unchanged.

@@ -70,7 +70,6 @@ No native provider execution/resume in a different worktree, `cwd` switching of 
 - Delete **all** files under `docs/ideas/specflow-engine/execution-plans/` in this implementation branch; regenerate docs index with `pnpm docs:check --write`; run `pnpm docs:check` and CI.
 - PR must contain only surviving implementation/tests/permanent documentation in its final diff; never merge these plans as the formal SpecFlow specification format.
 
-
 ## Plan 02 closure extension review boundary
 
 Run E2.T10–T17 with approved explicit lifecycle seams (no simulated workflow/active-writer checks), configured destination/ref, real Create/Close shared-resource coordination and documented external-writer limitations in [closure decisions](../specification-close-decisions.md) and [self-review](../specification-close-self-review.md). The old T09 cleanup placeholder is removed; the new T09 manifest naming/mode normalization is an executable solo compatibility gate. T10, T11, T12, T13, T15, T16, T17 are solo reviews; T14 is solo but may be developed in parallel with T12/T13 after T11 if modules AND Git refs are independent. Default to sequential if uncertain. The original FA01–FA12 must stay passing; the new LC gate cannot be declared green without real Git/OS-process evidence on Windows and POSIX. At end of PR #53 implementation all temporary execution plans, including new tasks, are removed exactly as stated above.
