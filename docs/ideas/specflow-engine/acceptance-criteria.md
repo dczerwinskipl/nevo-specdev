@@ -46,6 +46,23 @@ These are **candidate** gates, not adopted production contracts. An implementati
 
 **Foundation A acceptance does not imply that workflow or managed agent execution is ready.** If the Project Home mechanism relies on a specific checkout layout, record that supported scope explicitly and prove repair/missing-home behavior; no silent reinitialization.
 
+## Foundation A lifecycle extension gate (new, separate from FA01–FA12)
+
+This is a proposed **additional**, owner-approved Plan 02 exit gate. The already accepted Foundation A create/read contract is NOT retroactively redefined. Distinguish worktree close (spec remains active) and Specification close (archive).
+
+| ID | Mandatory outcome | Evidence |
+| --- | --- | --- |
+| FL01 | Linked managed worktree closes only after actual local integration, destination tree verification and CAS; spec remains active | LC01, LC05, LC07–LC18 |
+| FL02 | A worktree-closed spec can be closed later in the primary without another merge | LC02, LC04 |
+| FL03 | Linked and primary Specification closure put one stable specId in verified archive and create scoped archive commit | LC03–LC05, LC19–LC22, LC27 |
+| FL04 | Distinct durable operation kind/intent, idempotency, cross-process exclusion and honest unknown outcome recovery | LC17–LC23 |
+| FL05 | Offline CLI and explicitly authorized HTTP parity; live canonical reads after CLI mutation | LC06, LC25, LC28 |
+| FL06 | Unsupported writers/workspaces/branch states refuse; no forced cleanup or implicit branch checkout | LC09–LC16, LC23, LC26 |
+| FL07 | Explicit not-evaluated manual closure without installed Spec workflow, never fabricated passed gate or Task completion | LC24 plus domain review |
+| FL08 | Critical real Git/filesystem/process tests PASS on Windows and POSIX with no mandatory skips | LC01–LC05, LC07–LC23, LC26–LC27 |
+
+Gate is conditional on the product owner explicitly approving [DC03/DC04/DC05/DC08/DC10](specification-close-decisions.md). No Plan 03 E3.T06 dependency is required for the restricted closure policy; future actual writer claims and managed Sessions strengthen admission when they exist. Do not claim a clean tree or operator assertion physically proves absence of non-cooperating external writers. No permanent adoption of these draft requirements until independent architecture review and promotion to normative docs.
+
 ## Foundation B — Execution coordinator + one real minimal Workflow Kernel
 
 **Boundary:** no provider, no full old Nevo workflow; one representative real deterministic step start/finish, actual attempt identity, effects-based admission, and independent CLI processes. Do **not** satisfy these by a mock endpoint with no workflow state.

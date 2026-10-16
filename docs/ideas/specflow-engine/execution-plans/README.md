@@ -37,7 +37,7 @@ related:
 | 04   | [Managed Sessions Foundation](04-managed-sessions-foundation/README.md)       | Durable Session/Turn/Work with genuinely read-only mock                    | Can run alongside 02/03 after Plan 01 identities stabilize |
 | 05   | [Managed Execution Integration](05-managed-execution-integration/README.md)   | Real Engine coordinator + Runtime mock-provider dispatch/crash integration | Only after 03 and 04 pass                                  |
 
-Plan 02 task E2.T09 is a **deferred optional non-session binding/cleanup slice**, not mandatory for Foundation A or Plan 05. Do not mark it completed or implement worktree Session resume as part of this program.
+The original Plan 02 E2.T09 optional binding/cleanup placeholder is superseded, and its E3.T06 dependency is removed for ordinary close. A NEW, separately gated Plan 02 lifecycle extension E2.T10–T17 provides Close Worktree and Close Specification without Task/Attempt or Sessions. It does NOT change the already accepted FA01–FA12 gate or make Plan 03–05 prerequisites. No worktree Session/native resume work is part of these tasks.
 
 **Deferred beyond these five plans:** [Multi-instance execution](../multi-instance-execution.md) and its [future task plan](../multi-instance-plan/README.md) are not an E1–E5 acceptance gate. Preserve the distinction between a workflow attempt, one provider Turn and a physical writer claim; do not implement multi-instance dispatch or aggregation in E5.T07. This follow-up plan lives **outside** this disposable tree and must not be removed during E1–E5 cleanup.
 
@@ -52,7 +52,7 @@ Plan 02 task E2.T09 is a **deferred optional non-session binding/cleanup slice**
 ## Review checkpoints
 
 1. Plan 01: Project Home, local identity, config authority, package graph and process-safe local registry.
-2. Plan 02: real create/reads, non-destructive Git, idempotent recovery, live Runtime refresh **H03**; Foundation A gate.
+2. Plan 02: original real create/reads and H03 Foundation A gate, PLUS distinct, later owner-approved T10–T17 lifecycle close gate (LC01–LC28) with Windows/POSIX evidence. No future workflow or Session dependency.
 3. Plan 03: real offline workflow and attempt identity, claims/abandoned execution recovery, human trust; Foundation B gate.
 4. Plan 04: canonical Session/Turn/Work and mock provider contract; actual Runtime HTTP and persistence.
 5. Plan 05: durable dispatch uncertainty, explicit workflow finish, limited batch/handover and authorization; do not infer real provider behavior.
@@ -69,3 +69,8 @@ No native provider execution/resume in a different worktree, `cwd` switching of 
 - Promote evidence-backed persistent architecture/contract decisions to accepted homes after owner review, not by silently elevating Ideas.
 - Delete **all** files under `docs/ideas/specflow-engine/execution-plans/` in this implementation branch; regenerate docs index with `pnpm docs:check --write`; run `pnpm docs:check` and CI.
 - PR must contain only surviving implementation/tests/permanent documentation in its final diff; never merge these plans as the formal SpecFlow specification format.
+
+
+## Plan 02 closure extension review boundary
+
+Run E2.T10–T17 only after owner approval of manual no-workflow policy, destination/ref and external-writer trust limitations in [closure decisions](../specification-close-decisions.md). T09 is historical and not runnable. T10, T11, T12, T13, T15, T16, T17 are solo reviews; T14 is solo but may be developed in parallel with T12/T13 after T11 if modules AND Git refs are independent. Default to sequential if uncertain. The original FA01–FA12 must stay passing; the new LC gate cannot be declared green without real Git/OS-process evidence on Windows and POSIX. At end of PR #53 implementation all temporary execution plans, including new tasks, are removed exactly as stated above.

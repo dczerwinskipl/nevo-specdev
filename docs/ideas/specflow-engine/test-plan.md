@@ -185,6 +185,43 @@ These **MI** IDs do not alter Foundation A/B or current managed Session acceptan
 | MI11 | Two aggregate finalizers, crashing gate/commit transition          | One durable finalization and canonical state change; verify side effects exactly once                                 |
 | MI12 | Input independence, provider provenance, rebind and offline CLI    | Declared semantic independence assessed honestly; stale source and unknown effects safe; Engine works without Runtime |
 
+## Plan 02 lifecycle extension: LC01–LC28 (independent mandatory gate)
+
+An LC PASS requires actual Engine/CLI/Runtime behavior on the implementation HEAD, NOT the presence of these tasks. "Both" means Windows and POSIX real Git/FS/OS-process runs. "One" means at least one platform plus cross-platform build/schema checks. Cases marked "Both" may be grouped into a platform matrix but no required case may be skipped.
+
+| ID | Platform | Required real scenario and non-success constraint |
+| --- | --- | --- |
+| LC01 | Both | Worktree close integrates committed source and leaves original specId active in primary; managed worktree removed only after binding CAS |
+| LC02 | Both | Follow worktree close with ordinary Specification close directly on primary; no second merge/worktree |
+| LC03 | Both | Direct linked Specification close archives in source, commits, integrates into primary and removes managed worktree |
+| LC04 | Both | Direct primary Specification close archives and creates narrow Engine commit without integration/removal |
+| LC05 | Both | No duplicate canonical specId across active/archive or stale primary fallback; correct registry generation |
+| LC06 | One | Warm Runtime Overview cache, close via separate CLI, observe canonical refreshed active/archive result without restart |
+| LC07 | Both | Fast-forward source branch integration, verify actual destination HEAD/files/all intended source commits; primary BRANCH unchanged |
+| LC08 | Both | Explicit already-integrated source ancestor accepted only if physical destination content is correct; never rerun merge |
+| LC09 | Both | Divergence/merge conflict refuses and leaves registry/source intact; no forced merge/reset |
+| LC10 | Both | Destination checkout on unexpected branch or HEAD changes during preview fails without checkout/silent replan |
+| LC11 | Both | Dirty, staged and untracked source files are individually rejected, including uncommitted create scaffold |
+| LC12 | Both | Dirty, staged and untracked primary each block integration or scoped archive commit |
+| LC13 | Both | Unmanaged/foreign linked worktree is NOT removed; primary cannot be closed as worktree |
+| LC14 | Both | Second CANONICAL bound Spec in linked workspace blocks removal; inherited untouched primary manifests do NOT count as occupants |
+| LC15 | Both | Missing, invalid, symlinked or duplicated manifest/source/target blocks with zero false success |
+| LC16 | Both | Missing/moved/replaced linked instanceId, wrong common-dir/path/branch blocks cleanup and rebind |
+| LC17 | Both | Concurrent independent operation IDs for one spec: exactly one owner, the other conflicts; no double merge |
+| LC18 | Both | Identical operationId and intent retry returns same evidence/result, changed intent conflicts |
+| LC19 | Both | OS-process SIGKILL before/during/after archive move leaves inspectable intent; safe replay or explicit recovery |
+| LC20 | Both | OS-process SIGKILL after archive commit before integration detects committed tree, no duplicate archive commit |
+| LC21 | Both | OS-process SIGKILL after Git integration before registry CAS: prove destination and rebind exactly once |
+| LC22 | Both | OS-process SIGKILL after CAS before worktree deletion and after deletion before retirement: primary remains canonical, no wrong-path deletion |
+| LC23 | Both | Killed/unknown external Git or closing writer outcome never auto-replayed from PID/timeout; explicit inspect/reconciliation |
+| LC24 | One | No installed Spec workflow needs explicit manual Foundation acknowledgement; blocked/unknown installed future gate never counts as passed |
+| LC25 | One | Unauthenticated, wrongly scoped or create-only HTTP caller cannot close or see private operation details; zero side effects |
+| LC26 | Both | Real Git paths with spaces and non-ASCII; Windows casing, Unicode, literal pathspecs and worktree cleanup safe |
+| LC27 | Both | Already archived repeated close is evidence-backed idempotent or explicitly conflicted; never creates another commit |
+| LC28 | One | CLI offline and HTTP authenticated both invoke same Engine use cases, same operation ID/error semantics and correct read freshness |
+
+Mandatory scope: LC01–LC28; on Both scenarios real Git + real filesystem, and real OS-process termination at LC19–LC23. Live-process uncertainty must not be simulated solely with thrown exceptions. Test fixtures must record raw commit/ref, index/untracked state, identities, operation checkpoint, per-platform Git/Node/OS version and negative side-effect assertions. PR CI and independent reviewer sign-off are required. Deferred to Plan 03/04/05: actual external writer claims, provider/native Session resume safety, real spec-level workflow gates/actions, per-task attempts, human-verification provenance, remote PR integration, multi-instance execution.
+
 ## Running and reporting
 
 No concrete command names are prescribed until tests exist. Proposed categories: `engine:unit`, `engine:git-integration`, `engine:process-integration`, `runtime:integration` or equivalent using Turborepo/package scripts. CI should keep required checks stable and run affected packages. Mark tests explicitly skipped when Git executable/platform is unavailable rather than passing a fake.

@@ -1,0 +1,55 @@
+---
+id: ideas.specflow-engine.plan-02.task-13
+type: engineering
+title: 'E2.T13 — Close Worktree application operation'
+status: draft
+scope: specflow
+areas: [workflow, cli, runtime, testing]
+tags: [execution-task, temporary, lifecycle-closure]
+read_when:
+  - implementing or reviewing E2.T13
+summary: >
+  Temporary Plan 02 task: Close Worktree application operation.
+related:
+  - ideas.specflow-engine.plan-02
+  - ideas.specflow-engine.specification-worktree-closure
+  - ideas.specflow-engine.test-plan
+---
+
+# E2.T13 — Close Worktree application operation
+
+**Temporary task, documentation only.** Branch feature/specflow-engine-foundation / existing PR #53. No product implementation exists merely because this plan is present. This file must be removed with the entire temporary execution-plans tree before PR merge.
+
+## Executable prerequisites
+
+- E2.T10 accepted
+- E2.T11 accepted
+- E2.T12 accepted
+
+Run mode: **SOLO / end-to-end review**. No parallel writes to shared Git refs, registry schemas, journal/state files, authentication capability lists or runtime composition. Re-check HEAD and approved decisions DC01–DC12 before editing code.
+
+## Modules and ownership
+
+Engine: specs/lifecycle/close-worktree.ts, read-only preview and completion/inspection orchestration. Reuse version-control and registry lifecycle capabilities. No changes to specification status or archive files.
+
+## Required behavior / exact acceptance
+
+1. One worktree-close operation owns reservation -> integration proof -> verified rebind -> guarded disposal -> result. Eligibility restricted to exclusive managed linked binding and source location active; worktree closing never evaluates exit gates or archives.
+2. Same specId remains canonical once, status/location active, destination checkout physically contains intended files. Plain same-ID repeat returns prior evidence-backed result; competing ID is conflict.
+3. Explicit external-writer acknowledgement is recorded as trust assertion, not physical no-writer proof. Unknown external or journal state blocks. On removal failure report partial completed-integration/rebound with cleanup pending, not terminal success.
+4. Standalone Git operations remain internal; no Task/Attempt or Runtime dependencies.
+
+## Required evidence
+
+- Positive: create linked spec, commit its work, close worktree, resolve same active spec from primary with offline CLI Engine calls
+- Negative/no unintended effects: call on primary/unmanaged/shared linked checkout, divergent branch and SIGKILL after merge/CAS cannot cause duplicate merge, false archive or deletion
+- Report LC test IDs, test files, OS/Node/Git version for real filesystem/process work, PASS/FAIL/SKIP, modified public contracts, and an independent code-quality/recovery review. Mock-only tests do not satisfy Git/process cases.
+- Checkpoint for this task: Review separate domain semantics and rebind-after-integration evidence.
+- Preserve completed E2.T01–T08; avoid unrelated refactors. No Plan 03 or Session dependency.
+
+## Sources
+
+- [Plan 02](../README.md)
+- [Close architecture](../../../specification-and-worktree-close-design.md)
+- [Decisions needing approval](../../../specification-close-decisions.md)
+- [Lifecycle test matrix](../../../test-plan.md)
