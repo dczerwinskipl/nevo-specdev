@@ -23,7 +23,7 @@ related:
 ## Prerequisites and run mode
 
 - E2.T08 accepted baseline.
-- SOLO: independently review the Durable Create compatibility/negative tests BEFORE executing T10. No parallel change to Create journal versioning, scaffold generator or public manifest parser.
+- SOLO: implement in two separately verified checkpoints within this task: first prove historical Create v1/v2 journal exact-byte replay against unchanged legacy fixture, THEN switch new generator/repository paths and remove execution-mode marker. Review combined actual Git/crash tests before T10. No parallel changes to journal codec, generator or manifest parser.
 
 ## Product contract
 
@@ -62,3 +62,7 @@ Nevo SpecFlow has one deterministic workflow architecture. A Specification does 
 - [Test plan](../../../test-plan.md)
 
 All temporary execution plans, including this task, must be removed before PR #53 merge per the program runbook.
+
+## Self-review implementation guard (required)
+
+The historical journal already records the relative manifest filename and SHA-256 hashes. Distinguish the historic and new scaffold renderers by VERIFIED immutable journal file evidence (historical change.yaml versus new specification.yaml), not by mutable current project defaults or guessing an execution mode. Do not invent a second workflow algorithm. An optional journal format-version marker is justified ONLY if exact immutable evidence alone cannot safely disambiguate. Preserve journal v1/v2 negative/tamper tests, and verify completed historic Specs are never rewritten. A single end-to-end giant refactor does not meet the incremental review checkpoint.

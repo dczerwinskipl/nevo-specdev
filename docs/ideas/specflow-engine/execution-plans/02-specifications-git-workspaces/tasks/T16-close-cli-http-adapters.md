@@ -53,3 +53,9 @@ packages/specflow/src/specs/command.ts for CLI; packages/specflow-runtime/src/fe
 - [Close architecture](../../../specification-and-worktree-close-design.md)
 - [Decisions needing approval](../../../specification-close-decisions.md)
 - [Lifecycle test matrix](../../../test-plan.md)
+
+## Required self-review corrections before T16 ACCEPT
+
+- **Project-wide merge authorization:** Any HTTP CloseWorktree or CloseSpecification with integrateToTargetBranch=true can merge the ENTIRE source branch (code/config included). A narrowly scoped Spec-close capability is NOT adequate. Require a real, independently checked project-wide Git integration permission (or demonstrably equivalent project-wide grant) BEFORE the first mutation, including an Engine-scoped archive commit. Archive-only CloseSpecification needs only its Spec-close authorization. Full branch commit/path diff belongs in preflight/preview; protect sensitive project/config/auth changes (e.g. `.nevo/config.yaml`) with explicit authority or refusal. Test cross-scope callers and zero side effects.
+- **Init config:** Current `specflow init` writes only Runtime config. T10 already owns the validated Project Home git.integrationTargetBranch parser/missing-config contract. T16 wires initial branch selection (suggest current primary checked-out branch but never assume main) plus explicit safe reconfiguration/migration UX for existing initialized configs. No accidental overwrite of committed project policy.
+- **Truthful conflict outcome:** Public error/result and operation inspection must distinguish an archived-but-retained linked Specification requiring integration resolution from integrated-and-removed success. Do not promise a working agent/manual resolution UI in this slice; expose durable state and future capability seam only.

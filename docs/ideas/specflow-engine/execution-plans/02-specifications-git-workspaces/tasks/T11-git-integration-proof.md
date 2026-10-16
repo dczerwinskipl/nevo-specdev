@@ -51,3 +51,10 @@ Engine-internal version-control/git/integration.ts and typed ports in version-co
 - [Close architecture](../../../specification-and-worktree-close-design.md)
 - [Decisions needing approval](../../../specification-close-decisions.md)
 - [Lifecycle test matrix](../../../test-plan.md)
+
+## Required self-review corrections before T11 ACCEPT
+
+- **P1 ownership of scratch merge:** Define a *specific* durable mechanism for isolated merge scratch creation, physical identity, scoped file inventory, crash observation, known-conflict state and NONDESTRUCTIVE cleanup or owned retention. Ordinary no-force cleanup may fail when merge conflicts leave staged/unmerged files; never silently force-delete or orphan a worktree. Candidate commit parents, tree and operation SHA must be verifiable without trusting only commit message. In an unknown Git outcome do not rerun subprocess blindly.
+- **P1 post-archive conflict:** Source archive commit is ALREADY durable when linked integration is attempted. On a known conflict, preserve linked canonical archived Spec and its binding; return a truthful retained/needs-resolution result or a rigorously documented resumable state that does not strand the Spec. Define explicit later CloseWorktree route once manual/agent conflict reconciliation has been externally proven, without silently repinning immutable integration inputs. This is a current recovery design requirement, NOT implementation of future agent UX.
+- **Security:** Integration covers the WHOLE branch, including code and `.nevo/config.yaml`, not only `specs/**`. Provide exact source-vs-target commit/path diff preview to T16 and refuse protected project/auth policy changes absent separate project-level authority. Authorization occurs BEFORE side effects; Git integration port itself never trusts request-scoped Spec permission.
+- **Gate:** Independent real-Git review MUST approve clean divergent merge and conflicting merge, scratch lifecycle and crash checkpoints before T11 ACCEPT. Fast-forward-only green tests are not sufficient.

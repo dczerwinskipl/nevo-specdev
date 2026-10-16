@@ -37,13 +37,16 @@ related:
 | DC16 | New canonical manifest specification.yaml; historical change.yaml readable and old journal bytes recoverable, fail on both filenames; no implicit migration | Treat manifest as change log or local process state | Owner approved |
 | DC17 | Conflict UX to offer Resolve manually / Ask agent, but Engine only emits typed suspended conflict evidence; separate resolution capability and agent integration deferred | Engine silently edits conflicts or leaves dirty primary | Owner direction — implementation boundary proposed |
 | DC18 | Store integrationTargetBranch as Project Home operational policy in .nevo/config.yaml; release-train/stack policy deferred | Hard-code main or derive branch from invocation cwd | Owner direction — revised |
+| DC19 | T10 owns actual Git target parser + migration contract, T16 init/config UI; git.enabled controls new worktree creation, not integration of existing checkout | Add key rejected by strict parser or delay ownership until T16 | P1 review correction |
+| DC20 | Whole-branch Git integration requires PROJECT-WIDE integrate permission beyond per-Spec close, preview full diff, protect committed auth/project config changes | Infer repository-wide merge authority from narrowly scoped Spec permission | P1 security finding |
+| DC21 | Known post-archive merge conflict retains linked canonical archive and must have recoverable scratch + later CloseWorktree path without false integration or stranded journal | Indefinitely orphan a spec or silently mutate pinned intent | P1 recovery finding |
 
 ## Owner-confirmed direction and remaining engineering reviews
 
 - **Owner approved:** DC05 Engine-scoped automatic archive commit; DC08 explicitly located future gate/action seam ONLY, no fake gate/acknowledgement; DC10 check existing real protections and no invented writer status/acknowledgement; DC13 deterministic-only; DC16 `specification.yaml`; project-configured integration target and optional linked archive integration.
 - **Placement:** `specs/lifecycle/close-specification.ts` orchestrates and marks TODO before archive effects for future workflow-owned exit gates/actions. `specs/lifecycle/disposal.ts` marks TODO immediately before physical worktree disposal for future Workspace Execution/Session coordinator. Add actual typed ports/adapters ONLY with real counterpart implementation. Today real Git VersionControl capability, Specs archive, Project/registry CAS and durable lifecycle journal are implemented as appropriate.
 - **Supported scope:** real git/fs/index/ignore, Engine journals/locks, instance ID and registry checks continue; arbitrary OS writers are NOT physically fenced. No fabricated assertion of safe quiescence.
-- **Still requires technical review:** config migration + default branch validation; crash-safe isolated clean-merge commit ownership/hook/signing; scoped archive commit verification and worktree one-spec eligibility. Shared/unmanaged automatic removal deferred.
+- **Still requires technical review:** implement T10 parser+existing-config migration BEFORE T11/T16; T16 project-wide integration auth and full-branch scope; recoverable conflicted-merge scratch + no stranded archived Spec; crash-safe clean-merge commit ownership/hook/signing; scoped archive commit verification and worktree one-spec eligibility. Shared/unmanaged automatic removal deferred.
 ## Review checks
 
 - Does the transition graph prohibit CAS before actual destination content verification?

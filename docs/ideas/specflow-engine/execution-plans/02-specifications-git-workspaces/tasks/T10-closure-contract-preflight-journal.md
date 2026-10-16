@@ -53,3 +53,9 @@ Engine: new specs/lifecycle/{model,preflight,journal,store,reservation,inspect} 
 - [Close architecture](../../../specification-and-worktree-close-design.md)
 - [Decisions needing approval](../../../specification-close-decisions.md)
 - [Lifecycle test matrix](../../../test-plan.md)
+
+## Required self-review corrections before T10 ACCEPT
+
+- **P1 configuration ownership:** In T10 update the REAL Project Home Git config policy parser/validator (currently `version-control/worktrees/policy.ts` rejects unknown `git` keys) to support `git.integrationTargetBranch` and implement a read-only, explicit migration-required outcome for existing projects with runtime-only config. Do not auto-edit already initialized config. The existing `git.enabled` switch governs NEW worktree creation, NOT integration of already registered worktrees. Pin validated branch and config revision in the intent. T16 later implements init/reconfigure UX; T10 tests can build explicit config fixtures.
+- **P2 direct primary:** Direct primary Specification archive commit requires the Project Home primary checkout to be on the configured integrationTargetBranch even without a merge. Otherwise fail before journaled side effects; do not commit archive on an accidental feature branch.
+- **P1 conflict state:** Shape the versioned journal to distinguish 'archived locally, integration needs resolution, linked source retained' from true integrated completion and unknown Git effects. A known conflict must not permanently monopolize the Spec or conceal the existing committed archive. Later CloseWorktree must remain viable after supported external reconciliation.

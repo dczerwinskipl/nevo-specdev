@@ -55,3 +55,8 @@ Engine: specs/lifecycle/close-specification.ts owns real lifecycle orchestration
 - [Close architecture](../../../specification-and-worktree-close-design.md)
 - [Decisions needing approval](../../../specification-close-decisions.md)
 - [Lifecycle test matrix](../../../test-plan.md)
+
+## Required self-review corrections before T15 ACCEPT
+
+- For linked integrateToTargetBranch=true, archive+automatic commit precedes merge. A known conflict is NOT failure of the already committed archive: source remains canonical as archived in linked workspace, primary is untouched, removal/rebind are skipped. An actionable retained/needs-resolution outcome must be evidence-backed and allow later CloseWorktree; a permanently active journal owner without recovery is not acceptable. Do not silently change immutable integrateToTargetBranch into false.
+- Do not fabricate workflow exit checks, active process inspection, administrative bypass or injected no-op gateways. Keep only explicit TODO integration checkpoints owned by future real feature slices.

@@ -61,6 +61,13 @@ related:
 - DC08: leave `// TODO(specification-exit): ...` in Specs lifecycle application orchestrator immediately BEFORE archive effect. Future workflow slice owns actual gates/actions; do not build fake interfaces, registry, no-op implementations, statuses or administrative bypass now.
 - DC10: leave `// TODO(workspace-execution): ...` in Specs lifecycle disposal boundary before irreversible worktree removal. Future Workspace Execution feature owns process/session/claim quiescence, not a fake Foundation check. Current installed journal/lock/Git/fs blockers remain in place. No physical fencing guarantee against arbitrary OS writers.
 
+## Additional P1/P2 self-review findings — implementation admission
+
+- **SR14 P1 — parser/ordering:** Existing `parseGitWorktreePolicy` rejects `git.integrationTargetBranch`, `git.enabled` is compulsory when `git` present, and CLI init only writes runtime config. The T10 consumer must FIRST own parser and migration behavior, while T16 owns init UI; do not conflate worktree-create enablement with integration permission.
+- **SR15 P1 — authorization:** whole-branch merge can carry changes to code and project auth config; `CloseSpecification` per-Spec privilege cannot implicitly authorize repo-wide merge. T16 needs separate project-wide integrate authorization and full diff scope, and sensitive configuration protection.
+- **SR16 P1 — conflict recovery:** source archive commit is done before integration, so a conflict occurs AFTER an irreversible archive. Must retain canonical linked archive, allow safe operator recovery/later CloseWorktree, and not permanently hold an unfinishable per-spec journal or delete unverified merge scratch state.
+- **SR17 P2 — primary branch:** direct primary Spec close is not a merge but still creates a commit; only run it on the configured target branch, otherwise archived spec could end up on wrong branch.
+
 ## Residual risks / explicit non-goals
 
 1. Verified automatic conflict-free merge commits in a durable isolated checkout are included in owner direction DC04; rebase, squash-equivalence, PR/remote push and branch deletion remain deferred. Independent Git recovery review required.

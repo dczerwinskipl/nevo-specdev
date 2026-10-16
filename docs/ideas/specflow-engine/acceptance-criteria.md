@@ -56,7 +56,7 @@ This is a proposed **additional**, owner-approved Plan 02 exit gate. The already
 | FL02 | A worktree-closed spec can be closed later in the primary without another merge | LC02, LC04 |
 | FL03 | Linked and primary Specification closure put one stable specId in verified archive and automatically produce EXACTLY ONE Engine-owned, scoped archive commit without requiring a user/agent commit | LC03–LC05, LC19–LC22, LC27, LC32, LC38 |
 | FL04 | Distinct durable operation kind/intent, idempotency, cross-process exclusion and honest unknown outcome recovery | LC17–LC23 |
-| FL05 | Offline CLI and explicitly authorized HTTP parity; live canonical reads after CLI mutation | LC06, LC25, LC28 |
+| FL05 | Offline CLI and authorized HTTP parity; whole-branch merge separately requires project-wide Git integration authority, archive-only does not; live canonical reads | LC06, LC25, LC28 |
 | FL06 | Known unsettled Engine journals/locks, unsafe Git/filesystem/workspace identities and branch states refuse; no fake external-writer proof, forced cleanup or implicit branch checkout | LC09–LC16, LC23, LC26, LC29 |
 | FL07 | No speculative workflow gateway/registry, gate pass or no-evaluator admin bypass; real close runs after actual preflight. Explicit future workflow and workspace-execution TODO checkpoints, no fake active-process verification | LC24 plus domain review |
 | FL08 | Critical real Git/filesystem/process tests PASS on Windows and POSIX with no mandatory skips | LC01–LC05, LC07–LC23, LC26–LC27, LC29–LC33, LC35–LC40 |
