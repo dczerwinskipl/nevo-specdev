@@ -116,7 +116,7 @@ describe('E2.T01 Specification manifest and canonical checkout repository', () =
     });
   });
 
-  it.skipIf(process.platform === 'win32')('rejects incorrectly cased manifest names', async () => {
+  it('rejects incorrectly cased manifest names', async () => {
     const root = await workspace();
     const scaffold = createSpecificationScaffold({
       specId: randomUUID(),
