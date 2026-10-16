@@ -98,6 +98,30 @@ describe('SpecFlow authorization configuration', () => {
     ).toThrowError(/must contain only letters/);
   });
 
+  it('H10: rejects workstation-local workspaceId in committed authorization grants', async () => {
+    const knownUsers = new Set(['u1']);
+    expect(() =>
+      parseAuthorizationConfig(
+        { assignments: [{ userId: 'u1', role: 'viewer', scope: { workspaceId: 'local-only' } }] },
+        knownUsers,
+      ),
+    ).toThrowError(/workspaceId is a local workspace selector/);
+
+    const cwd = await mkdtemp(join(tmpdir(), 'specflow-authz-portability-'));
+    await mkdir(join(cwd, '.nevo'), { recursive: true });
+    await writeFile(
+      join(cwd, '.nevo/config.yaml'),
+      MINIMAL_PROJECT.replace(
+        'role: developer',
+        'role: developer\\n        scope:\\n          workspaceId: workstation-local-id',
+      ),
+      'utf8',
+    );
+    await expect(loadFrom(cwd)).rejects.toThrowError(
+      /workspaceId is a local workspace selector/,
+    );
+  });
+
   it('rejects unknown roles and configured auth users', () => {
     expect(() =>
       parseAuthorizationConfig({ assignments: [{ userId: 'u1', role: 'owner' }] }, new Set(['u1'])),

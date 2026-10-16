@@ -69,6 +69,13 @@ function parseAssignmentScope(value: unknown, path: string): Scope {
   const entries: [string, string][] = [];
 
   for (const [key, rawValue] of Object.entries(scope)) {
+    // Project authorization is portable. A workspaceId is local to one
+    // Project Home registry and must never become a committed access grant.
+    if (key === 'workspaceId') {
+      throw new RuntimeConfigError(
+        `${path}.workspaceId is a local workspace selector, not a portable authorization scope.`,
+      );
+    }
     if (!SCOPE_KEY.test(key)) {
       throw new RuntimeConfigError(
         `${path} key '${key}' must contain only letters, digits, '_' or '-', and must start with a letter or digit.`,
