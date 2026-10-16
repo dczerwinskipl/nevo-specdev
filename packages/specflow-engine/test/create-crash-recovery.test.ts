@@ -254,9 +254,9 @@ describe('E2.T04 — actual process termination and fresh-process recovery', () 
     expect(resumed.relativeManifestPath).toBe(scaffold.files[0]!.relativePath);
     expect(await readFile(manifest, 'utf8')).toBe(originalBytes);
     expect((await inspectCreateSpecification(engine, input.operationId))?.stage).toBe('completed');
-    expect((await engine.readRegistry()).specBindings.filter((x) => x.specId === specId)).toHaveLength(
-      1,
-    );
+    expect(
+      (await engine.readRegistry()).specBindings.filter((x) => x.specId === specId),
+    ).toHaveLength(1);
   }, 120000);
 
   it('R02: SIGKILL after git worktree add fences automatic replay until externally settled', async () => {
