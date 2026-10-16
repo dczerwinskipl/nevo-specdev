@@ -96,6 +96,11 @@ export async function readCanonicalSpecDocument(
   specId: string,
   kind: 'manifest' | 'overview',
 ): Promise<CanonicalDocumentRead> {
+  // TypeScript callers are constrained, but a transport or JS caller may not be.
+  // Never interpret an unrecognized document selector as 'overview'.
+  if (kind !== 'manifest' && kind !== 'overview') {
+    throw new SpecificationError('SPEC_VALIDATION_ERROR', 'Invalid canonical document kind.');
+  }
   const revision = (await engine.readRegistry()).revision;
   const found = await resolveSpecification(engine, specId);
   let result: CanonicalDocumentRead;

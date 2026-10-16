@@ -259,6 +259,22 @@ describe('E2.T03 — canonical Specification binding and discovery (real Git)', 
   });
 });
 
+describe('E2.T08 — untrusted canonical document selectors', () => {
+  it('H08: rejects invalid spec identity and document kind without reading arbitrary paths', async () => {
+    const { root, engine } = await project();
+    const specId = randomUUID();
+    await persist(root, scaffold(specId, 'Safe canonical selector'));
+    const registryBefore = await readFile(workspaceRegistryPath(engine.context), 'utf8');
+    await expect(readCanonicalSpecDocument(engine, '../../.nevo/config.yaml', 'manifest'))
+      .rejects.toMatchObject({ code: 'SPEC_VALIDATION_ERROR' });
+    // Deliberately bypass the TypeScript literal union to verify runtime rejection.
+    await expect(
+      readCanonicalSpecDocument(engine, specId, '../../.nevo/config.yaml' as 'manifest'),
+    ).rejects.toMatchObject({ code: 'SPEC_VALIDATION_ERROR' });
+    expect(await readFile(workspaceRegistryPath(engine.context), 'utf8')).toBe(registryBefore);
+  });
+});
+
 describe('E2.T07 — canonical reads across concurrent source changes (real Git)', () => {
   it('rejects a binding published after discovery rather than returning the previous source', async () => {
     const { root, engine } = await project();
