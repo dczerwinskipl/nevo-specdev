@@ -242,7 +242,9 @@ describe('E2.T01 Specification manifest and canonical checkout repository', () =
       const result = createSpecificationScaffold({ specId, title, created: '2026-10-14' });
       expect(result.slug).toBe(title.toLowerCase() + '-' + specId.slice(0, 8));
       expect(validateSpecificationSlug(result.slug)).toBe(result.slug);
-      expect(result.files[0]?.relativePath).toBe('specs/active/' + result.slug + '/specification.yaml');
+      expect(result.files[0]?.relativePath).toBe(
+        'specs/active/' + result.slug + '/specification.yaml',
+      );
     }
   });
 

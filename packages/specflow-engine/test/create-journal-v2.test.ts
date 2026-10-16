@@ -204,7 +204,6 @@ describe('VC05 — atomic v2 writer with legacy v1 retry', () => {
     ).toHaveLength(1);
   }, 120000);
 
-
   it('replays a persisted pre-cutover V2 journal with its original legacy manifest SHA', async () => {
     const context = await fixture();
     const engine = await openSpecFlowEngine({ cwd: context.project.homeRoot });
@@ -244,8 +243,9 @@ describe('VC05 — atomic v2 writer with legacy v1 retry', () => {
     const request = { operationId, title, target: { kind: 'existing' as const, workspaceId } };
     const createdSpec = await createSpecificationFromRequest(restarted, request);
     expect(createdSpec.relativeManifestPath).toBe(historical.files[0]?.relativePath);
-    expect(await readFile(join(createdSpec.workspaceRoot, createdSpec.relativeManifestPath), 'utf8'))
-      .toBe(historical.files[0]?.content);
+    expect(
+      await readFile(join(createdSpec.workspaceRoot, createdSpec.relativeManifestPath), 'utf8'),
+    ).toBe(historical.files[0]?.content);
     expect(await createSpecificationFromRequest(restarted, request)).toEqual(createdSpec);
     expect((await readCreateJournal(context, operationId))?.version).toBe(2);
     expect((await readCreateJournal(context, operationId))?.files).toEqual(record.files);
@@ -271,11 +271,16 @@ describe('VC05 — atomic v2 writer with legacy v1 retry', () => {
       title: record.title,
       created: record.created,
     });
-    await writeFile(path, JSON.stringify({ ...record, files: nextScaffold.files.map(
-      ({ relativePath, sha256 }) => ({ relativePath, sha256 }),
-    ) }) + '\n');
-    expect((await readCreateJournal(context, record.operationId))?.files[0]?.relativePath)
-      .toBe(nextScaffold.files[0]?.relativePath);
+    await writeFile(
+      path,
+      JSON.stringify({
+        ...record,
+        files: nextScaffold.files.map(({ relativePath, sha256 }) => ({ relativePath, sha256 })),
+      }) + '\n',
+    );
+    expect((await readCreateJournal(context, record.operationId))?.files[0]?.relativePath).toBe(
+      nextScaffold.files[0]?.relativePath,
+    );
 
     const mixed = [...record.files];
     mixed[0] = { ...mixed[0], relativePath: 'specs/active/' + record.slug + '/unknown.yaml' };
