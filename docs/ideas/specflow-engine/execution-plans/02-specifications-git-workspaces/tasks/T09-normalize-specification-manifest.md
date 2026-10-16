@@ -12,7 +12,7 @@ summary: >
   Remove the redundant execution-mode marker and rename new canonical manifest to specification.yaml, without breaking existing manifests or Durable Create recovery.
 related:
   - ideas.specflow-engine.plan-02
-  - ideas.specflow-engine.specification-creation
+  - ideas.specflow-engine.spec-creation
   - ideas.specflow-engine.specification-worktree-closure
 ---
 

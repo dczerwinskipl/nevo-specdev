@@ -4,7 +4,7 @@ type: engineering
 title: Self-review of Specification and Worktree closure design
 status: draft
 scope: specflow
-areas: [workflow, security, git, testing]
+areas: [workflow, security, testing]
 tags: [architecture-review, self-review, lifecycle, temporary-design]
 read_when:
   - independently reviewing E2.T09–T17
