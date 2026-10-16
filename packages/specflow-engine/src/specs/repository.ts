@@ -69,8 +69,7 @@ export async function listWorkspaceSpecifications(
       const manifestEntry = manifestEntries[0];
       if (
         manifestEntries.length !== 1 ||
-        (manifestEntry?.name !== 'change.yaml' &&
-          manifestEntry?.name !== 'specification.yaml')
+        (manifestEntry?.name !== 'change.yaml' && manifestEntry?.name !== 'specification.yaml')
       ) {
         throw new SpecificationError(
           'SPEC_SOURCE_INVALID',

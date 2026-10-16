@@ -283,7 +283,10 @@ describe('VC05 — atomic v2 writer with legacy v1 retry', () => {
     );
 
     const mixed = [...record.files];
-    mixed[0] = { ...record.files[0]!, relativePath: 'specs/active/' + record.slug + '/unknown.yaml' };
+    mixed[0] = {
+      ...record.files[0]!,
+      relativePath: 'specs/active/' + record.slug + '/unknown.yaml',
+    };
     await writeFile(path, JSON.stringify({ ...record, files: mixed }) + '\n');
     await expect(readCreateJournal(context, record.operationId)).rejects.toMatchObject({
       code: 'CREATE_JOURNAL_CORRUPT',
