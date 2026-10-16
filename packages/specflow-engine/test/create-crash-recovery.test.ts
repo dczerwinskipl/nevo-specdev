@@ -84,7 +84,12 @@ function worker(
   root: string,
   input: CreateSpecificationInput,
   mode: Mode,
-  options: { stage?: string; expectError?: string; gitSettled?: boolean; resumeExisting?: boolean } = {},
+  options: {
+    stage?: string;
+    expectError?: string;
+    gitSettled?: boolean;
+    resumeExisting?: boolean;
+  } = {},
 ): Worker {
   const signal = join(root, 'worker-' + randomUUID() + '.checkpoint');
   const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
