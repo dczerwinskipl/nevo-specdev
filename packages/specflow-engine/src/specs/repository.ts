@@ -66,17 +66,18 @@ export async function listWorkspaceSpecifications(
       const manifestEntries = (await readdir(base, { withFileTypes: true })).filter((item) =>
         /^(?:change|specification)\.yaml$/iu.test(item.name),
       );
+      const manifestEntry = manifestEntries[0];
       if (
         manifestEntries.length !== 1 ||
-        (manifestEntries[0]?.name !== 'change.yaml' &&
-          manifestEntries[0]?.name !== 'specification.yaml')
+        (manifestEntry?.name !== 'change.yaml' &&
+          manifestEntry?.name !== 'specification.yaml')
       ) {
         throw new SpecificationError(
           'SPEC_SOURCE_INVALID',
           'Specification directory must contain exactly one canonical manifest filename.',
         );
       }
-      const manifestName = manifestEntries[0].name;
+      const manifestName = manifestEntry.name;
       const relativeManifestPath = 'specs/' + location + '/' + slug + '/' + manifestName;
       const relativeOverviewPath = 'specs/' + location + '/' + slug + '/overview.md';
       const manifestPath = join(base, manifestName);
