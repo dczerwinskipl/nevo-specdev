@@ -34,7 +34,17 @@ import {
   type SpecFlowEngine,
 } from '../src/testing';
 import { withProjectControlLock } from '../src/project/control-lock';
-import { CREATE_JOURNAL_RELATIVE_DIR } from '../src/specs/create-journal';
+import {
+  CREATE_JOURNAL_RELATIVE_DIR,
+  createJournalPath,
+  withCreateJournalLock,
+  type CreateJournalV2,
+} from '../src/specs/create-journal';
+import {
+  fingerprintCreateClientIntent,
+  normalizeCreateClientIntent,
+} from '../src/specs/create-intent';
+import { createLegacySpecificationScaffold } from '../src/specs/model';
 import { createGitTestProject, git } from './support/git-project';
 
 const roots: string[] = [];
@@ -189,6 +199,64 @@ describe('E2.T04 — actual process termination and fresh-process recovery', () 
     expect(result.operationId).toBe(input.operationId);
     expect((await engine.readRegistry()).specBindings).toHaveLength(1);
     expect((await inspectCreateSpecification(engine, input.operationId))?.stage).toBe('completed');
+  }, 120000);
+
+  it('T09: SIGKILL during historical v2 Create replay preserves exact old manifest bytes', async () => {
+    const { root, engine } = await project();
+    const input = request(engine, 'Historical process crash');
+    if (input.target.kind !== 'existing') throw new Error('Expected primary target.');
+    const specId = randomUUID();
+    const scaffold = createLegacySpecificationScaffold({
+      specId,
+      title: input.title,
+      created: input.created,
+    });
+    const clientIntent = normalizeCreateClientIntent(input);
+    const record: CreateJournalV2 = {
+      version: 2,
+      projectId: engine.context.project.projectId,
+      operationId: input.operationId,
+      inputFingerprint: fingerprintCreateClientIntent(clientIntent),
+      specId,
+      slug: scaffold.slug,
+      title: input.title,
+      created: input.created,
+      stage: 'reserved',
+      target: {
+        kind: 'existing',
+        workspaceId: engine.workspace.workspaceId,
+        workspaceRoot: root,
+      },
+      files: scaffold.files.map(({ relativePath, sha256 }) => ({ relativePath, sha256 })),
+      requestIntent: clientIntent,
+    };
+    await withCreateJournalLock(engine.context, async () => {
+      await writeFile(
+        createJournalPath(engine.context, input.operationId),
+        JSON.stringify(record) + '\n',
+      );
+    });
+
+    expect(await killAtCheckpoint(root, input, 'manifest')).toBe('manifest');
+    const afterCrash = (await inspectCreateSpecification(engine, input.operationId))!;
+    expect(afterCrash.stage).toBe('manifest-writing');
+    expect(afterCrash.specId).toBe(specId);
+    expect(afterCrash.files).toEqual(record.files);
+    const manifest = join(root, scaffold.files[0]!.relativePath);
+    const originalBytes = await readFile(manifest, 'utf8');
+    expect(originalBytes).toBe(scaffold.files[0]!.content);
+
+    const resumed = JSON.parse(await replay(root, input)) as {
+      specId: string;
+      relativeManifestPath: string;
+    };
+    expect(resumed.specId).toBe(specId);
+    expect(resumed.relativeManifestPath).toBe(scaffold.files[0]!.relativePath);
+    expect(await readFile(manifest, 'utf8')).toBe(originalBytes);
+    expect((await inspectCreateSpecification(engine, input.operationId))?.stage).toBe('completed');
+    expect((await engine.readRegistry()).specBindings.filter((x) => x.specId === specId)).toHaveLength(
+      1,
+    );
   }, 120000);
 
   it('R02: SIGKILL after git worktree add fences automatic replay until externally settled', async () => {
