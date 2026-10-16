@@ -1,0 +1,31 @@
+name: Temporary T09 final formatter
+
+on:
+  push:
+    branches: [feature/specflow-engine-foundation]
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - name: Capture pinned Prettier formatting
+        shell: bash
+        run: |
+          pnpm exec prettier --write "packages/specflow-engine/src/specs/repository.ts" "packages/specflow-engine/test/create-journal-v2.test.ts"
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          const paths = ["packages/specflow-engine/src/specs/repository.ts","packages/specflow-engine/test/create-journal-v2.test.ts"];
+          for (const path of paths) {
+            const encoded = Buffer.from(readFileSync(path, 'utf8')).toString('base64');
+            console.log('FORMAT_BEGIN ' + path);
+            for (let i = 0; i < encoded.length; i += 1024) {
+              console.log('FORMAT_DATA ' + encoded.slice(i, i + 1024));
+            }
+            console.log('FORMAT_END ' + path);
+          }
+          NODE
