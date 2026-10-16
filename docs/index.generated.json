@@ -1288,6 +1288,39 @@
       ]
     },
     {
+      "id": "ideas.specflow-engine.specification-worktree-closure",
+      "type": "architecture",
+      "title": "Specification and managed worktree closure, Foundation A extension",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/specification-and-worktree-close-design.md",
+      "read_when": [
+        "implementing Plan 02 E2.T10 through E2.T17",
+        "reviewing Specification close versus Worktree close"
+      ],
+      "summary": "Proposed recoverable, transport-neutral close operations without a dependency on Plan 03, and a conservative future Specification workflow seam.",
+      "related": [
+        "ideas.specflow-engine.plan-02",
+        "ideas.specflow-engine.workspace-binding-lifecycle",
+        "ideas.specflow-engine.worktrees",
+        "ideas.specflow-engine.recovery",
+        "ideas.specflow-engine.acceptance"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "runtime",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "specification-lifecycle",
+        "worktree",
+        "durable-operation",
+        "temporary-design"
+      ]
+    },
+    {
       "id": "ideas.specflow-engine.workspace-binding-lifecycle",
       "type": "architecture",
       "title": "Canonical Specification workspace binding lifecycle",
@@ -2826,17 +2859,44 @@
     {
       "id": "ideas.specflow-engine.plan-02.task-09",
       "type": "engineering",
-      "title": "E2.T09 — Rebind and cleanup sub-slice (optional later gate)",
+      "title": "E2.T09 — Normalize Specification manifest contract",
       "status": "draft",
-      "file": "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/tasks/T09-rebind-and-cleanup-sub-slice-optional-later-gate.md",
+      "file": "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/tasks/T09-normalize-specification-manifest.md",
       "read_when": [
-        "implementing E2.T09 on the shared implementation branch",
-        "checking dependencies, batch safety and acceptance evidence"
+        "implementing or reviewing E2.T09"
       ],
-      "summary": "Temporary task for rebind and cleanup sub-slice (optional later gate) within the SpecFlow Engine implementation.",
+      "summary": "Remove the redundant execution-mode marker and rename new canonical manifest to specification.yaml, without breaking existing manifests or Durable Create recovery.",
       "related": [
         "ideas.specflow-engine.plan-02",
-        "ideas.specflow-engine.execution-plans",
+        "ideas.specflow-engine.spec-creation",
+        "ideas.specflow-engine.specification-worktree-closure"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "specification-contract",
+        "compatibility"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-02.task-10",
+      "type": "engineering",
+      "title": "E2.T10 — Lifecycle contracts, preview and durable reservation",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/tasks/T10-closure-contract-preflight-journal.md",
+      "read_when": [
+        "implementing or reviewing E2.T10"
+      ],
+      "summary": "Temporary Plan 02 task: Lifecycle contracts, preview and durable reservation.",
+      "related": [
+        "ideas.specflow-engine.plan-02",
+        "ideas.specflow-engine.specification-worktree-closure",
         "ideas.specflow-engine.test-plan"
       ],
       "scope": "specflow",
@@ -2849,7 +2909,203 @@
       "tags": [
         "execution-task",
         "temporary",
-        "implementation"
+        "lifecycle-closure"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-02.task-11",
+      "type": "engineering",
+      "title": "E2.T11 — Git integration and destination proof",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/tasks/T11-git-integration-proof.md",
+      "read_when": [
+        "implementing or reviewing E2.T11"
+      ],
+      "summary": "Temporary Plan 02 task: Git integration and destination proof.",
+      "related": [
+        "ideas.specflow-engine.plan-02",
+        "ideas.specflow-engine.specification-worktree-closure",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "runtime",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "lifecycle-closure"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-02.task-12",
+      "type": "engineering",
+      "title": "E2.T12 — CAS rebind and managed workspace disposal",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/tasks/T12-registry-rebind-disposal.md",
+      "read_when": [
+        "implementing or reviewing E2.T12"
+      ],
+      "summary": "Temporary Plan 02 task: CAS rebind and managed workspace disposal.",
+      "related": [
+        "ideas.specflow-engine.plan-02",
+        "ideas.specflow-engine.specification-worktree-closure",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "runtime",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "lifecycle-closure"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-02.task-13",
+      "type": "engineering",
+      "title": "E2.T13 — Close Worktree application operation",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/tasks/T13-close-worktree-use-case.md",
+      "read_when": [
+        "implementing or reviewing E2.T13"
+      ],
+      "summary": "Temporary Plan 02 task: Close Worktree application operation.",
+      "related": [
+        "ideas.specflow-engine.plan-02",
+        "ideas.specflow-engine.specification-worktree-closure",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "runtime",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "lifecycle-closure"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-02.task-14",
+      "type": "engineering",
+      "title": "E2.T14 — Physical archive and narrowly scoped Git commit",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/tasks/T14-archive-and-scoped-commit.md",
+      "read_when": [
+        "implementing or reviewing E2.T14"
+      ],
+      "summary": "Temporary Plan 02 task: Physical archive and narrowly scoped Git commit.",
+      "related": [
+        "ideas.specflow-engine.plan-02",
+        "ideas.specflow-engine.specification-worktree-closure",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "runtime",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "lifecycle-closure"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-02.task-15",
+      "type": "engineering",
+      "title": "E2.T15 — Specification closure and future workflow seam",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/tasks/T15-close-specification-use-case.md",
+      "read_when": [
+        "implementing or reviewing E2.T15"
+      ],
+      "summary": "Temporary Plan 02 task: Specification closure and future workflow seam.",
+      "related": [
+        "ideas.specflow-engine.plan-02",
+        "ideas.specflow-engine.specification-worktree-closure",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "runtime",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "lifecycle-closure"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-02.task-16",
+      "type": "engineering",
+      "title": "E2.T16 — Offline CLI and authenticated HTTP parity",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/tasks/T16-close-cli-http-adapters.md",
+      "read_when": [
+        "implementing or reviewing E2.T16"
+      ],
+      "summary": "Temporary Plan 02 task: Offline CLI and authenticated HTTP parity.",
+      "related": [
+        "ideas.specflow-engine.plan-02",
+        "ideas.specflow-engine.specification-worktree-closure",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "runtime",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "lifecycle-closure"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.plan-02.task-17",
+      "type": "engineering",
+      "title": "E2.T17 — Plan 02 lifecycle crash, platform and security gate",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/tasks/T17-lifecycle-recovery-regression.md",
+      "read_when": [
+        "implementing or reviewing E2.T17"
+      ],
+      "summary": "Temporary Plan 02 task: Plan 02 lifecycle crash, platform and security gate.",
+      "related": [
+        "ideas.specflow-engine.plan-02",
+        "ideas.specflow-engine.specification-worktree-closure",
+        "ideas.specflow-engine.test-plan"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "cli",
+        "runtime",
+        "testing"
+      ],
+      "tags": [
+        "execution-task",
+        "temporary",
+        "lifecycle-closure"
       ]
     },
     {
@@ -3739,6 +3995,63 @@
         "execution-task",
         "temporary",
         "implementation"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.specification-close-decisions",
+      "type": "engineering",
+      "title": "Proposed Specification and worktree closure decisions",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/specification-close-decisions.md",
+      "read_when": [
+        "approving Plan 02 lifecycle implementation"
+      ],
+      "summary": "Decisions, rejected alternatives and product-owner questions for safe offline and HTTP closing.",
+      "related": [
+        "ideas.specflow-engine.specification-worktree-closure",
+        "ideas.specflow-engine.plan-02"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "security",
+        "cli",
+        "runtime",
+        "testing"
+      ],
+      "tags": [
+        "decision-record",
+        "architecture-review",
+        "temporary-design"
+      ]
+    },
+    {
+      "id": "ideas.specflow-engine.specification-close-self-review",
+      "type": "engineering",
+      "title": "Self-review of Specification and Worktree closure design",
+      "status": "draft",
+      "file": "docs/ideas/specflow-engine/specification-close-self-review.md",
+      "read_when": [
+        "independently reviewing E2.T09–T17",
+        "checking corrected design weaknesses before code implementation"
+      ],
+      "summary": "Explicit internal review findings and correction evidence against the 2026-10-16 planning design.",
+      "related": [
+        "ideas.specflow-engine.specification-worktree-closure",
+        "ideas.specflow-engine.specification-close-decisions",
+        "ideas.specflow-engine.plan-02"
+      ],
+      "scope": "specflow",
+      "areas": [
+        "workflow",
+        "security",
+        "testing"
+      ],
+      "tags": [
+        "architecture-review",
+        "self-review",
+        "lifecycle",
+        "temporary-design"
       ]
     },
     {
