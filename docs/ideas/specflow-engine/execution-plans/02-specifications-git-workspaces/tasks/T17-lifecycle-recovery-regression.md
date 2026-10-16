@@ -34,7 +34,7 @@ Engine test lifecycle real Git fixtures, OS-process SIGKILL workers; Runtime HTT
 ## Required behavior / exact acceptance
 
 1. Execute mandatory LC01–LC40 (see test-plan) on Windows and POSIX as appropriate, reporting per platform Git/Node/OS versions, commit SHA, crash checkpoint, PASS/FAIL/SKIP and actual evidence. Do not substitute mocked Git for real Git or forcible OS-process termination for simulated exceptions: use SIGKILL on POSIX and an equivalent demonstrably abrupt OS termination on Windows.
-2. Verify each journal stage crash/unknown process, repeat same operationId and competing IDs, source/destination drift, archive commit recovery, integrate-before-CAS, CAS-before-remove, removal-before-retirement, and no accidental primary branch switch.
+2. Include OS-process concurrency on different Spec IDs attempting simultaneous PRIMARY archive/index commits, two linked sources targeting one development ref, and new Create versus overlapping Close; hold/release durable resource claims across crash. SIGKILL during primary candidate fast-forward must check partial HEAD, index and physical worktree rather than relying on ancestry. Verify each journal stage crash/unknown process, repeat same operationId and competing IDs, source/destination drift, archive commit recovery, integrate-before-CAS, CAS-before-remove, removal-before-retirement, and no accidental primary branch switch.
 3. Verify primary/linked worktree close chains, stable specId, single canonical manifest, correct runtime refresh, correct authorization, automatic exactly-once SCOPED Engine archive commit (and no arbitrary user-data commits), no unmanaged/shared deletion. Verify that public schemas and journals do NOT invent exit-gate pass, fake no-evaluator acknowledgement, registry or external-writer proof.
 4. Original FA01–FA12 remain independently satisfied; LC gate is an ADDITIONAL Plan 02 lifecycle gate and must be green before calling lifecycle complete. Future W/S/MI tests remain deferred.
 
@@ -52,3 +52,5 @@ Engine test lifecycle real Git fixtures, OS-process SIGKILL workers; Runtime HTT
 - [Close architecture](../../../specification-and-worktree-close-design.md)
 - [Decisions needing approval](../../../specification-close-decisions.md)
 - [Lifecycle test matrix](../../../test-plan.md)
+
+- LC17 covers inter-spec/ref/index/Create-close conflicts, not just same-spec operation IDs; LC39 covers two source integrations racing for one primary target and SIGKILL during candidate publication. LC21 checks HEAD+index+physical tree concordance following a crash after Git publication initiation. Platform evidence required.

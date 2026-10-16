@@ -51,36 +51,36 @@ Each task has its own Markdown file. **Batch** means sequential tasks in one age
 6. T06 → T07 sequential batch `2-read-freshness`
 7. T08 solo (Foundation A gate)
 8. T09 SOLO: normalize NEW Specification manifest to specification.yaml WITHOUT execution-mode selector; preserve historic change.yaml read/recovery and old Create journal bytes. No Plan 03 prerequisite.
-9. T10 SOLO: typed close lifecycle, preflight, intent/journal. Review before effects.
-10. T11 SOLO: project-configured target, fast-forward or clean divergent merge in isolated worktree, pause on conflict with future manual/agent UX seam. Independent Git review.
-11. T12 SOLO: scoped registry CAS and guarded managed worktree disposal. Independent data-loss review.
+9. T10 SOLO: typed lifecycle/preflight/journal AND durable shared checkout/ref resource claims honored by Create+Close; linked archive-only needs no target branch. Review before effects.
+10. T11 SOLO: configured target, checked-out primary Git publication updating HEAD/index/files, isolated clean-merge, durable known-conflict settlement without orphaning linked archive. Independent real-Git review.
+11. T12 SOLO: scoped registry CAS, own vs competing lifecycle journal evidence and guarded managed worktree disposal. Independent data-loss review.
 12. T13 SOLO: Close Worktree use case.
 13. T14 SOLO: archive directory and MANDATORY Engine-owned, exactly-once scoped commit, never delegated to user/agent/CLI adapter. After T11, MAY run parallel with T12/T13 only with strictly disjoint files/refs; default sequential.
 14. T15 SOLO: Close Specification with integrateToTargetBranch choice (default true); false retains archived linked worktree. Engine automatically commits archive effects. Place an explicit TODO before archive for FUTURE workflow-owned gates/actions; NO current evaluator, admin bypass or synthetic status.
 15. T16 SOLO: CLI/HTTP parity and authorization.
-16. T17 SOLO: actual cross-process crash, Windows/POSIX and authorization gate for lifecycle.
+16. T17 SOLO: actual cross-process race/kill tests for different Specs sharing primary/ref, Create vs Close, partial checked-out Git publication, Windows/POSIX and authorization gate.
 
 ### Tasks
 
-| Task                                                                                                                         | Depends on                     | Run mode                            |
-| ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ----------------------------------- |
-| [E2.T01 — Specs model and repository](tasks/T01-specs-model-and-repository.md)                                               | E1.T07                         | Solo                                |
-| [E2.T02 — Git capability](tasks/T02-git-capability.md)                                                                       | E2.T01                         | Solo                                |
-| [E2.T03 — Binding and discovery](tasks/T03-binding-and-discovery.md)                                                         | E2.T01, E2.T02                 | Solo                                |
-| [E2.T04 — Durable create](tasks/T04-durable-create.md)                                                                       | E2.T02, E2.T03                 | Solo                                |
-| [E2.T05 — CLI and HTTP create](tasks/T05-cli-and-http-create.md)                                                             | E2.T04                         | Solo                                |
-| [E2.T06 — Runtime read integration](tasks/T06-runtime-read-integration.md)                                                   | E2.T03, E2.T05                 | Sequential batch `2-read-freshness` |
-| [E2.T07 — Live refresh](tasks/T07-live-refresh.md)                                                                           | E2.T06                         | Sequential batch `2-read-freshness` |
-| [E2.T08 — Safety and regression](tasks/T08-safety-and-regression.md)                                                         | E2.T04, E2.T05, E2.T06, E2.T07 | Solo                                |
-| [E2.T09 — Normalize Specification manifest](tasks/T09-normalize-specification-manifest.md) | E2.T08 | Solo / compatibility gate |
-| [E2.T10 — Closure contract, preview, journal](tasks/T10-closure-contract-preflight-journal.md) | E2.T09; owner decisions | Solo |
-| [E2.T11 — Git integration and proof](tasks/T11-git-integration-proof.md) | E2.T10 | Solo |
-| [E2.T12 — Registry rebind and disposal](tasks/T12-registry-rebind-disposal.md) | E2.T10–T11 | Solo |
-| [E2.T13 — Close Worktree](tasks/T13-close-worktree-use-case.md) | E2.T10–T12 | Solo |
-| [E2.T14 — Archive and scoped commit](tasks/T14-archive-and-scoped-commit.md) | E2.T10–T11 | Solo; conditional disjoint parallel |
-| [E2.T15 — Close Specification](tasks/T15-close-specification-use-case.md) | E2.T10, T12–T14; owner decision | Solo |
-| [E2.T16 — CLI/HTTP close adapters](tasks/T16-close-cli-http-adapters.md) | E2.T13, T15 | Solo |
-| [E2.T17 — Lifecycle regression gate](tasks/T17-lifecycle-recovery-regression.md) | E2.T10–T16 | Solo; independent review |
+| Task                                                                                           | Depends on                      | Run mode                            |
+| ---------------------------------------------------------------------------------------------- | ------------------------------- | ----------------------------------- |
+| [E2.T01 — Specs model and repository](tasks/T01-specs-model-and-repository.md)                 | E1.T07                          | Solo                                |
+| [E2.T02 — Git capability](tasks/T02-git-capability.md)                                         | E2.T01                          | Solo                                |
+| [E2.T03 — Binding and discovery](tasks/T03-binding-and-discovery.md)                           | E2.T01, E2.T02                  | Solo                                |
+| [E2.T04 — Durable create](tasks/T04-durable-create.md)                                         | E2.T02, E2.T03                  | Solo                                |
+| [E2.T05 — CLI and HTTP create](tasks/T05-cli-and-http-create.md)                               | E2.T04                          | Solo                                |
+| [E2.T06 — Runtime read integration](tasks/T06-runtime-read-integration.md)                     | E2.T03, E2.T05                  | Sequential batch `2-read-freshness` |
+| [E2.T07 — Live refresh](tasks/T07-live-refresh.md)                                             | E2.T06                          | Sequential batch `2-read-freshness` |
+| [E2.T08 — Safety and regression](tasks/T08-safety-and-regression.md)                           | E2.T04, E2.T05, E2.T06, E2.T07  | Solo                                |
+| [E2.T09 — Normalize Specification manifest](tasks/T09-normalize-specification-manifest.md)     | E2.T08                          | Solo / compatibility gate           |
+| [E2.T10 — Closure contract, preview, journal](tasks/T10-closure-contract-preflight-journal.md) | E2.T09; owner decisions         | Solo                                |
+| [E2.T11 — Git integration and proof](tasks/T11-git-integration-proof.md)                       | E2.T10                          | Solo                                |
+| [E2.T12 — Registry rebind and disposal](tasks/T12-registry-rebind-disposal.md)                 | E2.T10–T11                      | Solo                                |
+| [E2.T13 — Close Worktree](tasks/T13-close-worktree-use-case.md)                                | E2.T10–T12                      | Solo                                |
+| [E2.T14 — Archive and scoped commit](tasks/T14-archive-and-scoped-commit.md)                   | E2.T10–T11                      | Solo; conditional disjoint parallel |
+| [E2.T15 — Close Specification](tasks/T15-close-specification-use-case.md)                      | E2.T10, T12–T14; owner decision | Solo                                |
+| [E2.T16 — CLI/HTTP close adapters](tasks/T16-close-cli-http-adapters.md)                       | E2.T13, T15                     | Solo                                |
+| [E2.T17 — Lifecycle regression gate](tasks/T17-lifecycle-recovery-regression.md)               | E2.T10–T16                      | Solo; independent review            |
 
 **Batch policy:** never auto-batch a high-risk solo gate with dependent tasks; re-evaluate shared file ownership at dispatch. In particular, lock/claim, security, HTTP scopes, durability/recovery and dispatch uncertainty need an explicit review checkpoint. If a task uncovers an architecture conflict, stop dependent tasks but continue unaffected, disjoint work.
 
@@ -124,3 +124,12 @@ Dependencies: T09 -> T10 -> T11 -> T12 -> T13; T11 -> T14; (T12, T13, T14) -> T1
 - T16 requires independently authorized project-wide Git integrate permission and full branch diff scope; per-Spec CloseSpecification grant cannot merge arbitrary code/project config. Archive-only close does not require Git integrate authority.
 - T10 direct primary archive commit requires primary already on configured target branch, not merely a registered primary path.
 - Preserve all existing real Git/FS/journal/identity/ignored-file protections, and explicit future exit/workspace-execution TODOs without fake checks.
+
+## Independent review hold points (2026-10-16)
+
+- T09: GO in two compatibility checkpoints; no closure implementation yet.
+- T10: resource reservations must cover **different** Spec IDs when source/destination index/ref/worktree metadata overlap; Create must participate without invalidating historical journals. Archive-only linked closure must not require target config.
+- T11: HOLD until target publication updates checked-out primary HEAD/index/physical tree with recoverable crash proofs; known conflict after archive commit settles safely and allows later CloseWorktree.
+- T12: own in-flight journal is admissible only at the expected stage with matching operationId/physical identity; another owner's pending journal blocks.
+- T14: archive scoped commit holds the checkout/index/ref resource throughout staging and commit verification.
+- T17: LC17 and LC39 cover distinct-Spec races and Create/Close; LC21 proves SIGKILL during primary publication. No fake worker coordination or no-op gateway.
