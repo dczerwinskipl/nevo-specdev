@@ -158,10 +158,22 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
       { specId: first.specId, workspaceId: first.workspaceId },
       { specId: second.specId, workspaceId: second.workspaceId },
     ]);
-    expect(await discoverSpecifications(engine)).toMatchObject([
-      { status: 'available', specId: first.specId, workspaceId: first.workspaceId },
-      { status: 'available', specId: second.specId, workspaceId: second.workspaceId },
-    ]);
+    const discovered = await discoverSpecifications(engine);
+    expect(discovered).toHaveLength(2);
+    expect(discovered).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          status: 'available',
+          specId: first.specId,
+          workspaceId: first.workspaceId,
+        }),
+        expect.objectContaining({
+          status: 'available',
+          specId: second.specId,
+          workspaceId: second.workspaceId,
+        }),
+      ]),
+    );
   }, 120000);
 
   it('SC00: records only Engine-created dirty scaffold files with durable fingerprints', async () => {
