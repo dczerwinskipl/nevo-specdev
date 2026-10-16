@@ -33,7 +33,7 @@ Engine test lifecycle real Git fixtures, OS-process SIGKILL workers; Runtime HTT
 
 ## Required behavior / exact acceptance
 
-1. Execute mandatory LC01–LC34 (see test-plan) on Windows and POSIX as appropriate, reporting per platform Git/Node/OS versions, commit SHA, crash checkpoint, PASS/FAIL/SKIP and actual evidence. Do not substitute mocked Git for real Git or forcible OS-process termination for simulated exceptions: use SIGKILL on POSIX and an equivalent demonstrably abrupt OS termination on Windows.
+1. Execute mandatory LC01–LC40 (see test-plan) on Windows and POSIX as appropriate, reporting per platform Git/Node/OS versions, commit SHA, crash checkpoint, PASS/FAIL/SKIP and actual evidence. Do not substitute mocked Git for real Git or forcible OS-process termination for simulated exceptions: use SIGKILL on POSIX and an equivalent demonstrably abrupt OS termination on Windows.
 2. Verify each journal stage crash/unknown process, repeat same operationId and competing IDs, source/destination drift, archive commit recovery, integrate-before-CAS, CAS-before-remove, removal-before-retirement, and no accidental primary branch switch.
 3. Verify primary/linked worktree close chains, stable specId, single canonical manifest, correct runtime refresh, correct authorization, no unmanaged or shared deletion and no automatic arbitrary commit.
 4. Original FA01–FA12 remain independently satisfied; LC gate is an ADDITIONAL Plan 02 lifecycle gate and must be green before calling lifecycle complete. Future W/S/MI tests remain deferred.

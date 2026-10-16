@@ -185,7 +185,7 @@ These **MI** IDs do not alter Foundation A/B or current managed Session acceptan
 | MI11 | Two aggregate finalizers, crashing gate/commit transition          | One durable finalization and canonical state change; verify side effects exactly once                                 |
 | MI12 | Input independence, provider provenance, rebind and offline CLI    | Declared semantic independence assessed honestly; stale source and unknown effects safe; Engine works without Runtime |
 
-## Plan 02 lifecycle extension: LC01–LC34 (independent mandatory gate)
+## Plan 02 lifecycle extension: LC01–LC40 (independent mandatory gate)
 
 An LC PASS requires actual Engine/CLI/Runtime behavior on the implementation HEAD, NOT the presence of these tasks. "Both" means Windows and POSIX real Git/FS/OS-process runs. "One" means at least one platform plus cross-platform build/schema checks. Cases marked "Both" may be grouped into a platform matrix but no required case may be skipped.
 
@@ -199,7 +199,7 @@ An LC PASS requires actual Engine/CLI/Runtime behavior on the implementation HEA
 | LC06 | One | Warm Runtime Overview cache, close via separate CLI, observe canonical refreshed active/archive result without restart |
 | LC07 | Both | Fast-forward source branch integration, verify actual destination HEAD/files/all intended source commits; primary BRANCH unchanged |
 | LC08 | Both | Explicit already-integrated source ancestor accepted only if physical destination content is correct; never rerun merge |
-| LC09 | Both | Divergence/merge conflict refuses and leaves registry/source intact; no forced merge/reset |
+| LC09 | Both | Divergence with conflict pauses with exact conflict evidence; primary remains clean and binding/source intact, no forced merge/reset |
 | LC10 | Both | Destination checkout on unexpected branch or HEAD changes during preview fails without checkout/silent replan |
 | LC11 | Both | Dirty, staged and untracked source files are individually rejected, including uncommitted create scaffold |
 | LC12 | Both | Dirty, staged and untracked primary each block integration or scoped archive commit |
@@ -225,8 +225,14 @@ An LC PASS requires actual Engine/CLI/Runtime behavior on the implementation HEA
 | LC32 | Both | Linked close-spec pins preArchiveSourceHead and a DISTINCT verified archive integrationSourceCommit; destination contains actual archive commit |
 | LC33 | Both | Killed process after journal-owned archive staging: replay recognizes only exact scoped staged state and rejects alien index additions |
 | LC34 | One | New scaffold YAML contains no workflow execution mode selector; existing persisted manifests remain readable without implicit rewrite |
+| LC35 | Both | New manifest at specs/{active,archive}/{slug}/specification.yaml resolves canonically; historical change.yaml still reads; both filenames, symlink and casing ambiguity fail closed |
+| LC36 | Both | Old v1/v2 CREATE journals replay exact historical filename+bytes+hash after BOTH mode removal and manifest rename; new journal records only new shape; no implicit historical rewrite |
+| LC37 | Both | Project Home config has validated git.integrationTargetBranch (test main AND develop), missing/changed config blocked/migrated explicitly, wrong current primary branch never silently checked out |
+| LC38 | Both | Linked close-spec integrateToTargetBranch=false archives+commits LOCALLY, retains bound archived Spec and worktree, no primary change; later worktree-close integrates archive and guarded cleanup |
+| LC39 | Both | Diverged disjoint branches clean-merge in isolated verified checkout, pinned parents/tree/journal candidate, primary advances only via verified fast-forward; SIGKILL/recovery cannot duplicate merge |
+| LC40 | Both | Actual Git conflict leaves PRIMARY clean, returns requires-resolution and durable paths/base/source/target; no automatic agent execution or deletion; future manual/agent handoff contract observable |
 
-Mandatory scope: LC01–LC34; on Both scenarios real Git + real filesystem, and real OS-process termination at LC19–LC23 and LC33. POSIX uses SIGKILL and Windows uses proven forcible OS-process termination with equivalent crash-checkpoint evidence. Live-process uncertainty must not be simulated solely with thrown exceptions. Test fixtures must record raw commit/ref, index/untracked state, identities, operation checkpoint, per-platform Git/Node/OS version and negative side-effect assertions. PR CI and independent reviewer sign-off are required. Deferred to Plan 03/04/05: actual external writer claims, provider/native Session resume safety, real spec-level workflow gates/actions, per-task attempts, human-verification provenance, remote PR integration, multi-instance execution.
+Mandatory scope: LC01–LC40; on Both scenarios real Git + real filesystem, and real OS-process termination at LC19–LC23, LC33 and LC39. POSIX uses SIGKILL and Windows uses proven forcible OS-process termination with equivalent crash-checkpoint evidence. Live-process uncertainty must not be simulated solely with thrown exceptions. Test fixtures must record raw commit/ref, index/untracked state, identities, operation checkpoint, per-platform Git/Node/OS version and negative side-effect assertions. PR CI and independent reviewer sign-off are required. Deferred to Plan 03/04/05: actual external writer claims, provider/native Session resume safety, real spec-level workflow gates/actions, per-task attempts, human-verification provenance, remote PR integration, multi-instance execution.
 
 ## Running and reporting
 

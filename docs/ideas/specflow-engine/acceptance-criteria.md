@@ -59,9 +59,11 @@ This is a proposed **additional**, owner-approved Plan 02 exit gate. The already
 | FL05 | Offline CLI and explicitly authorized HTTP parity; live canonical reads after CLI mutation | LC06, LC25, LC28 |
 | FL06 | Unsupported writers/workspaces/branch states refuse; no forced cleanup or implicit branch checkout | LC09–LC16, LC23, LC26 |
 | FL07 | Explicit administrative close acknowledgement without installed Specification exit evaluator; never fabricated gate pass or Task completion | LC24 plus domain review |
-| FL08 | Critical real Git/filesystem/process tests PASS on Windows and POSIX with no mandatory skips | LC01–LC05, LC07–LC23, LC26–LC27, LC29–LC33 |
-| FL09 | New Specification scaffold has no execution mode discriminator, while old Create journals retain safe original replay | LC30, LC34 |
+| FL08 | Critical real Git/filesystem/process tests PASS on Windows and POSIX with no mandatory skips | LC01–LC05, LC07–LC23, LC26–LC27, LC29–LC33, LC35–LC40 |
+| FL09 | New Specification scaffold has no execution mode discriminator or change-log filename, while old Create journals retain safe original replay | LC30, LC34–LC36 |
 | FL10 | Ignored local user files never vanish during disposal; archive integration uses proven post-archive HEAD and scoped replay | LC29, LC31–LC33 |
+| FL11 | Configured integration target is authoritative; local-only archive retains linked canonical source; later close-worktree integrates it | LC37–LC38 |
+| FL12 | Conflict-free divergent merge is verified and recoverable; conflicted merge pauses without mutating primary or fabricating agent actions | LC39–LC40 |
 
 Gate is conditional on the product owner explicitly approving [DC03/DC04/DC05/DC08/DC10](specification-close-decisions.md). No Plan 03 E3.T06 dependency is required for the restricted closure policy; future actual writer claims and managed Sessions strengthen admission when they exist. Do not claim a clean tree or operator assertion physically proves absence of non-cooperating external writers. No permanent adoption of these draft requirements until independent architecture review and promotion to normative docs.
 

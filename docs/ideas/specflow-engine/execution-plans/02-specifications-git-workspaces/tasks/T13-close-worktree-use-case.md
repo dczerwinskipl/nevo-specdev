@@ -26,7 +26,7 @@ related:
 - E2.T11 accepted
 - E2.T12 accepted
 
-Run mode: **SOLO / end-to-end review**. No parallel writes to shared Git refs, registry schemas, journal/state files, authentication capability lists or runtime composition. Re-check HEAD and approved decisions DC01–DC12 before editing code.
+Run mode: **SOLO / end-to-end review**. No parallel writes to shared Git refs, registry schemas, journal/state files, authentication capability lists or runtime composition. Re-check HEAD and approved decisions DC01–DC18 before editing code.
 
 ## Modules and ownership
 
@@ -34,14 +34,14 @@ Engine: specs/lifecycle/close-worktree.ts, read-only preview and completion/insp
 
 ## Required behavior / exact acceptance
 
-1. One worktree-close operation owns reservation -> integration proof -> verified rebind -> guarded disposal -> result. Eligibility restricted to exclusive managed linked binding and source location active; worktree closing never evaluates exit gates or archives.
-2. Same specId remains canonical once, status/location active, destination checkout physically contains intended files. Plain same-ID repeat returns prior evidence-backed result; competing ID is conflict.
+1. One worktree-close operation owns reservation -> integration proof -> verified rebind -> guarded disposal -> result. Eligibility restricted to exclusive managed linked binding and source location active OR archive (archived linked Spec retained after close without integration); worktree closing never evaluates exit gates, alters status or archives.
+2. Same specId remains canonical once, status/location preserved as either active or archive, destination checkout physically contains intended files. Plain same-ID repeat returns prior evidence-backed result; competing ID is conflict.
 3. Explicit external-writer acknowledgement is recorded as trust assertion, not physical no-writer proof. Unknown external or journal state blocks. On removal failure report partial completed-integration/rebound with cleanup pending, not terminal success.
 4. Standalone Git operations remain internal; no Task/Attempt or Runtime dependencies.
 
 ## Required evidence
 
-- Positive: create linked spec, commit its work, close worktree, resolve same active spec from primary with offline CLI Engine calls
+- Positive: create linked spec, commit its work, close worktree and resolve same active spec from primary; ALSO close spec locally with integrateToTargetBranch=false, then later close worktree to integrate existing archive and retain original specId
 - Negative/no unintended effects: call on primary/unmanaged/shared linked checkout, divergent branch and SIGKILL after merge/CAS cannot cause duplicate merge, false archive or deletion
 - Report LC test IDs, test files, OS/Node/Git version for real filesystem/process work, PASS/FAIL/SKIP, modified public contracts, and an independent code-quality/recovery review. Mock-only tests do not satisfy Git/process cases.
 - Checkpoint for this task: Review separate domain semantics and rebind-after-integration evidence.

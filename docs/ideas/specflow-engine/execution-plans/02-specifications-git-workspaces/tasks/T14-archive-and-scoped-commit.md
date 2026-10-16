@@ -25,7 +25,7 @@ related:
 - E2.T10 accepted
 - E2.T11 accepted
 
-Run mode: **SOLO / independent filesystem and commit review**. No parallel writes to shared Git refs, registry schemas, journal/state files, authentication capability lists or runtime composition. Re-check HEAD and approved decisions DC01–DC12 before editing code.
+Run mode: **SOLO / independent filesystem and commit review**. No parallel writes to shared Git refs, registry schemas, journal/state files, authentication capability lists or runtime composition. Re-check HEAD and approved decisions DC01–DC18 before editing code.
 
 ## Modules and ownership
 
@@ -33,7 +33,7 @@ Engine: specs/lifecycle/archive-{plan,effects,verify}.ts and version-control/git
 
 ## Required behavior / exact acceptance
 
-1. Inspect required derived/spec/docs indexes before mutation. They are projections, not canonical authorities, but if index regeneration is required by current repo contract, classify EXACT generated paths as Engine-owned archive effects and include their regenerated verified bytes in the scoped commit/recovery inventory. Do not leave required indexes stale or grant an arbitrary add -A. For one verified active Specification preserve specId/slug and entire directory tree while moving specs/active/<slug> to specs/archive/<slug>, writing status=archived. Fail closed on existing target, symlinks, duplicates or moved/changed source.
+1. Read the canonical manifest's ACTUAL filename (new specification.yaml or historic change.yaml) and preserve that path throughout archival; do not implicitly rename historical content as part of close. Inspect required derived/spec/docs indexes before mutation. They are projections, not canonical authorities, but if index regeneration is required by current repo contract, classify EXACT generated paths as Engine-owned archive effects and include their regenerated verified bytes in the scoped commit/recovery inventory. Do not leave required indexes stale or grant an arbitrary add -A. For one verified active Specification preserve specId/slug and entire directory tree while moving specs/active/<slug> to specs/archive/<slug>, writing status=archived. Fail closed on existing target, symlinks, duplicates or moved/changed source.
 2. Persist archive-initiated intent and exact inventory before mutation. Reconcile crash before/during/after move by checking actual file inventories and identity. No uncontrolled overwrite/rollback.
 3. Engine stages and commits ONLY planned archive paths plus declared, verified future-action outputs (none today). Preflight requires globally clean index/worktree; verify staged set after git add with literal pathspecs; no arbitrary add -A. Include operationId marker in commit but verify Git ancestry/tree rather than trusting message.
 4. Commit-initiated is durable BEFORE invoking Git, with unknown outcome fencing and exactly-once verification on retry. Refuse commit hook/index surprises rather than silently committing user files. A primary close needs no worktree or merge.

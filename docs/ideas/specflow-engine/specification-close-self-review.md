@@ -46,6 +46,15 @@ related:
 - Future Specification exit evaluation must never derive completion from tasks: unknown[] nor introduce a selectable execution mode. Task workflows in legacy Nevo are reference material only.
 - The generated closure design must be checked against docs/architecture/workflow/deterministic-workflow.md before architectural promotion. No claim that the new spec-level workflow evaluator exists today.
 
+## Owner refinements (2026-10-16)
+
+- DC03/DC18: recorded project development branch git.integrationTargetBranch in Project Home config, not per-close branch guess.
+- DC04/DC17: automatic verified conflict-free divergent Git merge as well as fast-forward. A true merge conflict yields requires-resolution evidence in isolated checkout; user/agent UX is a SEPARATE future capability, never invoked by Engine.
+- DC15: linked Specification close supports integrateToTargetBranch (default true); false archives locally and retains linked binding/worktree for later Close Worktree, including when Spec is already archived.
+- DC16: proposed meaningful canonical manifest filename specification.yaml. Historic change.yaml and Create journal payloads remain readable/recoverable, ambiguous both-filenames state fails closed. E2.T09 owns the contract refinement; naming awaits final owner confirmation.
+- NEW review risk SR12 (P1): isolated clean merge has substantial Git commit/journal identity/hook/temporary-checkout ownership complexity and must not mutate primary before verified candidate. T11/T17 independent review must test crash after candidate commit, after publish and during conflict.
+- NEW review risk SR13 (P1): linked archived-without-integration is NOT present in primary; registry binding and canonical document read must stay linked until later explicit integration/rebind. Never delete that worktree as a side effect of archive-only close.
+
 ## Residual risks / explicit non-goals
 
 1. Automatic branch merge commits, rebase, squash-equivalence, PR/remote push and branch deletion remain deferred; MVP integration is local fast-forward or strict already-integrated evidence.

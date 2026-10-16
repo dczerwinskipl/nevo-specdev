@@ -26,7 +26,7 @@ related:
 - E2.T15 accepted
 - Spec capability authorization contract reviewed
 
-Run mode: **SOLO / security review**. No parallel writes to shared Git refs, registry schemas, journal/state files, authentication capability lists or runtime composition. Re-check HEAD and approved decisions DC01–DC12 before editing code.
+Run mode: **SOLO / security review**. No parallel writes to shared Git refs, registry schemas, journal/state files, authentication capability lists or runtime composition. Re-check HEAD and approved decisions DC01–DC18 before editing code.
 
 ## Modules and ownership
 
@@ -34,10 +34,10 @@ packages/specflow/src/specs/command.ts for CLI; packages/specflow-runtime/src/fe
 
 ## Required behavior / exact acceptance
 
-1. Add CLI specs worktree close <spec-id> and specs close <spec-id>, read-only preview/check and inspect/resume where safe. --json, --operation-id, --destination-branch, explicit confirmations, stable nonzero exit and actionable error code, with Runtime OFF.
-2. POST /api/specs/{specId}/worktree/close and POST /api/specs/{specId}/close, with read-only preview/operation status endpoints as needed. HTTP validates requests, enforces authenticated narrowly scoped CloseWorktree and CloseSpecification independently of Create, resolves canonical identity securely, and returns typed result/status.
+1. Add CLI specs worktree close <spec-id> and specs close <spec-id>, read-only preview/check and inspect/resume where safe. --json, --operation-id, --integrate/--no-integrate for linked Specification close, explicit confirmations, stable nonzero exit and actionable error code, with Runtime OFF.
+2. Persist git.integrationTargetBranch via project init/configuration and read only trusted Project Home policy; do not let an HTTP body/CLI flag override configured target without a distinct authorized reconfiguration. POST /api/specs/{specId}/worktree/close and POST /api/specs/{specId}/close, with read-only preview/operation status endpoints as needed. HTTP validates requests, enforces authenticated narrowly scoped CloseWorktree and CloseSpecification independently of Create, resolves canonical identity securely, and returns typed result/status.
 3. Selector fields cannot grant authorization; do not leak unauthorized spec metadata, paths, branch names or journal status. No demo/fixture fallback, no unconfigured Engine writes, no bypass using the administrative no-evaluator acknowledgement. Avoid granting local workstation workspaceId as portable Auth scope.
-4. Error mapping explicit/exhaustive (400/401/403/404/409/422/503; unexpected 500); public JSON result distinguishes not-configured exit evaluation and cleanup pending from completed success. Runtime live reads resolve new binding/archive and invalidate refresh data.
+4. Typed result must distinguish integrated-and-removed, locally-archived-and-retained, integration-requires-resolution, and post-effect cleanup pending. Conflict-resolution actions (self vs agent) are future UI/workflow operations, not transport flags that claim execution. Error mapping explicit/exhaustive (400/401/403/404/409/422/503; unexpected 500); public JSON result distinguishes not-configured exit evaluation and cleanup pending from completed success. Runtime live reads resolve new binding/archive and invalidate refresh data.
 
 ## Required evidence
 

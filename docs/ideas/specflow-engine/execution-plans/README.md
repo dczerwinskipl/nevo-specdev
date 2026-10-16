@@ -52,7 +52,7 @@ The original Plan 02 E2.T09 optional binding/cleanup placeholder is replaced by 
 ## Review checkpoints
 
 1. Plan 01: Project Home, local identity, config authority, package graph and process-safe local registry.
-2. Plan 02: original real create/reads and H03 Foundation A gate, PLUS distinct, later owner-approved T10–T17 lifecycle close gate (LC01–LC34) with Windows/POSIX evidence. No future workflow or Session dependency.
+2. Plan 02: original real create/reads and H03 Foundation A gate, PLUS distinct, later owner-approved T10–T17 lifecycle close gate (LC01–LC40) with Windows/POSIX evidence. No future workflow or Session dependency.
 3. Plan 03: real offline workflow and attempt identity, claims/abandoned execution recovery, human trust; Foundation B gate.
 4. Plan 04: canonical Session/Turn/Work and mock provider contract; actual Runtime HTTP and persistence.
 5. Plan 05: durable dispatch uncertainty, explicit workflow finish, limited batch/handover and authorization; do not infer real provider behavior.
@@ -73,4 +73,4 @@ No native provider execution/resume in a different worktree, `cwd` switching of 
 
 ## Plan 02 closure extension review boundary
 
-Run E2.T10–T17 only after owner approval of manual no-workflow policy, destination/ref and external-writer trust limitations in [closure decisions](../specification-close-decisions.md) and [self-review](../specification-close-self-review.md). The old T09 cleanup placeholder is removed; the new T09 manifest cleanup is an executable solo compatibility gate. T10, T11, T12, T13, T15, T16, T17 are solo reviews; T14 is solo but may be developed in parallel with T12/T13 after T11 if modules AND Git refs are independent. Default to sequential if uncertain. The original FA01–FA12 must stay passing; the new LC gate cannot be declared green without real Git/OS-process evidence on Windows and POSIX. At end of PR #53 implementation all temporary execution plans, including new tasks, are removed exactly as stated above.
+Run E2.T10–T17 only after owner approval of manual no-workflow policy, destination/ref and external-writer trust limitations in [closure decisions](../specification-close-decisions.md) and [self-review](../specification-close-self-review.md). The old T09 cleanup placeholder is removed; the new T09 manifest naming/mode normalization is an executable solo compatibility gate. T10, T11, T12, T13, T15, T16, T17 are solo reviews; T14 is solo but may be developed in parallel with T12/T13 after T11 if modules AND Git refs are independent. Default to sequential if uncertain. The original FA01–FA12 must stay passing; the new LC gate cannot be declared green without real Git/OS-process evidence on Windows and POSIX. At end of PR #53 implementation all temporary execution plans, including new tasks, are removed exactly as stated above.

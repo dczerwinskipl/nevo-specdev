@@ -28,7 +28,7 @@ related:
 - E2.T14 accepted
 - Explicit owner approval of DC08
 
-Run mode: **SOLO / independent domain review**. No parallel writes to shared Git refs, registry schemas, journal/state files, authentication capability lists or runtime composition. Re-check HEAD and approved decisions DC01–DC12 before editing code.
+Run mode: **SOLO / independent domain review**. No parallel writes to shared Git refs, registry schemas, journal/state files, authentication capability lists or runtime composition. Re-check HEAD and approved decisions DC01–DC18 before editing code.
 
 ## Modules and ownership
 
@@ -36,14 +36,14 @@ Engine: specs/lifecycle/close-specification.ts and lifecycle/specification-exit-
 
 ## Required behavior / exact acceptance
 
-1. One specification-close intent contains policy decision, potential gate/action evidence, archive, scoped commit and if linked integration/rebind/disposal. Primary directly archives and commits only. Linked source archives/commits BEFORE verified primary integration. Never call the public worktree-close operation as a suboperation.
+1. One specification-close intent contains policy decision, potential gate/action evidence, archive, scoped commit and immutable integrateToTargetBranch input (linked default true). If true, linked close includes integration/rebind/disposal; if false, after archive commit complete with canonical archive still in linked checkout and linked binding unchanged (worktree/branch retained). Do NOT claim archive exists in primary. Primary directly archives and commits only. Linked source archives/commits BEFORE verified primary integration. Never call the public worktree-close operation as a suboperation.
 2. Today absent spec-workflow evaluator: only explicitly authorized administrative archive, requiring acknowledgement that Spec exit checks are not yet configured, with durable exitEvaluation=not-configured and closureAuthorization=administrative. It is NOT gate pass or workflow completion. The deterministic workflow architecture has no Specification execution-mode selector; absence of an installed Specification exit evaluator is distinct from successful gate evaluation.
 3. Reserve a minimal typed interface for future evaluateSpecificationExitGates and executeSpecificationExitActions: unavailable vs passed-with-evidence vs blocked/unknown, pinned workflow definition revision and action intent/effect evidence. An installed but failed/unknown integration must block BEFORE archive; future actions execute before archive commit, replay only if idempotency or reconciliation evidence exists.
 4. Validate already-closed repeat by verified canonical archive and matching journal/identity; a conflicting close with new ID must not create another commit. Do not inspect tasks: unknown[] or infer from status.
 
 ## Required evidence
 
-- Positive: primary and linked archive through same Engine use case with original specId and exactly one archive in verified primary
+- Positive: primary and linked-integrated archive through same Engine use case with original specId and exactly one archive in verified primary; linked archive-only retains one canonical archive bound to linked worktree, later close-worktree integrates it without reevaluating gates
 - Negative/no unintended effects: absent acknowledgement, explicit blocked/unknown gate, partially executed action, already archived but contradictory journal, crash after source archive or archive commit never pass as completed
 - Report LC test IDs, test files, OS/Node/Git version for real filesystem/process work, PASS/FAIL/SKIP, modified public contracts, and an independent code-quality/recovery review. Mock-only tests do not satisfy Git/process cases.
 - Checkpoint for this task: Independent review of administrative acknowledgement/authorization and future deterministic workflow compatibility without speculative implementation.

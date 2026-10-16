@@ -50,13 +50,13 @@ Each task has its own Markdown file. **Batch** means sequential tasks in one age
 5. T05 solo (CLI/HTTP create)
 6. T06 → T07 sequential batch `2-read-freshness`
 7. T08 solo (Foundation A gate)
-8. T09 SOLO: remove redundant workflow execution-mode marker from new Specification scaffolds; prove historic durable Create journal recovery. No Plan 03 prerequisite.
+8. T09 SOLO: normalize NEW Specification manifest to specification.yaml WITHOUT execution-mode selector; preserve historic change.yaml read/recovery and old Create journal bytes. No Plan 03 prerequisite.
 9. T10 SOLO: typed close lifecycle, preflight, intent/journal. Review before effects.
-10. T11 SOLO: conservative Git integration/proof. Independent Git review.
+10. T11 SOLO: project-configured target, fast-forward or clean divergent merge in isolated worktree, pause on conflict with future manual/agent UX seam. Independent Git review.
 11. T12 SOLO: scoped registry CAS and guarded managed worktree disposal. Independent data-loss review.
 12. T13 SOLO: Close Worktree use case.
 13. T14 SOLO: archive directory and Engine-scoped commit. After T11, MAY run parallel with T12/T13 only with strictly disjoint files/refs; default sequential.
-14. T15 SOLO: Close Specification, explicit administrative no-evaluator acknowledgement and future deterministic exit seam. Requires owner decision.
+14. T15 SOLO: Close Specification with integrateToTargetBranch choice (default true); false retains archived linked worktree, explicit administrative no-evaluator acknowledgement and future deterministic exit seam. Requires owner decision.
 15. T16 SOLO: CLI/HTTP parity and authorization.
 16. T17 SOLO: actual cross-process crash, Windows/POSIX and authorization gate for lifecycle.
 
@@ -72,7 +72,7 @@ Each task has its own Markdown file. **Batch** means sequential tasks in one age
 | [E2.T06 — Runtime read integration](tasks/T06-runtime-read-integration.md)                                                   | E2.T03, E2.T05                 | Sequential batch `2-read-freshness` |
 | [E2.T07 — Live refresh](tasks/T07-live-refresh.md)                                                                           | E2.T06                         | Sequential batch `2-read-freshness` |
 | [E2.T08 — Safety and regression](tasks/T08-safety-and-regression.md)                                                         | E2.T04, E2.T05, E2.T06, E2.T07 | Solo                                |
-| [E2.T09 — Remove redundant workflow mode](tasks/T09-remove-redundant-workflow-mode.md) | E2.T08 | Solo / compatibility gate |
+| [E2.T09 — Normalize Specification manifest](tasks/T09-normalize-specification-manifest.md) | E2.T08 | Solo / compatibility gate |
 | [E2.T10 — Closure contract, preview, journal](tasks/T10-closure-contract-preflight-journal.md) | E2.T09; owner decisions | Solo |
 | [E2.T11 — Git integration and proof](tasks/T11-git-integration-proof.md) | E2.T10 | Solo |
 | [E2.T12 — Registry rebind and disposal](tasks/T12-registry-rebind-disposal.md) | E2.T10–T11 | Solo |
@@ -112,6 +112,6 @@ No workflow start/finish, provider process, Session, full task planning, PR auto
 
 ## Additional Plan 02 lifecycle extension gate (separate from accepted FA01–FA12)
 
-A passing original Foundation A does not establish closure. This additional gate covers the two distinct domain operations with real Git and SIGKILL evidence, CLI offline and authorized HTTP parity; see [design](../../specification-and-worktree-close-design.md), [pending decisions](../../specification-close-decisions.md), [self-review findings](../../specification-close-self-review.md) and LC01–LC34 in [test plan](../../test-plan.md). Owner must approve DC03, DC04, DC05, DC08, DC10 before implementing. Critical Git/OS-process LC cases must pass on **Windows AND POSIX**. No LC case is satisfied by mocks alone. Preserve accepted E2.T01–T08 unchanged.
+A passing original Foundation A does not establish closure. This additional gate covers the two distinct domain operations with real Git and SIGKILL evidence, CLI offline and authorized HTTP parity; see [design](../../specification-and-worktree-close-design.md), [pending decisions](../../specification-close-decisions.md), [self-review findings](../../specification-close-self-review.md) and LC01–LC40 in [test plan](../../test-plan.md). Owner must approve DC03, DC04, DC05, DC08, DC10 before implementing. Critical Git/OS-process LC cases must pass on **Windows AND POSIX**. No LC case is satisfied by mocks alone. Preserve accepted E2.T01–T08 unchanged.
 
 Dependencies: T09 -> T10 -> T11 -> T12 -> T13; T11 -> T14; (T12, T13, T14) -> T15 -> T16 -> T17. T14 may be dispatched independently of T12/T13 only if interface and file/ref ownership are actually disjoint. The former T09 rebind placeholder and E3.T06 dependency are eliminated: T09 now owns a focused scaffold contract/recovery correction, required before T10. Plan 03 E3.T06 is NOT a prerequisite for ordinary closure. Plan 03 claims and Plan 04 managed Sessions later strengthen writer admission, not the basic closure path. Do not delete temporary plans now; the program runbook still requires deleting the entire execution-plans tree and regenerating indexes **before merge**.

@@ -74,6 +74,10 @@ A real workflow attempt records the precise definition revision/content provenan
 
 A local `projectId` / `workspaceId` identifies the **local** coordination environment, not necessarily a portable security scope; [local actor and authorization policy](local-actor-and-human-gates.md) separates persisted grants from runtime-resolved paths.
 
+## Project integration target policy
+
+The verified Project Home .nevo/config.yaml is the authority for git.integrationTargetBranch: one validated, explicit development branch selected at init or through a controlled project-configuration migration. Main, develop or another project branch is allowed; NEVER infer a mutable close destination from the caller's linked worktree branch, cwd, or an assumed hardcoded name. Version and validate config reads; a missing or changed configured target blocks integration until reviewed, and primary must already be checked out on target (no hidden checkout). Release trains/stacked target selection are deliberately deferred. Config is policy only, not the Specification's own YAML manifest.
+
 ## Path safety and isolation
 
 Resolve/canonicalize roots; verify parent boundaries, reserved destinations, symlinks, unexpected nested repositories, duplicate real paths and branch checkout constraints before creating or deleting. File API paths must be bounded to the resolved workspace and prohibit traversal via document IDs. A path's existence alone cannot authorize cleanup or serving its files.

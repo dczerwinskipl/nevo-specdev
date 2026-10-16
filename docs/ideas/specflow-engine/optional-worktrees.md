@@ -60,6 +60,9 @@ Spec ID resolves to bound worktree, independent of the caller's `cwd`. Git check
 
 ### Finalization boundary
 
+Closing a linked Specification and integrating it are separately selected effects: default integrate=true means archive+commit+verified merge+CAS+eligible cleanup; integrate=false means archive+commit locally with archived canonical Specification still bound to linked checkout, worktree/branch retained. A later Close Worktree operation integrates an active OR already archived Spec, then safely rebinds/removes managed checkout. If merge conflicts, do not touch primary: hold durable requires-resolution with future manual/agent UX handoff, no automatic conflict resolution. Local project config selects integration target branch rather than guessing main/develop. Close Worktree itself never discards committed source without integration.
+
+
 Do **not** reuse legacy `git checkout main` in the spec's linked worktree: a branch is typically checked out in one worktree only, and main may already be checked out elsewhere. Split workflow completion, integration/merge confirmation and worktree cleanup. Before removing a worktree, verify committed spec/archive outcome is represented in the intended destination branch, not only in the worktree that will disappear. Then perform an explicit [canonical binding rebind](workspace-binding-lifecycle.md) **before** cleanup; a workflow completion or merged PR alone cannot redirect the registry.
 
 ### Cleanup conditions

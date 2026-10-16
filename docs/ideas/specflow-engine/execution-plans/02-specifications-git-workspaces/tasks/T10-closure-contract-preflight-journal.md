@@ -23,9 +23,9 @@ related:
 ## Executable prerequisites
 
 - E2.T09 accepted (new scaffold contract and old Create journal recovery)
-- Owner decisions DC03, DC05, DC08 and DC10 signed off
+- Owner decisions DC03–DC05, DC08, DC10 and DC15–DC18 signed off or explicitly deferred with safe implementation scope
 
-Run mode: **SOLO / independent architecture review**. No parallel writes to shared Git refs, registry schemas, journal/state files, authentication capability lists or runtime composition. Re-check HEAD and approved decisions DC01–DC12 before editing code.
+Run mode: **SOLO / independent architecture review**. No parallel writes to shared Git refs, registry schemas, journal/state files, authentication capability lists or runtime composition. Re-check HEAD and approved decisions DC01–DC18 before editing code.
 
 ## Modules and ownership
 
@@ -33,9 +33,9 @@ Engine: new specs/lifecycle/{model,preflight,journal,store,reservation,inspect} 
 
 ## Required behavior / exact acceptance
 
-1. Closed discriminated kinds worktree-close and specification-close with separate legal stage transitions, request fingerprints, error union and evidence-bearing result. Typed idempotent operationId semantics; no create journal pollution.
-2. Read-only preview resolves canonical spec, actual linked/primary source, actual primary destination/checked-out branch and expected HEAD; inspects index/untracked state and existing Engine journals; never changes files, refs or registry.
-3. Pin pre-mutation source/destination HEAD, git-instance and linked instanceId, exact specId/slug/location, source tree identity, registry revision and binding generation, other bound occupants and touched Spec paths. For linked Specification close the later Engine-owned archive commit MUST persist a distinct integrationSourceCommit, not overwrite the pre-archive HEAD evidence. Inherited primary manifests are NOT extra linked occupants.
+1. Closed discriminated kinds worktree-close and specification-close with separate legal stage transitions, request fingerprints, error union and evidence-bearing result. Specification-close pins integrateToTargetBranch (default true only for linked; primary means not-applicable), and has TWO verified terminal outcomes: integrated-and-removed versus locally-archived-and-retained. Worktree-close preserves active OR archived location. Typed idempotent operationId semantics; no create journal pollution.
+2. Read-only preview resolves canonical spec, actual linked/primary source, Project Home .nevo/config.yaml git.integrationTargetBranch (required validated project policy, not a per-request default), actual primary destination/checked-out branch and expected HEAD; when integrateToTargetBranch=false no primary integration/cleanup admission required but source archive preflight remains strict; inspects index/untracked state and existing Engine journals; never changes files, refs or registry.
+3. Verify configured integration target from Project Home, include exact project config revision and selected integrateToTargetBranch in fingerprint; require explicit init/config migration if integration is requested and no target exists. Never assume main/develop or silently switch primary checkout. Pin pre-mutation source/destination HEAD, git-instance and linked instanceId, exact specId/slug/location, source tree identity, registry revision and binding generation, other bound occupants and touched Spec paths. For linked Specification close the later Engine-owned archive commit MUST persist a distinct integrationSourceCommit, not overwrite the pre-archive HEAD evidence. Inherited primary manifests are NOT extra linked occupants.
 4. Publish versioned local intent under short Project Home coordination; reject same-id changed fingerprint and different-id concurrent mutation of same spec. Reconcile unknown concurrent process as inspection/recovery-required, not PID/TTL takeover. Unknown journal/schema fails closed. Inspect a SIGKILL-orphaned short Project Home control lock explicitly; any manual recovery of that lock requires verified no-active-owner evidence and trusted operator action, never PID/age heuristics. This is a narrow Foundation operator-recovery requirement, NOT the future persistent workspace-writer claim mechanism.
 5. Standalone offline Engine inspection API returns in-progress stages and actionable blockers; do not claim a lock held only during journal writing fences external writers. No public generic Git mutation interface.
 
