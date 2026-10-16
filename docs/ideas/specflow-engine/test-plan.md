@@ -185,7 +185,7 @@ These **MI** IDs do not alter Foundation A/B or current managed Session acceptan
 | MI11 | Two aggregate finalizers, crashing gate/commit transition          | One durable finalization and canonical state change; verify side effects exactly once                                 |
 | MI12 | Input independence, provider provenance, rebind and offline CLI    | Declared semantic independence assessed honestly; stale source and unknown effects safe; Engine works without Runtime |
 
-## Plan 02 lifecycle extension: LC01–LC28 (independent mandatory gate)
+## Plan 02 lifecycle extension: LC01–LC34 (independent mandatory gate)
 
 An LC PASS requires actual Engine/CLI/Runtime behavior on the implementation HEAD, NOT the presence of these tasks. "Both" means Windows and POSIX real Git/FS/OS-process runs. "One" means at least one platform plus cross-platform build/schema checks. Cases marked "Both" may be grouped into a platform matrix but no required case may be skipped.
 
@@ -214,13 +214,19 @@ An LC PASS requires actual Engine/CLI/Runtime behavior on the implementation HEA
 | LC21 | Both | OS-process SIGKILL after Git integration before registry CAS: prove destination and rebind exactly once |
 | LC22 | Both | OS-process SIGKILL after CAS before worktree deletion and after deletion before retirement: primary remains canonical, no wrong-path deletion |
 | LC23 | Both | Killed/unknown external Git or closing writer outcome never auto-replayed from PID/timeout; explicit inspect/reconciliation |
-| LC24 | One | No installed Spec workflow needs explicit manual Foundation acknowledgement; blocked/unknown installed future gate never counts as passed |
+| LC24 | One | No installed Specification exit evaluator needs explicit administrative acknowledgement; blocked/unknown installed future gate never counts as passed |
 | LC25 | One | Unauthenticated, wrongly scoped or create-only HTTP caller cannot close or see private operation details; zero side effects |
 | LC26 | Both | Real Git paths with spaces and non-ASCII; Windows casing, Unicode, literal pathspecs and worktree cleanup safe |
 | LC27 | Both | Already archived repeated close is evidence-backed idempotent or explicitly conflicted; never creates another commit |
 | LC28 | One | CLI offline and HTTP authenticated both invoke same Engine use cases, same operation ID/error semantics and correct read freshness |
+| LC29 | Both | Ignored per-checkout local files (.nevo/local config, logs, history, artifacts) block managed worktree removal; only pinned Engine identity marker is eligible |
+| LC30 | Both | Historic unfinished Create v1/v2 journals with original scaffold fingerprint remain safely recoverable after field-free scaffold change |
+| LC31 | Both | Source branch commits touching OTHER Specification files cannot silently integrate/close an exclusive managed worktree |
+| LC32 | Both | Linked close-spec pins preArchiveSourceHead and a DISTINCT verified archive integrationSourceCommit; destination contains actual archive commit |
+| LC33 | Both | Killed process after journal-owned archive staging: replay recognizes only exact scoped staged state and rejects alien index additions |
+| LC34 | One | New scaffold YAML contains no workflow execution mode selector; existing persisted manifests remain readable without implicit rewrite |
 
-Mandatory scope: LC01–LC28; on Both scenarios real Git + real filesystem, and real OS-process termination at LC19–LC23. Live-process uncertainty must not be simulated solely with thrown exceptions. Test fixtures must record raw commit/ref, index/untracked state, identities, operation checkpoint, per-platform Git/Node/OS version and negative side-effect assertions. PR CI and independent reviewer sign-off are required. Deferred to Plan 03/04/05: actual external writer claims, provider/native Session resume safety, real spec-level workflow gates/actions, per-task attempts, human-verification provenance, remote PR integration, multi-instance execution.
+Mandatory scope: LC01–LC34; on Both scenarios real Git + real filesystem, and real OS-process termination at LC19–LC23 and LC33. POSIX uses SIGKILL and Windows uses proven forcible OS-process termination with equivalent crash-checkpoint evidence. Live-process uncertainty must not be simulated solely with thrown exceptions. Test fixtures must record raw commit/ref, index/untracked state, identities, operation checkpoint, per-platform Git/Node/OS version and negative side-effect assertions. PR CI and independent reviewer sign-off are required. Deferred to Plan 03/04/05: actual external writer claims, provider/native Session resume safety, real spec-level workflow gates/actions, per-task attempts, human-verification provenance, remote PR integration, multi-instance execution.
 
 ## Running and reporting
 

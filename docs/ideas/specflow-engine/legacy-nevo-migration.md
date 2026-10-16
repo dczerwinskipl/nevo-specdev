@@ -25,7 +25,7 @@ related:
 
 ## Scope and sequencing
 
-Legacy `dczerwinskipl/nevo` includes both older workflow and newer deterministic execution. **Only migrate the deterministic workflow path**; do not reintroduce a selectable legacy mode. Architectural constraints must be established and demonstrated by the Specs creation slice before porting a large subsystem. Reinspect actual source/HEAD before every migration; this is a map, not an exhaustive copied-file inventory.
+The migration source is the deterministic Task workflow in legacy `dczerwinskipl/nevo`. Nevo SpecFlow does not model workflow execution as a selectable mode. Architectural constraints must be established and demonstrated by the Specs creation slice before porting a large subsystem. Reinspect actual source/HEAD before every migration; this is a map, not an exhaustive copied-file inventory.
 
 ## Candidate module map
 
@@ -86,7 +86,7 @@ Full Task Planner, provider parity, batch protocol, PR merge and archived lifecy
 
 ## Per-module disposition and sequencing gate
 
-Before porting any module, label its disposition: **port** (semantics preserved), **refactor** (boundary/persistence changed), **replace** (new implementation), **delete** (unsupported legacy mode/queue), or **defer** (not part of current slice). Record owner, source revision, target capability and regression proof per row. The initial table is an **inspection routing map**, not an instruction to copy every file.
+Before porting any module, label its disposition: **port** (semantics preserved), **refactor** (boundary/persistence changed), **replace** (new implementation), **delete** (unsupported historical adapter or queue), or **defer** (not part of current slice). Record owner, source revision, target capability and regression proof per row. The initial table is an **inspection routing map**, not an instruction to copy every file.
 
 **Gates:** Foundation A proves Specs/Workspace/Git and offline CLI. Foundation B proves actual workflow start/finish/claim recovery against an external process. Sessions Foundation can implement Session/Turn persistence and mock provider with no workflow. Managed integration then proves Runtime ↔ Engine dispatch handshake and crash settlement; provider adapters and remaining deterministic workflow features migrate incrementally afterward. Do not make all Sessions wait for full workflow migration, but do not test managed coordination only with a fake Engine.
 

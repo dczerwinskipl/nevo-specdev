@@ -36,8 +36,8 @@ packages/specflow/src/specs/command.ts for CLI; packages/specflow-runtime/src/fe
 
 1. Add CLI specs worktree close <spec-id> and specs close <spec-id>, read-only preview/check and inspect/resume where safe. --json, --operation-id, --destination-branch, explicit confirmations, stable nonzero exit and actionable error code, with Runtime OFF.
 2. POST /api/specs/{specId}/worktree/close and POST /api/specs/{specId}/close, with read-only preview/operation status endpoints as needed. HTTP validates requests, enforces authenticated narrowly scoped CloseWorktree and CloseSpecification independently of Create, resolves canonical identity securely, and returns typed result/status.
-3. Selector fields cannot grant authorization; do not leak unauthorized spec metadata, paths, branch names or journal status. No demo/fixture fallback, no unconfigured Engine writes, no bypass using manual-foundation flag. Avoid granting local workstation workspaceId as portable Auth scope.
-4. Error mapping explicit/exhaustive (400/401/403/404/409/422/503; unexpected 500); public JSON result distinguishes not-evaluated gate policy and cleanup pending from completed success. Runtime live reads resolve new binding/archive and invalidate refresh data.
+3. Selector fields cannot grant authorization; do not leak unauthorized spec metadata, paths, branch names or journal status. No demo/fixture fallback, no unconfigured Engine writes, no bypass using the administrative no-evaluator acknowledgement. Avoid granting local workstation workspaceId as portable Auth scope.
+4. Error mapping explicit/exhaustive (400/401/403/404/409/422/503; unexpected 500); public JSON result distinguishes not-configured exit evaluation and cleanup pending from completed success. Runtime live reads resolve new binding/archive and invalidate refresh data.
 
 ## Required evidence
 

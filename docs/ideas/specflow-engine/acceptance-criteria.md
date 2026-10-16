@@ -58,8 +58,10 @@ This is a proposed **additional**, owner-approved Plan 02 exit gate. The already
 | FL04 | Distinct durable operation kind/intent, idempotency, cross-process exclusion and honest unknown outcome recovery | LC17–LC23 |
 | FL05 | Offline CLI and explicitly authorized HTTP parity; live canonical reads after CLI mutation | LC06, LC25, LC28 |
 | FL06 | Unsupported writers/workspaces/branch states refuse; no forced cleanup or implicit branch checkout | LC09–LC16, LC23, LC26 |
-| FL07 | Explicit not-evaluated manual closure without installed Spec workflow, never fabricated passed gate or Task completion | LC24 plus domain review |
-| FL08 | Critical real Git/filesystem/process tests PASS on Windows and POSIX with no mandatory skips | LC01–LC05, LC07–LC23, LC26–LC27 |
+| FL07 | Explicit administrative close acknowledgement without installed Specification exit evaluator; never fabricated gate pass or Task completion | LC24 plus domain review |
+| FL08 | Critical real Git/filesystem/process tests PASS on Windows and POSIX with no mandatory skips | LC01–LC05, LC07–LC23, LC26–LC27, LC29–LC33 |
+| FL09 | New Specification scaffold has no execution mode discriminator, while old Create journals retain safe original replay | LC30, LC34 |
+| FL10 | Ignored local user files never vanish during disposal; archive integration uses proven post-archive HEAD and scoped replay | LC29, LC31–LC33 |
 
 Gate is conditional on the product owner explicitly approving [DC03/DC04/DC05/DC08/DC10](specification-close-decisions.md). No Plan 03 E3.T06 dependency is required for the restricted closure policy; future actual writer claims and managed Sessions strengthen admission when they exist. Do not claim a clean tree or operator assertion physically proves absence of non-cooperating external writers. No permanent adoption of these draft requirements until independent architecture review and promotion to normative docs.
 

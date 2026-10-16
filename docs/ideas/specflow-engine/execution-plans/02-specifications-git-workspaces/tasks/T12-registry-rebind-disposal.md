@@ -34,14 +34,14 @@ project/registry-store.ts, workspace-registry.ts and validation/types ONLY for s
 ## Required behavior / exact acceptance
 
 1. Narrow, auditable CAS transition from one verified explicit linked Spec binding to primary, advancing binding generation. Require journal verified destination proof and expected source binding; never loosen generic registration append-only guard.
-2. Revalidate source/destination identity, no other explicit binding to source, no unsettled writer/operation evidence and source clean. Inherited manifests are permitted only when untouched and not source-owned.
+2. Revalidate source/destination identity, no other explicit binding to source, no unsettled writer/operation evidence and source clean, plus a full scan of ignored per-checkout files. Allow removal of only the verified Engine identity marker and its empty local directories; unknown .nevo/local config/state or ignored user data BLOCK removal. Inherited manifests are permitted only when untouched and not source-owned.
 3. CAS rebind precedes any worktree removal; from that instant ordinary reads resolve primary. Keep old registration until cleanup completes. Removal under journal initiated stage uses non-force Git worktree removal, safe location/instance checks, and reports retained or uncertain state without fabricating completion.
 4. Remove obsolete linked registration under another narrow CAS only after confirmed Git effect and zero references. Leave branch ref intact. If cleanup fails retain journal and safe primary binding. Do not erase ownership evidence preemptively.
 
 ## Required evidence
 
 - Positive: real CAS rebind after verified content; primary read remains available after safe source removal
-- Negative/no unintended effects: stale generation, unrelated registered spec, unmanaged/shared/substituted path, dirty source, refused non-force deletion leave source untouched and never revert verified primary binding
+- Negative/no unintended effects: stale generation, unrelated registered spec, unmanaged/shared/substituted path, dirty/ignored-user-data source, refused non-force deletion leave source untouched and never revert verified primary binding
 - Report LC test IDs, test files, OS/Node/Git version for real filesystem/process work, PASS/FAIL/SKIP, modified public contracts, and an independent code-quality/recovery review. Mock-only tests do not satisfy Git/process cases.
 - Checkpoint for this task: Review both order and crash window after CAS but before remove, plus removal before registry retirement.
 - Preserve completed E2.T01–T08; avoid unrelated refactors. No Plan 03 or Session dependency.

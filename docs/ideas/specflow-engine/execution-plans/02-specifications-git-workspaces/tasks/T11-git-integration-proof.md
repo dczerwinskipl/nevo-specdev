@@ -32,7 +32,7 @@ Engine-internal version-control/git/integration.ts and typed ports in version-co
 
 ## Required behavior / exact acceptance
 
-1. Report clean Git status including staged/untracked and sequencer state for BOTH verified checkouts, pinned HEADs, branch/ref, common-dir, source ancestry, proposed fast-forward and already-integrated proof. Do not infer integration from a PR or branch name.
+1. Report clean Git status including staged/untracked and sequencer state for BOTH verified checkouts, pinned pre-mutation HEADs, archive-commit integrationSourceCommit (when applicable), branch/ref, common-dir, source ancestry, proposed fast-forward and already-integrated proof. Do not infer integration from a PR or branch name.
 2. Before running git merge --ff-only with pinned SHA in PRIMARY, require journal integration-initiated. Never run checkout, reset, force, clean or remote fetch; do not hold project control lock across Git process.
 3. After Git returns or a process is interrupted, inspect HEAD/ancestry/tree and verify the target checkout contains exact required Specification tree/status plus intended committed branch changes. Failure/uncertainty is not success. Do not repeat merge if proof already exists.
 4. Explicitly block divergence, wrong checked-out destination branch, changed HEAD, source not committed, merge/sequencer conflict, replaced workspace or incompatible git policy. A manually integrated source commit may be accepted only by actual ancestry and physical content.
