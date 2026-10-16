@@ -265,8 +265,9 @@ describe('E2.T08 — untrusted canonical document selectors', () => {
     const specId = randomUUID();
     await persist(root, scaffold(specId, 'Safe canonical selector'));
     const registryBefore = await readFile(workspaceRegistryPath(engine.context), 'utf8');
-    await expect(readCanonicalSpecDocument(engine, '../../.nevo/config.yaml', 'manifest'))
-      .rejects.toMatchObject({ code: 'SPEC_VALIDATION_ERROR' });
+    await expect(
+      readCanonicalSpecDocument(engine, '../../.nevo/config.yaml', 'manifest'),
+    ).rejects.toMatchObject({ code: 'SPEC_VALIDATION_ERROR' });
     // Deliberately bypass the TypeScript literal union to verify runtime rejection.
     await expect(
       readCanonicalSpecDocument(engine, specId, '../../.nevo/config.yaml' as 'manifest'),

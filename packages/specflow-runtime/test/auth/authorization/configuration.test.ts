@@ -117,9 +117,7 @@ describe('SpecFlow authorization configuration', () => {
       ),
       'utf8',
     );
-    await expect(loadFrom(cwd)).rejects.toThrowError(
-      /workspaceId is a local workspace selector/,
-    );
+    await expect(loadFrom(cwd)).rejects.toThrowError(/workspaceId is a local workspace selector/);
   });
 
   it('rejects unknown roles and configured auth users', () => {

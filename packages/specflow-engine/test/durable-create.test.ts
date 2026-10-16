@@ -143,10 +143,12 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
     const secondManifest = await readFile(secondManifestPath, 'utf8');
     expect(firstManifest).toContain(first.specId);
     expect(secondManifest).toContain(second.specId);
-    await expect(readFile(join(second.workspaceRoot, first.relativeManifestPath), 'utf8'))
-      .rejects.toMatchObject({ code: 'ENOENT' });
-    await expect(readFile(join(first.workspaceRoot, second.relativeManifestPath), 'utf8'))
-      .rejects.toMatchObject({ code: 'ENOENT' });
+    await expect(
+      readFile(join(second.workspaceRoot, first.relativeManifestPath), 'utf8'),
+    ).rejects.toMatchObject({ code: 'ENOENT' });
+    await expect(
+      readFile(join(first.workspaceRoot, second.relativeManifestPath), 'utf8'),
+    ).rejects.toMatchObject({ code: 'ENOENT' });
 
     const changedFirst = firstManifest.replace('status: draft', 'status: approved');
     expect(changedFirst).not.toBe(firstManifest);
@@ -195,8 +197,9 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
 
     const unknownPath = 'unrelated-user-edit.txt';
     await writeFile(join(root, unknownPath), 'unrelated work\n');
-    expect((await inspectCreateSpecification(engine, result.operationId))?.files)
-      .toEqual(journal?.files);
+    expect((await inspectCreateSpecification(engine, result.operationId))?.files).toEqual(
+      journal?.files,
+    );
     expect(journal?.files.some((file) => file.relativePath === unknownPath)).toBe(false);
     expect(git(root, 'status', '--porcelain', '--untracked-files=all')).toContain(unknownPath);
   }, 90000);
