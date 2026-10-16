@@ -42,6 +42,7 @@ it.skipIf(!enabled)(
     if (mode === 'crash') {
       const checkpoint = process.env.NEVO_CREATE_CRASH_STAGE!;
       await createSpecification(engine, input, {
+        resumeInterruptedOperation: process.env.NEVO_CREATE_CRASH_RESUME_EXISTING === '1',
         afterEffect: async (stage) => {
           if (stage !== checkpoint) return;
           await writeFile(signal, JSON.stringify({ stage, pid: process.pid }));

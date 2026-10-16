@@ -84,7 +84,7 @@ function worker(
   root: string,
   input: CreateSpecificationInput,
   mode: Mode,
-  options: { stage?: string; expectError?: string; gitSettled?: boolean } = {},
+  options: { stage?: string; expectError?: string; gitSettled?: boolean; resumeExisting?: boolean } = {},
 ): Worker {
   const signal = join(root, 'worker-' + randomUUID() + '.checkpoint');
   const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -115,6 +115,7 @@ function worker(
         NEVO_CREATE_CRASH_STAGE: options.stage ?? '',
         NEVO_CREATE_CRASH_SIGNAL: signal,
         NEVO_CREATE_CRASH_GIT_SETTLED: options.gitSettled ? '1' : '0',
+        NEVO_CREATE_CRASH_RESUME_EXISTING: options.resumeExisting ? '1' : '0',
         NEVO_CREATE_CRASH_EXPECT_ERROR: options.expectError ?? '',
       },
     },
@@ -153,8 +154,9 @@ async function killAtCheckpoint(
   input: CreateSpecificationInput,
   stage: string,
   mode: Mode = 'crash',
+  resumeExisting = false,
 ): Promise<string> {
-  const child = worker(root, input, mode, { stage });
+  const child = worker(root, input, mode, { stage, resumeExisting });
   await awaitSignal(child.signal);
   const checkpoint = JSON.parse(await readFile(child.signal, 'utf8')) as {
     stage: string;
@@ -237,7 +239,7 @@ describe('E2.T04 — actual process termination and fresh-process recovery', () 
       );
     });
 
-    expect(await killAtCheckpoint(root, input, 'manifest')).toBe('manifest');
+    expect(await killAtCheckpoint(root, input, 'manifest', 'crash', true)).toBe('manifest');
     const afterCrash = (await inspectCreateSpecification(engine, input.operationId))!;
     expect(afterCrash.stage).toBe('manifest-writing');
     expect(afterCrash.specId).toBe(specId);
