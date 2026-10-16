@@ -27,7 +27,7 @@ related:
 
 ## Product contract
 
-Nevo SpecFlow has one deterministic workflow architecture. A Specification does not select an execution algorithm, so new manifest scaffolds MUST NOT persist workflow.mode or invent another workflow execution mode. The canonical version-controlled Specification manifest is named specification.yaml (not change.yaml or state.yaml): it contains the spec's durable definition/metadata/lifecycle status, NOT host-local sessions, mutable process locks or execution journals. Do not confuse workflow definition/step/action identifiers with a mode selector. Specification closing may record explicit administrative authorization and exit-evaluation evidence, but that is NOT a workflow execution mode.
+Nevo SpecFlow has one deterministic workflow architecture. A Specification does not select an execution algorithm, so new manifest scaffolds MUST NOT persist workflow.mode or invent another workflow execution mode. The canonical version-controlled Specification manifest is named specification.yaml (not change.yaml or state.yaml): it contains the spec's durable definition/metadata/lifecycle status, NOT host-local sessions, mutable process locks or execution journals. Do not confuse workflow definition/step/action identifiers with a mode selector. Current Foundation Specification closing has no exit-gate evaluator, no fake administrative bypass and no exit-evaluation evidence; later workflow integration belongs in its real feature.
 
 ## Owned files
 

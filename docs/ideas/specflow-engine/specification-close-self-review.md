@@ -31,11 +31,11 @@ related:
 | SR04 | P1 | Ordinary git status does not inventory ignored per-checkout files; managed worktrees have an ignored .nevo/local/state/workspace-identity.json and might have user state/config/artifacts. Removing checkout without inspecting ignored files risks silent loss. | Before disposal inventory ignored state, whitelist only original verified Engine marker, block other ignored local data. No force removal. | LC29 |
 | SR05 | P2 | An interrupted archive may leave exact Engine-owned staged files. Blindly re-running global-clean preflight makes supported journal recovery impossible. | First admission requires clean tree; recovery validates only pinned journal-owned file inventory/staged changes, all unexpected changes block. | LC33 |
 | SR06 | P2 | Windows has no POSIX SIGKILL semantics identical to Unix, although process-level crash proof is still required. | Require forcible OS process termination with actual confirmed process exit and stage proof on Windows, SIGKILL on POSIX. | T17 LC19–LC23 and LC33 |
-| SR07 | P2 | Earlier design/test prose said LC01–LC24 although 28 cases were published. | Correct to LC01–LC34 across design, plan, gate and task files. | Static consistency check |
+| SR07 | P2 | Earlier design/test prose said LC01–LC24 although 28 cases were published. | Fixed inconsistent range and later extended matrix to LC01–LC40. | Static consistency check |
 | SR08 | P2 | Generated Spec/docs indexes might become stale after an archive even if they are not canonical read authority. | T14 explicitly requires inspecting actual index contract and journaled path-scoped regeneration when required, not global add -A. | T14 independent review |
 | SR09 | P2 | T09 optional cleanup carried a Plan 03 writer-claim dependency inconsistent with Foundation-only closure; after moving closure to T10–T17 the placeholder was misleading. | Replace T09 with narrow manifest contract/recovery task; no dependency on E3.T06. | Review plan graph |
-| SR10 | Decision | No installed spec-level exit evaluator is NOT evidence of passed gates. An administrative archive is a separate explicit product authorization, not a workflow algorithm mode. | Keep explicit administrative acknowledgement and journal disposition not-configured, require owner approval, future installed/unknown gate results block. | Owner DC08 |
-| SR11 | Decision | Clean Git/index and even an operator's assertion cannot physically prevent a non-cooperating external writer. | Document cooperative offline trust limitation and block known unsettled work. Future claims/Sessions strengthen admission. | Owner DC10 |
+| SR10 | Decision | There is NO current Specification exit evaluator, so a fabricated pass, administrative bypass or not-configured status would invent an absent feature. | Explicit TODO before archiving for future Specification-workflow gates/actions; no evaluator/registry/gateway/acknowledgement fields now. | DC08 approved |
+| SR11 | Decision | Clean Git/index cannot physically prevent a non-cooperating OS writer and operator declarations don't prove quiescence. | Check installed Engine journals/locks/Git/fs only; explicit TODO before disposal for future Workspace Execution coordination. No fake writer service or assertion flag. | DC10 approved |
 
 ## Source-of-truth and consistency checks
 
@@ -51,17 +51,23 @@ related:
 - DC03/DC18: recorded project development branch git.integrationTargetBranch in Project Home config, not per-close branch guess.
 - DC04/DC17: automatic verified conflict-free divergent Git merge as well as fast-forward. A true merge conflict yields requires-resolution evidence in isolated checkout; user/agent UX is a SEPARATE future capability, never invoked by Engine.
 - DC15: linked Specification close supports integrateToTargetBranch (default true); false archives locally and retains linked binding/worktree for later Close Worktree, including when Spec is already archived.
-- DC16: proposed meaningful canonical manifest filename specification.yaml. Historic change.yaml and Create journal payloads remain readable/recoverable, ambiguous both-filenames state fails closed. E2.T09 owns the contract refinement; naming awaits final owner confirmation.
+- DC16: owner-approved canonical manifest filename specification.yaml. Historic change.yaml and Create journal payloads remain readable/recoverable, ambiguous both-filenames state fails closed. E2.T09 owns the contract refinement.
 - NEW review risk SR12 (P1): isolated clean merge has substantial Git commit/journal identity/hook/temporary-checkout ownership complexity and must not mutate primary before verified candidate. T11/T17 independent review must test crash after candidate commit, after publish and during conflict.
 - NEW review risk SR13 (P1): linked archived-without-integration is NOT present in primary; registry binding and canonical document read must stay linked until later explicit integration/rebind. Never delete that worktree as a side effect of archive-only close.
 
+## Final owner direction — explicit seams and Engine-owned archive commit
+
+- DC05: archive filesystem move + exactly-one scoped commit belongs inside Engine Specification-close durable operation; never a separate action delegated to user, agent, CLI or HTTP.
+- DC08: leave `// TODO(specification-exit): ...` in Specs lifecycle application orchestrator immediately BEFORE archive effect. Future workflow slice owns actual gates/actions; do not build fake interfaces, registry, no-op implementations, statuses or administrative bypass now.
+- DC10: leave `// TODO(workspace-execution): ...` in Specs lifecycle disposal boundary before irreversible worktree removal. Future Workspace Execution feature owns process/session/claim quiescence, not a fake Foundation check. Current installed journal/lock/Git/fs blockers remain in place. No physical fencing guarantee against arbitrary OS writers.
+
 ## Residual risks / explicit non-goals
 
-1. Automatic branch merge commits, rebase, squash-equivalence, PR/remote push and branch deletion remain deferred; MVP integration is local fast-forward or strict already-integrated evidence.
+1. Verified automatic conflict-free merge commits in a durable isolated checkout are included in owner direction DC04; rebase, squash-equivalence, PR/remote push and branch deletion remain deferred. Independent Git recovery review required.
 2. A managed worktree with unexpected ignored files or another canonical binding cannot be automatically removed. Source integration/rebind and later cleanup recovery are distinct observed states, never fake success.
 3. Current Foundation cannot physically fence a hostile/same-OS-account process; this remains an owner security decision before enabling removal. A PID, TTL, clean tree or arbitrary caller claim is insufficient.
 4. Future workflow exit actions may be non-idempotent. Their installed implementation MUST durably pin action intent/inputs and reconcile before replay. The seam is reserved, no action engine built now.
-5. No implementation tests have yet been executed for these NEW close tasks; LC01–LC34 are acceptance requirements, not PASS claims. No independent agent reviewed this design.
+5. No implementation tests have yet been executed for these NEW close tasks; LC01–LC40 are acceptance requirements, not PASS claims. No independent agent reviewed this design.
 
 ## Recommended next check
 

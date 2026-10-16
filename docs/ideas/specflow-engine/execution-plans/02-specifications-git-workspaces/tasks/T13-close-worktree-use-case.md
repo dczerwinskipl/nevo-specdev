@@ -36,7 +36,7 @@ Engine: specs/lifecycle/close-worktree.ts, read-only preview and completion/insp
 
 1. One worktree-close operation owns reservation -> integration proof -> verified rebind -> guarded disposal -> result. Eligibility restricted to exclusive managed linked binding and source location active OR archive (archived linked Spec retained after close without integration); worktree closing never evaluates exit gates, alters status or archives.
 2. Same specId remains canonical once, status/location preserved as either active or archive, destination checkout physically contains intended files. Plain same-ID repeat returns prior evidence-backed result; competing ID is conflict.
-3. Explicit external-writer acknowledgement is recorded as trust assertion, not physical no-writer proof. Unknown external or journal state blocks. On removal failure report partial completed-integration/rebound with cleanup pending, not terminal success.
+3. No caller-supplied external-writer acknowledgement or fabricated claim enumeration. Block on ACTUAL unresolved Engine journals/locks, ambiguous Git effect, unsafe local files or identity; document that arbitrary external OS writers are not fenced by Foundation. On removal failure report verified integration/rebound with cleanup pending, not terminal success. Future writer admission hooks belong to the shared disposal slice, not this use case.
 4. Standalone Git operations remain internal; no Task/Attempt or Runtime dependencies.
 
 ## Required evidence

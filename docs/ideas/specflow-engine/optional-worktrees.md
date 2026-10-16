@@ -69,11 +69,11 @@ Do **not** reuse legacy `git checkout main` in the spec's linked worktree: a bra
 
 - Worktree was created and registered as `managed`, or user explicitly approved removing an attached checkout under a separate guarded operation.
 - No active or ambiguous Engine execution/claim/recovery record in that workspace.
-- No Runtime-managed active Session/Turn bound to it; external claims checked through Engine.
+- FUTURE CHECKPOINT ONLY: when managed Sessions/Turns and claims exist, require their actual owners to prove quiescence before disposal. No fictitious sessions/processes are consulted in Foundation.
 - Clean Git status, no untracked meaningful files, no unpushed commits or unreconciled local branch changes.
 - Integration/merge verified against intended destination (no inference from a completed Task).
 - Recorded path/branch/common-dir match actual Git facts at deletion.
-- User confirms cleanup for MVP; no default force; do not delete branch automatically as a side effect.
+- Ordinary UX confirmation of destructive cleanup is not evidence that external writers stopped. No fake `confirmExternalWritersQuiescent` flag, no force or implicit branch deletion.
 
 If removal fails, keep registry/journal for repair and return an explicit reason. Disappearing directory must not cause silent spec rebinding to main.
 

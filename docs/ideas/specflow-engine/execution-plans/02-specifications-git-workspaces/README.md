@@ -20,7 +20,7 @@ related:
 
 # Plan 02 — Specifications and Git Workspaces
 
-**Lifecycle: temporary implementation plan**, not an approved ADR or a formal product spec. Implements **Foundation A** on Plan 01 without implicitly starting workflow, creating a Session or auto-committing source files.
+**Lifecycle: temporary implementation plan**, not an approved ADR or a formal product spec. Extends Foundation A on Plan 01. Creation does NOT automatically commit user/scaffold edits; in contrast CLOSE SPECIFICATION automatically commits its OWN tightly scoped archive changes within Engine. It does not start workflow, create Sessions or ask an agent/human to commit archive effects.
 
 ## Goal and demonstrable user scenario
 
@@ -55,8 +55,8 @@ Each task has its own Markdown file. **Batch** means sequential tasks in one age
 10. T11 SOLO: project-configured target, fast-forward or clean divergent merge in isolated worktree, pause on conflict with future manual/agent UX seam. Independent Git review.
 11. T12 SOLO: scoped registry CAS and guarded managed worktree disposal. Independent data-loss review.
 12. T13 SOLO: Close Worktree use case.
-13. T14 SOLO: archive directory and Engine-scoped commit. After T11, MAY run parallel with T12/T13 only with strictly disjoint files/refs; default sequential.
-14. T15 SOLO: Close Specification with integrateToTargetBranch choice (default true); false retains archived linked worktree, explicit administrative no-evaluator acknowledgement and future deterministic exit seam. Requires owner decision.
+13. T14 SOLO: archive directory and MANDATORY Engine-owned, exactly-once scoped commit, never delegated to user/agent/CLI adapter. After T11, MAY run parallel with T12/T13 only with strictly disjoint files/refs; default sequential.
+14. T15 SOLO: Close Specification with integrateToTargetBranch choice (default true); false retains archived linked worktree. Engine automatically commits archive effects. Place an explicit TODO before archive for FUTURE workflow-owned gates/actions; NO current evaluator, admin bypass or synthetic status.
 15. T16 SOLO: CLI/HTTP parity and authorization.
 16. T17 SOLO: actual cross-process crash, Windows/POSIX and authorization gate for lifecycle.
 
@@ -114,4 +114,4 @@ No workflow start/finish, provider process, Session, full task planning, PR auto
 
 A passing original Foundation A does not establish closure. This additional gate covers the two distinct domain operations with real Git and SIGKILL evidence, CLI offline and authorized HTTP parity; see [design](../../specification-and-worktree-close-design.md), [pending decisions](../../specification-close-decisions.md), [self-review findings](../../specification-close-self-review.md) and LC01–LC40 in [test plan](../../test-plan.md). Owner must approve DC03, DC04, DC05, DC08, DC10 before implementing. Critical Git/OS-process LC cases must pass on **Windows AND POSIX**. No LC case is satisfied by mocks alone. Preserve accepted E2.T01–T08 unchanged.
 
-Dependencies: T09 -> T10 -> T11 -> T12 -> T13; T11 -> T14; (T12, T13, T14) -> T15 -> T16 -> T17. T14 may be dispatched independently of T12/T13 only if interface and file/ref ownership are actually disjoint. The former T09 rebind placeholder and E3.T06 dependency are eliminated: T09 now owns a focused scaffold contract/recovery correction, required before T10. Plan 03 E3.T06 is NOT a prerequisite for ordinary closure. Plan 03 claims and Plan 04 managed Sessions later strengthen writer admission, not the basic closure path. Do not delete temporary plans now; the program runbook still requires deleting the entire execution-plans tree and regenerating indexes **before merge**.
+Dependencies: T09 -> T10 -> T11 -> T12 -> T13; T11 -> T14; (T12, T13, T14) -> T15 -> T16 -> T17. T14 may be dispatched independently of T12/T13 only if interface and file/ref ownership are actually disjoint. The former T09 rebind placeholder and E3.T06 dependency are eliminated: T09 now owns a focused scaffold contract/recovery correction, required before T10. Plan 03 E3.T06 is NOT a prerequisite for ordinary closure. Plan 03 claims and Plan 04 managed Sessions later provide REAL writer/session quiescence admission at the documented disposal checkpoint, not the basic closure path. Plan 02 checks only installed Engine journals/locks, actual Git/FS/instance state and ignored files. It does not pretend arbitrary OS writers have stopped or require fake attestations. Do not delete temporary plans now; the program runbook still requires deleting the entire execution-plans tree and regenerating indexes **before merge**.
