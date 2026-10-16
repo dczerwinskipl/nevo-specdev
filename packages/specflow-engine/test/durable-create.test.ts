@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { lstat, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
@@ -117,6 +117,76 @@ describe('E2.T04 — durable Spec creation on actual Git', () => {
     const restarted = await openSpecFlowEngine({ cwd: root });
     expect(await createSpecification(restarted, input)).toEqual(output);
     expect(git(root, 'worktree', 'list', '--porcelain').match(/worktree /gu)).toHaveLength(2);
+  }, 90000);
+
+  it('C06: two managed worktrees retain isolated uncommitted Specs without touching primary', async () => {
+    const { root, engine } = await project();
+    const originalHead = git(root, 'rev-parse', 'HEAD');
+    const originalStatus = git(root, 'status', '--porcelain', '--untracked-files=all');
+
+    const first = await createSpecification(engine, linked('First isolated worktree'));
+    const second = await createSpecification(engine, linked('Second isolated worktree'));
+    for (const parent of [dirname(first.workspaceRoot), dirname(second.workspaceRoot)]) {
+      if (!roots.includes(parent)) roots.push(parent);
+    }
+
+    expect(first.specId).not.toBe(second.specId);
+    expect(first.workspaceId).not.toBe(second.workspaceId);
+    expect(first.workspaceRoot).not.toBe(second.workspaceRoot);
+    expect(git(root, 'rev-parse', 'HEAD')).toBe(originalHead);
+    expect(git(root, 'status', '--porcelain', '--untracked-files=all')).toBe(originalStatus);
+    expect(git(root, 'worktree', 'list', '--porcelain').match(/worktree /gu)).toHaveLength(3);
+
+    const firstManifestPath = join(first.workspaceRoot, first.relativeManifestPath);
+    const secondManifestPath = join(second.workspaceRoot, second.relativeManifestPath);
+    const firstManifest = await readFile(firstManifestPath, 'utf8');
+    const secondManifest = await readFile(secondManifestPath, 'utf8');
+    expect(firstManifest).toContain(first.specId);
+    expect(secondManifest).toContain(second.specId);
+    await expect(readFile(join(second.workspaceRoot, first.relativeManifestPath), 'utf8'))
+      .rejects.toMatchObject({ code: 'ENOENT' });
+    await expect(readFile(join(first.workspaceRoot, second.relativeManifestPath), 'utf8'))
+      .rejects.toMatchObject({ code: 'ENOENT' });
+
+    const changedFirst = firstManifest.replace('status: draft', 'status: approved');
+    expect(changedFirst).not.toBe(firstManifest);
+    await writeFile(firstManifestPath, changedFirst);
+    expect(await readFile(firstManifestPath, 'utf8')).toBe(changedFirst);
+    expect(await readFile(secondManifestPath, 'utf8')).toBe(secondManifest);
+    expect(git(root, 'status', '--porcelain', '--untracked-files=all')).toBe(originalStatus);
+    expect((await engine.readRegistry()).specBindings).toMatchObject([
+      { specId: first.specId, workspaceId: first.workspaceId },
+      { specId: second.specId, workspaceId: second.workspaceId },
+    ]);
+    expect(await discoverSpecifications(engine)).toMatchObject([
+      { status: 'available', specId: first.specId, workspaceId: first.workspaceId },
+      { status: 'available', specId: second.specId, workspaceId: second.workspaceId },
+    ]);
+  }, 120000);
+
+  it('SC00: records only Engine-created dirty scaffold files with durable fingerprints', async () => {
+    const { root, engine } = await project(false);
+    const result = await createSpecification(engine, existing(engine, 'Baseline evidence'));
+    const journal = await inspectCreateSpecification(engine, result.operationId);
+    expect(journal?.stage).toBe('completed');
+    expect(journal?.files).toHaveLength(2);
+    for (const file of journal!.files) {
+      expect(file.relativePath).toMatch(/^specs\/active\/baseline-evidence\//u);
+      expect(file.sha256).toBe(
+        createHash('sha256')
+          .update(await readFile(join(root, file.relativePath), 'utf8'), 'utf8')
+          .digest('hex'),
+      );
+    }
+    const sourceStatus = git(root, 'status', '--porcelain', '--untracked-files=all');
+    expect(sourceStatus).toContain(result.relativeManifestPath);
+
+    const unknownPath = 'unrelated-user-edit.txt';
+    await writeFile(join(root, unknownPath), 'unrelated work\n');
+    expect((await inspectCreateSpecification(engine, result.operationId))?.files)
+      .toEqual(journal?.files);
+    expect(journal?.files.some((file) => file.relativePath === unknownPath)).toBe(false);
+    expect(git(root, 'status', '--porcelain', '--untracked-files=all')).toContain(unknownPath);
   }, 90000);
 
   it('VC05: retries pinned Git reservation after branchPattern/baseRef change', async () => {
