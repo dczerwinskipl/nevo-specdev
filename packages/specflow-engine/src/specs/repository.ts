@@ -61,9 +61,25 @@ export async function listWorkspaceSpecifications(
 
       const base = join(directory, slug);
       await requirePhysicalDirectory(base);
-      const relativeManifestPath = 'specs/' + location + '/' + slug + '/change.yaml';
+      // Do not hide a second manifest, case alias, symlink or legacy collision
+      // by preferring the new filename. Exactly one physical source is allowed.
+      const manifestEntries = (await readdir(base, { withFileTypes: true })).filter((item) =>
+        /^(?:change|specification)\.yaml$/iu.test(item.name),
+      );
+      if (
+        manifestEntries.length !== 1 ||
+        (manifestEntries[0]?.name !== 'change.yaml' &&
+          manifestEntries[0]?.name !== 'specification.yaml')
+      ) {
+        throw new SpecificationError(
+          'SPEC_SOURCE_INVALID',
+          'Specification directory must contain exactly one canonical manifest filename.',
+        );
+      }
+      const manifestName = manifestEntries[0].name;
+      const relativeManifestPath = 'specs/' + location + '/' + slug + '/' + manifestName;
       const relativeOverviewPath = 'specs/' + location + '/' + slug + '/overview.md';
-      const manifestPath = join(base, 'change.yaml');
+      const manifestPath = join(base, manifestName);
       await requirePhysicalFile(manifestPath);
 
       let parsed: unknown;

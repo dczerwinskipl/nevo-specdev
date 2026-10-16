@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 
 import { describe, expect, it } from 'vitest';
 
-import { createSpecificationScaffold } from '../src/testing';
+import { createLegacySpecificationScaffold } from '../src/specs/model';
 
 /**
  * Frozen PRE-T09 byte fixture. Do not regenerate this constant with the
@@ -59,7 +59,7 @@ const expectedOverview = [
 
 describe('E2.T09 checkpoint 1: frozen pre-migration Create scaffold bytes', () => {
   it('preserves the exact historical manifest and overview fingerprints', () => {
-    const scaffold = createSpecificationScaffold(historicalScaffold);
+    const scaffold = createLegacySpecificationScaffold(historicalScaffold);
     expect(scaffold.slug).toBe('historical-spec');
     expect(scaffold.files).toEqual([
       {

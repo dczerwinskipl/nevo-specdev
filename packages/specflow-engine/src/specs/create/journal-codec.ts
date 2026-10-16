@@ -103,7 +103,8 @@ function isValidJournalFiles(value: unknown, slug: unknown): boolean {
         SHA256.test(file.sha256),
     ) &&
     isRecord(value[0]) &&
-    value[0].relativePath === 'specs/active/' + slug + '/change.yaml' &&
+    (value[0].relativePath === 'specs/active/' + slug + '/change.yaml' ||
+      value[0].relativePath === 'specs/active/' + slug + '/specification.yaml') &&
     isRecord(value[1]) &&
     value[1].relativePath === 'specs/active/' + slug + '/overview.md'
   );

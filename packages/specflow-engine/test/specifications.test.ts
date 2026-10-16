@@ -6,6 +6,8 @@ import { dirname, join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { createLegacySpecificationScaffold } from '../src/specs/model';
+
 import {
   SpecificationError,
   createSpecificationScaffold,
@@ -38,7 +40,7 @@ async function persist(root: string, scaffold: SpecificationScaffold): Promise<v
 }
 
 describe('E2.T01 Specification manifest and canonical checkout repository', () => {
-  it('creates a deterministic title-only scaffold compatible with change.yaml', async () => {
+  it('creates a deterministic title-only scaffold using the canonical specification.yaml', async () => {
     const specId = randomUUID();
     const input = { specId, title: 'Żółty Projekt', created: '2026-10-14' };
     const first = createSpecificationScaffold(input);
@@ -46,14 +48,15 @@ describe('E2.T01 Specification manifest and canonical checkout repository', () =
     expect(first).toEqual(second);
     expect(first.slug).toBe('zolty-projekt');
     expect(first.files.map((item) => item.relativePath)).toEqual([
-      'specs/active/zolty-projekt/change.yaml',
+      'specs/active/zolty-projekt/specification.yaml',
       'specs/active/zolty-projekt/overview.md',
     ]);
     for (const file of first.files) {
       expect(file.sha256).toMatch(/^[a-f0-9]{64}$/u);
     }
     expect(first.files[0]?.content).toContain('spec_id: ' + specId);
-    expect(first.files[0]?.content).toContain('mode: deterministic');
+    expect(first.files[0]?.content).not.toContain('workflow:');
+    expect(first.files[0]?.content).not.toContain('mode: deterministic');
 
     const root = await workspace();
     await persist(root, first);
@@ -74,6 +77,57 @@ describe('E2.T01 Specification manifest and canonical checkout repository', () =
     expect(await readWorkspaceSpecification(root, specId)).toEqual(actual[0]);
     await expect(readFile(join(root, 'specs/index.generated.json'), 'utf8')).rejects.toMatchObject({
       code: 'ENOENT',
+    });
+  });
+
+  it('keeps historical change.yaml bytes and read identity without rewriting old Specs', async () => {
+    const specId = randomUUID();
+    const input = { specId, title: 'Historical manifest', created: '2026-10-14' };
+    const oldScaffold = createLegacySpecificationScaffold(input);
+    const nextScaffold = createSpecificationScaffold(input);
+    expect(oldScaffold.files[0]?.relativePath).toBe('specs/active/historical-manifest/change.yaml');
+    expect(oldScaffold.files[0]?.content).toContain('workflow:\n  mode: deterministic');
+    expect(oldScaffold.files[0]?.sha256).not.toBe(nextScaffold.files[0]?.sha256);
+
+    const root = await workspace();
+    await persist(root, oldScaffold);
+    const sourcePath = join(root, oldScaffold.files[0]!.relativePath);
+    const sourceBytes = await readFile(sourcePath);
+    const found = await readWorkspaceSpecification(root, specId);
+    expect(found.relativeManifestPath).toBe(oldScaffold.files[0]?.relativePath);
+    expect((await readFile(sourcePath)).equals(sourceBytes)).toBe(true);
+    await expect(readFile(join(root, nextScaffold.files[0]!.relativePath))).rejects.toMatchObject({
+      code: 'ENOENT',
+    });
+  });
+
+  it('rejects two manifest filenames rather than selecting a preferred source', async () => {
+    const root = await workspace();
+    const scaffold = createSpecificationScaffold({
+      specId: randomUUID(),
+      title: 'Ambiguous manifest',
+      created: '2026-10-14',
+    });
+    await persist(root, scaffold);
+    const directory = dirname(join(root, scaffold.files[0]!.relativePath));
+    await writeFile(join(directory, 'change.yaml'), scaffold.files[0]!.content);
+    await expect(listWorkspaceSpecifications(root)).rejects.toMatchObject({
+      code: 'SPEC_SOURCE_INVALID',
+    });
+  });
+
+  it.skipIf(process.platform === 'win32')('rejects incorrectly cased manifest names', async () => {
+    const root = await workspace();
+    const scaffold = createSpecificationScaffold({
+      specId: randomUUID(),
+      title: 'Wrong case',
+      created: '2026-10-14',
+    });
+    const directory = dirname(join(root, scaffold.files[0]!.relativePath));
+    await mkdir(directory, { recursive: true });
+    await writeFile(join(directory, 'Specification.yaml'), scaffold.files[0]!.content);
+    await expect(listWorkspaceSpecifications(root)).rejects.toMatchObject({
+      code: 'SPEC_SOURCE_INVALID',
     });
   });
 
@@ -106,7 +160,7 @@ describe('E2.T01 Specification manifest and canonical checkout repository', () =
     });
     const target = join(root, 'specs/archive/duplicate');
     await mkdir(target, { recursive: true });
-    await writeFile(join(target, 'change.yaml'), other.files[0]!.content);
+    await writeFile(join(target, 'specification.yaml'), other.files[0]!.content);
     await expect(listWorkspaceSpecifications(root)).rejects.toMatchObject({
       code: 'SPEC_CONFLICT',
     });
@@ -188,7 +242,7 @@ describe('E2.T01 Specification manifest and canonical checkout repository', () =
       const result = createSpecificationScaffold({ specId, title, created: '2026-10-14' });
       expect(result.slug).toBe(title.toLowerCase() + '-' + specId.slice(0, 8));
       expect(validateSpecificationSlug(result.slug)).toBe(result.slug);
-      expect(result.files[0]?.relativePath).toBe('specs/active/' + result.slug + '/change.yaml');
+      expect(result.files[0]?.relativePath).toBe('specs/active/' + result.slug + '/specification.yaml');
     }
   });
 

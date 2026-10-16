@@ -12,6 +12,7 @@ import {
   createSpecificationFromRequest,
   openSpecFlowEngine,
 } from '../src/testing';
+import { createLegacySpecificationScaffold } from '../src/specs/model';
 import {
   fingerprintCreateClientIntent,
   normalizeCreateClientIntent,
@@ -80,7 +81,7 @@ describe('VC05 — atomic v2 writer with legacy v1 retry', () => {
     const created = '2026-10-13';
     const title = 'Authentic legacy retry';
     const target = { kind: 'existing' as const, workspaceId: engine.workspace.workspaceId };
-    const scaffold = createSpecificationScaffold({ specId, title, created });
+    const scaffold = createLegacySpecificationScaffold({ specId, title, created });
     const legacyFingerprint = createHash('sha256')
       .update(JSON.stringify({ title, created, target }), 'utf8')
       .digest('hex');
@@ -136,7 +137,7 @@ describe('VC05 — atomic v2 writer with legacy v1 retry', () => {
     const created = '2026-10-13';
     const specId = randomUUID();
     const operationId = randomUUID();
-    const scaffold = createSpecificationScaffold({ specId, title, created });
+    const scaffold = createLegacySpecificationScaffold({ specId, title, created });
     const workspaceId = randomUUID();
     const legacy: CreateJournalV1 = {
       version: 1,
@@ -202,6 +203,87 @@ describe('VC05 — atomic v2 writer with legacy v1 retry', () => {
       (await restarted.readRegistry()).specBindings.filter((x) => x.specId === specId),
     ).toHaveLength(1);
   }, 120000);
+
+
+  it('replays a persisted pre-cutover V2 journal with its original legacy manifest SHA', async () => {
+    const context = await fixture();
+    const engine = await openSpecFlowEngine({ cwd: context.project.homeRoot });
+    const operationId = randomUUID();
+    const specId = randomUUID();
+    const title = 'Pre-cutover V2 replay';
+    const created = '2026-10-14';
+    const workspaceId = engine.workspace.workspaceId;
+    const historical = createLegacySpecificationScaffold({ specId, title, created });
+    const intent = normalizeCreateClientIntent({
+      title,
+      target: { kind: 'existing', workspaceId },
+    });
+    const record: CreateJournalV2 = {
+      version: 2,
+      projectId: context.project.projectId,
+      operationId,
+      inputFingerprint: fingerprintCreateClientIntent(intent),
+      specId,
+      slug: historical.slug,
+      title,
+      created,
+      stage: 'reserved',
+      target: {
+        kind: 'existing',
+        workspaceId,
+        workspaceRoot: context.project.homeRoot,
+      },
+      files: historical.files.map(({ relativePath, sha256 }) => ({ relativePath, sha256 })),
+      requestIntent: intent,
+    };
+    await withCreateJournalLock(context, async () => {
+      await writeFile(createJournalPath(context, operationId), JSON.stringify(record) + '\n');
+    });
+
+    const restarted = await openSpecFlowEngine({ cwd: context.project.homeRoot });
+    const request = { operationId, title, target: { kind: 'existing' as const, workspaceId } };
+    const createdSpec = await createSpecificationFromRequest(restarted, request);
+    expect(createdSpec.relativeManifestPath).toBe(historical.files[0]?.relativePath);
+    expect(await readFile(join(createdSpec.workspaceRoot, createdSpec.relativeManifestPath), 'utf8'))
+      .toBe(historical.files[0]?.content);
+    expect(await createSpecificationFromRequest(restarted, request)).toEqual(createdSpec);
+    expect((await readCreateJournal(context, operationId))?.version).toBe(2);
+    expect((await readCreateJournal(context, operationId))?.files).toEqual(record.files);
+  }, 120000);
+
+  it('rejects mixed or unrecognized manifest paths in immutable Create evidence', async () => {
+    const context = await fixture();
+    const historical = legacy(context);
+    const intent = normalizeCreateClientIntent({
+      title: historical.title,
+      target: { kind: 'existing', workspaceId: historical.target.workspaceId },
+    });
+    const record: CreateJournalV2 = {
+      ...historical,
+      version: 2,
+      requestIntent: intent,
+      inputFingerprint: fingerprintCreateClientIntent(intent),
+    };
+    await withCreateJournalLock(context, () => Promise.resolve());
+    const path = createJournalPath(context, record.operationId);
+    const nextScaffold = createSpecificationScaffold({
+      specId: record.specId,
+      title: record.title,
+      created: record.created,
+    });
+    await writeFile(path, JSON.stringify({ ...record, files: nextScaffold.files.map(
+      ({ relativePath, sha256 }) => ({ relativePath, sha256 }),
+    ) }) + '\n');
+    expect((await readCreateJournal(context, record.operationId))?.files[0]?.relativePath)
+      .toBe(nextScaffold.files[0]?.relativePath);
+
+    const mixed = [...record.files];
+    mixed[0] = { ...mixed[0], relativePath: 'specs/active/' + record.slug + '/unknown.yaml' };
+    await writeFile(path, JSON.stringify({ ...record, files: mixed }) + '\n');
+    await expect(readCreateJournal(context, record.operationId)).rejects.toMatchObject({
+      code: 'CREATE_JOURNAL_CORRUPT',
+    });
+  });
 
   it('round-trips a structural v1 journal fixture without changing its representation', async () => {
     const context = await fixture();

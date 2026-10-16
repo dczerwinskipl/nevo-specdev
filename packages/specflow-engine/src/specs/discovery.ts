@@ -9,7 +9,7 @@ import { listWorkspaceSpecifications, type WorkspaceSpecification } from './repo
 
 /**
  * The workstation-local registry selects WHERE a spec is authoritative.
- * The selected checkout's change.yaml selects WHAT that spec contains.
+ * The selected checkout's specification.yaml (or historical change.yaml) selects WHAT it contains.
  * No generated index, unregistered worktree or stale primary copy is a fallback.
  */
 export type DiscoveredSpecification =
