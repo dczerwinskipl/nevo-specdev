@@ -26,27 +26,22 @@ export interface NewWorktreeJournalTarget {
   readonly workspaceRoot: string;
   readonly branch: string;
   readonly baseCommit: string;
-  /** v1 journals may predate physical workspace identity markers. */
-  readonly instanceId?: string;
-}
-
-export type CreateJournalTarget = ExistingJournalTarget | NewWorktreeJournalTarget;
-
-/** v2 reservations pin the physical checkout identity before publication. */
-export interface PersistedNewWorktreeJournalTarget extends NewWorktreeJournalTarget {
   readonly instanceId: string;
 }
 
-export type CreateJournalV2Target = ExistingJournalTarget | PersistedNewWorktreeJournalTarget;
+export type CreateJournalTarget = ExistingJournalTarget | NewWorktreeJournalTarget;
 
 export interface CreateJournalFile {
   readonly relativePath: string;
   readonly sha256: string;
 }
 
-export interface CreateJournalFields<TTarget extends CreateJournalTarget> {
+/** Single current durable Create format. No unpublished prototype migrations. */
+export interface CreateJournal {
+  readonly version: 2;
   readonly projectId: string;
   readonly operationId: string;
+  readonly requestIntent: CreateClientIntent;
   readonly inputFingerprint: string;
   readonly specId: string;
   readonly slug: string;
@@ -54,19 +49,8 @@ export interface CreateJournalFields<TTarget extends CreateJournalTarget> {
   readonly created: string;
   readonly goal?: string;
   readonly stage: CreateStage;
-  readonly target: TTarget;
+  readonly target: CreateJournalTarget;
   readonly files: readonly CreateJournalFile[];
+  readonly gitPlan?: { readonly projectRoot: string; readonly gitInstanceId: string };
   readonly reason?: string;
 }
-
-export interface CreateJournalV1 extends CreateJournalFields<CreateJournalTarget> {
-  readonly version: 1;
-}
-
-export interface CreateJournalV2 extends CreateJournalFields<CreateJournalV2Target> {
-  readonly version: 2;
-  readonly requestIntent: CreateClientIntent;
-  readonly gitPlan?: { readonly projectRoot: string; readonly gitInstanceId: string };
-}
-
-export type CreateJournal = CreateJournalV1 | CreateJournalV2;

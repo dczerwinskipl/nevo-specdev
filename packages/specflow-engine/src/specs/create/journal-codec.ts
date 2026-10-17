@@ -9,8 +9,8 @@ import { CREATE_STAGES, type CreateJournal, type CreateStage } from './journal-m
 
 export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 const SHA256 = /^[0-9a-f]{64}$/u;
-const V2_EXISTING_TARGET_FIELDS = new Set(['kind', 'workspaceId', 'workspaceRoot']);
-const V2_WORKTREE_TARGET_FIELDS = new Set([
+const EXISTING_TARGET_FIELDS = new Set(['kind', 'workspaceId', 'workspaceRoot']);
+const WORKTREE_TARGET_FIELDS = new Set([
   'kind',
   'workspaceId',
   'workspaceRoot',
@@ -27,9 +27,9 @@ export function parseCreateJournal(
   if (
     !isRecord(value) ||
     !isValidJournalIdentity(context, value, operationId) ||
-    !isValidJournalTarget(value.target, value.version) ||
+    !isValidJournalTarget(value.target) ||
     !isValidJournalFiles(value.files, value.slug) ||
-    (value.version === 2 && !isValidV2Journal(context, value))
+    !isValidJournalIntent(context, value)
   ) {
     throw invalidJournal();
   }
@@ -43,7 +43,7 @@ function isValidJournalIdentity(
   operationId: string,
 ): boolean {
   return (
-    (value.version === 1 || value.version === 2) &&
+    value.version === 2 &&
     value.projectId === context.project.projectId &&
     value.operationId === operationId &&
     UUID.test(operationId) &&
@@ -64,7 +64,7 @@ function isCreateStage(value: unknown): value is CreateStage {
   return typeof value === 'string' && CREATE_STAGES.some((stage) => stage === value);
 }
 
-function isValidJournalTarget(value: unknown, version: unknown): boolean {
+function isValidJournalTarget(value: unknown): boolean {
   if (!isRecord(value)) return false;
   if (value.kind !== 'existing' && value.kind !== 'new-worktree') return false;
   if (
@@ -76,16 +76,13 @@ function isValidJournalTarget(value: unknown, version: unknown): boolean {
   ) {
     return false;
   }
-  // V2 records must match the discriminated domain model exactly.
-  // Legacy V1 target shapes remain readable without normalization.
-  if (version === 2) {
-    const allowed =
-      value.kind === 'existing' ? V2_EXISTING_TARGET_FIELDS : V2_WORKTREE_TARGET_FIELDS;
-    if (Object.keys(value).some((key) => !allowed.has(key))) return false;
-  }
+  const allowed =
+    value.kind === 'existing' ? EXISTING_TARGET_FIELDS : WORKTREE_TARGET_FIELDS;
+  if (Object.keys(value).some((key) => !allowed.has(key))) return false;
   if (value.kind === 'existing') return true;
   return (
-    (version !== 2 || (typeof value.instanceId === 'string' && UUID.test(value.instanceId))) &&
+    typeof value.instanceId === 'string' &&
+    UUID.test(value.instanceId) &&
     typeof value.branch === 'string' &&
     typeof value.baseCommit === 'string' &&
     /^[a-f0-9]{40}(?:[a-f0-9]{24})?$/iu.test(value.baseCommit)
@@ -103,15 +100,14 @@ function isValidJournalFiles(value: unknown, slug: unknown): boolean {
         SHA256.test(file.sha256),
     ) &&
     isRecord(value[0]) &&
-    (value[0].relativePath === 'specs/active/' + slug + '/change.yaml' ||
-      value[0].relativePath === 'specs/active/' + slug + '/specification.yaml') &&
+    value[0].relativePath === 'specs/active/' + slug + '/specification.yaml' &&
     isRecord(value[1]) &&
     value[1].relativePath === 'specs/active/' + slug + '/overview.md'
   );
 }
 
-/** Strict v2 evidence shape: no hidden current defaults or generated date in intent. */
-function isValidV2Journal(context: ResolvedProjectHome, value: Record<string, unknown>): boolean {
+/** Strict durable evidence: no hidden current defaults or generated date in intent. */
+function isValidJournalIntent(context: ResolvedProjectHome, value: Record<string, unknown>): boolean {
   const intent = value.requestIntent;
   const plan = value.gitPlan;
   if (

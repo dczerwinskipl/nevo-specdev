@@ -1,4 +1,4 @@
-// Compatibility imports for Engine callers. Internal responsibilities live in create/.
+// Engine journal API; implementation responsibilities live in create/.
 export { CreateOperationError, type CreateOperationErrorCode } from './create-error';
 export {
   CREATE_STAGES,
@@ -6,11 +6,7 @@ export {
   type ExistingJournalTarget,
   type NewWorktreeJournalTarget,
   type CreateJournalTarget,
-  type CreateJournalV2Target,
   type CreateJournalFile,
-  type CreateJournalFields,
-  type CreateJournalV1,
-  type CreateJournalV2,
   type CreateJournal,
 } from './create/journal-model';
 export {

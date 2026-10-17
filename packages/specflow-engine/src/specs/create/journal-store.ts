@@ -105,17 +105,6 @@ export async function publishCreateJournal(
   record: CreateJournal,
 ): Promise<void> {
   parseCreateJournal(context, record, record.operationId);
-  if (record.version === 1) {
-    // A historical journal may advance stages, but new v1 reservations are
-    // forbidden after the v2 transport/writer cutover.
-    const previous = await readCreateJournal(context, record.operationId);
-    if (previous?.version !== 1) {
-      throw new CreateOperationError(
-        'CREATE_RECOVERY_REQUIRED',
-        'A new v1 reservation cannot be published after VC05.',
-      );
-    }
-  }
   await writeJsonAtomically(createJournalPath(context, record.operationId), record);
 }
 
