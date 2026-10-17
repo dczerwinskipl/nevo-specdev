@@ -97,7 +97,7 @@ export function specificationSlugFromTitle(title: string, specId: string): strin
   );
 }
 
-/** Parse either supported manifest shape without inferring a status or workflow mode. */
+/** Parse the canonical Specification manifest without guessing a status. */
 export function parseSpecificationManifest(
   source: unknown,
   slug: string,
@@ -157,24 +157,6 @@ export function parseSpecificationManifest(
 export function createSpecificationScaffold(
   input: SpecificationScaffoldInput,
 ): SpecificationScaffold {
-  return renderSpecificationScaffold(input, false);
-}
-
-/**
- * Replay ONLY: immutable Create v1/v2 journals written before the manifest
- * filename and workflow-mode change must reproduce the exact original bytes.
- * Do not use this renderer to initiate new Specifications.
- */
-export function createLegacySpecificationScaffold(
-  input: SpecificationScaffoldInput,
-): SpecificationScaffold {
-  return renderSpecificationScaffold(input, true);
-}
-
-function renderSpecificationScaffold(
-  input: SpecificationScaffoldInput,
-  legacy: boolean,
-): SpecificationScaffold {
   if (!isValidSpecificationId(input.specId)) {
     throw new SpecificationError('SPEC_VALIDATION_ERROR', 'A canonical specId is required.');
   }
@@ -189,7 +171,6 @@ function renderSpecificationScaffold(
     status: 'draft',
     priority: 10,
     created: input.created,
-    ...(legacy ? { workflow: { mode: 'deterministic' } } : {}),
     tasks: [],
     spec_id: input.specId,
   });
@@ -225,7 +206,7 @@ function renderSpecificationScaffold(
     specId: input.specId,
     slug,
     files: [
-      fingerprint(base + (legacy ? 'change.yaml' : 'specification.yaml'), manifest),
+      fingerprint(base + 'specification.yaml', manifest),
       fingerprint(base + 'overview.md', overview),
     ],
   };

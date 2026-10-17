@@ -61,7 +61,7 @@ export async function listWorkspaceSpecifications(
 
       const base = join(directory, slug);
       await requirePhysicalDirectory(base);
-      // Do not hide a second manifest, case alias, symlink or legacy collision
+      // Fail closed for a deprecated manifest, duplicate candidate or case alias
       // by preferring the new filename. Exactly one physical source is allowed.
       const manifestEntries = (await readdir(base, { withFileTypes: true })).filter((item) =>
         /^(?:change|specification)\.yaml$/iu.test(item.name),
@@ -69,7 +69,7 @@ export async function listWorkspaceSpecifications(
       const manifestEntry = manifestEntries[0];
       if (
         manifestEntries.length !== 1 ||
-        (manifestEntry?.name !== 'change.yaml' && manifestEntry?.name !== 'specification.yaml')
+        manifestEntry?.name !== 'specification.yaml'
       ) {
         throw new SpecificationError(
           'SPEC_SOURCE_INVALID',

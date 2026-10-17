@@ -3,20 +3,12 @@ import { isDeepStrictEqual } from 'node:util';
 import { lstat, mkdir, open, readFile, realpath } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
-import {
-  createLegacySpecificationScaffold,
-  createSpecificationScaffold,
-  type SpecificationScaffold,
-} from './model';
+import { createSpecificationScaffold, type SpecificationScaffold } from './model';
 import { CreateOperationError, type CreateJournal } from './create-journal';
 
 /** Durable scaffold contents are immutable until the operation completes. */
 function expectedScaffold(record: CreateJournal): SpecificationScaffold {
-  const render =
-    record.files[0]?.relativePath === 'specs/active/' + record.slug + '/change.yaml'
-      ? createLegacySpecificationScaffold
-      : createSpecificationScaffold;
-  const scaffold = render({
+  const scaffold = createSpecificationScaffold({
     specId: record.specId,
     title: record.title,
     created: record.created,
