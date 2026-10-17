@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { lstat, readFile } from 'node:fs/promises';
 import { parse as parseYaml } from 'yaml';
 
@@ -9,23 +10,42 @@ import { parseGitWorktreePolicy, type GitWorktreePolicy } from './policy';
 export async function loadGitWorktreePolicy(
   context: ResolvedProjectHome,
 ): Promise<GitWorktreePolicy> {
-  const project = await readYaml(context.project.projectConfigPath, false);
+  return (await readProjectGitPolicy(context)).policy;
+}
+
+/** One committed Project Home authority, including exact bytes pinned by lifecycle. */
+export async function readProjectGitPolicy(
+  context: ResolvedProjectHome,
+): Promise<{ readonly policy: GitWorktreePolicy; readonly revision: string }> {
+  const raw = await readVerifiedConfig(context.project.projectConfigPath);
+  const project = parseConfig(raw);
   const local = await readYaml(context.project.localConfigPath, true);
-  return parseGitWorktreePolicy(project, local);
+  return {
+    policy: parseGitWorktreePolicy(project, local),
+    revision: createHash('sha256').update(raw, 'utf8').digest('hex'),
+  };
 }
 
 async function readYaml(path: string, optional: boolean): Promise<unknown> {
   try {
-    const stat = await lstat(path);
-    if (!stat.isFile() || stat.isSymbolicLink()) throw invalid('Redirected configuration file.');
-    const parsed = parseYaml(await readFile(path, 'utf8')) as unknown;
-    if (!isRecord(parsed)) throw invalid('Configuration must be a YAML object.');
-    return parsed;
+    return parseConfig(await readVerifiedConfig(path));
   } catch (error) {
     if (optional && isMissing(error)) return undefined;
     if (error instanceof GitCapabilityError) throw error;
     throw invalid('Project Home configuration is unavailable or invalid.');
   }
+}
+
+async function readVerifiedConfig(path: string): Promise<string> {
+  const stat = await lstat(path);
+  if (!stat.isFile() || stat.isSymbolicLink()) throw invalid('Redirected configuration file.');
+  return readFile(path, 'utf8');
+}
+
+function parseConfig(raw: string): unknown {
+  const parsed = parseYaml(raw) as unknown;
+  if (!isRecord(parsed)) throw invalid('Configuration must be a YAML object.');
+  return parsed;
 }
 
 function invalid(message: string): GitCapabilityError {

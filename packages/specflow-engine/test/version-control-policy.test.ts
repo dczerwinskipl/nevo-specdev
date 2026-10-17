@@ -25,6 +25,24 @@ describe('Version Control worktree policy (VC01)', () => {
     });
   });
 
+  it('parses the configured integration branch independently from new-worktree enablement', () => {
+    expect(
+      parseGitWorktreePolicy({
+        git: { enabled: false, integrationTargetBranch: 'develop' },
+      }),
+    ).toMatchObject({ enabled: false, integrationTargetBranch: 'develop' });
+    expect(
+      parseGitWorktreePolicy({
+        git: { enabled: true, integrationTargetBranch: 'main' },
+      }),
+    ).toMatchObject({ enabled: true, integrationTargetBranch: 'main' });
+    expect(parseGitWorktreePolicy({ git: { enabled: true } }).integrationTargetBranch).toBeUndefined();
+    for (const target of ['HEAD', 'a..b', '-bad', 'origin/main..x', '', 17]) {
+      expect(() => parseGitWorktreePolicy({ git: { enabled: true, integrationTargetBranch: target } }))
+        .toThrow();
+    }
+  });
+
   it('supports only explicit naming variables, conventional prefixes and default base refs', () => {
     const policy = parseGitWorktreePolicy({
       git: {

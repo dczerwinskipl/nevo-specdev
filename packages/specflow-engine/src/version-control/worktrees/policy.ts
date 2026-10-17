@@ -8,6 +8,8 @@ export interface GitWorktreePolicy {
   readonly enabled: boolean;
   readonly branchPattern: string;
   readonly baseRef: string;
+  /** Independently configured destination for existing-worktree integration. */
+  readonly integrationTargetBranch?: string;
 }
 
 export const DEFAULT_BRANCH_PATTERN = 'spec/{slug}-{shortId}';
@@ -32,7 +34,7 @@ export function parseGitWorktreePolicy(
   if (!isRecord(value) || typeof value.enabled !== 'boolean') {
     throw invalid('Project git.enabled must be a boolean.');
   }
-  if (Object.keys(value).some((key) => key !== 'enabled' && key !== 'worktrees')) {
+  if (Object.keys(value).some((key) => key !== 'enabled' && key !== 'worktrees' && key !== 'integrationTargetBranch')) {
     throw invalid('Unsupported Git policy key.');
   }
   const worktrees = value.worktrees;
@@ -52,7 +54,18 @@ export function parseGitWorktreePolicy(
   }
   validateBranchPattern(branchPattern);
   validateBaseRef(baseRef);
-  return { enabled: value.enabled, branchPattern, baseRef };
+  const target = value.integrationTargetBranch;
+  if (target !== undefined) {
+    if (typeof target !== 'string') throw invalid('git.integrationTargetBranch must be a local branch.');
+    validateBranchName(target);
+    if (target === 'HEAD') throw invalid('Integration target must be a named local branch.');
+  }
+  return {
+    enabled: value.enabled,
+    branchPattern,
+    baseRef,
+    ...(target !== undefined ? { integrationTargetBranch: target } : {}),
+  };
 }
 
 /** Only two placeholders are supported; a stable shortId is mandatory. */
