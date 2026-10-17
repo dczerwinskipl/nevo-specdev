@@ -15,7 +15,7 @@ export interface SpecOverviewRecord {
   readonly pullRequests?: readonly SpecPullRequestRecord[];
   readonly tags?: readonly string[];
   readonly updatedAt: string;
-  readonly progress: SpecProgressRecord;
+  readonly progress: SpecProgressRecord | null;
 }
 
 export type CurrentSpecAttentionReasonRecord =
@@ -40,13 +40,15 @@ export interface CurrentSpecSignalRecord {
 }
 
 export interface CurrentSpecRecord extends SpecOverviewRecord {
-  readonly readyForWork: boolean;
-  readonly signals: readonly CurrentSpecSignalRecord[];
-  readonly currentExecutions: readonly {
-    readonly sessionId: string;
-    readonly agentRole: string;
-    readonly taskIds: readonly string[];
-  }[];
+  readonly readyForWork: boolean | null;
+  readonly signals: readonly CurrentSpecSignalRecord[] | null;
+  readonly currentExecutions:
+    | readonly {
+        readonly sessionId: string;
+        readonly agentRole: string;
+        readonly taskIds: readonly string[];
+      }[]
+    | null;
 }
 
 export interface ArchivedSpecRecord extends SpecOverviewRecord {

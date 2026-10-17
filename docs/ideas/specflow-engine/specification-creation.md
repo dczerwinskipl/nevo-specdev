@@ -67,17 +67,17 @@ These are **sketches**, not approved API/public DTO shapes. The CLI's default ta
 
 ## Partial failure/retry table
 
-| Failure point | Candidate behavior |
-| --- | --- |
-| Git disabled | Reject before reserving/provisioning or writing |
-| Invalid title or collision | Structured validation/conflict, no side effects |
-| Branch already checked out | Explicit conflict, do not forcibly steal it |
-| Worktree creation failed | Record failure; release reservation; do not mutate primary branch |
-| Worktree exists but manifest write failed | Resume same intent; don't create second worktree |
-| Manifest exists but registry write failed | Recover and link only after verifying matching specId and operation |
-| Successful create retried with same operation ID | Same result; not a duplicate spec |
-| Target root replaced with unrelated path | Refuse mutation and flag recovery |
-| Crash after all writes before response | Re-read committed state and return same result |
+| Failure point                                    | Candidate behavior                                                  |
+| ------------------------------------------------ | ------------------------------------------------------------------- |
+| Git disabled                                     | Reject before reserving/provisioning or writing                     |
+| Invalid title or collision                       | Structured validation/conflict, no side effects                     |
+| Branch already checked out                       | Explicit conflict, do not forcibly steal it                         |
+| Worktree creation failed                         | Record failure; release reservation; do not mutate primary branch   |
+| Worktree exists but manifest write failed        | Resume same intent; don't create second worktree                    |
+| Manifest exists but registry write failed        | Recover and link only after verifying matching specId and operation |
+| Successful create retried with same operation ID | Same result; not a duplicate spec                                   |
+| Target root replaced with unrelated path         | Refuse mutation and flag recovery                                   |
+| Crash after all writes before response           | Re-read committed state and return same result                      |
 
 For failures requiring manual recovery, keep durable evidence; never automatically remove an unproven worktree or discard edits.
 
@@ -95,9 +95,9 @@ HTTP: propose a real `POST /api/specs` with declared request/response types and 
 
 ## First-run scaffold baseline and dirty state
 
-The new manifest may be uncommitted immediately after creation. A subsequent Spec Writer must not get stuck merely because creation produced its own known files. Foundation A must record provenance/fingerprint for scaffold side effects; a later action-specific admission can accept that known baseline **only when evidence proves it**, without globally bypassing unrelated dirty changes or mandatory clean Git gates. Avoid automatically committing as a workaround until owner chooses an explicit commit policy. Stage B must test Create → authoring writer admission and the difference between Engine-owned scaffold dirt and unknown external edits.
+The new canonical manifest is specification.yaml, not a change log; it is versioned durable Specification metadata and status, not host-local journals, locks, or execution process state. Unreleased change.yaml and Create v1 artifacts are not supported or silently converted; reject them explicitly and require manual recreation or one-off operator handling if data exist. The new manifest may be uncommitted immediately after creation. Nevo SpecFlow uses deterministic workflow execution by architecture; new Specification scaffolds MUST NOT persist a redundant workflow.mode execution-algorithm selector. These contract corrections are E2.T09 and MUST preserve byte-exact replay of previously persisted Create v1/v2 journals rather than invalidating stored scaffold fingerprints. A subsequent Spec Writer must not get stuck merely because creation produced its own known files. Foundation A must record provenance/fingerprint for scaffold side effects; a later action-specific admission can accept that known baseline **only when evidence proves it**, without globally bypassing unrelated dirty changes or mandatory clean Git gates. Avoid automatically committing as a workaround until owner chooses an explicit commit policy. Stage B must test Create → authoring writer admission and the difference between Engine-owned scaffold dirt and unknown external edits.
 
-For the PoC, lock/resource serialization covers *creation*, not a fake `workflow step start`; see [two-stage acceptance](acceptance-criteria.md) and [execution scopes](execution-scopes-and-recovery.md).
+For the PoC, lock/resource serialization covers _creation_, not a fake `workflow step start`; see [two-stage acceptance](acceptance-criteria.md) and [execution scopes](execution-scopes-and-recovery.md).
 
 ## Prerequisite choices
 

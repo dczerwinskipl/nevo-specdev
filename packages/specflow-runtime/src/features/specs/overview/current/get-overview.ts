@@ -7,7 +7,7 @@ import type {
 import type { RequestAuthorization } from '../../../auth';
 import type { SpecsOverviewRepository } from '../repository/read-repository';
 import type { CurrentSpecRecord } from '../repository/model';
-import { filterAuthorizedSpecs } from '../filter-authorized-specs';
+import { canViewSpec, filterAuthorizedSpecs } from '../filter-authorized-specs';
 import { classifyCurrentSpec } from './classify-spec';
 
 export interface GetCurrentOverviewDependencies {
@@ -19,16 +19,26 @@ export interface GetCurrentOverviewDependencies {
 export async function getCurrentOverview(
   dependencies: GetCurrentOverviewDependencies,
 ): Promise<CurrentSpecsOverview> {
-  const snapshot = await dependencies.repository.readCurrent();
+  const snapshot = await dependencies.repository.readCurrent((specId) =>
+    canViewSpec(dependencies.authorization, specId),
+  );
   const visible = filterAuthorizedSpecs(dependencies.authorization, snapshot.items);
-  const items = visible
-    .map(toOverviewItem)
-    .filter((item) => dependencies.sections.includes(item.classification.section));
+  const candidates = visible.map(toOverviewItem);
+  // Unknown sources must never disappear merely because a legacy project
+  // configured the four pre-E2.T06 sections explicitly.
+  const sections: CurrentSpecSectionId[] = [...dependencies.sections];
+  if (
+    !sections.includes('unknown') &&
+    candidates.some((item) => item.classification.section === 'unknown')
+  ) {
+    sections.push('unknown');
+  }
+  const items = candidates.filter((item) => sections.includes(item.classification.section));
 
   return {
     revision: snapshot.revision,
     collection: 'current',
-    sections: [...dependencies.sections],
+    sections,
     items,
   };
 }
@@ -43,10 +53,11 @@ function toOverviewItem(spec: CurrentSpecRecord): CurrentSpecOverviewItem {
     updatedAt: spec.updatedAt,
     progress: spec.progress,
     classification: classifyCurrentSpec(spec),
-    signals: spec.signals.map((signal) => ({ ...signal })),
-    currentExecutions: spec.currentExecutions.map((execution) => ({
-      ...execution,
-      taskIds: [...execution.taskIds],
-    })),
+    signals: spec.signals?.map((signal) => ({ ...signal })) ?? null,
+    currentExecutions:
+      spec.currentExecutions?.map((execution) => ({
+        ...execution,
+        taskIds: [...execution.taskIds],
+      })) ?? null,
   };
 }

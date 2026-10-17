@@ -60,19 +60,27 @@ Spec ID resolves to bound worktree, independent of the caller's `cwd`. Git check
 
 ### Finalization boundary
 
+Closing a linked Specification and integrating it are separately selected effects: default integrate=true means archive+commit+verified merge+CAS+eligible cleanup; integrate=false means archive+commit locally with archived canonical Specification still bound to linked checkout, worktree/branch retained. A later Close Worktree operation integrates an active OR already archived Spec, then safely rebinds/removes managed checkout. If merge conflicts after an Engine-owned archive commit, keep the linked archived source canonical; persist conflict evidence and safely retire or retain isolated scratch with explicit ownership. A proved conflict may settle as `archived-linked-awaiting-integration`, not as integrated success; future manual/agent resolution is a separate workflow. Local project config selects integration target branch rather than guessing main/develop. Close Worktree itself never discards committed source without integration.
+
 Do **not** reuse legacy `git checkout main` in the spec's linked worktree: a branch is typically checked out in one worktree only, and main may already be checked out elsewhere. Split workflow completion, integration/merge confirmation and worktree cleanup. Before removing a worktree, verify committed spec/archive outcome is represented in the intended destination branch, not only in the worktree that will disappear. Then perform an explicit [canonical binding rebind](workspace-binding-lifecycle.md) **before** cleanup; a workflow completion or merged PR alone cannot redirect the registry.
 
 ### Cleanup conditions
 
 - Worktree was created and registered as `managed`, or user explicitly approved removing an attached checkout under a separate guarded operation.
 - No active or ambiguous Engine execution/claim/recovery record in that workspace.
-- No Runtime-managed active Session/Turn bound to it; external claims checked through Engine.
+- FUTURE CHECKPOINT ONLY: when managed Sessions/Turns and claims exist, require their actual owners to prove quiescence before disposal. No fictitious sessions/processes are consulted in Foundation.
 - Clean Git status, no untracked meaningful files, no unpushed commits or unreconciled local branch changes.
 - Integration/merge verified against intended destination (no inference from a completed Task).
 - Recorded path/branch/common-dir match actual Git facts at deletion.
-- User confirms cleanup for MVP; no default force; do not delete branch automatically as a side effect.
+- Ordinary UX confirmation of destructive cleanup is not evidence that external writers stopped. No fake `confirmExternalWritersQuiescent` flag, no force or implicit branch deletion.
 
 If removal fails, keep registry/journal for repair and return an explicit reason. Disappearing directory must not cause silent spec rebinding to main.
+
+## Deferred multi-instance execution and worktrees
+
+The one-spec managed worktree policy does **not** imply one Session, Turn or step instance per worktree. Several instances of one user-defined step may access the same verified checkout. Only technically enforced read-only executions can safely share it without a long-lived exclusive writer claim; their CLI/MCP contribution submissions still use short Engine state coordination. Writer or external-effect steps require suitable isolation, serialization and admission. Creating a worktree per instance is not a default requirement.
+
+When a step requires comparable inputs, Git HEAD alone is insufficient: dirty/index/untracked content and external writers may change the material. Capture the requested baseline **after step activation**, then block or invalidate conflicting writes, rebind or cleanup. Other user-defined steps may have independent input policies. A registry claim cannot physically fence an external process with OS-level file access. This capability is outside Foundation A; see [multi-instance execution](multi-instance-execution.md).
 
 ## Move/delete outside SpecFlow
 
@@ -90,3 +98,7 @@ A manually moved worktree or deleted directory becomes unavailable/needs repair.
 ## Unresolved and measurable
 
 Decide branch naming defaults, safe filesystem root, import/reattach policy, lifecycle retention after merge, and multi-spec checkout semantics. Validate the model on Windows and POSIX, especially worktrees with spaces in paths and mixed casing. See [test plan](test-plan.md).
+
+## Foundation A explicit close operations (draft extension, 2026-10-16)
+
+The earlier exclusion of automatic cleanup on Task/workflow completion remains in force. A separately authorized, user-initiated **Close Worktree** may perform guarded removal only AFTER full local Git integration proof and registry rebind; it keeps the Specification active. **Close Specification** may archive in primary directly or archive in a linked source before integration and managed cleanup. An existing managed linked checkout can be closed even if worktree creation is disabled by current policy, subject to an explicit close capability. See [closure proposal](specification-and-worktree-close-design.md) and owner decisions. No native provider Session migration is asserted, and arbitrary writers cannot be physically fenced by a clean tree alone.

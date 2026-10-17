@@ -1,0 +1,516 @@
+import { randomUUID } from 'node:crypto';
+import { channel } from 'node:diagnostics_channel';
+import { spawn, execFileSync } from 'node:child_process';
+import {
+  access,
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  realpath,
+  rm,
+  writeFile,
+} from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
+import { setTimeout as sleep } from 'node:timers/promises';
+import { fileURLToPath } from 'node:url';
+
+import { afterEach, describe, expect, it } from 'vitest';
+
+import {
+  PROJECT_HOME_MARKER_RELATIVE_PATH,
+  GIT_INSTANCE_SENTINEL_FILE,
+  addWorkspace,
+  bindSpecToWorkspace,
+  initializeWorkspaceRegistry,
+  inspectRegisteredWorkspace,
+  inspectProjectControlLock,
+  projectControlLockPath,
+  WORKSPACE_IDENTITY_RELATIVE_PATH,
+  provisionLinkedWorkspaceIdentity,
+  readWorkspaceRegistry,
+  resolveProjectHome,
+  updateWorkspaceRegistry,
+  withProjectControlLock,
+  workspaceRegistryPath,
+} from '../src/testing';
+
+const roots: string[] = [];
+afterEach(async () => {
+  await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
+});
+
+function git(cwd: string, ...args: string[]): string {
+  return execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
+}
+
+async function fixture() {
+  const root = await realpath(await mkdtemp(join(tmpdir(), 'specflow-lock-process-Ż ')));
+  roots.push(root);
+  git(root, 'init', '-q');
+  await mkdir(join(root, '.nevo/local/state'), { recursive: true });
+  await writeFile(join(root, '.gitignore'), '.nevo/local/\n');
+  await writeFile(join(root, '.nevo/config.yaml'), 'runtime: {}\n');
+  git(root, 'add', '.gitignore', '.nevo/config.yaml');
+  git(
+    root,
+    '-c',
+    'user.name=SpecFlow Test',
+    '-c',
+    'user.email=specflow@example.invalid',
+    'commit',
+    '-qm',
+    'bootstrap',
+  );
+  const projectId = randomUUID();
+  const gitInstanceId = randomUUID();
+  const commonDir = await realpath(resolve(root, '.git'));
+  await writeFile(
+    join(commonDir, GIT_INSTANCE_SENTINEL_FILE),
+    JSON.stringify({ version: 1, projectId, instanceId: gitInstanceId }),
+  );
+  await writeFile(
+    join(root, PROJECT_HOME_MARKER_RELATIVE_PATH),
+    JSON.stringify({
+      version: 1,
+      projectId,
+      homeRoot: root,
+      gitCommonDir: commonDir,
+      gitInstanceId,
+      registryBootstrap: 'fresh',
+    }),
+  );
+  const context = await resolveProjectHome({ cwd: root });
+  await initializeWorkspaceRegistry(context);
+  return { root, context };
+}
+
+async function linked(root: string): Promise<string> {
+  const path = await realpath(await mkdtemp(join(tmpdir(), 'specflow-linked-Ż ')));
+  roots.push(path);
+  git(root, 'worktree', 'add', '--detach', path);
+  return path;
+}
+
+interface WorkerOptions {
+  readonly mode: string;
+  readonly target: string;
+  readonly linked?: string;
+  readonly workspaceId?: string;
+}
+
+interface Worker {
+  readonly ready: string;
+  readonly start: string;
+  readonly outcome: Promise<{ code: number | null; signal: NodeJS.Signals | null; log: string }>;
+}
+
+function startWorker(root: string, options: WorkerOptions): Worker {
+  const id = randomUUID();
+  const ready = join(root, `worker-${id}.ready`);
+  const start = join(root, `worker-${id}.go`);
+  const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+  const vitestEntry = resolve(
+    dirname(fileURLToPath(import.meta.resolve('vitest'))),
+    '..',
+    'vitest.mjs',
+  );
+  const child = spawn(
+    process.execPath,
+    [
+      vitestEntry,
+      'run',
+      'test/fixtures/registry-worker.test.ts',
+      '--maxWorkers=1',
+      '--testTimeout=30000',
+    ],
+    {
+      cwd: packageRoot,
+      windowsHide: true,
+      env: {
+        ...process.env,
+        NEVO_REGISTRY_WORKER: '1',
+        NEVO_REGISTRY_HOME: root,
+        NEVO_REGISTRY_READY: ready,
+        NEVO_REGISTRY_GO: start,
+        NEVO_REGISTRY_MODE: options.mode,
+        NEVO_REGISTRY_TARGET: options.target,
+        ...(options.linked ? { NEVO_REGISTRY_LINKED: options.linked } : {}),
+        ...(options.workspaceId ? { NEVO_REGISTRY_WORKSPACE_ID: options.workspaceId } : {}),
+      },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    },
+  );
+  let log = '';
+  child.stdout.setEncoding('utf8');
+  child.stderr.setEncoding('utf8');
+  child.stdout.on('data', (s: string) => {
+    log += s;
+  });
+  child.stderr.on('data', (s: string) => {
+    log += s;
+  });
+  const outcome = new Promise<{ code: number | null; signal: NodeJS.Signals | null; log: string }>(
+    (resolvePromise, reject) => {
+      child.once('error', reject);
+      child.once('close', (code, signal) => resolvePromise({ code, signal, log }));
+    },
+  );
+  return { ready, start, outcome };
+}
+
+async function launchTogether(workers: readonly Worker[]): Promise<void> {
+  const deadline = Date.now() + 30000;
+  for (const worker of workers) {
+    while (true) {
+      try {
+        await access(worker.ready);
+        break;
+      } catch {
+        if (Date.now() > deadline) throw new Error('Independent worker did not reach barrier.');
+        await sleep(25);
+      }
+    }
+  }
+  await Promise.all(workers.map((worker) => writeFile(worker.start, 'go')));
+}
+
+describe('E1.T05 independent OS-process coordination', () => {
+  it('publishes lock profiling only after the coordinated action is released', async () => {
+    const { context } = await fixture();
+    const diagnostics = channel('nevo.specflow.engine.control-lock');
+    const samples: unknown[] = [];
+    const listener = (message: unknown): void => {
+      samples.push(message);
+    };
+    diagnostics.subscribe(listener);
+    let duringAction = -1;
+    try {
+      await withProjectControlLock(context, () => {
+        duringAction = samples.length;
+        return Promise.resolve();
+      });
+    } finally {
+      diagnostics.unsubscribe(listener);
+    }
+
+    expect(duringAction).toBe(0);
+    expect(samples).toHaveLength(1);
+    expect(samples[0]).toMatchObject({
+      projectId: context.project.projectId,
+      released: true,
+    });
+    const sample = samples[0] as { waitMs: number; heldMs: number };
+    expect(sample.waitMs).toBeGreaterThanOrEqual(0);
+    expect(sample.heldMs).toBeGreaterThanOrEqual(0);
+  });
+
+  it('does not advance registry revision when snapshot keys are reordered', async () => {
+    const { context } = await fixture();
+    const path = workspaceRegistryPath(context);
+    const before = await readFile(path, 'utf8');
+    const original = await readWorkspaceRegistry(context);
+    const result = await updateWorkspaceRegistry(context, (current) => ({
+      specBindings: current.specBindings,
+      workspaces: current.workspaces,
+      primaryWorkspaceId: current.primaryWorkspaceId,
+      revision: current.revision,
+      projectId: current.projectId,
+      version: current.version,
+    }));
+    expect(result).toEqual(original);
+    expect(result.revision).toBe(0);
+    expect(await readFile(path, 'utf8')).toBe(before);
+  });
+
+  it('does not lose two simultaneous registry updates', async () => {
+    const { root, context } = await fixture();
+    const left = randomUUID();
+    const right = randomUUID();
+    const workers = [
+      startWorker(root, { mode: 'bind', target: left }),
+      startWorker(root, { mode: 'bind', target: right }),
+    ];
+    await launchTogether(workers);
+    const outcomes = await Promise.all(workers.map((worker) => worker.outcome));
+    expect(
+      outcomes.map((x) => x.code),
+      JSON.stringify(outcomes),
+    ).toEqual([0, 0]);
+
+    const registry = await readWorkspaceRegistry(context);
+    expect(registry.revision).toBe(2);
+    expect(new Set(registry.specBindings.map((b) => b.specId))).toEqual(new Set([left, right]));
+    expect(new Set(registry.specBindings.map((b) => b.generation))).toEqual(new Set([1, 2]));
+  }, 75000);
+
+  it('serializes registrations of two independently verified linked worktrees', async () => {
+    const { root, context } = await fixture();
+    const first = await linked(root);
+    const second = await linked(root);
+    const workers = [
+      startWorker(root, { mode: 'register', target: randomUUID(), linked: first }),
+      startWorker(root, { mode: 'register', target: randomUUID(), linked: second }),
+    ];
+    await launchTogether(workers);
+    const outcomes = await Promise.all(workers.map((worker) => worker.outcome));
+    expect(
+      outcomes.map((x) => x.code),
+      JSON.stringify(outcomes),
+    ).toEqual([0, 0]);
+
+    const registry = await readWorkspaceRegistry(context);
+    expect(registry.revision).toBe(2);
+    expect(registry.workspaces).toHaveLength(3);
+    expect(registry.workspaces.map((w) => w.root)).toContain(first);
+    expect(registry.workspaces.map((w) => w.root)).toContain(second);
+  }, 75000);
+
+  it('rejects simultaneous conflicting bindings instead of silently rebinding', async () => {
+    const { root, context } = await fixture();
+    const linkedRoot = await linked(root);
+    const linkedId = randomUUID();
+    const registration = await provisionLinkedWorkspaceIdentity(
+      context,
+      linkedRoot,
+      linkedId,
+      true,
+    );
+    await updateWorkspaceRegistry(context, (current) => addWorkspace(current, registration));
+    const specId = randomUUID();
+    const workers = [
+      startWorker(root, { mode: 'bind', target: specId }),
+      startWorker(root, { mode: 'bind', target: specId, workspaceId: linkedId }),
+    ];
+    await launchTogether(workers);
+    const outcomes = await Promise.all(workers.map((worker) => worker.outcome));
+    expect(outcomes.filter((x) => x.code === 0)).toHaveLength(1);
+    expect(outcomes.filter((x) => x.code !== 0)).toHaveLength(1);
+    const registry = await readWorkspaceRegistry(context);
+    expect(registry.revision).toBe(2);
+    expect(registry.specBindings.filter((x) => x.specId === specId)).toHaveLength(1);
+  }, 75000);
+
+  it('retains the previous valid registry after SIGKILL before atomic rename', async () => {
+    const { root, context } = await fixture();
+    const previous = await readFile(workspaceRegistryPath(context), 'utf8');
+    const worker = startWorker(root, { mode: 'crash-before-rename', target: 'unused' });
+    await launchTogether([worker]);
+    const outcome = await worker.outcome;
+    expect(outcome.code).not.toBe(0);
+    expect(await readFile(workspaceRegistryPath(context), 'utf8')).toBe(previous);
+    expect((await inspectProjectControlLock(context)).status).toBe('held');
+    const files = await readdir(context.project.stateRoot);
+    expect(files).toContain('workspaces.json');
+    expect(files.some((name) => name.endsWith('.tmp'))).toBe(true);
+
+    await expect(
+      updateWorkspaceRegistry(
+        context,
+        (current) => bindSpecToWorkspace(current, randomUUID(), current.primaryWorkspaceId),
+        { lock: { waitMs: 0 } },
+      ),
+    ).rejects.toMatchObject({ code: 'CONTROL_LOCK_BUSY' });
+
+    // Explicit test-only operator recovery; production must not steal this lock.
+    await rm(projectControlLockPath(context));
+    await updateWorkspaceRegistry(context, (current) =>
+      bindSpecToWorkspace(current, randomUUID(), current.primaryWorkspaceId),
+    );
+    expect((await readWorkspaceRegistry(context)).revision).toBe(1);
+  }, 75000);
+
+  it('retains committed CAS after post-publish SIGKILL', async () => {
+    const { root, context } = await fixture();
+    const worker = startWorker(root, { mode: 'crash-after-rename', target: 'unused' });
+    await launchTogether([worker]);
+    const outcome = await worker.outcome;
+    expect(outcome.code).not.toBe(0);
+
+    const published = await readWorkspaceRegistry(context);
+    expect(published.revision).toBe(1);
+    expect((await inspectProjectControlLock(context)).status).toBe('held');
+    // Recovery must not infer "free" merely from a dead PID.
+    await expect(
+      updateWorkspaceRegistry(context, (current) => current, { lock: { waitMs: 0 } }),
+    ).rejects.toMatchObject({ code: 'CONTROL_LOCK_BUSY' });
+
+    // After explicit operator recovery, a request with old CAS cannot replay.
+    await rm(projectControlLockPath(context));
+    await expect(
+      updateWorkspaceRegistry(context, (current) => current, { expectedRevision: 0 }),
+    ).rejects.toMatchObject({ code: 'REGISTRY_CONFLICT' });
+    expect((await readWorkspaceRegistry(context)).revision).toBe(1);
+  }, 75000);
+
+  it('rejects an unregistered linked caller even when the Git common-dir matches', async () => {
+    const { root } = await fixture();
+    const linkedRoot = await linked(root);
+    const linkedContext = await resolveProjectHome({ cwd: linkedRoot });
+    await expect(
+      updateWorkspaceRegistry(linkedContext, (current) => current),
+    ).rejects.toMatchObject({ code: 'REGISTRY_CONFLICT' });
+  });
+
+  it('does not allow in-place modification to bypass registry transition checks', async () => {
+    const { context } = await fixture();
+    await expect(
+      updateWorkspaceRegistry(context, (current) => {
+        (current.workspaces as unknown as { managed: boolean }[])[0]!.managed = true;
+        return current;
+      }),
+    ).rejects.toThrow();
+    expect((await readWorkspaceRegistry(context)).workspaces[0]?.managed).toBe(false);
+  });
+
+  it('fails closed on a corrupt control lock instead of overwriting it', async () => {
+    const { context } = await fixture();
+    const path = projectControlLockPath(context);
+    await writeFile(path, '{incomplete', 'utf8');
+    expect((await inspectProjectControlLock(context)).status).toBe('corrupt');
+    await expect(
+      withProjectControlLock(context, () => Promise.resolve(undefined), { waitMs: 0 }),
+    ).rejects.toMatchObject({ code: 'CONTROL_LOCK_CORRUPT' });
+    expect(await readFile(path, 'utf8')).toBe('{incomplete');
+  });
+
+  it('preserves absent linked bindings and refuses new bindings to missing roots', async () => {
+    const { root, context } = await fixture();
+    const linkedRoot = await linked(root);
+    const linkedId = randomUUID();
+    const registration = await provisionLinkedWorkspaceIdentity(
+      context,
+      linkedRoot,
+      linkedId,
+      true,
+    );
+    await updateWorkspaceRegistry(context, (current) => addWorkspace(current, registration));
+    git(root, 'worktree', 'remove', '--force', linkedRoot);
+
+    await expect(
+      updateWorkspaceRegistry(context, (current) =>
+        bindSpecToWorkspace(current, 'new-spec', linkedId),
+      ),
+    ).rejects.toMatchObject({ code: 'REGISTRY_WORKSPACE_UNAVAILABLE' });
+    const persisted = await readWorkspaceRegistry(context);
+    expect(persisted.revision).toBe(1);
+    expect(persisted.workspaces.some((w) => w.workspaceId === linkedId)).toBe(true);
+    expect(persisted.specBindings).toEqual([]);
+  });
+
+  it('rejects a replaced Git worktree at the same path while preserving binding', async () => {
+    const { root, context } = await fixture();
+    const target = await linked(root);
+    const workspaceId = randomUUID();
+    const old = await provisionLinkedWorkspaceIdentity(context, target, workspaceId, true);
+    await updateWorkspaceRegistry(context, (current) => addWorkspace(current, old));
+    await updateWorkspaceRegistry(context, (current) =>
+      bindSpecToWorkspace(current, 'spec-with-binding', workspaceId),
+    );
+    const before = await readWorkspaceRegistry(context);
+    expect((await inspectRegisteredWorkspace(context, before, workspaceId)).status).toBe(
+      'available',
+    );
+
+    git(root, 'worktree', 'remove', '--force', target);
+    git(root, 'worktree', 'add', '-b', 'replacement-branch', target);
+    await expect(inspectRegisteredWorkspace(context, before, workspaceId)).rejects.toMatchObject({
+      code: 'REGISTRY_WORKSPACE_MISMATCH',
+    });
+    // New checkout must receive a different, explicit incarnation even if a
+    // caller asks to reuse the old workspaceId.
+    const fresh = await provisionLinkedWorkspaceIdentity(context, target, workspaceId, true);
+    expect(fresh.instanceId).not.toBe(old.instanceId);
+    expect(await readFile(join(target, WORKSPACE_IDENTITY_RELATIVE_PATH), 'utf8')).toContain(
+      fresh.instanceId!,
+    );
+    await expect(inspectRegisteredWorkspace(context, before, workspaceId)).rejects.toMatchObject({
+      code: 'REGISTRY_WORKSPACE_MISMATCH',
+    });
+    await expect(
+      updateWorkspaceRegistry(context, (current) =>
+        bindSpecToWorkspace(current, 'another-spec', workspaceId),
+      ),
+    ).rejects.toMatchObject({ code: 'REGISTRY_WORKSPACE_MISMATCH' });
+    const after = await readWorkspaceRegistry(context);
+    expect(after).toEqual(before);
+  });
+
+  it('requires recovery rather than recreating primary identity after registry loss', async () => {
+    const { root, context } = await fixture();
+    const old = await readWorkspaceRegistry(context);
+    await updateWorkspaceRegistry(context, (current) =>
+      bindSpecToWorkspace(current, 'remember-me', current.primaryWorkspaceId),
+    );
+    await rm(workspaceRegistryPath(context));
+    await expect(initializeWorkspaceRegistry(context)).rejects.toMatchObject({
+      code: 'REGISTRY_RECOVERY_REQUIRED',
+    });
+    await expect(readWorkspaceRegistry(context)).rejects.toMatchObject({
+      code: 'REGISTRY_RECOVERY_REQUIRED',
+    });
+    const marker = JSON.parse(
+      await readFile(join(root, PROJECT_HOME_MARKER_RELATIVE_PATH), 'utf8'),
+    ) as { registryBootstrap: string; primaryWorkspaceId: string };
+    expect(marker.registryBootstrap).toBe('claimed');
+    expect(marker.primaryWorkspaceId).toBe(old.primaryWorkspaceId);
+  });
+
+  it('rejects a restored registry with a different primary ID', async () => {
+    const { context } = await fixture();
+    const original = await readWorkspaceRegistry(context);
+    const substitutedId = randomUUID();
+    const restored = {
+      ...original,
+      primaryWorkspaceId: substitutedId,
+      workspaces: original.workspaces.map((workspace) =>
+        workspace.kind === 'primary' ? { ...workspace, workspaceId: substitutedId } : workspace,
+      ),
+    };
+    // This backup is internally valid and belongs to the correct project.
+    await writeFile(workspaceRegistryPath(context), JSON.stringify(restored));
+    await expect(readWorkspaceRegistry(context)).rejects.toMatchObject({
+      code: 'REGISTRY_RECOVERY_REQUIRED',
+    });
+    await expect(
+      updateWorkspaceRegistry(context, (current) =>
+        bindSpecToWorkspace(current, 'should-not-write', current.primaryWorkspaceId),
+      ),
+    ).rejects.toMatchObject({ code: 'REGISTRY_RECOVERY_REQUIRED' });
+    expect(JSON.parse(await readFile(workspaceRegistryPath(context), 'utf8'))).toEqual(restored);
+  });
+
+  it('rejects an existing registry when Project Home still claims fresh bootstrap', async () => {
+    const { root, context } = await fixture();
+    const original = await readWorkspaceRegistry(context);
+    const homeMarkerPath = join(root, PROJECT_HOME_MARKER_RELATIVE_PATH);
+    const marker = JSON.parse(await readFile(homeMarkerPath, 'utf8')) as Record<string, unknown>;
+    await writeFile(homeMarkerPath, JSON.stringify({ ...marker, registryBootstrap: 'fresh' }));
+
+    await expect(readWorkspaceRegistry(context)).rejects.toMatchObject({
+      code: 'REGISTRY_RECOVERY_REQUIRED',
+    });
+    await expect(
+      updateWorkspaceRegistry(context, (current) =>
+        bindSpecToWorkspace(current, 'should-not-write', current.primaryWorkspaceId),
+      ),
+    ).rejects.toMatchObject({ code: 'REGISTRY_RECOVERY_REQUIRED' });
+    expect(JSON.parse(await readFile(workspaceRegistryPath(context), 'utf8'))).toEqual(original);
+  });
+
+  it('prevents lost updates with an explicit stale CAS revision', async () => {
+    const { context } = await fixture();
+    await updateWorkspaceRegistry(context, (current) =>
+      bindSpecToWorkspace(current, 'first', current.primaryWorkspaceId),
+    );
+    await expect(
+      updateWorkspaceRegistry(
+        context,
+        (current) => bindSpecToWorkspace(current, 'second', current.primaryWorkspaceId),
+        { expectedRevision: 0 },
+      ),
+    ).rejects.toMatchObject({ code: 'REGISTRY_CONFLICT' });
+    expect((await readWorkspaceRegistry(context)).revision).toBe(1);
+  });
+});

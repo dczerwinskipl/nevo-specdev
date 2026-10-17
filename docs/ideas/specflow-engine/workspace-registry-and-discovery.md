@@ -48,9 +48,7 @@ Proposed machine-owned ignored file under project home: `.nevo/local/state/works
       "managed": true
     }
   ],
-  "specBindings": [
-    { "specId": "canonical-spec-uuid", "workspaceId": "wt-01" }
-  ]
+  "specBindings": [{ "specId": "canonical-spec-uuid", "workspaceId": "wt-01" }]
 }
 ```
 
@@ -70,7 +68,7 @@ Do not choose whichever manifest is newest by timestamp, status or file modifica
 
 ## Missing workspace semantics
 
-When bound root disappears, keep the binding and report a distinguishable `workspace_unavailable` state, with repair/removal options. A missing Project Home is a *different* error from a missing linked workspace. Do **not** fall back to a stale same-ID copy in the primary checkout. Do not auto-delete specs from Overview. A truly non-existent manifest in a verified workspace is different from a missing workspace; preserve that distinction.
+When bound root disappears, keep the binding and report a distinguishable `workspace_unavailable` state, with repair/removal options. A missing Project Home is a _different_ error from a missing linked workspace. Do **not** fall back to a stale same-ID copy in the primary checkout. Do not auto-delete specs from Overview. A truly non-existent manifest in a verified workspace is different from a missing workspace; preserve that distinction.
 
 Runtime may cache or subscribe to filesystem changes, but must refresh/regenerate snapshots when files change from an offline CLI or external editor. Polling/index revision can supplement watchers; watcher events are hints, not authority.
 

@@ -32,15 +32,15 @@ related:
 
 **Writer admission is determined by actual/potential side effects on a physical workspace, not by agent archetype or presence of workflow.** A read-only execution may omit a claim only if tools/transport are truly write-restricted; otherwise conservatively request ownership or reject unsupported unsafe mode.
 
-| Scenario | Workflow attempt | Workspace claim | Git/ref coordination |
-| --- | --- | --- | --- |
-| Ad-hoc chat with no writable tools | No | No | No |
-| Read-only review of spec | Optional | No when enforcement proven | No |
-| Spec Writer editing source/spec files | Optional | Yes | Only for ref mutations |
-| Implementer processing Task | Yes | Yes | According to actions |
-| Human sign-off operation | Gate context | No physical writer for evidence-only step; transactional lock for evidence | No |
-| Git worktree create/rebind/remove | Optional | Relevant affected workspaces | Yes, project/repository-scoped |
-| Batch of Tasks in one managed Session | One identity **per** Task attempt | Claim scoped to shared physical workspace | As required |
+| Scenario                              | Workflow attempt                  | Workspace claim                                                            | Git/ref coordination           |
+| ------------------------------------- | --------------------------------- | -------------------------------------------------------------------------- | ------------------------------ |
+| Ad-hoc chat with no writable tools    | No                                | No                                                                         | No                             |
+| Read-only review of spec              | Optional                          | No when enforcement proven                                                 | No                             |
+| Spec Writer editing source/spec files | Optional                          | Yes                                                                        | Only for ref mutations         |
+| Implementer processing Task           | Yes                               | Yes                                                                        | According to actions           |
+| Human sign-off operation              | Gate context                      | No physical writer for evidence-only step; transactional lock for evidence | No                             |
+| Git worktree create/rebind/remove     | Optional                          | Relevant affected workspaces                                               | Yes, project/repository-scoped |
+| Batch of Tasks in one managed Session | One identity **per** Task attempt | Claim scoped to shared physical workspace                                  | As required                    |
 
 Do not create a durable workflow attempt for every Turn. Execution claim is an admission/coordination resource; workflow step and provider Turn have separate lifecycles.
 
@@ -80,11 +80,17 @@ Explain why reclaim is unsafe, which actor must intervene, what evidence is miss
 
 ## Dirty baseline semantics
 
-Do not make every dirty checkout categorically fatal. Resolve admission at the *specific action* and scope. Creation scaffold or known Engine-owned files can establish a declared baseline for a subsequent Spec Writer turn if proven, while unrelated changes, ambiguous provider writes and gate-declared clean-tree requirements remain blockers. A dirty baseline remediation action may be allowed **before** step activation; do not create a fake active workflow attempt just to clean up.
+Do not make every dirty checkout categorically fatal. Resolve admission at the _specific action_ and scope. Creation scaffold or known Engine-owned files can establish a declared baseline for a subsequent Spec Writer turn if proven, while unrelated changes, ambiguous provider writes and gate-declared clean-tree requirements remain blockers. A dirty baseline remediation action may be allowed **before** step activation; do not create a fake active workflow attempt just to clean up.
 
 ## Batch and handover
 
 Batch scope is explicit, ordered, per-Task, never inferred from historical Session bindings. Releasing a Turn claim does not finish all Task attempts. Handover creates a new possible owner/Session after previous writer is safely released or fenced. It cannot silently transfer an opaque claim or auto-activate the next workflow transition.
+
+## Multi-instance scope (future; distinct from task batch)
+
+A `task-batch` covers multiple Task attempts. Multi-instance execution instead has **one user-defined step attempt** and several Engine-assigned contribution slots, each with independent execution runs and retries. Step instructions, output schema, effect requirements and declared reducer determine result semantics. Do not infer slot count from Sessions, concurrent Turns or `maxConcurrency`, or allocate a new workflow attempt just because one run failed.
+
+Read-only instances skip writer claims only when enforced capabilities prove that safe; write-producing instances need admission or isolation. Instance starts/submissions/finalization still use short Engine state coordination. Terminal Turns without validated contributions are not workflow results; stale runs and ambiguous effects cannot cause aggregate `finish`. See [multi-instance execution](multi-instance-execution.md). Foundation B remains single-instance.
 
 ## Acceptance and stage ownership
 

@@ -51,6 +51,9 @@ related:
 20. [Workspace binding lifecycle](workspace-binding-lifecycle.md): verified rebind after integration, move, cleanup, session history.
 21. [Local actors and human gates](local-actor-and-human-gates.md): OS/HTTP trust, actor provenance and limits of human decision verification.
 
+22. [Deferred multi-instance execution](multi-instance-execution.md): independently identified runs of any user-defined step, effect-scoped admission and deterministic aggregation.
+23. [Future multi-instance plan](multi-instance-plan/README.md): staged implementation tasks after the Engine/managed execution acceptance gates.
+
 ## Staged experiments and independent acceptance gates
 
 Use the freshest `main` at implementation time; #45 is **preview only** and does not become the base by reference. Distinguish these three proof levels:

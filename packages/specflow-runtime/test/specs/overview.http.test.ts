@@ -7,14 +7,29 @@ import type {
 
 import { InMemoryAuthenticationStore } from '../../src/features/auth/authentication/store/in-memory-store';
 import { authCookieNames } from '../../src/features/auth/authentication/http/cookies';
-import { createRuntimeApp } from '../../src/server/app';
+import { createRuntimeApp as createRealRuntimeApp } from '../../src/server/app';
+import { createSampleSpecsOverviewRepository } from '../../src/features/specs/overview/repository/sample-repository';
 import { cookieValue } from '../auth/support/http';
 import { passwordConfig } from '../auth/support/config';
+
+function createSampleApp(
+  config: Parameters<typeof createRealRuntimeApp>[0],
+  dependencies: Parameters<typeof createRealRuntimeApp>[1] = {},
+) {
+  return createRealRuntimeApp(config, {
+    ...dependencies,
+    specs: {
+      ...dependencies.specs,
+      overviewRepository:
+        dependencies.specs?.overviewRepository ?? createSampleSpecsOverviewRepository(),
+    },
+  });
+}
 
 describe('Specs overview HTTP integration', () => {
   it('retains trusted-local disabled access semantics', async () => {
     const config = passwordConfig();
-    const app = await createRuntimeApp({
+    const app = await createSampleApp({
       ...config,
       authentication: { ...config.authentication, mode: 'none' },
     });
@@ -26,7 +41,13 @@ describe('Specs overview HTTP integration', () => {
       const overview = response.json<CurrentSpecsOverview>();
       expect(overview.collection).toBe('current');
       expect(overview.items).toHaveLength(6);
-      expect(overview.sections).toEqual(['requires-attention', 'active', 'ready', 'draft']);
+      expect(overview.sections).toEqual([
+        'requires-attention',
+        'active',
+        'ready',
+        'draft',
+        'unknown',
+      ]);
     } finally {
       await app.close();
     }
@@ -34,7 +55,7 @@ describe('Specs overview HTTP integration', () => {
 
   it('uses real password login and revokes list access on logout', async () => {
     const config = passwordConfig();
-    const app = await createRuntimeApp({
+    const app = await createSampleApp({
       ...config,
       authorization: {
         assignments: [{ userId: 'demo-user', role: 'viewer', scope: {} }],
@@ -101,7 +122,7 @@ describe('Specs overview HTTP integration', () => {
       userId: 'demo-user',
       authenticatedWith: { kind: 'password' },
     });
-    const app = await createRuntimeApp(
+    const app = await createSampleApp(
       {
         ...config,
         authorization: {
@@ -145,7 +166,7 @@ describe('Specs overview HTTP integration', () => {
     });
     const readCurrent = vi.fn(() => Promise.reject(new Error('repository must not be read')));
     const readArchive = vi.fn(() => Promise.reject(new Error('repository must not be read')));
-    const app = await createRuntimeApp(config, {
+    const app = await createSampleApp(config, {
       auth: { store },
       specs: { overviewRepository: { readCurrent, readArchive } },
     });
@@ -179,7 +200,7 @@ describe('Specs overview HTTP integration', () => {
         userId: 'demo-user',
         authenticatedWith: { kind: 'password' },
       });
-      const app = await createRuntimeApp(
+      const app = await createSampleApp(
         {
           ...config,
           authorization: {

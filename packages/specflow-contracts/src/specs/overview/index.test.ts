@@ -46,6 +46,25 @@ describe('Specs Overview contracts', () => {
     ).toBe(true);
   });
 
+  it('accepts explicitly unknown progress, signals and session evidence', () => {
+    expect(
+      Value.Check(SpecsOverviewSchema, {
+        collection: 'current',
+        revision: 'unknown',
+        sections: ['unknown'],
+        items: [
+          {
+            ...baseItem,
+            progress: null,
+            classification: { section: 'unknown' },
+            signals: null,
+            currentExecutions: null,
+          },
+        ],
+      }),
+    ).toBe(true);
+  });
+
   it('allows Requires attention before a semantic attention reason is classified', () => {
     expect(
       Value.Check(SpecsOverviewSchema, {

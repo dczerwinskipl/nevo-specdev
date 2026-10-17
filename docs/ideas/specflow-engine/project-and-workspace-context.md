@@ -38,12 +38,12 @@ Candidate representation:
 ```ts
 type ProjectContext = {
   projectId: string;
-  projectRoot: string;  // known local coordination home
-  stateRoot: string;    // explicit ignored state location
+  projectRoot: string; // known local coordination home
+  stateRoot: string; // explicit ignored state location
 };
 type WorkspaceContext = {
   workspaceId: string;
-  root: string;         // verified absolute canonical filesystem root
+  root: string; // verified absolute canonical filesystem root
   kind: 'primary' | 'linked';
   git?: { commonDir: string; branch?: string };
 };
@@ -60,7 +60,7 @@ Avoid injecting this entire object into every small function. Resolve once at th
 4. Resolve the central local registry and `workspaceId`; ensure recorded roots still refer to the same Git repository, not a symlink/substitution to an unrelated location.
 5. Fail clearly when zero or multiple candidate homes exist. Never silently treat an arbitrary linked checkout as a second independent project.
 
-Git's `git rev-parse --show-toplevel` alone returns the *current checkout*, not the project's coordination home. This is a concrete limitation of `packages/specflow/src/project/layout.ts` on main.
+Git's `git rev-parse --show-toplevel` alone returns the _current checkout_, not the project's coordination home. This is a concrete limitation of `packages/specflow/src/project/layout.ts` on main.
 
 ## Open design: home discovery and moves
 
@@ -73,6 +73,10 @@ Two checkout roots may contain different Git-tracked `.nevo/config.yaml` or `.ne
 A real workflow attempt records the precise definition revision/content provenance resolved when it started. Later `inspect`, `resume` and `finish` may not silently adopt new workflow YAML because the home checkout HEAD moved or a linked branch changed. Missing/changed provenance blocks for explicit compatible migration/recovery, never a best-guess replacement. Initial proof: P06 in Foundation A for config ownership and W10 in Foundation B for definition pinning.
 
 A local `projectId` / `workspaceId` identifies the **local** coordination environment, not necessarily a portable security scope; [local actor and authorization policy](local-actor-and-human-gates.md) separates persisted grants from runtime-resolved paths.
+
+## Project integration target policy
+
+The verified Project Home .nevo/config.yaml is the authority for git.integrationTargetBranch: one validated, explicit development branch selected at init or through a controlled project-configuration migration. Main, develop or another project branch is allowed; NEVER infer a mutable close destination from the caller's linked worktree branch, cwd, or an assumed hardcoded name. Version and validate config reads; a missing or changed configured target blocks integration until reviewed, and primary must already be checked out on target (no hidden checkout). Release trains/stacked target selection are deliberately deferred. Config is policy only, not the Specification's own YAML manifest.
 
 ## Path safety and isolation
 

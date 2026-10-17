@@ -5,7 +5,7 @@ import type {
 
 import type { RequestAuthorization } from '../../../auth';
 import type { ArchivedSpecRecord } from '../repository/model';
-import { filterAuthorizedSpecs } from '../filter-authorized-specs';
+import { canViewSpec, filterAuthorizedSpecs } from '../filter-authorized-specs';
 import type { SpecsOverviewRepository } from '../repository/read-repository';
 
 export interface GetArchiveOverviewDependencies {
@@ -16,7 +16,9 @@ export interface GetArchiveOverviewDependencies {
 export async function getArchiveOverview(
   dependencies: GetArchiveOverviewDependencies,
 ): Promise<ArchiveSpecsOverview> {
-  const snapshot = await dependencies.repository.readArchive();
+  const snapshot = await dependencies.repository.readArchive((specId) =>
+    canViewSpec(dependencies.authorization, specId),
+  );
   const items = filterAuthorizedSpecs(dependencies.authorization, snapshot.items).map(
     toOverviewItem,
   );

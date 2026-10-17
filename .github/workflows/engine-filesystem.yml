@@ -1,0 +1,66 @@
+name: Engine filesystem integration
+
+on:
+  # Full OS-level regression can be started on demand, including from draft branches.
+  workflow_dispatch:
+  # Weekly full-platform safety net for regressions outside Engine file changes.
+  schedule:
+    - cron: "17 3 * * 1"
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft, labeled]
+    paths:
+      - "packages/specflow-engine/**"
+      - ".github/workflows/engine-filesystem.yml"
+  push:
+    branches: [main]
+    paths:
+      - "packages/specflow-engine/**"
+      - ".github/workflows/engine-filesystem.yml"
+
+concurrency:
+  group: engine-filesystem-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  # Preserve the current required-check names for PR branch protection.
+  # Linux already runs the complete Engine suite in ci.yml's package-test matrix.
+  engine-filesystem:
+    name: engine filesystem (${{ matrix.os }})
+    if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+      - name: Verify Windows/macOS Git and journal smoke regressions
+        run: pnpm --filter @nevo/specflow-engine test:filesystem:smoke
+
+  # Exhaustive real-Git, crash/recovery, durable-create and multi-process tests.
+  # On PRs, run only on the explicit ci:full-platform labeled event.
+  # Full Windows runs are isolated to avoid competing Vitest worker processes.
+  engine-filesystem-full:
+    name: engine filesystem full (${{ matrix.os }})
+    if: >-
+      github.event_name != 'pull_request' ||
+      (github.event.action == 'labeled' &&
+       github.event.label.name == 'ci:full-platform')
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+      - name: Verify full real-Git, cross-process and crash/recovery regression
+        run: pnpm --filter @nevo/specflow-engine test:filesystem:full

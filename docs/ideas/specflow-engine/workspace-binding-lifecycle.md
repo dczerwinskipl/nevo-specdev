@@ -25,18 +25,18 @@ related:
 
 ## Binding is authority for location, not content
 
-The workstation-local registry owns `specId -> workspaceId` placement and optionally a binding generation/revision. Git-tracked manifest files own canonical spec content. A checkout branch named after the spec is *not* an authoritative binding. Never choose an alternate checkout based on recency when a bound worktree is unavailable.
+The workstation-local registry owns `specId -> workspaceId` placement and optionally a binding generation/revision. Git-tracked manifest files own canonical spec content. A checkout branch named after the spec is _not_ an authoritative binding. Never choose an alternate checkout based on recency when a bound worktree is unavailable.
 
 ## Distinct operations
 
-| Operation | Preconditions and effect |
-| --- | --- |
-| `register` | Provision verified workspace; attach one specId under atomic registry revision |
-| `resolve` | Validate current Git membership, registry generation and spec manifest identity; return verified workspace |
-| `rebind` | Explicitly change authoritative source from `workspaceA` to `workspaceB` after verifying same spec and intended committed content |
-| `relocate` | Update physical root for **same** workspace identity after verifying Git metadata/path; may invalidate provider native resume compatibility |
-| `mark-unavailable` | Keep binding and identity; return repairable source-unavailable state |
-| `cleanup` | Separate authorized operation, only after integration and safe rebind, never implicit on Task/Turn completion |
+| Operation          | Preconditions and effect                                                                                                                    |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `register`         | Provision verified workspace; attach one specId under atomic registry revision                                                              |
+| `resolve`          | Validate current Git membership, registry generation and spec manifest identity; return verified workspace                                  |
+| `rebind`           | Explicitly change authoritative source from `workspaceA` to `workspaceB` after verifying same spec and intended committed content           |
+| `relocate`         | Update physical root for **same** workspace identity after verifying Git metadata/path; may invalidate provider native resume compatibility |
+| `mark-unavailable` | Keep binding and identity; return repairable source-unavailable state                                                                       |
+| `cleanup`          | Separate authorized operation, only after integration and safe rebind, never implicit on Task/Turn completion                               |
 
 These are proposed use cases; exact names and public availability are not frozen.
 
@@ -74,6 +74,10 @@ workflow complete (domain) -> integration proven (Git)
 
 These are not one automatic "finish" side effect. Deleting a worktree that remains canonical would create a self-inflicted unavailable spec.
 
+## Deferred multi-instance lifecycle implications
+
+A group of instances for one user-defined step may depend on a configured input baseline or hold effect-specific resource ownership even without an exclusive writer claim. Rebind, relocation and cleanup must account for active instances, source reservations, writer claims and managed Turns. Preserve per-instance history and reject stale results when declared input consistency is violated. Do not impose frozen source inputs on steps that explicitly allow independent input; see [multi-instance execution](multi-instance-execution.md).
+
 ## Authorization scope after binding
 
 HTTP receives selectors and resolves the authoritative spec/workspace through Engine before authorizing a resource-specific read/mutation. Never trust caller-provided `workspaceId` to widen authorization or allow an alternate path. For `create new-worktree` (before workspaceId exists), use project-level capability plus Git/worktree-specific permission if policy requires it; then bind the created resource to resolved project scope. Where a resource may not be disclosed to unauthorized users, resolve only minimal trusted scope before returning any details.
@@ -85,3 +89,7 @@ HTTP receives selectors and resolves the authoritative spec/workspace through En
 - A managed active Turn prevents uncoordinated rebind; Turn history remains readable after relocation.
 - Missing worktree shows unavailable, not stale source or fabricated 404.
 - Different actor cannot rebind by supplying an authorized specId with an unauthorized destination.
+
+## Foundation A close extension (draft clarification, 2026-10-16)
+
+The original generic rebind/cleanup ideas list future writer-claims and Runtime Sessions. Those mechanisms are NOT installed today and must not become fictitious proof that no external writer exists. The restricted Plan 02 **Close Worktree** and **Close Specification** operations are designed separately in [closure proposal](specification-and-worktree-close-design.md), without synthetic gate/process checks, with real Git/FS journal checks, exclusive managed-worktree requirement, durable shared Create/Close resource claims, checked-out primary HEAD/index/tree proof, and CAS before disposal. An externally authored branch or inherited manifest is not a new registry binding. Plan 03 claim admission and managed Session rebind remain future strengthening; they are not needed to model Specification closure or a canonical linked-to-primary rebind under the stated limitations. This paragraph is candidate guidance, not a normative contract.

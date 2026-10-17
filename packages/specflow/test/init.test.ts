@@ -2,6 +2,7 @@ import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import type { GitCheckoutLayout } from '@nevo/specflow-engine/testing';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
@@ -9,7 +10,6 @@ import {
   type ConfigWriteOptions,
   initializeProject,
 } from '../src/init/initialize-project';
-import type { ProjectLayout } from '../src/project/layout';
 
 const dirs: string[] = [];
 
@@ -25,7 +25,7 @@ async function repository(): Promise<string> {
   return root;
 }
 
-function layout(root: string): ProjectLayout {
+function layout(root: string): GitCheckoutLayout {
   return {
     root,
     projectConfigPath: join(root, '.nevo', 'config.yaml'),

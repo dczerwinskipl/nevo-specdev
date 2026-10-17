@@ -1,6 +1,8 @@
 import { Type, type Static } from 'typebox';
 
 export { SpecsCollectionSchema, SpecsOverviewQuerySchema, SpecOverviewItemSchema } from './common';
+export { SpecsOverviewReadErrorSchema } from './errors';
+export type { SpecsOverviewReadError } from './errors';
 export type { SpecsCollection, SpecOverviewItem } from './common';
 
 export {

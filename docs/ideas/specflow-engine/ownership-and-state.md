@@ -30,18 +30,18 @@ A process being alive does not automatically make its state canonical. Conversel
 
 ## Proposed authority table
 
-| Information | Authority / owner | Persistence | Visibility |
-| --- | --- | --- | --- |
-| `specId`, title, documents, task definitions | Specs Engine + versioned repository files | Git-tracked YAML/Markdown | CLI and Runtime reads |
-| Workflow step/attempt, approvals, transitions | Workflow Engine | Authoritative manifest/accepted workflow records | CLI and Runtime reads |
-| Multi-stage operation journal/recovery evidence | Engine operation service | Ignored local durable storage | CLI and Runtime diagnostics |
-| `specId -> workspaceId` | Project Workspace Registry | Ignored local registry | CLI and Runtime |
-| Short transaction lock, longer execution claim | Engine coordination subsystem | Cross-process lock/claim files | CLI and Runtime |
-| Provider-native external chat | External provider/tool | Provider-owned, if at all | **Not** Runtime Session |
-| Runtime-managed canonical Session/Turn/Work | Runtime Sessions capability | Runtime-owned durable store | Runtime UI/API |
-| Provider process, stream, prompts, interactions | Running Runtime | Live resources + recovery metadata | Runtime only |
-| HTTP identity and scoped authorization | Runtime Auth | Config + request context | HTTP boundary only |
-| UI Query cache/Attention presentation | UI and Runtime projection | Derived/refreshable | Browser |
+| Information                                     | Authority / owner                         | Persistence                                      | Visibility                  |
+| ----------------------------------------------- | ----------------------------------------- | ------------------------------------------------ | --------------------------- |
+| `specId`, title, documents, task definitions    | Specs Engine + versioned repository files | Git-tracked YAML/Markdown                        | CLI and Runtime reads       |
+| Workflow step/attempt, approvals, transitions   | Workflow Engine                           | Authoritative manifest/accepted workflow records | CLI and Runtime reads       |
+| Multi-stage operation journal/recovery evidence | Engine operation service                  | Ignored local durable storage                    | CLI and Runtime diagnostics |
+| `specId -> workspaceId`                         | Project Workspace Registry                | Ignored local registry                           | CLI and Runtime             |
+| Short transaction lock, longer execution claim  | Engine coordination subsystem             | Cross-process lock/claim files                   | CLI and Runtime             |
+| Provider-native external chat                   | External provider/tool                    | Provider-owned, if at all                        | **Not** Runtime Session     |
+| Runtime-managed canonical Session/Turn/Work     | Runtime Sessions capability               | Runtime-owned durable store                      | Runtime UI/API              |
+| Provider process, stream, prompts, interactions | Running Runtime                           | Live resources + recovery metadata               | Runtime only                |
+| HTTP identity and scoped authorization          | Runtime Auth                              | Config + request context                         | HTTP boundary only          |
+| UI Query cache/Attention presentation           | UI and Runtime projection                 | Derived/refreshable                              | Browser                     |
 
 **Source provenance is part of authority.** The Project Home's committed config plus ignored local config determines effective local operational/project policy; a linked checkout's alternate `.nevo/config.yaml` is not an implicit replacement. Versioned workflow definition content is selected from the actual execution workspace, and its exact revision is pinned to the Engine's workflow attempt. This is not a second mutable workflow-status store; see [Project Home provenance](project-home-discovery.md).
 

@@ -12,6 +12,8 @@ import type { RuntimeSetupUi } from '@nevo/specflow-runtime';
 import { Command } from 'commander';
 
 import { createProjectInitCommand, type ProjectInitCommandContext } from './init/cli';
+import { createProjectInspectCommand } from './project/inspect-command';
+import { createSpecsCommand } from './specs/command';
 import { startProjectRuntime } from './runtime/start-project-runtime';
 import { NEVO_SPECFLOW_VERSION } from './version';
 
@@ -44,6 +46,9 @@ export function createProgram(io: ProgramIO): Command {
       ...(io.initializeProject ? { initialize: io.initializeProject } : {}),
     }),
   );
+
+  program.addCommand(createProjectInspectCommand({ cwd: io.cwd ?? '.', stdout: io.stdout }));
+  program.addCommand(createSpecsCommand({ cwd: io.cwd ?? '.', stdout: io.stdout }));
 
   program.addCommand(
     createAuthCommand({

@@ -44,6 +44,7 @@ export const CurrentSpecSectionIdSchema = Type.Union([
   Type.Literal('active'),
   Type.Literal('ready'),
   Type.Literal('draft'),
+  Type.Literal('unknown'),
 ]);
 export type CurrentSpecSectionId = Static<typeof CurrentSpecSectionIdSchema>;
 
@@ -56,6 +57,7 @@ export const CurrentSpecClassificationSchema = Type.Union([
   Type.Object({ section: Type.Literal('active') }),
   Type.Object({ section: Type.Literal('ready') }),
   Type.Object({ section: Type.Literal('draft') }),
+  Type.Object({ section: Type.Literal('unknown') }),
 ]);
 export type CurrentSpecClassification = Static<typeof CurrentSpecClassificationSchema>;
 
@@ -63,14 +65,17 @@ export const CurrentSpecOverviewItemSchema = Type.Object(
   {
     ...SpecOverviewItemSchema.properties,
     classification: CurrentSpecClassificationSchema,
-    signals: Type.Array(CurrentSpecSignalSchema),
-    currentExecutions: Type.Array(
-      Type.Object({
-        sessionId: Type.String(),
-        agentRole: Type.String(),
-        taskIds: Type.Array(Type.String()),
-      }),
-    ),
+    signals: Type.Union([Type.Array(CurrentSpecSignalSchema), Type.Null()]),
+    currentExecutions: Type.Union([
+      Type.Array(
+        Type.Object({
+          sessionId: Type.String(),
+          agentRole: Type.String(),
+          taskIds: Type.Array(Type.String()),
+        }),
+      ),
+      Type.Null(),
+    ]),
   },
   { additionalProperties: false },
 );

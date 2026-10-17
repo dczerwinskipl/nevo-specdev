@@ -252,7 +252,7 @@ export function createLongContentFixture(): CurrentSpecsOverview {
             'Confirm whether verification should continue in the existing worktree or resume after the upstream repository changes have been reconciled.',
             'decision',
           ),
-          ...base.items[0]!.signals,
+          ...(base.items[0]!.signals ?? []),
         ],
       }),
       ...base.items.slice(1),
