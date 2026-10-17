@@ -27,6 +27,13 @@ export async function reserveCloseOperation(
   engine: SpecFlowEngine,
   request: CloseRequest & { readonly operationId: string },
 ): Promise<{ readonly journal: CloseJournal; readonly existing: boolean }> {
+  // An existing reservation must remain observable even after Git/archive
+  // mutations make the original first-admission preview impossible.
+  const existing = await readCloseJournal(engine.context, request.operationId);
+  if (existing) {
+    assertMatchingRequest(existing, request);
+    return { journal: existing, existing: true };
+  }
   // Git inspection is outside the short coordination lock. The immutable
   // snapshot is verified against registry/config CAS inside the lock, and
   // future effects must re-verify pinned HEAD/index/physical source.
@@ -34,17 +41,7 @@ export async function reserveCloseOperation(
   return withProjectControlLock(engine.context, async () => {
     const previous = await readCloseJournal(engine.context, request.operationId);
     if (previous) {
-      // Include effective linked default in the identity; an identical retry
-      // only observes its own journal and never replays mutation.
-      if (previous.plan.kind !== request.kind || previous.plan.specId !== request.specId) {
-        throw new CloseOperationError('CLOSE_CONFLICT', 'OperationId belongs to a different lifecycle intent.');
-      }
-      if (request.kind === 'specification-close' && request.integrateToTargetBranch !== undefined) {
-        const integrated = previous.plan.integrateToTargetBranch ?? false;
-        if (integrated !== request.integrateToTargetBranch) {
-          throw new CloseOperationError('CLOSE_CONFLICT', 'OperationId changed immutable integration selection.');
-        }
-      }
+      assertMatchingRequest(previous, request);
       return { journal: previous, existing: true };
     }
     const latest = await readWorkspaceRegistry(engine.context);
@@ -76,4 +73,18 @@ export async function reserveCloseOperation(
     }
     return { journal: stored, existing: false };
   });
+}
+
+function assertMatchingRequest(
+  journal: CloseJournal,
+  request: CloseRequest & { readonly operationId: string },
+): void {
+  if (journal.plan.kind !== request.kind || journal.plan.specId !== request.specId) {
+    throw new CloseOperationError('CLOSE_CONFLICT', 'OperationId belongs to another lifecycle intent.');
+  }
+  if (request.kind === 'specification-close' &&
+      request.integrateToTargetBranch !== undefined &&
+      journal.plan.integrateToTargetBranch !== request.integrateToTargetBranch) {
+    throw new CloseOperationError('CLOSE_CONFLICT', 'OperationId changed immutable integration selection.');
+  }
 }

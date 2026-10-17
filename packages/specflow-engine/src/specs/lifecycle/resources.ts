@@ -1,7 +1,7 @@
 import type { ResolvedProjectHome } from '../../project/project-home';
 import type { CreateJournal } from '../create-journal';
 import { listCreateJournals } from '../create-journal';
-import { CloseOperationError, type CloseJournal } from './model';
+import { CloseOperationError, resourcesForClosePlan, type CloseJournal } from './model';
 import { listCloseJournals } from './journal-store';
 
 export type MutationResource = string;
@@ -53,6 +53,9 @@ export async function assertResourcesAvailable(
     }
   }
   for (const record of closes) {
+    if (record.plan.resources.join('\0') !== resourcesForClosePlan(record.plan, record.projectId).join('\0')) {
+      throw new CloseOperationError('CLOSE_JOURNAL_CORRUPT', 'Close journal resource inventory is inconsistent.');
+    }
     if (self?.kind === 'close' && self.operationId === record.plan.operationId) continue;
     if (settledClose(record)) continue;
     if (overlaps(resources, record.plan.resources)) {

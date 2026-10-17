@@ -98,6 +98,27 @@ export function normalizeCloseIntent(input: CloseIntent): CloseIntent {
   throw new CloseOperationError('CLOSE_INVALID', 'Invalid lifecycle operation kind or options.');
 }
 
+/** Derived resource identities must agree with persisted intent, not a forged list. */
+export function resourcesForClosePlan(
+  plan: ClosePlan,
+  projectId: string,
+): readonly string[] {
+  const integrate = plan.kind === 'worktree-close' || plan.integrateToTargetBranch === true;
+  const values = [
+    'spec:' + plan.specId,
+    'checkout:' + plan.source.workspaceId,
+    'ref:refs/heads/' + plan.source.branch.toLowerCase(),
+    ...(plan.target && plan.target.workspaceId !== plan.source.workspaceId
+      ? [
+          'checkout:' + plan.target.workspaceId,
+          'ref:refs/heads/' + plan.target.branch.toLowerCase(),
+        ]
+      : []),
+    ...(plan.source.instanceId && integrate ? ['git-worktree-admin:' + projectId] : []),
+  ];
+  return [...new Set(values)].sort();
+}
+
 export type CloseOperationErrorCode =
   | 'CLOSE_INVALID'
   | 'CLOSE_CONFLICT'

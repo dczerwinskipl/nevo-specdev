@@ -58,3 +58,8 @@ export {
   createSpecificationFromRequest,
   type CreateSpecificationRequest,
 } from './specs/create-request';
+
+// Read-only lifecycle surface. Mutation orchestration is reserved for T13–T15.
+export { previewCloseOperation, type CloseRequest } from './specs/lifecycle/preflight';
+export { inspectCloseOperation } from './specs/lifecycle/reservation';
+export { CloseOperationError, type ClosePlan, type CloseJournal } from './specs/lifecycle/model';

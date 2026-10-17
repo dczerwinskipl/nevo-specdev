@@ -59,3 +59,10 @@ export {
 } from './specs/durable-create';
 export { CREATE_JOURNAL_RELATIVE_DIR } from './specs/create-journal';
 export { createSpecificationForTesting, type TestCreateOptions } from './specs/create-test-support';
+
+// Internal verification surface for planned lifecycle operations; no transport mutations yet.
+export { previewCloseOperation, type CloseRequest } from './specs/lifecycle/preflight';
+export { reserveCloseOperation, inspectCloseOperation } from './specs/lifecycle/reservation';
+export { CloseOperationError, type CloseJournal, type ClosePlan } from './specs/lifecycle/model';
+export { assertResourcesAvailable, resourcesForCreate } from './specs/lifecycle/resources';
+export { listCloseJournals, closeJournalPath } from './specs/lifecycle/journal-store';

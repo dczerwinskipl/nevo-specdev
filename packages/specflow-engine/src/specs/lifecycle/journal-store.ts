@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 import { writeJsonAtomically } from '../../project/atomic-json';
 import type { ResolvedProjectHome } from '../../project/project-home';
-import { CloseOperationError, type CloseJournal } from './model';
+import { CloseOperationError, fingerprintCloseIntent, resourcesForClosePlan, type CloseJournal } from './model';
 
 const JOURNAL_DIR = 'engine/operations/close';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
@@ -98,6 +98,16 @@ function isCloseJournal(
     (value.reason === undefined || typeof value.reason === 'string') &&
     (value.outcome === undefined || outcomes.has(value.outcome)) &&
     plan.operationId === operationId && UUID.test(operationId) &&
+    plan.fingerprint === fingerprintCloseIntent(
+      plan.kind === 'worktree-close'
+        ? { kind: 'worktree-close', operationId, specId: plan.specId as string }
+        : {
+            kind: 'specification-close',
+            operationId,
+            specId: plan.specId as string,
+            integrateToTargetBranch: plan.integrateToTargetBranch ?? false,
+          },
+    ) &&
     UUID.test(plan.specId) && SHA.test(plan.fingerprint) &&
     (plan.kind === 'worktree-close' || plan.kind === 'specification-close') &&
     typeof plan.slug === 'string' &&
@@ -112,7 +122,8 @@ function isCloseJournal(
     Array.isArray(plan.resources) && plan.resources.length > 0 &&
     plan.resources.every((resource: unknown) => typeof resource === 'string' && resource.length > 0) &&
     new Set(plan.resources).size === plan.resources.length &&
-    plan.resources.every((resource: string, i: number) => i === 0 || plan.resources[i-1] < resource)
+    plan.resources.every((resource: string, i: number) => i === 0 || plan.resources[i-1] < resource) &&
+    plan.resources.join('\0') === resourcesForClosePlan(plan as unknown as CloseJournal['plan'], context.project.projectId).join('\0')
   );
 }
 
