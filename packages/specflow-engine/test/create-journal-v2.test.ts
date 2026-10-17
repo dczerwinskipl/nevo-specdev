@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   bootstrapProjectHome,
+  createSpecification,
   createSpecificationScaffold,
   createSpecificationFromRequest,
   openSpecFlowEngine,
@@ -241,7 +242,13 @@ describe('VC05 — atomic v2 writer with legacy v1 retry', () => {
 
     const restarted = await openSpecFlowEngine({ cwd: context.project.homeRoot });
     const request = { operationId, title, target: { kind: 'existing' as const, workspaceId } };
-    const createdSpec = await createSpecificationFromRequest(restarted, request);
+    // This is a seeded interrupted v2 operation: only the trusted Engine
+    // recovery path may take over its original writer.
+    const createdSpec = await createSpecification(
+      restarted,
+      { operationId, title, created, target: { kind: 'existing', workspaceId } },
+      { resumeInterruptedOperation: true },
+    );
     expect(createdSpec.relativeManifestPath).toBe(historical.files[0]?.relativePath);
     expect(
       await readFile(join(createdSpec.workspaceRoot, createdSpec.relativeManifestPath), 'utf8'),
@@ -261,6 +268,11 @@ describe('VC05 — atomic v2 writer with legacy v1 retry', () => {
     const record: CreateJournalV2 = {
       ...historical,
       version: 2,
+      target: {
+        kind: 'existing',
+        workspaceId: historical.target.workspaceId,
+        workspaceRoot: historical.target.workspaceRoot,
+      },
       requestIntent: intent,
       inputFingerprint: fingerprintCreateClientIntent(intent),
     };
