@@ -48,7 +48,7 @@ async function fixture() {
 
 function currentJournal(
   context: Awaited<ReturnType<typeof fixture>>,
-  targetWorkspaceId = randomUUID(),
+  targetWorkspaceId: string = randomUUID(),
 ): CreateJournal {
   const title = 'Current contract';
   const specId = randomUUID();
