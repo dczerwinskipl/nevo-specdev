@@ -107,6 +107,7 @@ function isCloseJournal(
     isWorkspace(plan.source) &&
     (plan.target === undefined || isWorkspace(plan.target)) &&
     (plan.targetBranch === undefined || typeof plan.targetBranch === 'string') &&
+    (plan.integrateToTargetBranch === undefined || typeof plan.integrateToTargetBranch === 'boolean') &&
     (plan.configRevision === undefined || (typeof plan.configRevision === 'string' && SHA.test(plan.configRevision))) &&
     Array.isArray(plan.resources) && plan.resources.length > 0 &&
     plan.resources.every((resource: unknown) => typeof resource === 'string' && resource.length > 0) &&

@@ -2,6 +2,8 @@ import { isDeepStrictEqual } from 'node:util';
 
 import type { SpecFlowEngine } from '../../application';
 import { withProjectControlLock } from '../../project/control-lock';
+import { readWorkspaceRegistry } from '../../project/workspace-registry';
+import { readProjectGitPolicy } from '../../version-control/worktrees/config';
 import { CloseOperationError, type CloseJournal, type ClosePlan } from './model';
 import { readCloseJournal, publishCloseJournal } from './journal-store';
 import { assertResourcesAvailable } from './resources';
@@ -25,6 +27,10 @@ export async function reserveCloseOperation(
   engine: SpecFlowEngine,
   request: CloseRequest & { readonly operationId: string },
 ): Promise<{ readonly journal: CloseJournal; readonly existing: boolean }> {
+  // Git inspection is outside the short coordination lock. The immutable
+  // snapshot is verified against registry/config CAS inside the lock, and
+  // future effects must re-verify pinned HEAD/index/physical source.
+  const plan: ClosePlan = await previewCloseOperation(engine, request);
   return withProjectControlLock(engine.context, async () => {
     const previous = await readCloseJournal(engine.context, request.operationId);
     if (previous) {
@@ -34,15 +40,24 @@ export async function reserveCloseOperation(
         throw new CloseOperationError('CLOSE_CONFLICT', 'OperationId belongs to a different lifecycle intent.');
       }
       if (request.kind === 'specification-close' && request.integrateToTargetBranch !== undefined) {
-        const integrated = previous.plan.target !== undefined &&
-          previous.plan.source.workspaceId !== previous.plan.target.workspaceId;
+        const integrated = previous.plan.integrateToTargetBranch ?? false;
         if (integrated !== request.integrateToTargetBranch) {
           throw new CloseOperationError('CLOSE_CONFLICT', 'OperationId changed immutable integration selection.');
         }
       }
       return { journal: previous, existing: true };
     }
-    const plan: ClosePlan = await previewCloseOperation(engine, request);
+    const latest = await readWorkspaceRegistry(engine.context);
+    if (latest.revision !== plan.registryRevision) {
+      throw new CloseOperationError('CLOSE_CONFLICT', 'Registry revision changed after preview.');
+    }
+    if (plan.configRevision !== undefined) {
+      const config = await readProjectGitPolicy(engine.context);
+      if (config.revision !== plan.configRevision ||
+          config.policy.integrationTargetBranch !== plan.targetBranch) {
+        throw new CloseOperationError('CLOSE_CONFLICT', 'Project integration policy changed after preview.');
+      }
+    }
     await assertResourcesAvailable(engine.context, plan.resources, {
       kind: 'close',
       operationId: plan.operationId,

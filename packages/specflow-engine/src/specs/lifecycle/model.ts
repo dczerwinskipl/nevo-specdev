@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 
 import { validateOperationId } from '../create-journal';
+import { isValidSpecificationId } from '../model';
 
 export type CloseKind = 'worktree-close' | 'specification-close';
 
@@ -57,6 +58,7 @@ export interface ClosePlan {
   readonly source: CloseWorkspaceEvidence;
   readonly target?: CloseWorkspaceEvidence;
   readonly targetBranch?: string;
+  readonly integrateToTargetBranch?: boolean;
   readonly configRevision?: string;
   readonly resources: readonly string[];
 }
@@ -79,7 +81,7 @@ export function fingerprintCloseIntent(input: CloseIntent): string {
 
 export function normalizeCloseIntent(input: CloseIntent): CloseIntent {
   validateOperationId(input.operationId);
-  if (!/^[a-f0-9]{8}-[a-f0-9-]{27,}$/iu.test(input.specId)) {
+  if (!isValidSpecificationId(input.specId)) {
     throw new CloseOperationError('CLOSE_INVALID', 'Invalid Specification identity.');
   }
   if (input.kind === 'worktree-close') {

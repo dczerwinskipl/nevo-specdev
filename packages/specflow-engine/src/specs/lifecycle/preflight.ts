@@ -76,6 +76,9 @@ export async function previewCloseOperation(
   request: CloseRequest,
 ): Promise<ClosePlan> {
   const operationId = request.operationId ?? randomUUID();
+  if (request.kind !== 'worktree-close' && request.kind !== 'specification-close') {
+    throw new CloseOperationError('CLOSE_INVALID', 'Unknown lifecycle operation kind.');
+  }
   if (!isValidSpecificationId(request.specId)) {
     throw new CloseOperationError('CLOSE_INVALID', 'Invalid Specification identity.');
   }
@@ -170,6 +173,7 @@ export async function previewCloseOperation(
     source,
     ...(target ? { target } : {}),
     ...(targetBranch ? { targetBranch } : {}),
+    ...(request.kind === 'specification-close' && linked ? { integrateToTargetBranch: integrate } : {}),
     ...(configRevision ? { configRevision } : {}),
     resources,
   };
