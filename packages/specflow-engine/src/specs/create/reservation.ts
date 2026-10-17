@@ -1,6 +1,9 @@
 import { randomUUID } from 'node:crypto';
+import { setTimeout as sleep } from 'node:timers/promises';
 
 import type { SpecFlowEngine } from '../../application';
+import { assertResourcesAvailable, resourcesForCreate } from '../lifecycle/resources';
+import { CloseOperationError } from '../lifecycle/model';
 import { inspectRegisteredWorkspace } from '../../project/workspace-registry';
 import { openVersionControl } from '../../version-control';
 import { fingerprintCreateClientIntent, type CreateClientIntent } from '../create-intent';
@@ -28,7 +31,13 @@ export async function reserveCreateOperation(
   operationId: string,
   creationDate: () => string,
 ): Promise<{ readonly record: CreateJournal; readonly existing: boolean }> {
-  return withCreateJournalLock(engine.context, async () => {
+  // Preserve the existing separate-Spec Create outcome: overlapping writers
+  // are serialized, never admitted to mutate the same checkout in parallel.
+  // A crash-owned claim is NOT stolen by a timeout.
+  const deadline = Date.now() + 25000;
+  while (true) {
+    try {
+      return await withCreateJournalLock(engine.context, async () => {
     const operations = await listCreateJournals(engine.context);
     const previous = operations.find((item) => item.operationId === operationId);
     if (previous) {
@@ -139,9 +148,24 @@ export async function reserveCreateOperation(
       ...(gitPlan ? { gitPlan } : {}),
       files: scaffold.files.map(({ relativePath, sha256 }) => ({ relativePath, sha256 })),
     };
+    await assertResourcesAvailable(engine.context, resourcesForCreate(record));
     await publishCreateJournal(engine.context, record);
     return { record, existing: false };
-  });
+      });
+    } catch (error) {
+      if (error instanceof CloseOperationError && error.code === 'CLOSE_CONFLICT') {
+        if (Date.now() < deadline) {
+          await sleep(50);
+          continue;
+        }
+        throw new CreateOperationError(
+          'CREATE_CONFLICT',
+          'Checkout/ref is reserved by an unfinished Create or Close operation.',
+        );
+      }
+      throw error;
+    }
+  }
 }
 
 function branchesOverlap(left: string, right: string): boolean {
