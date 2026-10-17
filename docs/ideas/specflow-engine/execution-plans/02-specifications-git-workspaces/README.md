@@ -50,7 +50,7 @@ Each task has its own Markdown file. **Batch** means sequential tasks in one age
 5. T05 solo (CLI/HTTP create)
 6. T06 → T07 sequential batch `2-read-freshness`
 7. T08 solo (Foundation A gate)
-8. T09 SOLO: normalize NEW Specification manifest to specification.yaml WITHOUT execution-mode selector; preserve historic change.yaml read/recovery and old Create journal bytes. No Plan 03 prerequisite.
+8. T09 SOLO: unify Specification manifest to specification.yaml, remove workflow-mode selector and all unreleased Create v1/legacy scaffold branches; keep current-format recovery. No Plan 03 prerequisite.
 9. T10 SOLO: typed lifecycle/preflight/journal AND durable shared checkout/ref resource claims honored by Create+Close; linked archive-only needs no target branch. Review before effects.
 10. T11 SOLO: configured target, checked-out primary Git publication updating HEAD/index/files, isolated clean-merge, durable known-conflict settlement without orphaning linked archive. Independent real-Git review.
 11. T12 SOLO: scoped registry CAS, own vs competing lifecycle journal evidence and guarded managed worktree disposal. Independent data-loss review.
@@ -72,7 +72,7 @@ Each task has its own Markdown file. **Batch** means sequential tasks in one age
 | [E2.T06 — Runtime read integration](tasks/T06-runtime-read-integration.md)                     | E2.T03, E2.T05                  | Sequential batch `2-read-freshness` |
 | [E2.T07 — Live refresh](tasks/T07-live-refresh.md)                                             | E2.T06                          | Sequential batch `2-read-freshness` |
 | [E2.T08 — Safety and regression](tasks/T08-safety-and-regression.md)                           | E2.T04, E2.T05, E2.T06, E2.T07  | Solo                                |
-| [E2.T09 — Normalize Specification manifest](tasks/T09-normalize-specification-manifest.md)     | E2.T08                          | Solo / compatibility gate           |
+| [E2.T09 — Normalize Specification manifest](tasks/T09-normalize-specification-manifest.md) | E2.T08 | Solo / current-contract and recovery gate |
 | [E2.T10 — Closure contract, preview, journal](tasks/T10-closure-contract-preflight-journal.md) | E2.T09; owner decisions         | Solo                                |
 | [E2.T11 — Git integration and proof](tasks/T11-git-integration-proof.md)                       | E2.T10                          | Solo                                |
 | [E2.T12 — Registry rebind and disposal](tasks/T12-registry-rebind-disposal.md)                 | E2.T10–T11                      | Solo                                |
@@ -86,7 +86,7 @@ Each task has its own Markdown file. **Batch** means sequential tasks in one age
 
 ## Material choices to record
 
-- Default spec manifest/slug location and indexes: select from current repo + verified legacy compatibility, not a new schema invented by this plan.
+- Default spec manifest/slug location and indexes: use the sole current specification.yaml contract, not earlier internal prototype formats or an invented new schema.
 - New scaffold may be dirty: record its Engine-owned fingerprint. Do not globally bypass clean Git gates or auto-commit without an explicit decision.
 - Auth for a new worktree occurs at canonical project-level capability before `workspaceId` exists; a client-supplied workspace ID is not an authorization grant.
 - Read model may preserve optional/unavailable sections; missing source must never be disguised as a demo success.
@@ -117,7 +117,7 @@ Dependencies: T09 -> T10 -> T11 -> T12 -> T13; T11 -> T14; (T12, T13, T14) -> T1
 
 ## Self-review implementation admission (mandatory)
 
-- GO for E2.T09 alone after rechecking HEAD; two small review checkpoints for historical byte-replay and new manifest contract.
+- GO for E2.T09 alone after rechecking HEAD; two checkpoints for current strict journal/manifest and real crash recovery; prototype replay is explicitly deleted.
 - T10 MUST own Project Home git.integrationTargetBranch parser validation and the missing-existing-config migration-required contract (current parser rejects the new key; CLI init is Runtime-only). T16 later implements init/reconfigure UX.
 - T11 is NOT ACCEPT until isolated clean merge and post-archive conflict have crash-consistent, non-destructive scratch ownership/recovery, truthful retained archive outcome and viable later CloseWorktree. No infinite per-spec journal reservation.
 - T16 requires independently authorized project-wide Git integrate permission and full branch diff scope; per-Spec CloseSpecification grant cannot merge arbitrary code/project config. Archive-only close does not require Git integrate authority.
@@ -126,8 +126,8 @@ Dependencies: T09 -> T10 -> T11 -> T12 -> T13; T11 -> T14; (T12, T13, T14) -> T1
 
 ## Independent review hold points (2026-10-16)
 
-- T09: GO in two compatibility checkpoints; no closure implementation yet.
-- T10: resource reservations must cover **different** Spec IDs when source/destination index/ref/worktree metadata overlap; Create must participate without invalidating historical journals. Archive-only linked closure must not require target config.
+- T09: one current manifest/journal plus real recovery gate; no closure implementation yet.
+- T10: resource reservations must cover **different** Spec IDs when source/destination index/ref/worktree metadata overlap; Create must participate without weakening current-journal safety; unsupported leftover prototype records are operator-repaired, never silently migrated. Archive-only linked closure must not require target config.
 - T11: HOLD until target publication updates checked-out primary HEAD/index/physical tree with recoverable crash proofs; known conflict after archive commit settles safely and allows later CloseWorktree.
 - T12: own in-flight journal is admissible only at the expected stage with matching operationId/physical identity; another owner's pending journal blocks.
 - T14: archive scoped commit holds the checkout/index/ref resource throughout staging and commit verification.
