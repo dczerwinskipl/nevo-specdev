@@ -1,0 +1,31 @@
+name: Temporary T10 exact Prettier
+
+on:
+  push:
+    branches: [feature/specflow-engine-foundation]
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - name: Format and capture changed TypeScript
+        shell: bash
+        run: |
+          pnpm exec prettier --write "packages/specflow-engine/src/specs/create/reservation.ts" "packages/specflow-engine/src/specs/lifecycle/journal-store.ts" "packages/specflow-engine/src/specs/lifecycle/preflight.ts" "packages/specflow-engine/src/specs/lifecycle/reservation.ts" "packages/specflow-engine/src/version-control/worktrees/policy.ts" "packages/specflow-engine/test/lifecycle-reservations.test.ts" "packages/specflow-engine/test/version-control-policy.test.ts"
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const paths = ["packages/specflow-engine/src/specs/create/reservation.ts","packages/specflow-engine/src/specs/lifecycle/journal-store.ts","packages/specflow-engine/src/specs/lifecycle/preflight.ts","packages/specflow-engine/src/specs/lifecycle/reservation.ts","packages/specflow-engine/src/version-control/worktrees/policy.ts","packages/specflow-engine/test/lifecycle-reservations.test.ts","packages/specflow-engine/test/version-control-policy.test.ts"];
+          for (const path of paths) {
+            const value = fs.readFileSync(path).toString('base64');
+            console.log('CAPTURE_BEGIN ' + path);
+            for (let i=0; i<value.length; i+=1024) {
+              console.log('CAPTURE_DATA ' + value.slice(i,i+1024));
+            }
+            console.log('CAPTURE_END ' + path);
+          }
+          NODE
