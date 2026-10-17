@@ -17,7 +17,7 @@ export async function createSpecificationFromRequest(
   request: CreateSpecificationRequest,
 ): Promise<CreatedSpecification> {
   // No date or ref defaults are chosen outside the Project Home lock. An
-  // existing v1/v2 journal is inspected before sampling a fresh clock.
+  // existing journal is inspected before sampling a fresh clock.
   return createSpecificationWithIntent(
     engine,
     request.operationId ?? randomUUID(),

@@ -20,8 +20,7 @@ import { registrationOf } from './create/registration';
 
 /**
  * Reconstruct a fixed plan from durable evidence, never from the latest naming
- * policy. V1 predates a stored gitInstanceId; Project Home's independently
- * persisted sentinel/registry remains its authority (validated on port reads).
+ * policy. Verify the recorded Git instance against the authoritative Project Home.
  */
 export function planFromCreateJournal(engine: SpecFlowEngine, record: CreateJournal): WorktreePlan {
   const target = record.target;
@@ -29,15 +28,13 @@ export function planFromCreateJournal(engine: SpecFlowEngine, record: CreateJour
     target.kind !== 'new-worktree' ||
     !target.branch ||
     !target.baseCommit ||
-    (record.version === 2 &&
-      (record.gitPlan?.projectRoot !== engine.context.project.homeRoot ||
-        record.gitPlan?.gitInstanceId !== engine.context.project.gitInstanceId))
+    record.gitPlan?.projectRoot !== engine.context.project.homeRoot ||
+    record.gitPlan?.gitInstanceId !== engine.context.project.gitInstanceId
   ) {
     throw recovery('Create journal has no valid pinned Git worktree plan.');
   }
-  // V1 did not persist a separate Git plan: its original target identity is
-  // derived from the reserved slug and the immutable Project Home location.
-  // A different direct child under the same managed parent is NOT equivalent.
+  // The managed target path is derived from the reserved slug and immutable
+  // Project Home location. A different child is NOT equivalent.
   const home = engine.context.project.homeRoot;
   const expectedTarget = join(dirname(home), basename(home) + '-worktrees', record.slug);
   const actualTarget = target.workspaceRoot;

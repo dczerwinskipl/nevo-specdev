@@ -46,7 +46,7 @@ export interface CreateSpecificationOptions {
   readonly confirmInterruptedGitSettled?: boolean;
   /**
    * Explicit operator assertion that the original create executor is no
-   * longer active. Required to resume a nonterminal v2 journal, including
+   * longer active. Required to resume a nonterminal journal, including
    * reserved, manifest-writing and registry-writing. This is NOT inferred
    * from elapsed time or from a stale journal stage.
    *
@@ -75,7 +75,7 @@ export async function inspectCreateSpecification(
  */
 /**
  * Trusted low-level Engine API. Its explicit 'created' is a clock/test input;
- * v2 still chooses it only while holding the first reservation lock.
+ * chosen only while holding the first reservation lock.
  */
 export async function createSpecification(
   engine: SpecFlowEngine,
@@ -92,8 +92,7 @@ export async function createSpecification(
 }
 
 /**
- * One version-aware reservation path for both transports and direct Engine.
- * No new journal v1 can be minted. Existing v1 is retained verbatim on retry.
+ * One canonical journal reservation path for both transports and direct Engine.
  */
 export async function createSpecificationWithIntent(
   engine: SpecFlowEngine,
@@ -110,7 +109,7 @@ export async function createSpecificationWithIntent(
   // terminated without any later mutation having started.
   await afterEffect?.('reservation');
 
-  // A normal retry of an already-reserved v2 operation is *only* a reader.
+  // A normal retry of an already-reserved operation is *only* a reader.
   // Its original writer may still be active inside an uncertain Git/FS stage,
   // even if the journal has not changed for a long time. Do not infer a lease
   // or quiescence from the persisted stage, and do not execute any side effect.
@@ -118,7 +117,6 @@ export async function createSpecificationWithIntent(
   // confirmInterruptedGitSettled flag cannot bypass this writer boundary.
   if (
     reservation.existing &&
-    record.version === 2 &&
     record.stage !== 'completed' &&
     !options.resumeInterruptedOperation
   ) {
@@ -234,7 +232,6 @@ export async function createSpecificationWithIntent(
     throw recovery('Create operation exceeded its bounded state transition count.');
   } catch (error) {
     if (
-      record.version === 2 &&
       error instanceof CreateOperationError &&
       error.code === 'CREATE_CONFLICT'
     ) {

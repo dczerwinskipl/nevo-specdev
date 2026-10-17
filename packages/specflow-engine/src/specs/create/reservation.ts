@@ -10,69 +10,13 @@ import {
   publishCreateJournal,
   withCreateJournalLock,
   type CreateJournal,
-  type CreateJournalV2,
 } from '../create-journal';
-import { sha256 } from '../create-scaffold';
 import { discoverSpecifications } from '../discovery';
 import {
   createSpecificationScaffold,
   isValidSpecificationId,
   validateSpecificationScaffoldInput,
 } from '../model';
-import type { CreateSpecificationInput } from './create-input';
-
-function normalize(input: CreateSpecificationInput): Omit<CreateSpecificationInput, 'operationId'> {
-  const title = input.title.replace(/\s+/gu, ' ').trim();
-  const goal = input.goal?.trim();
-  // Reuse canonical validation without generating a throwaway Spec identity.
-  validateSpecificationScaffoldInput({ title, created: input.created });
-  if (input.target.kind === 'existing') {
-    if (!isValidSpecificationId(input.target.workspaceId)) {
-      throw new CreateOperationError('CREATE_OPERATION_INVALID', 'Invalid target workspaceId.');
-    }
-    return {
-      title,
-      created: input.created,
-      ...(goal ? { goal } : {}),
-      target: { kind: 'existing', workspaceId: input.target.workspaceId },
-    };
-  }
-  if (typeof input.target.baseRef !== 'string' || !input.target.baseRef) {
-    throw new CreateOperationError('CREATE_OPERATION_INVALID', 'Git baseRef is required.');
-  }
-  return {
-    title,
-    created: input.created,
-    ...(goal ? { goal } : {}),
-    target: {
-      kind: 'new-worktree',
-      baseRef: input.target.baseRef,
-      ...(input.target.branch ? { branch: input.target.branch } : {}),
-    },
-  };
-}
-
-function legacyFingerprint(intent: CreateClientIntent, created: string): string {
-  // The exact original v1 normalized field order and HEAD fallback.
-  const legacy: CreateSpecificationInput = {
-    operationId: '00000000-0000-4000-8000-000000000000',
-    title: intent.title,
-    created,
-    ...(intent.goal ? { goal: intent.goal } : {}),
-    target:
-      intent.target.kind === 'existing'
-        ? intent.target
-        : {
-            kind: 'new-worktree',
-            baseRef:
-              intent.target.baseRef.kind === 'explicit' ? intent.target.baseRef.value : 'HEAD',
-            ...(intent.target.branch.kind === 'explicit'
-              ? { branch: intent.target.branch.value }
-              : {}),
-          },
-  };
-  return sha256(JSON.stringify(normalize(legacy)));
-}
 
 /**
  * First lock winner owns the creation date and pinned Git effect plan.
@@ -88,10 +32,7 @@ export async function reserveCreateOperation(
     const operations = await listCreateJournals(engine.context);
     const previous = operations.find((item) => item.operationId === operationId);
     if (previous) {
-      const fingerprint =
-        previous.version === 1
-          ? legacyFingerprint(intent, previous.created)
-          : fingerprintCreateClientIntent(intent);
+      const fingerprint = fingerprintCreateClientIntent(intent);
       if (previous.inputFingerprint !== fingerprint) {
         throw new CreateOperationError(
           'CREATE_CONFLICT',
@@ -124,7 +65,7 @@ export async function reserveCreateOperation(
       throw new CreateOperationError('CREATE_CONFLICT', 'Specification slug is already reserved.');
     }
 
-    let target: CreateJournalV2['target'];
+    let target: CreateJournal['target'];
     let gitPlan: { readonly projectRoot: string; readonly gitInstanceId: string } | undefined;
     if (intent.target.kind === 'existing') {
       if (!isValidSpecificationId(intent.target.workspaceId)) {
