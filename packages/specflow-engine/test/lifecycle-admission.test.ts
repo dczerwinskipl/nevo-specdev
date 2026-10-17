@@ -272,5 +272,19 @@ describe('E2.T10 — read-only lifecycle admission and durable shared Git resour
       code: 'CLOSE_JOURNAL_CORRUPT',
     });
     expect(JSON.parse(await readFile(path, 'utf8'))).toEqual(corrupted);
+
+    // A forged "completed" state without Git/registry/filesystem proofs must
+    // not release reserved checkout/index/ref ownership.
+    await writeFile(
+      path,
+      JSON.stringify({
+        ...original,
+        stage: 'completed',
+        outcome: 'integrated-and-removed',
+      }),
+    );
+    await expect(listCloseJournals(engine.context)).rejects.toMatchObject({
+      code: 'CLOSE_JOURNAL_CORRUPT',
+    });
   }, 90000);
 });

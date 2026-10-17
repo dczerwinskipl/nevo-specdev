@@ -90,35 +90,16 @@ function isCloseJournal(
 ): value is CloseJournal {
   if (!isRecord(value) || !isRecord(value.plan)) return false;
   const plan = value.plan;
-  const stages = new Set([
-    'reserved',
-    'archive-initiated',
-    'archive-committed',
-    'integration-preparation-initiated',
-    'integration-publish-initiated',
-    'integration-verified',
-    'binding-rebound',
-    'disposal-initiated',
-    'completed',
-    'archived-linked-awaiting-integration',
-    'recovery-required',
-  ]);
-  const outcomes = new Set([
-    'integrated-and-removed',
-    'archive-only-closed',
-    'archived-linked-awaiting-integration',
-    'archived-in-primary',
-    'worktree-integrated-and-removed',
-  ]);
+  // No archive/merge/rebind/removal executor exists in T10 yet. A malicious
+  // or truncated journal cannot claim terminal success and drop its resource
+  // reservation until a later task installs evidence-backed stage decoding.
+  if (value.stage !== 'reserved' || value.outcome !== undefined || value.reason !== undefined) {
+    return false;
+  }
   return (
     value.version === 1 &&
     value.projectId === context.project.projectId &&
     value.gitInstanceId === context.project.gitInstanceId &&
-    typeof value.stage === 'string' &&
-    stages.has(value.stage) &&
-    (value.reason === undefined || typeof value.reason === 'string') &&
-    (value.outcome === undefined ||
-      (typeof value.outcome === 'string' && outcomes.has(value.outcome))) &&
     plan.operationId === operationId &&
     UUID.test(operationId) &&
     typeof plan.specId === 'string' &&
