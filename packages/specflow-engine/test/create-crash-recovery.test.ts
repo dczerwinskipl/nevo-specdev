@@ -34,11 +34,7 @@ import {
   type SpecFlowEngine,
 } from '../src/testing';
 import { withProjectControlLock } from '../src/project/control-lock';
-import {
-  CREATE_JOURNAL_RELATIVE_DIR,
-  createJournalPath,
-  withCreateJournalLock,
-} from '../src/specs/create-journal';
+import { CREATE_JOURNAL_RELATIVE_DIR } from '../src/specs/create-journal';
 import { createGitTestProject, git } from './support/git-project';
 
 const roots: string[] = [];
