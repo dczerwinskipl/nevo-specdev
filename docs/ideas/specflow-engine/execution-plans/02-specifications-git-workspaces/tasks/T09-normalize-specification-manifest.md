@@ -1,58 +1,53 @@
 ---
 id: ideas.specflow-engine.plan-02.task-09
 type: engineering
-title: 'E2.T09 — Normalize Specification manifest contract'
+title: 'E2.T09 — Normalize Specification manifest and Create journal'
 status: draft
 scope: specflow
 areas: [workflow, cli, testing]
-tags: [execution-task, temporary, specification-contract, compatibility]
+tags: [execution-task, temporary, specification-contract, pre-release]
 read_when:
   - implementing or reviewing E2.T09
 summary: >
-  Remove the redundant execution-mode marker and rename new canonical manifest to specification.yaml, without breaking existing manifests or Durable Create recovery.
+  Establish one canonical specification.yaml and one strict current Create journal,
+  without prototype-only backward compatibility; retain durable recovery guarantees.
 related:
   - ideas.specflow-engine.plan-02
   - ideas.specflow-engine.spec-creation
   - ideas.specflow-engine.specification-worktree-closure
 ---
 
-# E2.T09 — Normalize Specification manifest contract
+# E2.T09 — Normalize Specification manifest and Create journal
 
-**Temporary executable task**, branch feature/specflow-engine-foundation / existing PR #53. No production implementation in this planning commit. This is a narrowly scoped follow-up after E2.T01–E2.T08; do not reopen or reimplement accepted foundation tasks.
-
-## Prerequisites and run mode
-
-- E2.T08 accepted baseline.
-- SOLO: implement in two separately verified checkpoints within this task: first prove historical Create v1/v2 journal exact-byte replay against unchanged legacy fixture, THEN switch new generator/repository paths and remove execution-mode marker. Review combined actual Git/crash tests before T10. No parallel changes to journal codec, generator or manifest parser.
+This task is part of the existing PR #53. **Pre-release contract rule:** formats created only by earlier, unreleased PR commits are not compatibility commitments. No permanent adapters, legacy renderers, v1 codec or automatic migration. Preserve crash safety for the current format.
 
 ## Product contract
 
-Nevo SpecFlow has one deterministic workflow architecture. A Specification does not select an execution algorithm, so new manifest scaffolds MUST NOT persist workflow.mode or invent another workflow execution mode. The canonical version-controlled Specification manifest is named specification.yaml (not change.yaml or state.yaml): it contains the spec's durable definition/metadata/lifecycle status, NOT host-local sessions, mutable process locks or execution journals. Do not confuse workflow definition/step/action identifiers with a mode selector. Current Foundation Specification closing has no exit-gate evaluator, no fake administrative bypass and no exit-evaluation evidence; later workflow integration belongs in its real feature.
+- One Specification manifest: `specs/{active|archive}/{slug}/specification.yaml`, with valid Spec identity, definition and lifecycle metadata.
+- No `workflow.mode` or other execution-mode selector; deterministic orchestration is intrinsic.
+- One strict current Durable Create journal (`version: 2`), with immutable request intent, generated date, physical checkout identity, exact scaffold paths and SHA-256 evidence, plus CAS-controlled progress.
+- Old `change.yaml` directories, unsupported journal versions and obsolete scaffold hashes fail closed with actionable repair/recreate guidance; **never** silently reinterpret, overwrite, rename or delete user files.
 
-## Owned files
+## Implementation
 
-- packages/specflow-engine/src/specs/model.ts: new scaffold emits specification.yaml WITHOUT mode marker; audit overview.md generated metadata for outdated change-domain terms (avoid unrelated taxonomy migration).
-- packages/specflow-engine/src/specs/repository.ts, canonical-source.ts and discovery/read projections: recognize exact allowed filename variants without guessing, rejecting an ambiguous directory with both manifest names.
-- packages/specflow-engine/src/specs/create-scaffold.ts, specs/create/journal-{model,codec}.ts and specs/create/reservation.ts only as narrowly required to maintain v1/v2 creation intent recovery and stable fingerprint semantics.
-- packages/specflow-engine/test/specifications.test.ts, create-journal-v2.test.ts, durable-create.test.ts and create-crash-recovery.test.ts for positive/negative persistence, retry, portability.
-- Documentation: specification-creation.md, accepted workflow contracts only if inaccurate; never add a selectable mode or pretend one is implemented. No Runtime/CLI new feature required.
+1. Remove `createLegacySpecificationScaffold` and the legacy/current renderer fork. The new renderer writes only `specification.yaml`.
+2. Remove `CreateJournalV1`, old v1 fingerprint/HEAD fallback and compatibility branches from journal codec, reservation and Git planning. Keep one closed discriminated model for existing checkout versus new managed worktree. Preserve explicit client omission versus override in pinned v2 intent.
+3. Repository/discovery/canonical-source accepts exactly correctly cased `specification.yaml`. A `change.yaml`-only directory, both filenames, symlinks, path redirection, invalid slugs or duplicate identities fail closed. No mode-field fallback.
+4. Retain strict durable journal validation (fingerprint, file list, canonical path, Git instance, workspace incarnation) and stage-based idempotency. Existing uncompleted records of the CURRENT format resume only via trusted explicit operator recovery. Normal CLI/HTTP retry must not silently take over an active writer.
+5. Verify real process SIGKILL at reservation, Git mutation, manifest write and registry publication where already covered. Verify unknown Git effects, tampered scaffold and conflicting operationId fail closed. Retain Windows/macOS/Linux evidence.
+6. Replace prototype-migration tests with positive current-format coverage and negative tests rejecting obsolete versions/paths. Do not delete unrelated version-control capability regression tests.
 
-## Implementation and compatibility requirements
+## Acceptance
 
-1. New artifacts use specs/{active|archive}/{slug}/specification.yaml; remove workflow.mode and its selector semantics in the scaffold for NEW operations; no replacement discriminator, toggle or default. Existing parser/read projections must not depend on this redundant field. Deterministic workflow execution remains the sole architecture direction.
-2. **P1 recovery compatibility**: unfinished persisted Create v1/v2 journal entries were fingerprinted against bytes GENERATED WITH the marker, under the historical filename change.yaml. The present create-scaffold.ts reconstructs a scaffold and compares all hashes to immutable record.files. A naive generator-only edit makes old intent unrecoverable. Preserve exact old-byte replay for such existing journals while new reservations use marker-free output, with an explicit, validated scaffold format discriminator for new records OR another equally strict proven compatibility mechanism. Do not silently re-hash, overwrite, migrate or mutate existing journal identity. Avoid adding a speculative schema version unless necessary.
-3. Completed earlier creation operations and existing manifests with historical change.yaml and the mode marker must remain readable and idempotently resolvable. The repository reader recognizes EXACTLY one of specification.yaml (new) or change.yaml (historical), never an active-first or filename-preference fallback that masks duplicates. If both exist, or symlinks, invalid identity or collision is detected, fail closed; do not silently rename, copy or delete committed user files. Never rewrite user-authored/committed manifests as a side-effect of create retry or closing. Any eventual physical cleanup of the marker in old manifests must be a separate explicit migration, not an implicit move to archive.
-4. Audit code and documentation references to literal change.yaml (including CLI, Runtime read canonical documents, git diff path filters, test fixtures, generated index paths and overview metadata); update only those owned by the canonical manifest contract, retaining explicit historical-read path support. Update scaffold unit assertions to verify parsed YAML has NO workflow execution-mode property; don't conflate this with the required task/definition schema. Ensure cross-process SIGKILL/restart recovery of an old interrupted create and new field-free create, including SHA-256 provenance and identical operationId retry. Exercise v1 and v2 persisted journals, including manifest-writing/manifest-written recovery checkpoints.
-5. Ensure new archive/move in T14 preserves a historical manifest filename if that is what source actually contains; explicit migration/normalization is a different operation and cannot be hidden in archive or close. Add a negative test that mismatched or tampered scaffold hashes are rejected rather than "made compatible" by replacing evidence; support Windows/POSIX where actual file/process cases are involved.
+- New create and canonical read produce `specification.yaml`, no execution-mode field.
+- Only the current journal format is accepted; obsolete `version: 1` and `change.yaml` are rejected, not upgraded.
+- Current journal recovery remains idempotent and SHA-256/CAS safe after process failure; the public retry remains observation-only.
+- Full Quality, Engine, real Git/filesystem, Windows/macOS and CI checks pass. Independently review the current code and negative cases before beginning T10.
+- Gate IDs: LC30, LC34, LC35 and LC36. T10 depends on this completed scope.
 
-## Acceptance / verification
+## Pre-release contract policy for PR #53
 
-- New specification.yaml: stable specId, location, status and tasks; no workflow.mode key. Existing change.yaml manifest reads unchanged; no implicit rewrite or rename.
-- Old CREATE journals: exact byte/fingerprint proof, safe operator-confirmed interrupted-operation recovery; no overwritten user file, duplicated spec/worktree or second change of operationId.
-- Updated tests explicitly distinguish new scaffold shape/file path from historical journal renderer; reject both filenames together and wrong-case/redirected manifests on Windows and POSIX; verify failed/mismatched evidence stays blocked.
-- Report modified modules, test IDs, OS/Node/Git versions, PASS/FAIL/SKIP, CI outcomes and independent checkpoint review.
-- Gate IDs: LC30, LC34 and LC35–LC36 (test-plan.md). This task is a hard prerequisite for T10.
-- No implementation of Specification workflow, Task/Attempt, Sessions or new execution mode.
+Until a released version or verified real user data requires migration, change internal contracts directly rather than accumulating backward compatibility. Any exception needs a documented real-world data requirement and a separate explicit migration plan. This does **not** relax durability, recovery, concurrency, filesystem safety or authorization requirements.
 
 ## References
 
@@ -61,8 +56,4 @@ Nevo SpecFlow has one deterministic workflow architecture. A Specification does 
 - [Spec creation](../../../specification-creation.md)
 - [Test plan](../../../test-plan.md)
 
-All temporary execution plans, including this task, must be removed before PR #53 merge per the program runbook.
-
-## Self-review implementation guard (required)
-
-The historical journal already records the relative manifest filename and SHA-256 hashes. Distinguish the historic and new scaffold renderers by VERIFIED immutable journal file evidence (historical change.yaml versus new specification.yaml), not by mutable current project defaults or guessing an execution mode. Do not invent a second workflow algorithm. An optional journal format-version marker is justified ONLY if exact immutable evidence alone cannot safely disambiguate. Preserve journal v1/v2 negative/tamper tests, and verify completed historic Specs are never rewritten. A single end-to-end giant refactor does not meet the incremental review checkpoint.
+Temporary execution plans are removed before final PR #53 merge as required by the program runbook.

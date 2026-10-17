@@ -22,7 +22,7 @@ related:
 
 ## Executable prerequisites
 
-- E2.T09 accepted (new scaffold contract and old Create journal recovery)
+- E2.T09 accepted (single specification.yaml and current Create journal recovery; no prototype compatibility)
 - Owner-approved DC05, DC08, DC10, DC13, DC16 direction applied; remaining Git target, merge recovery and source ownership choices reviewed against actual repo
 
 Run mode: **SOLO / independent architecture review**. No parallel writes to shared Git refs, registry schemas, journal/state files, authentication capability lists or runtime composition. Re-check HEAD and approved decisions DC01–DC18 before editing code.
