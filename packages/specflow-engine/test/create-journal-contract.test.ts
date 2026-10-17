@@ -88,9 +88,7 @@ describe('Durable Create — one canonical journal and Specification format', ()
   it('persists and reads the current journal without changing immutable evidence', async () => {
     const context = await fixture();
     const record = currentJournal(context);
-    expect(record.files[0]?.relativePath).toBe(
-      'specs/active/current-contract/specification.yaml',
-    );
+    expect(record.files[0]?.relativePath).toBe('specs/active/current-contract/specification.yaml');
     await withCreateJournalLock(context, () => publishCreateJournal(context, record));
     expect(await readCreateJournal(context, record.operationId)).toEqual(record);
   });
@@ -158,9 +156,7 @@ describe('Durable Create — one canonical journal and Specification format', ()
     );
     expect(result.specId).toBe(record.specId);
     expect(result.relativeManifestPath).toBe(record.files[0]!.relativePath);
-    expect(
-      await readFile(join(result.workspaceRoot, result.relativeManifestPath), 'utf8'),
-    ).toBe(
+    expect(await readFile(join(result.workspaceRoot, result.relativeManifestPath), 'utf8')).toBe(
       createSpecificationScaffold({
         specId: record.specId,
         title: record.title,
@@ -168,8 +164,9 @@ describe('Durable Create — one canonical journal and Specification format', ()
       }).files[0]!.content,
     );
     expect((await readCreateJournal(context, record.operationId))?.stage).toBe('completed');
-    expect((await engine.readRegistry()).specBindings.filter((x) => x.specId === record.specId))
-      .toHaveLength(1);
+    expect(
+      (await engine.readRegistry()).specBindings.filter((x) => x.specId === record.specId),
+    ).toHaveLength(1);
   }, 120000);
 
   it('rejects extra fields in existing and linked worktree targets', async () => {
@@ -181,7 +178,11 @@ describe('Durable Create — one canonical journal and Specification format', ()
       { baseCommit: 'a'.repeat(40) },
       { unexpected: true },
     ]) {
-      await seed(context, { ...record, target: { ...record.target, ...extra } }, record.operationId);
+      await seed(
+        context,
+        { ...record, target: { ...record.target, ...extra } },
+        record.operationId,
+      );
       await expect(readCreateJournal(context, record.operationId)).rejects.toMatchObject({
         code: 'CREATE_JOURNAL_CORRUPT',
       });

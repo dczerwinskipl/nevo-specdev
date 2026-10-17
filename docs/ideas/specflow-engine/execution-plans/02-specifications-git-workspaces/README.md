@@ -62,25 +62,25 @@ Each task has its own Markdown file. **Batch** means sequential tasks in one age
 
 ### Tasks
 
-| Task                                                                                           | Depends on                      | Run mode                            |
-| ---------------------------------------------------------------------------------------------- | ------------------------------- | ----------------------------------- |
-| [E2.T01 — Specs model and repository](tasks/T01-specs-model-and-repository.md)                 | E1.T07                          | Solo                                |
-| [E2.T02 — Git capability](tasks/T02-git-capability.md)                                         | E2.T01                          | Solo                                |
-| [E2.T03 — Binding and discovery](tasks/T03-binding-and-discovery.md)                           | E2.T01, E2.T02                  | Solo                                |
-| [E2.T04 — Durable create](tasks/T04-durable-create.md)                                         | E2.T02, E2.T03                  | Solo                                |
-| [E2.T05 — CLI and HTTP create](tasks/T05-cli-and-http-create.md)                               | E2.T04                          | Solo                                |
-| [E2.T06 — Runtime read integration](tasks/T06-runtime-read-integration.md)                     | E2.T03, E2.T05                  | Sequential batch `2-read-freshness` |
-| [E2.T07 — Live refresh](tasks/T07-live-refresh.md)                                             | E2.T06                          | Sequential batch `2-read-freshness` |
-| [E2.T08 — Safety and regression](tasks/T08-safety-and-regression.md)                           | E2.T04, E2.T05, E2.T06, E2.T07  | Solo                                |
-| [E2.T09 — Normalize Specification manifest](tasks/T09-normalize-specification-manifest.md) | E2.T08 | Solo / current-contract and recovery gate |
-| [E2.T10 — Closure contract, preview, journal](tasks/T10-closure-contract-preflight-journal.md) | E2.T09; owner decisions         | Solo                                |
-| [E2.T11 — Git integration and proof](tasks/T11-git-integration-proof.md)                       | E2.T10                          | Solo                                |
-| [E2.T12 — Registry rebind and disposal](tasks/T12-registry-rebind-disposal.md)                 | E2.T10–T11                      | Solo                                |
-| [E2.T13 — Close Worktree](tasks/T13-close-worktree-use-case.md)                                | E2.T10–T12                      | Solo                                |
-| [E2.T14 — Archive and scoped commit](tasks/T14-archive-and-scoped-commit.md)                   | E2.T10–T11                      | Solo; conditional disjoint parallel |
-| [E2.T15 — Close Specification](tasks/T15-close-specification-use-case.md)                      | E2.T10, T12–T14; owner decision | Solo                                |
-| [E2.T16 — CLI/HTTP close adapters](tasks/T16-close-cli-http-adapters.md)                       | E2.T13, T15                     | Solo                                |
-| [E2.T17 — Lifecycle regression gate](tasks/T17-lifecycle-recovery-regression.md)               | E2.T10–T16                      | Solo; independent review            |
+| Task                                                                                           | Depends on                      | Run mode                                  |
+| ---------------------------------------------------------------------------------------------- | ------------------------------- | ----------------------------------------- |
+| [E2.T01 — Specs model and repository](tasks/T01-specs-model-and-repository.md)                 | E1.T07                          | Solo                                      |
+| [E2.T02 — Git capability](tasks/T02-git-capability.md)                                         | E2.T01                          | Solo                                      |
+| [E2.T03 — Binding and discovery](tasks/T03-binding-and-discovery.md)                           | E2.T01, E2.T02                  | Solo                                      |
+| [E2.T04 — Durable create](tasks/T04-durable-create.md)                                         | E2.T02, E2.T03                  | Solo                                      |
+| [E2.T05 — CLI and HTTP create](tasks/T05-cli-and-http-create.md)                               | E2.T04                          | Solo                                      |
+| [E2.T06 — Runtime read integration](tasks/T06-runtime-read-integration.md)                     | E2.T03, E2.T05                  | Sequential batch `2-read-freshness`       |
+| [E2.T07 — Live refresh](tasks/T07-live-refresh.md)                                             | E2.T06                          | Sequential batch `2-read-freshness`       |
+| [E2.T08 — Safety and regression](tasks/T08-safety-and-regression.md)                           | E2.T04, E2.T05, E2.T06, E2.T07  | Solo                                      |
+| [E2.T09 — Normalize Specification manifest](tasks/T09-normalize-specification-manifest.md)     | E2.T08                          | Solo / current-contract and recovery gate |
+| [E2.T10 — Closure contract, preview, journal](tasks/T10-closure-contract-preflight-journal.md) | E2.T09; owner decisions         | Solo                                      |
+| [E2.T11 — Git integration and proof](tasks/T11-git-integration-proof.md)                       | E2.T10                          | Solo                                      |
+| [E2.T12 — Registry rebind and disposal](tasks/T12-registry-rebind-disposal.md)                 | E2.T10–T11                      | Solo                                      |
+| [E2.T13 — Close Worktree](tasks/T13-close-worktree-use-case.md)                                | E2.T10–T12                      | Solo                                      |
+| [E2.T14 — Archive and scoped commit](tasks/T14-archive-and-scoped-commit.md)                   | E2.T10–T11                      | Solo; conditional disjoint parallel       |
+| [E2.T15 — Close Specification](tasks/T15-close-specification-use-case.md)                      | E2.T10, T12–T14; owner decision | Solo                                      |
+| [E2.T16 — CLI/HTTP close adapters](tasks/T16-close-cli-http-adapters.md)                       | E2.T13, T15                     | Solo                                      |
+| [E2.T17 — Lifecycle regression gate](tasks/T17-lifecycle-recovery-regression.md)               | E2.T10–T16                      | Solo; independent review                  |
 
 **Batch policy:** never auto-batch a high-risk solo gate with dependent tasks; re-evaluate shared file ownership at dispatch. In particular, lock/claim, security, HTTP scopes, durability/recovery and dispatch uncertainty need an explicit review checkpoint. If a task uncovers an architecture conflict, stop dependent tasks but continue unaffected, disjoint work.
 

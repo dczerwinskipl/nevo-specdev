@@ -76,8 +76,7 @@ function isValidJournalTarget(value: unknown): boolean {
   ) {
     return false;
   }
-  const allowed =
-    value.kind === 'existing' ? EXISTING_TARGET_FIELDS : WORKTREE_TARGET_FIELDS;
+  const allowed = value.kind === 'existing' ? EXISTING_TARGET_FIELDS : WORKTREE_TARGET_FIELDS;
   if (Object.keys(value).some((key) => !allowed.has(key))) return false;
   if (value.kind === 'existing') return true;
   return (
@@ -107,7 +106,10 @@ function isValidJournalFiles(value: unknown, slug: unknown): boolean {
 }
 
 /** Strict durable evidence: no hidden current defaults or generated date in intent. */
-function isValidJournalIntent(context: ResolvedProjectHome, value: Record<string, unknown>): boolean {
+function isValidJournalIntent(
+  context: ResolvedProjectHome,
+  value: Record<string, unknown>,
+): boolean {
   const intent = value.requestIntent;
   const plan = value.gitPlan;
   if (

@@ -115,11 +115,7 @@ export async function createSpecificationWithIntent(
   // or quiescence from the persisted stage, and do not execute any side effect.
   // Only resumeInterruptedOperation permits takeover of Create. The separate
   // confirmInterruptedGitSettled flag cannot bypass this writer boundary.
-  if (
-    reservation.existing &&
-    record.stage !== 'completed' &&
-    !options.resumeInterruptedOperation
-  ) {
+  if (reservation.existing && record.stage !== 'completed' && !options.resumeInterruptedOperation) {
     const observed = await followExistingCreateOperation(engine, operationId);
     if (observed.stage !== 'completed') {
       throw recovery(
@@ -231,10 +227,7 @@ export async function createSpecificationWithIntent(
     }
     throw recovery('Create operation exceeded its bounded state transition count.');
   } catch (error) {
-    if (
-      error instanceof CreateOperationError &&
-      error.code === 'CREATE_CONFLICT'
-    ) {
+    if (error instanceof CreateOperationError && error.code === 'CREATE_CONFLICT') {
       // An advanced CAS means another writer won. Do not retry the same
       // effect; observe completion and verify the persisted identity.
       const observed = await followExistingCreateOperation(engine, record.operationId);
