@@ -41,6 +41,10 @@ export async function readCloseJournal(
 ): Promise<CloseJournal | undefined> {
   const path = closeJournalPath(context, operationId);
   try {
+    // A symlinked ancestor is a redirected journal namespace, not a missing record.
+    await requireRealDirectory(join(context.project.stateRoot, 'engine'));
+    await requireRealDirectory(join(context.project.stateRoot, 'engine', 'operations'));
+    await requireRealDirectory(join(context.project.stateRoot, JOURNAL_DIR));
     const stat = await lstat(path);
     if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 65536) throw invalid();
     const parsed = JSON.parse(await readFile(path, 'utf8')) as unknown;
@@ -94,10 +98,12 @@ function isCloseJournal(
     value.version === 1 &&
     value.projectId === context.project.projectId &&
     value.gitInstanceId === context.project.gitInstanceId &&
-    stages.has(value.stage) &&
+    typeof value.stage === 'string' && stages.has(value.stage) &&
     (value.reason === undefined || typeof value.reason === 'string') &&
-    (value.outcome === undefined || outcomes.has(value.outcome)) &&
+    (value.outcome === undefined || (typeof value.outcome === 'string' && outcomes.has(value.outcome))) &&
     plan.operationId === operationId && UUID.test(operationId) &&
+    typeof plan.specId === 'string' &&
+    typeof plan.fingerprint === 'string' &&
     plan.fingerprint === fingerprintCloseIntent(
       plan.kind === 'worktree-close'
         ? { kind: 'worktree-close', operationId, specId: plan.specId as string }
@@ -112,8 +118,8 @@ function isCloseJournal(
     (plan.kind === 'worktree-close' || plan.kind === 'specification-close') &&
     typeof plan.slug === 'string' &&
     (plan.location === 'active' || plan.location === 'archive') &&
-    Number.isSafeInteger(plan.registryRevision) &&
-    (plan.bindingGeneration === undefined || Number.isSafeInteger(plan.bindingGeneration)) &&
+    typeof plan.registryRevision === 'number' && Number.isSafeInteger(plan.registryRevision) &&
+    (plan.bindingGeneration === undefined || (typeof plan.bindingGeneration === 'number' && Number.isSafeInteger(plan.bindingGeneration))) &&
     isWorkspace(plan.source) &&
     (plan.target === undefined || isWorkspace(plan.target)) &&
     (plan.targetBranch === undefined || typeof plan.targetBranch === 'string') &&
