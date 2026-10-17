@@ -26,7 +26,16 @@ async function fixture() {
     'runtime: {}\ngit:\n  enabled: false\n  integrationTargetBranch: ' + branch + '\n',
   );
   git(root, 'add', '--', '.nevo/config.yaml');
-  git(root, '-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'target');
+  git(
+    root,
+    '-c',
+    'user.name=Test',
+    '-c',
+    'user.email=test@example.invalid',
+    'commit',
+    '-qm',
+    'target',
+  );
   const engine = await bootstrapProjectHome(root);
   return { root, engine, branch };
 }
@@ -105,9 +114,7 @@ describe('E2.T10 — shared durable resource admission', () => {
     ).rejects.toMatchObject({ code: 'CLOSE_CONFLICT' });
     await withProjectControlLock(engine.context, async () => {
       await expect(
-        assertResourcesAvailable(engine.context, [
-          'checkout:' + engine.workspace.workspaceId,
-        ]),
+        assertResourcesAvailable(engine.context, ['checkout:' + engine.workspace.workspaceId]),
       ).rejects.toMatchObject({ code: 'CLOSE_CONFLICT' });
     });
     expect(git(root, 'status', '--porcelain')).toBe('');
