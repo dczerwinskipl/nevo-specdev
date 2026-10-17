@@ -153,8 +153,7 @@ export async function previewCloseOperation(
     const primary = registry.workspaces.find(
       (item) => item.workspaceId === registry.primaryWorkspaceId,
     );
-    if (primary?.kind !== 'primary')
-      throw invalid('Verified primary workspace is unavailable.');
+    if (primary?.kind !== 'primary') throw invalid('Verified primary workspace is unavailable.');
     const inspected = await inspectRegisteredWorkspace(
       engine.context,
       registry,
