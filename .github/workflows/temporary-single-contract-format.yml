@@ -19,10 +19,8 @@ jobs:
           pnpm exec prettier --write "docs/ideas/specflow-engine/acceptance-criteria.md" "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/README.md" "docs/ideas/specflow-engine/specification-close-decisions.md" "docs/ideas/specflow-engine/specification-close-self-review.md" "docs/ideas/specflow-engine/test-plan.md" "packages/specflow-engine/src/specs/create/journal-codec.ts" "packages/specflow-engine/src/specs/durable-create.ts" "packages/specflow-engine/src/specs/repository.ts" "packages/specflow-engine/test/create-journal-contract.test.ts"
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
-          import { execFileSync } from 'node:child_process';
           const candidates = ["docs/ideas/specflow-engine/acceptance-criteria.md","docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/README.md","docs/ideas/specflow-engine/specification-close-decisions.md","docs/ideas/specflow-engine/specification-close-self-review.md","docs/ideas/specflow-engine/test-plan.md","packages/specflow-engine/src/specs/create/journal-codec.ts","packages/specflow-engine/src/specs/durable-create.ts","packages/specflow-engine/src/specs/repository.ts","packages/specflow-engine/test/create-journal-contract.test.ts"];
-          const changed = execFileSync('git', ['diff','--name-only','--', ...candidates], { encoding: 'utf8' })
-            .trim().split('\\n').filter(Boolean);
+          const changed = candidates;
           for (const path of changed) {
             const encoded = fs.readFileSync(path).toString('base64');
             console.log('FORMAT_BEGIN ' + path);
