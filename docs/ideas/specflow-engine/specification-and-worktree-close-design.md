@@ -24,14 +24,14 @@ related:
 
 Status: proposed for independent architectural review, NOT production authority. Updated for owner integration, project target-branch and manifest naming direction (2026-10-16); re-check HEAD before implementing.
 
-## Verified code baseline and compatibility
+## Verified code baseline and pre-release policy
 
 - Engine exports createSpecificationFromRequest, discoverSpecifications, resolveSpecification; CLI owns specs create/list/resolve; Runtime owns POST /api/specs and GET /api/specs/overview.
 - WorkspaceRegistry has primaryWorkspaceId, registration kind/managed/instanceId and SpecWorkspaceBinding.generation. registry-store intentionally rejects ANY rebind or workspace removal: implement a narrow, independently reviewed lifecycle transition, not a general relaxation of append-only registration.
 - VersionControl.worktrees is an INTERNAL create-only port; the local Git client currently provides creation, worktree inspection and refs but no integration/commit/removal operations.
 - Durable Create v2 records one creation intent, evidence checkpoints and manual interrupted-process confirmation. Reuse validated primitives and semantics, NOT creation journal schemas or flags.
 - The legacy nevo workflow step finish is TASK/step/attempt-scoped. Its gate inspect/verify and action check/execute separation is reusable as an idea, but the legacy spec finalize invokes branch checkout/PR operations that are unsafe in linked worktrees.
-- The deterministic workflow model is the ONLY SpecFlow workflow model. No Specification execution-mode selector is a domain concept. The current Engine scaffold has a redundant mode marker (implementation cleanup in E2.T09). Unreleased Create journal v1 and change.yaml prototypes are not production compatibility contracts; T09 removes those branches and retains crash recovery for the single current format. No installed Specification workflow evaluator exists; neither scaffold metadata nor Task status is exit-gate evidence.
+- The deterministic workflow model is the ONLY SpecFlow workflow model. No Specification execution-mode selector is a domain concept. T09 removes the previously redundant scaffold mode marker; only specification.yaml is canonical. Unreleased Create journal v1 and change.yaml prototypes are not production compatibility contracts; T09 removes those branches and retains crash recovery for the single current format. No installed Specification workflow evaluator exists; neither scaffold metadata nor Task status is exit-gate evidence.
 
 ## Separate use cases and outcomes
 
@@ -144,7 +144,7 @@ Stable error families: target_branch_not_configured, target_branch_not_checked_o
 
 Recommended routes: POST /api/specs/{specId}/worktree/close and POST /api/specs/{specId}/close, with read-only preview endpoints and operation inspection as needed; separate SpecCapabilities.CloseWorktree and CloseSpecification with validated project/spec scope, PLUS project-wide Git integration permission whenever integration is requested. Verify target resource scope from trusted canonical lookup after authenticated admission; never derive grants from caller destinationBranch or workspaceId. Runtime and CLI call identical Engine use cases. Existing create scope is NOT authority to close.
 
-## Explicit deferrals and compatibility
+## Explicit deferrals and unsupported prototypes
 
 Deferred: custom rebase/PR flows; unsafe unmanaged/shared cleanup; auto branch deletion; remote push; distributed fencing of arbitrary OS writers; session-native resume migration; Task/Attempt gates; actual Specification exit gates/actions; workflow evaluator/action implementation. Do not simulate deferred capabilities in Foundation. Plan 03 claims and Plan 04 Sessions will later strengthen close admission; they are not runtime dependencies for the explicitly limited Plan 02 close.
 
