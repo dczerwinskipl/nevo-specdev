@@ -50,9 +50,14 @@ export async function reserveCloseOperation(
     }
     if (plan.configRevision !== undefined) {
       const config = await readProjectGitPolicy(engine.context);
-      if (config.revision !== plan.configRevision ||
-          config.policy.integrationTargetBranch !== plan.targetBranch) {
-        throw new CloseOperationError('CLOSE_CONFLICT', 'Project integration policy changed after preview.');
+      if (
+        config.revision !== plan.configRevision ||
+        config.policy.integrationTargetBranch !== plan.targetBranch
+      ) {
+        throw new CloseOperationError(
+          'CLOSE_CONFLICT',
+          'Project integration policy changed after preview.',
+        );
       }
     }
     await assertResourcesAvailable(engine.context, plan.resources, {
@@ -69,7 +74,10 @@ export async function reserveCloseOperation(
     await publishCloseJournal(engine.context, journal);
     const stored = await readCloseJournal(engine.context, plan.operationId);
     if (!stored || !isDeepStrictEqual(stored, journal)) {
-      throw new CloseOperationError('CLOSE_RECOVERY_REQUIRED', 'Close reservation was not durably verified.');
+      throw new CloseOperationError(
+        'CLOSE_RECOVERY_REQUIRED',
+        'Close reservation was not durably verified.',
+      );
     }
     return { journal: stored, existing: false };
   });
@@ -80,11 +88,19 @@ function assertMatchingRequest(
   request: CloseRequest & { readonly operationId: string },
 ): void {
   if (journal.plan.kind !== request.kind || journal.plan.specId !== request.specId) {
-    throw new CloseOperationError('CLOSE_CONFLICT', 'OperationId belongs to another lifecycle intent.');
+    throw new CloseOperationError(
+      'CLOSE_CONFLICT',
+      'OperationId belongs to another lifecycle intent.',
+    );
   }
-  if (request.kind === 'specification-close' &&
-      request.integrateToTargetBranch !== undefined &&
-      journal.plan.integrateToTargetBranch !== request.integrateToTargetBranch) {
-    throw new CloseOperationError('CLOSE_CONFLICT', 'OperationId changed immutable integration selection.');
+  if (
+    request.kind === 'specification-close' &&
+    request.integrateToTargetBranch !== undefined &&
+    journal.plan.integrateToTargetBranch !== request.integrateToTargetBranch
+  ) {
+    throw new CloseOperationError(
+      'CLOSE_CONFLICT',
+      'OperationId changed immutable integration selection.',
+    );
   }
 }

@@ -35,9 +35,11 @@ async function gitValue(root: string, args: readonly string[], reason: string): 
 }
 
 /** Read-only: git status may refresh index by default; disable optional locks. */
-async function gitFacts(
-  workspace: { readonly workspaceId: string; readonly root: string; readonly instanceId?: string },
-): Promise<CloseWorkspaceEvidence> {
+async function gitFacts(workspace: {
+  readonly workspaceId: string;
+  readonly root: string;
+  readonly instanceId?: string;
+}): Promise<CloseWorkspaceEvidence> {
   const root = workspace.root;
   const state = await executeGit(root, [
     '-c',
@@ -48,7 +50,9 @@ async function gitFacts(
     '--untracked-files=all',
   ]);
   if (state.exitCode !== 0 || state.stdout) {
-    throw invalid('Checkout has staged, modified or untracked files, or Git status is unavailable.');
+    throw invalid(
+      'Checkout has staged, modified or untracked files, or Git status is unavailable.',
+    );
   }
   const branchRef = await gitValue(
     root,
@@ -56,7 +60,11 @@ async function gitFacts(
     'Checkout must be on an attached local branch.',
   );
   if (!branchRef.startsWith('refs/heads/')) throw invalid('Checkout branch is not a local ref.');
-  const head = await gitValue(root, ['rev-parse', '--verify', 'HEAD'], 'Checkout HEAD is unavailable.');
+  const head = await gitValue(
+    root,
+    ['rev-parse', '--verify', 'HEAD'],
+    'Checkout HEAD is unavailable.',
+  );
   if (!/^[0-9a-f]{40}(?:[0-9a-f]{24})?$/iu.test(head)) throw invalid('Invalid Git HEAD.');
   return {
     workspaceId: workspace.workspaceId,
@@ -84,13 +92,19 @@ export async function previewCloseOperation(
   }
   const canonical = await resolveSpecification(engine, request.specId);
   if (canonical.status !== 'available') {
-    throw new CloseOperationError('CLOSE_UNAVAILABLE', 'Canonical Specification source is unavailable.');
+    throw new CloseOperationError(
+      'CLOSE_UNAVAILABLE',
+      'Canonical Specification source is unavailable.',
+    );
   }
   const registry = await engine.readRegistry();
-  const sourceWorkspace = registry.workspaces.find((item) => item.workspaceId === canonical.workspaceId);
+  const sourceWorkspace = registry.workspaces.find(
+    (item) => item.workspaceId === canonical.workspaceId,
+  );
   if (!sourceWorkspace) throw invalid('Canonical workspace registration disappeared.');
   const linked = sourceWorkspace.kind === 'linked';
-  if (linked && !sourceWorkspace.managed) throw invalid('Unmanaged linked worktree cannot be closed.');
+  if (linked && !sourceWorkspace.managed)
+    throw invalid('Unmanaged linked worktree cannot be closed.');
   if (linked) {
     const occupants = registry.specBindings.filter(
       (item) => item.workspaceId === sourceWorkspace.workspaceId,
@@ -106,19 +120,23 @@ export async function previewCloseOperation(
     if (canonical.specification.location !== 'active') {
       throw invalid('Only an active Specification can be archived.');
     }
-    if (request.integrateToTargetBranch !== undefined &&
-        typeof request.integrateToTargetBranch !== 'boolean') {
+    if (
+      request.integrateToTargetBranch !== undefined &&
+      typeof request.integrateToTargetBranch !== 'boolean'
+    ) {
       throw new CloseOperationError('CLOSE_INVALID', 'Invalid integration selection.');
     }
     if (!linked && request.integrateToTargetBranch !== undefined) {
-      throw new CloseOperationError('CLOSE_INVALID', 'Integration selection is not applicable in primary.');
+      throw new CloseOperationError(
+        'CLOSE_INVALID',
+        'Integration selection is not applicable in primary.',
+      );
     }
   }
   const source = await gitFacts(sourceWorkspace);
   const integrate =
     request.kind === 'worktree-close' ||
-    (request.kind === 'specification-close' && linked &&
-      (request.integrateToTargetBranch ?? true));
+    (request.kind === 'specification-close' && linked && (request.integrateToTargetBranch ?? true));
   const needsTarget = integrate || !linked;
   let target: CloseWorkspaceEvidence | undefined;
   let targetBranch: string | undefined;
@@ -127,16 +145,27 @@ export async function previewCloseOperation(
     const configured = await readProjectGitPolicy(engine.context);
     targetBranch = configured.policy.integrationTargetBranch;
     if (!targetBranch) {
-      throw invalid('Project Home requires explicit git.integrationTargetBranch configuration before this operation.');
+      throw invalid(
+        'Project Home requires explicit git.integrationTargetBranch configuration before this operation.',
+      );
     }
     configRevision = configured.revision;
-    const primary = registry.workspaces.find((item) => item.workspaceId === registry.primaryWorkspaceId);
-    if (!primary || primary.kind !== 'primary') throw invalid('Verified primary workspace is unavailable.');
-    const inspected = await inspectRegisteredWorkspace(engine.context, registry, primary.workspaceId);
+    const primary = registry.workspaces.find(
+      (item) => item.workspaceId === registry.primaryWorkspaceId,
+    );
+    if (!primary || primary.kind !== 'primary')
+      throw invalid('Verified primary workspace is unavailable.');
+    const inspected = await inspectRegisteredWorkspace(
+      engine.context,
+      registry,
+      primary.workspaceId,
+    );
     if (inspected.status !== 'available') throw invalid('Primary worktree is unavailable.');
     target = source.workspaceId === primary.workspaceId ? source : await gitFacts(primary);
     if (target.branch !== targetBranch) {
-      throw invalid('Primary worktree is checked out on a different branch from git.integrationTargetBranch.');
+      throw invalid(
+        'Primary worktree is checked out on a different branch from git.integrationTargetBranch.',
+      );
     }
   }
   const binding = registry.specBindings.find((item) => item.specId === request.specId);
@@ -173,7 +202,9 @@ export async function previewCloseOperation(
     source,
     ...(target ? { target } : {}),
     ...(targetBranch ? { targetBranch } : {}),
-    ...(request.kind === 'specification-close' && linked ? { integrateToTargetBranch: integrate } : {}),
+    ...(request.kind === 'specification-close' && linked
+      ? { integrateToTargetBranch: integrate }
+      : {}),
     ...(configRevision ? { configRevision } : {}),
     resources,
   };

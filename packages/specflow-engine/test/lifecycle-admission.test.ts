@@ -38,9 +38,13 @@ async function fixture(target: 'current' | 'different' | 'none' = 'current') {
   git(root, 'add', '.nevo/config.yaml');
   git(
     root,
-    '-c', 'user.name=SpecFlow Test',
-    '-c', 'user.email=specflow@example.invalid',
-    'commit', '-qm', 'project branch policy',
+    '-c',
+    'user.name=SpecFlow Test',
+    '-c',
+    'user.email=specflow@example.invalid',
+    'commit',
+    '-qm',
+    'project branch policy',
   );
   return { root, engine: await bootstrapProjectHome(root), branch };
 }
@@ -55,12 +59,22 @@ async function specification(engine: SpecFlowEngine, title: string, linked = fal
       : { kind: 'existing', workspaceId: engine.workspace.workspaceId },
   });
   if (linked) roots.push(dirname(created.workspaceRoot));
-  git(created.workspaceRoot, 'add', '--', created.relativeManifestPath, 'specs/active/' + created.slug + '/overview.md');
   git(
     created.workspaceRoot,
-    '-c', 'user.name=SpecFlow Test',
-    '-c', 'user.email=specflow@example.invalid',
-    'commit', '-qm', 'commit authored source',
+    'add',
+    '--',
+    created.relativeManifestPath,
+    'specs/active/' + created.slug + '/overview.md',
+  );
+  git(
+    created.workspaceRoot,
+    '-c',
+    'user.name=SpecFlow Test',
+    '-c',
+    'user.email=specflow@example.invalid',
+    'commit',
+    '-qm',
+    'commit authored source',
   );
   return created;
 }

@@ -53,8 +53,14 @@ export async function assertResourcesAvailable(
     }
   }
   for (const record of closes) {
-    if (record.plan.resources.join('\0') !== resourcesForClosePlan(record.plan, record.projectId).join('\0')) {
-      throw new CloseOperationError('CLOSE_JOURNAL_CORRUPT', 'Close journal resource inventory is inconsistent.');
+    if (
+      record.plan.resources.join('\0') !==
+      resourcesForClosePlan(record.plan, record.projectId).join('\0')
+    ) {
+      throw new CloseOperationError(
+        'CLOSE_JOURNAL_CORRUPT',
+        'Close journal resource inventory is inconsistent.',
+      );
     }
     if (self?.kind === 'close' && self.operationId === record.plan.operationId) continue;
     if (settledClose(record)) continue;

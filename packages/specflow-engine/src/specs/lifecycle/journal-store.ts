@@ -3,7 +3,12 @@ import { join } from 'node:path';
 
 import { writeJsonAtomically } from '../../project/atomic-json';
 import type { ResolvedProjectHome } from '../../project/project-home';
-import { CloseOperationError, fingerprintCloseIntent, resourcesForClosePlan, type CloseJournal } from './model';
+import {
+  CloseOperationError,
+  fingerprintCloseIntent,
+  resourcesForClosePlan,
+  type CloseJournal,
+} from './model';
 
 const JOURNAL_DIR = 'engine/operations/close';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
@@ -86,69 +91,105 @@ function isCloseJournal(
   if (!isRecord(value) || !isRecord(value.plan)) return false;
   const plan = value.plan;
   const stages = new Set([
-    'reserved','archive-initiated','archive-committed','integration-preparation-initiated',
-    'integration-publish-initiated','integration-verified','binding-rebound',
-    'disposal-initiated','completed','archived-linked-awaiting-integration','recovery-required',
+    'reserved',
+    'archive-initiated',
+    'archive-committed',
+    'integration-preparation-initiated',
+    'integration-publish-initiated',
+    'integration-verified',
+    'binding-rebound',
+    'disposal-initiated',
+    'completed',
+    'archived-linked-awaiting-integration',
+    'recovery-required',
   ]);
   const outcomes = new Set([
-    'integrated-and-removed','archive-only-closed','archived-linked-awaiting-integration',
-    'archived-in-primary','worktree-integrated-and-removed',
+    'integrated-and-removed',
+    'archive-only-closed',
+    'archived-linked-awaiting-integration',
+    'archived-in-primary',
+    'worktree-integrated-and-removed',
   ]);
   return (
     value.version === 1 &&
     value.projectId === context.project.projectId &&
     value.gitInstanceId === context.project.gitInstanceId &&
-    typeof value.stage === 'string' && stages.has(value.stage) &&
+    typeof value.stage === 'string' &&
+    stages.has(value.stage) &&
     (value.reason === undefined || typeof value.reason === 'string') &&
-    (value.outcome === undefined || (typeof value.outcome === 'string' && outcomes.has(value.outcome))) &&
-    plan.operationId === operationId && UUID.test(operationId) &&
+    (value.outcome === undefined ||
+      (typeof value.outcome === 'string' && outcomes.has(value.outcome))) &&
+    plan.operationId === operationId &&
+    UUID.test(operationId) &&
     typeof plan.specId === 'string' &&
     typeof plan.fingerprint === 'string' &&
-    plan.fingerprint === fingerprintCloseIntent(
-      plan.kind === 'worktree-close'
-        ? { kind: 'worktree-close', operationId, specId: plan.specId as string }
-        : {
-            kind: 'specification-close',
-            operationId,
-            specId: plan.specId as string,
-            integrateToTargetBranch: plan.integrateToTargetBranch ?? false,
-          },
-    ) &&
-    UUID.test(plan.specId) && SHA.test(plan.fingerprint) &&
+    plan.fingerprint ===
+      fingerprintCloseIntent(
+        plan.kind === 'worktree-close'
+          ? { kind: 'worktree-close', operationId, specId: plan.specId as string }
+          : {
+              kind: 'specification-close',
+              operationId,
+              specId: plan.specId as string,
+              integrateToTargetBranch: plan.integrateToTargetBranch ?? false,
+            },
+      ) &&
+    UUID.test(plan.specId) &&
+    SHA.test(plan.fingerprint) &&
     (plan.kind === 'worktree-close' || plan.kind === 'specification-close') &&
     typeof plan.slug === 'string' &&
     (plan.location === 'active' || plan.location === 'archive') &&
-    typeof plan.registryRevision === 'number' && Number.isSafeInteger(plan.registryRevision) &&
-    (plan.bindingGeneration === undefined || (typeof plan.bindingGeneration === 'number' && Number.isSafeInteger(plan.bindingGeneration))) &&
+    typeof plan.registryRevision === 'number' &&
+    Number.isSafeInteger(plan.registryRevision) &&
+    (plan.bindingGeneration === undefined ||
+      (typeof plan.bindingGeneration === 'number' &&
+        Number.isSafeInteger(plan.bindingGeneration))) &&
     isWorkspace(plan.source) &&
     (plan.target === undefined || isWorkspace(plan.target)) &&
     (plan.targetBranch === undefined || typeof plan.targetBranch === 'string') &&
-    (plan.integrateToTargetBranch === undefined || typeof plan.integrateToTargetBranch === 'boolean') &&
-    (plan.configRevision === undefined || (typeof plan.configRevision === 'string' && SHA.test(plan.configRevision))) &&
-    Array.isArray(plan.resources) && plan.resources.length > 0 &&
-    plan.resources.every((resource: unknown) => typeof resource === 'string' && resource.length > 0) &&
+    (plan.integrateToTargetBranch === undefined ||
+      typeof plan.integrateToTargetBranch === 'boolean') &&
+    (plan.configRevision === undefined ||
+      (typeof plan.configRevision === 'string' && SHA.test(plan.configRevision))) &&
+    Array.isArray(plan.resources) &&
+    plan.resources.length > 0 &&
+    plan.resources.every(
+      (resource: unknown) => typeof resource === 'string' && resource.length > 0,
+    ) &&
     new Set(plan.resources).size === plan.resources.length &&
-    plan.resources.every((resource: string, i: number) => i === 0 || plan.resources[i-1] < resource) &&
-    plan.resources.join('\0') === resourcesForClosePlan(plan as unknown as CloseJournal['plan'], context.project.projectId).join('\0')
+    plan.resources.every(
+      (resource: string, i: number) => i === 0 || plan.resources[i - 1] < resource,
+    ) &&
+    plan.resources.join('\0') ===
+      resourcesForClosePlan(
+        plan as unknown as CloseJournal['plan'],
+        context.project.projectId,
+      ).join('\0')
   );
 }
 
 function isWorkspace(value: unknown): boolean {
-  return isRecord(value) &&
+  return (
+    isRecord(value) &&
     UUID.test(value.workspaceId as string) &&
     typeof value.root === 'string' &&
     typeof value.branch === 'string' &&
     /^[a-f0-9]{40}(?:[a-f0-9]{24})?$/iu.test(value.head as string) &&
-    (value.instanceId === undefined || UUID.test(value.instanceId as string));
+    (value.instanceId === undefined || UUID.test(value.instanceId as string))
+  );
 }
 
 async function requireRealDirectory(path: string): Promise<void> {
   const stat = await lstat(path);
-  if (!stat.isDirectory() || stat.isSymbolicLink() || (await realpath(path)) !== path) throw invalid();
+  if (!stat.isDirectory() || stat.isSymbolicLink() || (await realpath(path)) !== path)
+    throw invalid();
 }
 
 function invalid(): CloseOperationError {
-  return new CloseOperationError('CLOSE_JOURNAL_CORRUPT', 'Close journal is corrupt, redirected or unsupported.');
+  return new CloseOperationError(
+    'CLOSE_JOURNAL_CORRUPT',
+    'Close journal is corrupt, redirected or unsupported.',
+  );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

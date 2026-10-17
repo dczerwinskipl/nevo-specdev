@@ -38,119 +38,127 @@ export async function reserveCreateOperation(
   while (true) {
     try {
       return await withCreateJournalLock(engine.context, async () => {
-    const operations = await listCreateJournals(engine.context);
-    const previous = operations.find((item) => item.operationId === operationId);
-    if (previous) {
-      const fingerprint = fingerprintCreateClientIntent(intent);
-      if (previous.inputFingerprint !== fingerprint) {
-        throw new CreateOperationError(
-          'CREATE_CONFLICT',
-          'OperationId was already used with different immutable inputs.',
-        );
-      }
-      return { record: previous, existing: true };
-    }
+        const operations = await listCreateJournals(engine.context);
+        const previous = operations.find((item) => item.operationId === operationId);
+        if (previous) {
+          const fingerprint = fingerprintCreateClientIntent(intent);
+          if (previous.inputFingerprint !== fingerprint) {
+            throw new CreateOperationError(
+              'CREATE_CONFLICT',
+              'OperationId was already used with different immutable inputs.',
+            );
+          }
+          return { record: previous, existing: true };
+        }
 
-    // Date generated once under Project Home lock, after checking no journal.
-    const created = creationDate();
-    validateSpecificationScaffoldInput({ title: intent.title, created });
-    const canonical = await discoverSpecifications(engine);
-    if (canonical.some((item) => item.status !== 'available')) {
-      throw recovery('Cannot reserve new Spec while an existing canonical source is unavailable.');
-    }
-    const specId = randomUUID();
-    const scaffold = createSpecificationScaffold({
-      specId,
-      title: intent.title,
-      created,
-      goal: intent.goal,
-    });
-    if (
-      canonical.some(
-        (item) => item.status === 'available' && item.specification.slug === scaffold.slug,
-      ) ||
-      operations.some((item) => item.slug === scaffold.slug)
-    ) {
-      throw new CreateOperationError('CREATE_CONFLICT', 'Specification slug is already reserved.');
-    }
+        // Date generated once under Project Home lock, after checking no journal.
+        const created = creationDate();
+        validateSpecificationScaffoldInput({ title: intent.title, created });
+        const canonical = await discoverSpecifications(engine);
+        if (canonical.some((item) => item.status !== 'available')) {
+          throw recovery(
+            'Cannot reserve new Spec while an existing canonical source is unavailable.',
+          );
+        }
+        const specId = randomUUID();
+        const scaffold = createSpecificationScaffold({
+          specId,
+          title: intent.title,
+          created,
+          goal: intent.goal,
+        });
+        if (
+          canonical.some(
+            (item) => item.status === 'available' && item.specification.slug === scaffold.slug,
+          ) ||
+          operations.some((item) => item.slug === scaffold.slug)
+        ) {
+          throw new CreateOperationError(
+            'CREATE_CONFLICT',
+            'Specification slug is already reserved.',
+          );
+        }
 
-    let target: CreateJournal['target'];
-    let gitPlan: { readonly projectRoot: string; readonly gitInstanceId: string } | undefined;
-    if (intent.target.kind === 'existing') {
-      if (!isValidSpecificationId(intent.target.workspaceId)) {
-        throw new CreateOperationError('CREATE_OPERATION_INVALID', 'Invalid target workspaceId.');
-      }
-      const registry = await engine.readRegistry();
-      const inspected = await inspectRegisteredWorkspace(
-        engine.context,
-        registry,
-        intent.target.workspaceId,
-      );
-      if (inspected.status !== 'available') {
-        throw recovery('Selected existing workspace is unavailable.');
-      }
-      target = {
-        kind: 'existing',
-        workspaceId: intent.target.workspaceId,
-        workspaceRoot: inspected.root,
-      };
-    } else {
-      const plan = await openVersionControl(engine).worktrees.plan({
-        slug: scaffold.slug,
-        shortId: specId.slice(0, 8),
-        ...(intent.target.baseRef.kind === 'explicit'
-          ? { baseRefOverride: intent.target.baseRef.value }
-          : {}),
-        ...(intent.target.branch.kind === 'explicit'
-          ? { branchOverride: intent.target.branch.value }
-          : {}),
-      });
-      if (
-        operations.some(
-          (item) =>
-            item.target.kind === 'new-worktree' &&
-            (branchesOverlap(item.target.branch, plan.branch) ||
-              item.target.workspaceRoot.toLowerCase() === plan.targetPath.toLowerCase()),
-        )
-      ) {
-        throw new CreateOperationError(
-          'CREATE_CONFLICT',
-          'Git branch or worktree path is reserved.',
-        );
-      }
-      target = {
-        kind: 'new-worktree',
-        workspaceId: randomUUID(),
-        workspaceRoot: plan.targetPath,
-        instanceId: randomUUID(),
-        branch: plan.branch,
-        baseCommit: plan.baseCommit,
-      };
-      gitPlan = {
-        projectRoot: plan.projectRoot,
-        gitInstanceId: plan.gitInstanceId,
-      };
-    }
+        let target: CreateJournal['target'];
+        let gitPlan: { readonly projectRoot: string; readonly gitInstanceId: string } | undefined;
+        if (intent.target.kind === 'existing') {
+          if (!isValidSpecificationId(intent.target.workspaceId)) {
+            throw new CreateOperationError(
+              'CREATE_OPERATION_INVALID',
+              'Invalid target workspaceId.',
+            );
+          }
+          const registry = await engine.readRegistry();
+          const inspected = await inspectRegisteredWorkspace(
+            engine.context,
+            registry,
+            intent.target.workspaceId,
+          );
+          if (inspected.status !== 'available') {
+            throw recovery('Selected existing workspace is unavailable.');
+          }
+          target = {
+            kind: 'existing',
+            workspaceId: intent.target.workspaceId,
+            workspaceRoot: inspected.root,
+          };
+        } else {
+          const plan = await openVersionControl(engine).worktrees.plan({
+            slug: scaffold.slug,
+            shortId: specId.slice(0, 8),
+            ...(intent.target.baseRef.kind === 'explicit'
+              ? { baseRefOverride: intent.target.baseRef.value }
+              : {}),
+            ...(intent.target.branch.kind === 'explicit'
+              ? { branchOverride: intent.target.branch.value }
+              : {}),
+          });
+          if (
+            operations.some(
+              (item) =>
+                item.target.kind === 'new-worktree' &&
+                (branchesOverlap(item.target.branch, plan.branch) ||
+                  item.target.workspaceRoot.toLowerCase() === plan.targetPath.toLowerCase()),
+            )
+          ) {
+            throw new CreateOperationError(
+              'CREATE_CONFLICT',
+              'Git branch or worktree path is reserved.',
+            );
+          }
+          target = {
+            kind: 'new-worktree',
+            workspaceId: randomUUID(),
+            workspaceRoot: plan.targetPath,
+            instanceId: randomUUID(),
+            branch: plan.branch,
+            baseCommit: plan.baseCommit,
+          };
+          gitPlan = {
+            projectRoot: plan.projectRoot,
+            gitInstanceId: plan.gitInstanceId,
+          };
+        }
 
-    const record: CreateJournal = {
-      version: 2,
-      projectId: engine.context.project.projectId,
-      operationId,
-      inputFingerprint: fingerprintCreateClientIntent(intent),
-      requestIntent: intent,
-      specId,
-      slug: scaffold.slug,
-      title: intent.title,
-      created,
-      ...(intent.goal ? { goal: intent.goal } : {}),
-      stage: 'reserved',
-      target,
-      ...(gitPlan ? { gitPlan } : {}),
-      files: scaffold.files.map(({ relativePath, sha256 }) => ({ relativePath, sha256 })),
-    };
-    await assertResourcesAvailable(engine.context, resourcesForCreate(record));
-    await publishCreateJournal(engine.context, record);
-    return { record, existing: false };
+        const record: CreateJournal = {
+          version: 2,
+          projectId: engine.context.project.projectId,
+          operationId,
+          inputFingerprint: fingerprintCreateClientIntent(intent),
+          requestIntent: intent,
+          specId,
+          slug: scaffold.slug,
+          title: intent.title,
+          created,
+          ...(intent.goal ? { goal: intent.goal } : {}),
+          stage: 'reserved',
+          target,
+          ...(gitPlan ? { gitPlan } : {}),
+          files: scaffold.files.map(({ relativePath, sha256 }) => ({ relativePath, sha256 })),
+        };
+        await assertResourcesAvailable(engine.context, resourcesForCreate(record));
+        await publishCreateJournal(engine.context, record);
+        return { record, existing: false };
       });
     } catch (error) {
       if (error instanceof CloseOperationError && error.code === 'CLOSE_CONFLICT') {

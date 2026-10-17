@@ -34,7 +34,11 @@ export function parseGitWorktreePolicy(
   if (!isRecord(value) || typeof value.enabled !== 'boolean') {
     throw invalid('Project git.enabled must be a boolean.');
   }
-  if (Object.keys(value).some((key) => key !== 'enabled' && key !== 'worktrees' && key !== 'integrationTargetBranch')) {
+  if (
+    Object.keys(value).some(
+      (key) => key !== 'enabled' && key !== 'worktrees' && key !== 'integrationTargetBranch',
+    )
+  ) {
     throw invalid('Unsupported Git policy key.');
   }
   const worktrees = value.worktrees;
@@ -56,7 +60,8 @@ export function parseGitWorktreePolicy(
   validateBaseRef(baseRef);
   const target = value.integrationTargetBranch;
   if (target !== undefined) {
-    if (typeof target !== 'string') throw invalid('git.integrationTargetBranch must be a local branch.');
+    if (typeof target !== 'string')
+      throw invalid('git.integrationTargetBranch must be a local branch.');
     validateBranchName(target);
     if (target === 'HEAD') throw invalid('Integration target must be a named local branch.');
   }

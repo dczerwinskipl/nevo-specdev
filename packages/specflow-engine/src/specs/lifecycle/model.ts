@@ -99,10 +99,7 @@ export function normalizeCloseIntent(input: CloseIntent): CloseIntent {
 }
 
 /** Derived resource identities must agree with persisted intent, not a forged list. */
-export function resourcesForClosePlan(
-  plan: ClosePlan,
-  projectId: string,
-): readonly string[] {
+export function resourcesForClosePlan(plan: ClosePlan, projectId: string): readonly string[] {
   const integrate = plan.kind === 'worktree-close' || plan.integrateToTargetBranch === true;
   const values = [
     'spec:' + plan.specId,

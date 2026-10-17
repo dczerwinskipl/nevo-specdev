@@ -36,10 +36,13 @@ describe('Version Control worktree policy (VC01)', () => {
         git: { enabled: true, integrationTargetBranch: 'main' },
       }),
     ).toMatchObject({ enabled: true, integrationTargetBranch: 'main' });
-    expect(parseGitWorktreePolicy({ git: { enabled: true } }).integrationTargetBranch).toBeUndefined();
+    expect(
+      parseGitWorktreePolicy({ git: { enabled: true } }).integrationTargetBranch,
+    ).toBeUndefined();
     for (const target of ['HEAD', 'a..b', '-bad', 'origin/main..x', '', 17]) {
-      expect(() => parseGitWorktreePolicy({ git: { enabled: true, integrationTargetBranch: target } }))
-        .toThrow();
+      expect(() =>
+        parseGitWorktreePolicy({ git: { enabled: true, integrationTargetBranch: target } }),
+      ).toThrow();
     }
   });
 
