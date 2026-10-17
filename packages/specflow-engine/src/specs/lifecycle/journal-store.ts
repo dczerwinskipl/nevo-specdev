@@ -126,11 +126,11 @@ function isCloseJournal(
     plan.fingerprint ===
       fingerprintCloseIntent(
         plan.kind === 'worktree-close'
-          ? { kind: 'worktree-close', operationId, specId: plan.specId as string }
+          ? { kind: 'worktree-close', operationId, specId: plan.specId }
           : {
               kind: 'specification-close',
               operationId,
-              specId: plan.specId as string,
+              specId: plan.specId,
               integrateToTargetBranch: plan.integrateToTargetBranch ?? false,
             },
       ) &&

@@ -6,6 +6,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   bootstrapProjectHome,
+  withProjectControlLock,
+  assertResourcesAvailable,
   createSpecificationForTesting,
   inspectCloseOperation,
   listCloseJournals,
@@ -136,6 +138,16 @@ describe('E2.T10 — read-only lifecycle admission and durable shared Git resour
     expect(git(root, 'rev-parse', 'HEAD')).toBe(head);
     expect(await engine.readRegistry()).toEqual(before);
     expect(await listCloseJournals(engine.context)).toHaveLength(1);
+    await withProjectControlLock(engine.context, async () => {
+      // A new Create in this checkout is excluded by the SAME journal-derived
+      // claim, even when its Specification ID differs.
+      await expect(
+        assertResourcesAvailable(engine.context, [
+          'checkout:' + engine.workspace.workspaceId,
+          'spec:' + randomUUID(),
+        ]),
+      ).rejects.toMatchObject({ code: 'CLOSE_CONFLICT' });
+    });
 
     // An identical retry remains a reader once first-admission clean-tree
     // preflight is no longer possible; it must not re-publish or own effects.
@@ -159,9 +171,10 @@ describe('E2.T10 — read-only lifecycle admission and durable shared Git resour
           target: { kind: 'existing', workspaceId: engine.workspace.workspaceId },
         },
         {
-          afterEffect: async (stage) => {
-            if (stage === 'reservation') throw new Error('intentionally interrupted Create');
-          },
+          afterEffect: (stage) =>
+            stage === 'reservation'
+              ? Promise.reject(new Error('intentionally interrupted Create'))
+              : Promise.resolve(),
         },
       ),
     ).rejects.toThrow('intentionally interrupted Create');
