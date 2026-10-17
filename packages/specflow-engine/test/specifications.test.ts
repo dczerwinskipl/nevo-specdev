@@ -6,8 +6,6 @@ import { dirname, join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { createLegacySpecificationScaffold } from '../src/specs/model';
-
 import {
   SpecificationError,
   createSpecificationScaffold,
@@ -80,24 +78,18 @@ describe('E2.T01 Specification manifest and canonical checkout repository', () =
     });
   });
 
-  it('keeps historical change.yaml bytes and read identity without rewriting old Specs', async () => {
-    const specId = randomUUID();
-    const input = { specId, title: 'Historical manifest', created: '2026-10-14' };
-    const oldScaffold = createLegacySpecificationScaffold(input);
-    const nextScaffold = createSpecificationScaffold(input);
-    expect(oldScaffold.files[0]?.relativePath).toBe('specs/active/historical-manifest/change.yaml');
-    expect(oldScaffold.files[0]?.content).toContain('workflow:\n  mode: deterministic');
-    expect(oldScaffold.files[0]?.sha256).not.toBe(nextScaffold.files[0]?.sha256);
-
+  it('fails closed on an obsolete change.yaml-only directory', async () => {
     const root = await workspace();
-    await persist(root, oldScaffold);
-    const sourcePath = join(root, oldScaffold.files[0]!.relativePath);
-    const sourceBytes = await readFile(sourcePath);
-    const found = await readWorkspaceSpecification(root, specId);
-    expect(found.relativeManifestPath).toBe(oldScaffold.files[0]?.relativePath);
-    expect((await readFile(sourcePath)).equals(sourceBytes)).toBe(true);
-    await expect(readFile(join(root, nextScaffold.files[0]!.relativePath))).rejects.toMatchObject({
-      code: 'ENOENT',
+    const scaffold = createSpecificationScaffold({
+      specId: randomUUID(),
+      title: 'Outdated prototype',
+      created: '2026-10-14',
+    });
+    const currentPath = join(root, scaffold.files[0]!.relativePath);
+    await mkdir(dirname(currentPath), { recursive: true });
+    await writeFile(join(dirname(currentPath), 'change.yaml'), scaffold.files[0]!.content);
+    await expect(listWorkspaceSpecifications(root)).rejects.toMatchObject({
+      code: 'SPEC_SOURCE_INVALID',
     });
   });
 
