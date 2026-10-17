@@ -2859,13 +2859,13 @@
     {
       "id": "ideas.specflow-engine.plan-02.task-09",
       "type": "engineering",
-      "title": "E2.T09 — Normalize Specification manifest contract",
+      "title": "E2.T09 — Normalize Specification manifest and Create journal",
       "status": "draft",
       "file": "docs/ideas/specflow-engine/execution-plans/02-specifications-git-workspaces/tasks/T09-normalize-specification-manifest.md",
       "read_when": [
         "implementing or reviewing E2.T09"
       ],
-      "summary": "Remove the redundant execution-mode marker and rename new canonical manifest to specification.yaml, without breaking existing manifests or Durable Create recovery.",
+      "summary": "Establish one canonical specification.yaml and one strict current Create journal, without prototype-only backward compatibility; retain durable recovery guarantees.",
       "related": [
         "ideas.specflow-engine.plan-02",
         "ideas.specflow-engine.spec-creation",
@@ -2881,7 +2881,7 @@
         "execution-task",
         "temporary",
         "specification-contract",
-        "compatibility"
+        "pre-release"
       ]
     },
     {
